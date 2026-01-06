@@ -1,0 +1,7 @@
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/com.c:64:6:ComInit	8	static
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/com.c:109:6:ComTask	24	static
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/com.c:168:6:ComFree	0	static
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/com.c:184:6:ComTransmitPacket	8	static
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/com.c:239:12:ComGetActiveInterfaceMaxRxLen	0	static
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/com.c:281:12:ComGetActiveInterfaceMaxTxLen	8	static
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/com.c:322:10:ComIsConnected	8	static

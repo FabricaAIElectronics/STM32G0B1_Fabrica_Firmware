@@ -1,0 +1,5 @@
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/timer.c:69:6:TimerInit	24	static
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/timer.c:120:6:TimerReset	0	static
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/timer.c:141:6:TimerUpdate	16	static
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/timer.c:173:12:TimerGet	8	static
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/timer.c:193:10:HAL_GetTick	8	static

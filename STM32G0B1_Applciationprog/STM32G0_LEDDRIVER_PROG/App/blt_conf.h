@@ -44,7 +44,7 @@
  * de-initialize application specific parts, for example to stop blinking an LED, etc.
  */
 /** \brief Frequency of the external crystal or internal (HSI) oscillator. */
-#define BOOT_CPU_XTAL_SPEED_KHZ          (8000)
+#define BOOT_CPU_XTAL_SPEED_KHZ          (16000)
 /** \brief Desired system speed. */
 #define BOOT_CPU_SYSTEM_SPEED_KHZ        (60000)
 /** \brief Motorola or Intel style byte ordering. */

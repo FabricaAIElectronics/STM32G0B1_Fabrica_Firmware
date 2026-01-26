@@ -60,6 +60,8 @@ void MX_FDCAN1_Init(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define FAN_PWM_5_Pin GPIO_PIN_12
+#define FAN_PWM_5_GPIO_Port GPIOC
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
 #define HS_DR_EN_Pin GPIO_PIN_1
@@ -68,20 +70,20 @@ void MX_FDCAN1_Init(void);
 #define HS_E_EN_GPIO_Port GPIOC
 #define HS_SC_EN_Pin GPIO_PIN_3
 #define HS_SC_EN_GPIO_Port GPIOC
-#define Temp_PTC_1_Pin GPIO_PIN_0
-#define Temp_PTC_1_GPIO_Port GPIOA
-#define Temp_PTC_2_Pin GPIO_PIN_1
-#define Temp_PTC_2_GPIO_Port GPIOA
-#define Temp_PTC_3_Pin GPIO_PIN_2
-#define Temp_PTC_3_GPIO_Port GPIOA
-#define Temp_PTC_4_Pin GPIO_PIN_3
-#define Temp_PTC_4_GPIO_Port GPIOA
-#define Temp_PTC_5_Pin GPIO_PIN_4
-#define Temp_PTC_5_GPIO_Port GPIOA
+#define PTC_1_Pin GPIO_PIN_0
+#define PTC_1_GPIO_Port GPIOA
+#define PTC_2_Pin GPIO_PIN_1
+#define PTC_2_GPIO_Port GPIOA
+#define PTC_3_Pin GPIO_PIN_2
+#define PTC_3_GPIO_Port GPIOA
+#define PTC_4_Pin GPIO_PIN_3
+#define PTC_4_GPIO_Port GPIOA
+#define PTC_5_Pin GPIO_PIN_4
+#define PTC_5_GPIO_Port GPIOA
 #define LED2_Pin GPIO_PIN_5
 #define LED2_GPIO_Port GPIOA
-#define Temp_PTC_6_Pin GPIO_PIN_6
-#define Temp_PTC_6_GPIO_Port GPIOA
+#define PTC_6_Pin GPIO_PIN_6
+#define PTC_6_GPIO_Port GPIOA
 #define CURR_MON_1_Pin GPIO_PIN_7
 #define CURR_MON_1_GPIO_Port GPIOA
 #define TACHO_1_Pin GPIO_PIN_4
@@ -110,6 +112,10 @@ void MX_FDCAN1_Init(void);
 #define FAN_PWM_2_GPIO_Port GPIOA
 #define TACHO_3_Pin GPIO_PIN_6
 #define TACHO_3_GPIO_Port GPIOC
+#define TACHO_5_Pin GPIO_PIN_7
+#define TACHO_5_GPIO_Port GPIOC
+#define VBUCK_EN_Pin GPIO_PIN_8
+#define VBUCK_EN_GPIO_Port GPIOD
 #define HS_DR_FT_Pin GPIO_PIN_9
 #define HS_DR_FT_GPIO_Port GPIOD
 #define FAN_PWM_3_Pin GPIO_PIN_10

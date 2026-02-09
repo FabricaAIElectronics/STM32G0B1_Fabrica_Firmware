@@ -1,0 +1,10 @@
+../Core/Src/io_module.c:14:6:HS_init	16	static
+../Core/Src/io_module.c:28:6:HS_Enable	16	static
+../Core/Src/io_module.c:34:6:HS_EnableAll	8	static
+../Core/Src/io_module.c:41:6:HS_EnableWithoutCap	8	static
+../Core/Src/io_module.c:47:6:HS_Disable	16	static
+../Core/Src/io_module.c:53:6:HS_DisableAll	8	static
+../Core/Src/io_module.c:60:6:HS_Fault	16	static
+../Core/Src/io_module.c:64:6:HS_PGood	16	static
+../Core/Src/io_module.c:68:6:Bat_curr_measurement	16	static
+../Core/Src/io_module.c:73:6:V24_volt_measurement	16	static

@@ -21,26 +21,56 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "header.h"
+#include "eeprom_driver.h"
+#include "RunningHorseDisplay.h"
+//#include "fonts.h"
+#include "stdio.h"
+#include <stdio.h>
+#include "display_scheduler.h"
+#include "ssd1306.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 
+/**
+  * @brief  Vector base address configuration. It should no longer be at the start of
+  *         flash memory but moved forward because the first part of flash is
+  *         reserved for the bootloader. Note that this is already done by the
+  *         bootloader before starting this program. Unfortunately, function
+  *         SystemInit() overwrites this change again.
+  * @return none.
+  */
+static void VectorBase_Config(void)
+{
+  /* The constant array with vectors of the vector table is declared externally in the
+   * c-startup code.
+   */
+  extern const unsigned long g_pfnVectors[];
+
+  /* Remap the vector table to where the vector table is located for this program. */
+  SCB->VTOR = (unsigned long)&g_pfnVectors[0];
+}
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+uint32_t adc_val[10] = {0};
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc){
+//	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+};
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
+DMA_HandleTypeDef hdma_adc1;
 
 FDCAN_HandleTypeDef hfdcan1;
 FDCAN_HandleTypeDef hfdcan2;
@@ -50,12 +80,19 @@ I2C_HandleTypeDef hi2c1;
 TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN PV */
+static Config g_config;
+static Config test_config;
+static bool g_oled_present = false;
+static bool g_eeprom_present = false;
+
+
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_FDCAN1_Init(void);
 static void MX_FDCAN2_Init(void);
@@ -68,6 +105,7 @@ static void MX_TIM1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+
 /* USER CODE END 0 */
 
 /**
@@ -78,7 +116,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+ VectorBase_Config();
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -99,12 +137,94 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_ADC1_Init();
   MX_FDCAN1_Init();
   MX_FDCAN2_Init();
   MX_I2C1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+//  HAL_I2C_EnableListen_IT(&hi2c1);
+  AppInit();
+
+
+    g_eeprom_present = (HAL_I2C_IsDeviceReady(&hi2c1, 0xA0, 3, 500)==HAL_OK);
+    g_oled_present = (HAL_I2C_IsDeviceReady(&hi2c1, 0x78, 3, 500)==HAL_OK);
+    if((g_eeprom_present)&&(g_oled_present)){
+    	HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
+    }
+    else{
+    	HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
+    }
+  
+//    for (int i =0; i <512; i++){
+//    	EEPROM_pageErase(i);
+//    }
+        if (g_eeprom_present)
+        {
+//        	HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin,GPIO_PIN_SET);
+            /* Try to load config from EEPROM */
+           	EEPROM_Read_Config(1, 0, &g_config);
+        	if(!checkcfg(&g_config)){
+        		HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
+        		LoadDefault(&g_config);
+
+        	}
+        	else{
+        		g_config.count=100;
+        	}
+
+            EEPROM_Write_Config(1, 0, &g_config);
+            EEPROM_Read_Config(1, 0, &test_config);
+//            HAL_Delay(1000);
+        }
+        else
+        {
+            /* EEPROM not present - use defaults */
+
+//            HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin,GPIO_PIN_RESET);
+        }
+
+        /* ════════════════════════════════════════════════════════
+         *  OLED Initialization
+         * ════════════════════════════════════════════════════════ */
+
+        HAL_Delay(100);  /* Let I2C stabilize */
+
+        g_oled_present = (HAL_I2C_IsDeviceReady(&hi2c1, 0x78, 3, 500)==HAL_OK);
+        SSD1306_Init();
+
+        if (g_oled_present)
+        {
+//        	HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin,GPIO_PIN_SET);
+            /* Show startup screen */
+
+        	SSD1306_Clear();
+            /* One-shot EEPROM write/read diagnostic: write magic + FW 0x0120 and read back */
+
+            SSD1306_GotoXY(0, 10);
+            SSD1306_Puts("System Init", &Font_7x10, 1);
+            EEPROM_Read_Config(1, 0, &test_config);
+            SSD1306_GotoXY(0, 25);
+            char buf[64];
+
+                sprintf(buf, "count: v%d",test_config.count);
+
+
+                SSD1306_Puts(buf, &Font_7x10, 1);
+
+            SSD1306_UpdateScreen();
+            Demo_ScrollRight();
+//            SSD1306_UpdateScreen();
+            HAL_Delay(2000);
+
+
+            /* Initialize display scheduler */
+            DisplayScheduler_Init();
+        }
+        else{
+//        	HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin,GPIO_PIN_RESET);
+        }
 
   /* USER CODE END 2 */
 
@@ -112,6 +232,32 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  static int TimerCount = 0;
+	  if(HAL_GetTick()-TimerCount>500){
+	  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_val, 10);
+//	  if(test_config.firmware_ver == 0x0103)
+//		  HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+	  TimerCount = HAL_GetTick();
+  	  }
+
+
+	  AppTask();
+	  static int EEPROM_format = 0;
+	  if(!HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13)){
+		      HAL_Delay(100);
+	  if(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13))
+		      EEPROM_format = 1;
+	  }
+
+	  if(EEPROM_format){
+		  for (int i =0; i <512; i++){
+		  		      	EEPROM_pageErase(i);
+		  		      }
+		  EEPROM_format = 0;
+	  }
+
+	  runningHorse();
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -186,22 +332,20 @@ static void MX_ADC1_Init(void)
   /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
   */
   hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
-  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc1.Init.ScanConvMode = ADC_SCAN_SEQ_FIXED;
+  hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   hadc1.Init.LowPowerAutoWait = DISABLE;
   hadc1.Init.LowPowerAutoPowerOff = DISABLE;
-  hadc1.Init.ContinuousConvMode = DISABLE;
+  hadc1.Init.ContinuousConvMode = ENABLE;
   hadc1.Init.NbrOfConversion = 1;
-  hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.DMAContinuousRequests = DISABLE;
-  hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
-  hadc1.Init.SamplingTimeCommon1 = ADC_SAMPLETIME_1CYCLE_5;
-  hadc1.Init.SamplingTimeCommon2 = ADC_SAMPLETIME_1CYCLE_5;
+  hadc1.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
+  hadc1.Init.SamplingTimeCommon1 = ADC_SAMPLETIME_19CYCLES_5;
   hadc1.Init.OversamplingMode = DISABLE;
   hadc1.Init.TriggerFrequencyMode = ADC_TRIGGER_FREQ_HIGH;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
@@ -212,14 +356,88 @@ static void MX_ADC1_Init(void)
   /** Configure Regular Channel
   */
   sConfig.Channel = ADC_CHANNEL_0;
-  sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLINGTIME_COMMON_1;
+  sConfig.Rank = ADC_RANK_CHANNEL_NUMBER;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_1;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_2;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_3;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_4;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_6;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_7;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_8;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_9;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_10;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
   }
   /* USER CODE BEGIN ADC1_Init 2 */
-
+  if (HAL_ADCEx_Calibration_Start(&hadc1) != HAL_OK)
+  {
+      Error_Handler();
+  }
   /* USER CODE END ADC1_Init 2 */
 
 }
@@ -289,9 +507,9 @@ static void MX_FDCAN2_Init(void)
   hfdcan2.Init.AutoRetransmission = DISABLE;
   hfdcan2.Init.TransmitPause = DISABLE;
   hfdcan2.Init.ProtocolException = DISABLE;
-  hfdcan2.Init.NominalPrescaler = 16;
+  hfdcan2.Init.NominalPrescaler = 12;
   hfdcan2.Init.NominalSyncJumpWidth = 1;
-  hfdcan2.Init.NominalTimeSeg1 = 1;
+  hfdcan2.Init.NominalTimeSeg1 = 8;
   hfdcan2.Init.NominalTimeSeg2 = 1;
   hfdcan2.Init.DataPrescaler = 1;
   hfdcan2.Init.DataSyncJumpWidth = 1;
@@ -353,6 +571,9 @@ static void MX_I2C1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN I2C1_Init 2 */
+//	I2C1->CR1 |= (I2C_CR1_TXIE | I2C_CR1_RXIE | I2C_CR1_ERRIE);
+//	HAL_NVIC_SetPriority(I2C1_IRQn, 3, 0);
+//	HAL_NVIC_EnableIRQ(I2C1_IRQn);
 
   /* USER CODE END I2C1_Init 2 */
 
@@ -441,6 +662,22 @@ static void MX_TIM1_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -460,16 +697,35 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, LED_GREEN_Pin|GPIO_PIN_9|GPIO_PIN_10, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, SW_Pin|GPIO_PIN_7, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, LED_GREEN_Pin|FAN_CTRL_Pin|EN_AUX_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOD, EN_LED_Pin|EN_DRIVE_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(EN_CAP_GPIO_Port, EN_CAP_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PC0 PC6 FLT_LED_Pin */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_6|FLT_LED_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : SW_Pin PC7 */
+  GPIO_InitStruct.Pin = SW_Pin|GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LED_GREEN_Pin */
   GPIO_InitStruct.Pin = LED_GREEN_Pin;
@@ -478,31 +734,40 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(LED_GREEN_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA9 PA10 */
-  GPIO_InitStruct.Pin = GPIO_PIN_9|GPIO_PIN_10;
+  /*Configure GPIO pins : FAN_CTRL_Pin EN_AUX_Pin */
+  GPIO_InitStruct.Pin = FAN_CTRL_Pin|EN_AUX_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PC6 */
-  GPIO_InitStruct.Pin = GPIO_PIN_6;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PC7 */
-  GPIO_InitStruct.Pin = GPIO_PIN_7;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PD8 PD9 */
-  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9;
+  /*Configure GPIO pins : FLT_AUX_Pin PGOOD_AUX_Pin PGOOD_LED_Pin FLT_DRIVE_Pin
+                           PGOOD_DRIVE_Pin FLT_CAP_Pin PGOOD_CAP_Pin */
+  GPIO_InitStruct.Pin = FLT_AUX_Pin|PGOOD_AUX_Pin|PGOOD_LED_Pin|FLT_DRIVE_Pin
+                          |PGOOD_DRIVE_Pin|FLT_CAP_Pin|PGOOD_CAP_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : EN_LED_Pin EN_DRIVE_Pin */
+  GPIO_InitStruct.Pin = EN_LED_Pin|EN_DRIVE_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : EN_CAP_Pin */
+  GPIO_InitStruct.Pin = EN_CAP_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(EN_CAP_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : FLT_SBC_Pin PGOOD_SBC_Pin */
+  GPIO_InitStruct.Pin = FLT_SBC_Pin|PGOOD_SBC_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 

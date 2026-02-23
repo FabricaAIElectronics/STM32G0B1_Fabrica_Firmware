@@ -2,6 +2,6 @@
 ../App/boot.c:53:6:BootComInit	1
 ../App/boot.c:70:6:BootComCheckActivationRequest	1
 ../App/boot.c:86:6:BootActivate	0
-../App/boot.c:326:22:CanCalculateBitTimingConfig	18
-../App/boot.c:447:13:BootComCanInit	3
-../App/boot.c:611:13:BootComCanCheckActivationRequest	11
+../App/boot.c:327:22:CanCalculateBitTimingConfig	18
+../App/boot.c:448:13:BootComCanInit	3
+../App/boot.c:612:13:BootComCanCheckActivationRequest	11

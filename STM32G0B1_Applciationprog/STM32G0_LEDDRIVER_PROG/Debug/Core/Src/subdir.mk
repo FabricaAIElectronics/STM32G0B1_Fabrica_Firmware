@@ -5,8 +5,11 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../Core/Src/eeprom.c \
+../Core/Src/applogic.c \
+../Core/Src/can_operation.c \
+../Core/Src/eeprom_driver.c \
 ../Core/Src/main.c \
+../Core/Src/peripheral.c \
 ../Core/Src/stm32g0xx_hal_msp.c \
 ../Core/Src/stm32g0xx_it.c \
 ../Core/Src/syscalls.c \
@@ -14,8 +17,11 @@ C_SRCS += \
 ../Core/Src/system_stm32g0xx.c 
 
 OBJS += \
-./Core/Src/eeprom.o \
+./Core/Src/applogic.o \
+./Core/Src/can_operation.o \
+./Core/Src/eeprom_driver.o \
 ./Core/Src/main.o \
+./Core/Src/peripheral.o \
 ./Core/Src/stm32g0xx_hal_msp.o \
 ./Core/Src/stm32g0xx_it.o \
 ./Core/Src/syscalls.o \
@@ -23,8 +29,11 @@ OBJS += \
 ./Core/Src/system_stm32g0xx.o 
 
 C_DEPS += \
-./Core/Src/eeprom.d \
+./Core/Src/applogic.d \
+./Core/Src/can_operation.d \
+./Core/Src/eeprom_driver.d \
 ./Core/Src/main.d \
+./Core/Src/peripheral.d \
 ./Core/Src/stm32g0xx_hal_msp.d \
 ./Core/Src/stm32g0xx_it.d \
 ./Core/Src/syscalls.d \
@@ -39,7 +48,7 @@ Core/Src/%.o Core/Src/%.su Core/Src/%.cyclo: ../Core/Src/%.c Core/Src/subdir.mk
 clean: clean-Core-2f-Src
 
 clean-Core-2f-Src:
-	-$(RM) ./Core/Src/eeprom.cyclo ./Core/Src/eeprom.d ./Core/Src/eeprom.o ./Core/Src/eeprom.su ./Core/Src/main.cyclo ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/stm32g0xx_hal_msp.cyclo ./Core/Src/stm32g0xx_hal_msp.d ./Core/Src/stm32g0xx_hal_msp.o ./Core/Src/stm32g0xx_hal_msp.su ./Core/Src/stm32g0xx_it.cyclo ./Core/Src/stm32g0xx_it.d ./Core/Src/stm32g0xx_it.o ./Core/Src/stm32g0xx_it.su ./Core/Src/syscalls.cyclo ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.cyclo ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/system_stm32g0xx.cyclo ./Core/Src/system_stm32g0xx.d ./Core/Src/system_stm32g0xx.o ./Core/Src/system_stm32g0xx.su
+	-$(RM) ./Core/Src/applogic.cyclo ./Core/Src/applogic.d ./Core/Src/applogic.o ./Core/Src/applogic.su ./Core/Src/can_operation.cyclo ./Core/Src/can_operation.d ./Core/Src/can_operation.o ./Core/Src/can_operation.su ./Core/Src/eeprom_driver.cyclo ./Core/Src/eeprom_driver.d ./Core/Src/eeprom_driver.o ./Core/Src/eeprom_driver.su ./Core/Src/main.cyclo ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/peripheral.cyclo ./Core/Src/peripheral.d ./Core/Src/peripheral.o ./Core/Src/peripheral.su ./Core/Src/stm32g0xx_hal_msp.cyclo ./Core/Src/stm32g0xx_hal_msp.d ./Core/Src/stm32g0xx_hal_msp.o ./Core/Src/stm32g0xx_hal_msp.su ./Core/Src/stm32g0xx_it.cyclo ./Core/Src/stm32g0xx_it.d ./Core/Src/stm32g0xx_it.o ./Core/Src/stm32g0xx_it.su ./Core/Src/syscalls.cyclo ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.cyclo ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/system_stm32g0xx.cyclo ./Core/Src/system_stm32g0xx.d ./Core/Src/system_stm32g0xx.o ./Core/Src/system_stm32g0xx.su
 
 .PHONY: clean-Core-2f-Src
 

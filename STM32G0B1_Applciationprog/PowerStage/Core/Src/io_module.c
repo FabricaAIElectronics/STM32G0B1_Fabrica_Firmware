@@ -58,11 +58,11 @@ void HS_DisableAll(){
 }
 
 bool HS_Fault(HS_CTRL_ *HS){
-	return HAL_GPIO_ReadPin(HS->fault.port, HS->fault.pin);
+	return HAL_GPIO_ReadPin(HS->fault.port, HS->fault.pin)==false;
 }
 
 bool HS_PGood(HS_CTRL_ *HS){
-	return HAL_GPIO_ReadPin(HS->pgood.port, HS->pgood.pin);
+	return HAL_GPIO_ReadPin(HS->pgood.port, HS->pgood.pin)==false;
 }
 
 void Bat_curr_measurement(SystemMeasurement_t *ms){

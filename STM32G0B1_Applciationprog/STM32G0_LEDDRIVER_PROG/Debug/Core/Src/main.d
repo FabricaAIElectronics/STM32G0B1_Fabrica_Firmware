@@ -41,7 +41,10 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/boot.h \
  C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/led.h \
  C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/timer.h \
- ../Core/Inc/eeprom.h
+ ../Core/Inc/eeprom_driver.h ../Core/Inc/can_operation.h \
+ ../Core/Inc/main.h ../Core/Inc/eeprom_driver.h ../Core/Inc/peripheral.h \
+ ../Core/Inc/applogic.h ../Core/Inc/can_operation.h \
+ ../Core/Inc/peripheral.h
 ../Core/Inc/main.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal.h:
 ../Core/Inc/stm32g0xx_hal_conf.h:
@@ -85,4 +88,11 @@ C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciation
 C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/boot.h:
 C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/led.h:
 C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/timer.h:
-../Core/Inc/eeprom.h:
+../Core/Inc/eeprom_driver.h:
+../Core/Inc/can_operation.h:
+../Core/Inc/main.h:
+../Core/Inc/eeprom_driver.h:
+../Core/Inc/peripheral.h:
+../Core/Inc/applogic.h:
+../Core/Inc/can_operation.h:
+../Core/Inc/peripheral.h:

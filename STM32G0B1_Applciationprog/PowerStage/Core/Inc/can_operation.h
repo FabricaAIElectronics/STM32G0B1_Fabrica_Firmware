@@ -22,10 +22,10 @@ typedef struct{
 bool system_update_detected; //detected flash over can, usually is 7E1#FF
 bool system_transmit_stat;	 //stop broadcast data to CANBUS to avoid corrupt the traffic
 }CAN_STATUS;
-CAN_STATUS canstat = {false,true};
+extern CAN_STATUS canstat;
 extern FDCAN_HandleTypeDef canHandle;
-FDCAN_TxHeaderTypeDef TxHeader;
-FDCAN_RxHeaderTypeDef RxHeader;
+extern FDCAN_TxHeaderTypeDef TxHeader;
+extern FDCAN_RxHeaderTypeDef RxHeader;
 extern uint32_t TxMailbox;
 extern uint8_t gpio_status;
 extern uint8_t CAN_Rxdata[8];

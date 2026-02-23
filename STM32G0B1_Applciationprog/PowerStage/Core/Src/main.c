@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include "display_scheduler.h"
 #include "ssd1306.h"
+#include "can_operation.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -146,7 +147,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 //  HAL_I2C_EnableListen_IT(&hi2c1);
   AppInit();
-
+  CANInitTxHeader();
 
     g_eeprom_present = (HAL_I2C_IsDeviceReady(&hi2c1, 0xA0, 3, 500)==HAL_OK);
     g_oled_present = (HAL_I2C_IsDeviceReady(&hi2c1, 0x78, 3, 500)==HAL_OK);
@@ -214,7 +215,7 @@ int main(void)
                 SSD1306_Puts(buf, &Font_7x10, 1);
 
             SSD1306_UpdateScreen();
-            Demo_ScrollRight();
+
 //            SSD1306_UpdateScreen();
             HAL_Delay(2000);
 
@@ -256,7 +257,7 @@ int main(void)
 		  EEPROM_format = 0;
 	  }
 
-	  runningHorse();
+//	  runningHorse();
 
     /* USER CODE END WHILE */
 

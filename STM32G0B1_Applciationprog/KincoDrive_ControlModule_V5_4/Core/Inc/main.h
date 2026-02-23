@@ -100,6 +100,8 @@ void MX_FDCAN1_Init(void);
 #define VADC_12_GPIO_Port GPIOB
 #define TACHO_4_Pin GPIO_PIN_11
 #define TACHO_4_GPIO_Port GPIOB
+#define CURR_MON_IN_Pin GPIO_PIN_12
+#define CURR_MON_IN_GPIO_Port GPIOB
 #define EStop_NO_Pin GPIO_PIN_13
 #define EStop_NO_GPIO_Port GPIOB
 #define EStop_NC_Pin GPIO_PIN_14

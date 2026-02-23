@@ -22,18 +22,17 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "header.h"
-#include "eeprom.h"
+#include "eeprom_driver.h"
+#include "can_operation.h"
+#include "peripheral.h"
+#include "applogic.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-uint32_t ADC_VAL[2];
 
-uint32_t adc_data1 = 0;
-uint32_t adc_data2 = 0;
+static AppStateMachine sm;
 
-Config cfginput;
-Config cfgread;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -90,15 +89,7 @@ static void MX_ADC1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc){
-	if(hadc->Instance== ADC1){
 
-		adc_data1 = ADC_VAL[0];
-//		adc_data2 = ADC_VAL[1];
-
-
-	}
-}
 /* USER CODE END 0 */
 
 /**
@@ -136,32 +127,12 @@ int main(void)
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
   AppInit();
+  CAN_Init();
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
 
-  HAL_ADC_Start_DMA(&hadc1, ADC_VAL, 2);
-  //erase eeprom all page
-  for (int i =0; i <512; i++){
-  	EEPROM_pageErase(i);
-  }
-
-  cfginput.count =0;
-  cfginput.mode = 0x01;
-  cfginput.pwm0 = 4000;
-  cfginput.pwm1 = 1000;
-  cfginput.voltage = 25200;
-  cfgread.count =0;
-  cfgread.mode = 0x00;
-  cfgread.pwm0 = 0;
-  cfgread.pwm1 = 0;
-  cfgread.voltage = 0;
-
-  EEPROM_Write_Config(1, 0, &cfginput);
-  EEPROM_Read_Config(1, 0, &cfgread);
-  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,cfgread.pwm0);
-  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,cfgread.pwm1);
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+  AppLogic_Init(&sm);
 
   /* USER CODE END 2 */
 
@@ -169,12 +140,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  AppTask();
-//	  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,(4095-ADC_VAL[0])/1000);
-
-	  __HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,adc_data1);
-
-	  HAL_ADC_Start_DMA(&hadc1, ADC_VAL, 2);
+	  AppTask();           /* Bootloader LED toggle + activation check */
+	  AppLogic_Run(&sm);   /* State machine tick */
 
     /* USER CODE END WHILE */
 
@@ -199,17 +166,15 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSIDiv = RCC_HSI_DIV1;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV1;
   RCC_OscInitStruct.PLL.PLLN = 15;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV8;
-  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV4;
+  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -227,6 +192,10 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
+  /** Enables the Clock Security System
+  */
+  HAL_RCC_EnableCSS();
 }
 
 /**
@@ -253,20 +222,19 @@ static void MX_ADC1_Init(void)
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE;
+  hadc1.Init.ScanConvMode = ADC_SCAN_SEQ_FIXED;
   hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   hadc1.Init.LowPowerAutoWait = DISABLE;
   hadc1.Init.LowPowerAutoPowerOff = DISABLE;
   hadc1.Init.ContinuousConvMode = ENABLE;
-  hadc1.Init.NbrOfConversion = 2;
+  hadc1.Init.NbrOfConversion = 1;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.DMAContinuousRequests = DISABLE;
   hadc1.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
-  hadc1.Init.SamplingTimeCommon1 = ADC_SAMPLETIME_12CYCLES_5;
-  hadc1.Init.SamplingTimeCommon2 = ADC_SAMPLETIME_79CYCLES_5;
+  hadc1.Init.SamplingTimeCommon1 = ADC_SAMPLETIME_39CYCLES_5;
   hadc1.Init.OversamplingMode = DISABLE;
-  hadc1.Init.TriggerFrequencyMode = ADC_TRIGGER_FREQ_LOW;
+  hadc1.Init.TriggerFrequencyMode = ADC_TRIGGER_FREQ_HIGH;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
   {
     Error_Handler();
@@ -275,8 +243,7 @@ static void MX_ADC1_Init(void)
   /** Configure Regular Channel
   */
   sConfig.Channel = ADC_CHANNEL_1;
-  sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLINGTIME_COMMON_1;
+  sConfig.Rank = ADC_RANK_CHANNEL_NUMBER;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -285,13 +252,13 @@ static void MX_ADC1_Init(void)
   /** Configure Regular Channel
   */
   sConfig.Channel = ADC_CHANNEL_2;
-  sConfig.Rank = ADC_REGULAR_RANK_2;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
   }
   /* USER CODE BEGIN ADC1_Init 2 */
-
+  HAL_ADCEx_Calibration_Start(&hadc1);
+  HAL_Delay(1);
   /* USER CODE END ADC1_Init 2 */
 
 }

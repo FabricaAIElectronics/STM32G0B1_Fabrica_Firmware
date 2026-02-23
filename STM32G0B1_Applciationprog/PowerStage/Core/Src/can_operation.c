@@ -10,7 +10,8 @@
 #include <string.h>
 #include <stdbool.h>
 extern FDCAN_HandleTypeDef canHandle;
-extern CAN_STATUS canstat;
+FDCAN_TxHeaderTypeDef TxHeader;
+CAN_STATUS canstat = {false,true};
 uint8_t CAN_Rxdata[8];
 uint8_t gpio_status;
 uint8_t Update_count =0;

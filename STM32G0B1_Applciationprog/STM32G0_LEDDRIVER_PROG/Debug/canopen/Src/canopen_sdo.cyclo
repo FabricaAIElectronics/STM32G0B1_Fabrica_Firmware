@@ -1,0 +1,9 @@
+../canopen/Src/canopen_sdo.c:3:10:CanOpen_Sdo_ToLowWord	1
+../canopen/Src/canopen_sdo.c:7:15:CanOpen_Sdo_CreateReadRequestFrame	1
+../canopen/Src/canopen_sdo.c:30:15:CanOpen_Sdo_CreateWriteRequestFrame	1
+../canopen/Src/canopen_sdo.c:58:10:CanOpen_Sdo_GetSdoMessageType	1
+../canopen/Src/canopen_sdo.c:66:9:GetSdoReadReceivedCommand	5
+../canopen/Src/canopen_sdo.c:79:15:CanOpen_Sdo_CreateReadDataResponseFrame	1
+../canopen/Src/canopen_sdo.c:104:15:CanOpen_Sdo_CreateErrorResponseFrame	1
+../canopen/Src/canopen_sdo.c:113:15:CanOpen_Sdo_CreateWriteAckResponseFrame	1
+../canopen/Src/canopen_sdo.c:135:15:CanOpen_Sdo_CreateWriteErrorResponseFrame	1

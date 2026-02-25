@@ -36,15 +36,13 @@ Core/Src/can_operation.o: ../Core/Src/can_operation.c \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr_ex.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h \
+ ../Core/Inc/main.h ../Core/Inc/eeprom_driver.h \
+ ../Core/Inc/canopen_bridge.h ../canopen/Inc/canopen.h \
+ ../canopen/Inc/can_structs.h ../canopen/Inc/canopen_buffer.h \
+ ../canopen/Inc/canopen_frame.h ../canopen/Inc/canopen_heartbeat.h \
+ ../canopen/Inc/canopen_nmt.h ../canopen/Inc/canopen_obj_dict.h \
+ ../canopen/Inc/canopen_sdo.h ../canopen/Inc/canopen_pdo.h \
  ../Core/Inc/main.h \
- C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/header.h \
- C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/blt_conf.h \
- C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/app.h \
- C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/boot.h \
- C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/led.h \
- C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/timer.h \
- ../Core/Inc/eeprom_driver.h ../Core/Inc/main.h \
- ../Core/Inc/eeprom_driver.h \
  ../Drivers/CMSIS/Device/ST/STM32G0xx/Include/stm32g0b1xx.h
 ../Core/Inc/can_operation.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal.h:
@@ -84,13 +82,16 @@ Core/Src/can_operation.o: ../Core/Src/can_operation.c \
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h:
 ../Core/Inc/main.h:
-C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/header.h:
-C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/blt_conf.h:
-C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/app.h:
-C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/boot.h:
-C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/led.h:
-C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/timer.h:
 ../Core/Inc/eeprom_driver.h:
+../Core/Inc/canopen_bridge.h:
+../canopen/Inc/canopen.h:
+../canopen/Inc/can_structs.h:
+../canopen/Inc/canopen_buffer.h:
+../canopen/Inc/canopen_frame.h:
+../canopen/Inc/canopen_heartbeat.h:
+../canopen/Inc/canopen_nmt.h:
+../canopen/Inc/canopen_obj_dict.h:
+../canopen/Inc/canopen_sdo.h:
+../canopen/Inc/canopen_pdo.h:
 ../Core/Inc/main.h:
-../Core/Inc/eeprom_driver.h:
 ../Drivers/CMSIS/Device/ST/STM32G0xx/Include/stm32g0b1xx.h:

@@ -1,0 +1,17 @@
+../Drivers/CMSIS/Include/core_cm0plus.h:985:34:__NVIC_SystemReset	1
+../Core/Src/canopen_bridge.c:40:6:CanOpenBridge_Init	1
+../Core/Src/canopen_bridge.c:81:6:CanOpenBridge_OnRxIsr	2
+../Core/Src/canopen_bridge.c:95:6:CanOpenBridge_OnNmtRxIsr	2
+../Core/Src/canopen_bridge.c:112:6:CanOpenBridge_ProcessRx	4
+../Core/Src/canopen_bridge.c:139:6:CanOpenBridge_SendPending	2
+../Core/Src/canopen_bridge.c:150:6:CanOpenBridge_SendHeartbeat	3
+../Core/Src/canopen_bridge.c:168:6:CanOpen_Nmt_InitCompleteCallback	1
+../Core/Src/canopen_bridge.c:175:6:CanOpen_Nmt_OnResetCallback	2
+../Core/Src/canopen_bridge.c:187:17:PwmReadCb	3
+../Core/Src/canopen_bridge.c:195:17:PwmWriteCb	4
+../Core/Src/canopen_bridge.c:209:17:VoltageThreshReadCb	4
+../Core/Src/canopen_bridge.c:221:17:VoltageThreshWriteCb	4
+../Core/Src/canopen_bridge.c:236:17:AdcReadCb	5
+../Core/Src/canopen_bridge.c:251:17:DeviceStatusReadCb	5
+../Core/Src/canopen_bridge.c:266:17:EepromCmdWriteCb	4
+../Core/Src/canopen_bridge.c:280:17:BootloaderWriteCb	2

@@ -42,7 +42,12 @@ Core/Src/applogic.o: ../Core/Src/applogic.c ../Core/Inc/applogic.h \
  C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/led.h \
  C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/timer.h \
  ../Core/Inc/eeprom_driver.h ../Core/Inc/can_operation.h \
- ../Core/Inc/peripheral.h
+ ../Core/Inc/peripheral.h ../Core/Inc/canopen_bridge.h \
+ ../canopen/Inc/canopen.h ../canopen/Inc/can_structs.h \
+ ../canopen/Inc/canopen_buffer.h ../canopen/Inc/canopen_frame.h \
+ ../canopen/Inc/canopen_heartbeat.h ../canopen/Inc/canopen_nmt.h \
+ ../canopen/Inc/canopen_obj_dict.h ../canopen/Inc/canopen_sdo.h \
+ ../canopen/Inc/canopen_pdo.h
 ../Core/Inc/applogic.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal.h:
@@ -90,3 +95,13 @@ C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciation
 ../Core/Inc/eeprom_driver.h:
 ../Core/Inc/can_operation.h:
 ../Core/Inc/peripheral.h:
+../Core/Inc/canopen_bridge.h:
+../canopen/Inc/canopen.h:
+../canopen/Inc/can_structs.h:
+../canopen/Inc/canopen_buffer.h:
+../canopen/Inc/canopen_frame.h:
+../canopen/Inc/canopen_heartbeat.h:
+../canopen/Inc/canopen_nmt.h:
+../canopen/Inc/canopen_obj_dict.h:
+../canopen/Inc/canopen_sdo.h:
+../canopen/Inc/canopen_pdo.h:

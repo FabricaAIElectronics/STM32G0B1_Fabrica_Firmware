@@ -1,0 +1,76 @@
+VERSION ""
+
+NS_ :
+
+BS_:
+
+BU_: Master LEDDriver
+
+BO_ 0 NMT_Control: 2 Master
+ SG_ NMT_Command : 0|8@1+ (1,0) [0|255] "" LEDDriver
+ SG_ NMT_NodeID : 8|8@1+ (1,0) [0|127] "" LEDDriver
+
+BO_ 1537 SDO_Request_Node1: 8 Master
+ SG_ SDO_CommandByte : 0|8@1+ (1,0) [0|255] "" LEDDriver
+ SG_ SDO_Index : 8|16@1+ (1,0) [0|65535] "" LEDDriver
+ SG_ SDO_SubIndex : 24|8@1+ (1,0) [0|255] "" LEDDriver
+ SG_ SDO_Data : 32|32@1+ (1,0) [0|4294967295] "" LEDDriver
+
+BO_ 1409 SDO_Response_Node1: 8 LEDDriver
+ SG_ SDO_RespCommandByte : 0|8@1+ (1,0) [0|255] "" Master
+ SG_ SDO_RespIndex : 8|16@1+ (1,0) [0|65535] "" Master
+ SG_ SDO_RespSubIndex : 24|8@1+ (1,0) [0|255] "" Master
+ SG_ SDO_RespData : 32|32@1+ (1,0) [0|4294967295] "" Master
+
+BO_ 1793 Heartbeat_Node1: 1 LEDDriver
+ SG_ NMT_State : 0|8@1+ (1,0) [0|255] "" Master
+
+CM_ BU_ Master "CANopen master controller";
+CM_ BU_ LEDDriver "STM32G0B1 LED Driver, CANopen Node ID 0x01";
+
+CM_ BO_ 0 "NMT Network Management control frame. COB-ID = 0x000.";
+CM_ BO_ 1537 "SDO Request to Node 1. COB-ID = 0x600 + 0x01 = 0x601.";
+CM_ BO_ 1409 "SDO Response from Node 1. COB-ID = 0x580 + 0x01 = 0x581.";
+CM_ BO_ 1793 "Heartbeat from Node 1. COB-ID = 0x700 + 0x01 = 0x701. Sent every 200ms.";
+
+CM_ SG_ 0 NMT_Command "NMT command: 0x01=Start, 0x02=Stop, 0x80=PreOp, 0x81=ResetNode, 0x82=ResetComm";
+CM_ SG_ 0 NMT_NodeID "Target node ID. 0x00 = all nodes, 0x01 = LED Driver.";
+
+CM_ SG_ 1537 SDO_CommandByte "SDO command specifier. 0x40=Read, 0x2F=Write1byte, 0x2B=Write2bytes, 0x23=Write4bytes.";
+CM_ SG_ 1537 SDO_Index "Object dictionary index (little-endian). 0x6000=PWM, 0x6001=VoltThresh, 0x6002=ADC, 0x6003=Status, 0x6004=EEPROM, 0x6005=Bootloader.";
+CM_ SG_ 1537 SDO_SubIndex "Object dictionary subindex.";
+CM_ SG_ 1537 SDO_Data "SDO write data (little-endian). Data size depends on command byte.";
+
+CM_ SG_ 1409 SDO_RespCommandByte "SDO response: 0x4F=Read1byte, 0x4B=Read2bytes, 0x43=Read4bytes, 0x60=WriteAck, 0x80=Error.";
+CM_ SG_ 1409 SDO_RespIndex "Echoed object dictionary index.";
+CM_ SG_ 1409 SDO_RespSubIndex "Echoed object dictionary subindex.";
+CM_ SG_ 1409 SDO_RespData "Response data (read value or abort code, little-endian).";
+
+CM_ SG_ 1793 NMT_State "Heartbeat state: 0x00=Boot-up, 0x04=Stopped, 0x05=Operational, 0x7F=Pre-Operational.";
+
+VAL_ 0 NMT_Command
+  1 "Start_Operational"
+  2 "Stop"
+  128 "Pre_Operational"
+  129 "Reset_Node"
+  130 "Reset_Communication" ;
+
+VAL_ 1537 SDO_CommandByte
+  64 "Read_Request"
+  47 "Write_1Byte"
+  43 "Write_2Bytes"
+  35 "Write_4Bytes" ;
+
+VAL_ 1409 SDO_RespCommandByte
+  79 "Read_1Byte"
+  75 "Read_2Bytes"
+  67 "Read_4Bytes"
+  96 "Write_Ack"
+  128 "Abort_Error" ;
+
+VAL_ 1793 NMT_State
+  0 "Boot_Up"
+  4 "Stopped"
+  5 "Operational"
+  127 "Pre_Operational" ;
+

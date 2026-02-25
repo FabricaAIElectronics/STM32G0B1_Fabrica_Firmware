@@ -42,7 +42,7 @@ typedef enum {
 #define TICK_EEPROM_DATA_MS			1000
 
 /* ---- State Machine Context ---- */
-typedef struct {
+typedef struct AppStateMachine_ {
     AppState    state;
     ErrorCode   errorCode;
 

@@ -1,0 +1,14 @@
+../canopen/Inc/canopen_frame.h:31:24:CanOpen_FrameData_AsUInt64	1
+../canopen/Src/canopen_frame.c:4:6:CanOpen_Frame_CreateFrame	1
+../canopen/Src/canopen_frame.c:13:6:CanOpen_Frame_CreateEmptyFrame	1
+../canopen/Src/canopen_frame.c:22:6:CanOpen_Frame_Overwrite	1
+../canopen/Src/canopen_frame.c:31:21:CanOpen_Nmt_GetCommand	5
+../canopen/Src/canopen_frame.c:48:21:CanOpen_Sdo_GetCommand	13
+../canopen/Src/canopen_frame.c:70:10:CanOpen_Sdo_GetIndex	1
+../canopen/Src/canopen_frame.c:72:9:CanOpen_Sdo_GetSubIndex	1
+../canopen/Src/canopen_frame.c:74:9:CanOpen_Sdo_GetDataLenBytes	1
+../canopen/Src/canopen_frame.c:79:10:CanOpen_Sdo_GetData	5
+../canopen/Src/canopen_frame.c:95:21:CanOpen_Pdo_RPDOChannelMessageType	7
+../canopen/Src/canopen_frame.c:110:21:CanOpen_Pdo_TPDOChannelMessageType	7
+../canopen/Src/canopen_frame.c:125:10:CanOpen_Pdo_GetData	1
+../canopen/Src/canopen_frame.c:127:26:CanOpen_Heartbeat_GetStatus	7

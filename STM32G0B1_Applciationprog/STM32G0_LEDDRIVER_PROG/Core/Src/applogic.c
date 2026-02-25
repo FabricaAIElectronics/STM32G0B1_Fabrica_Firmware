@@ -5,6 +5,7 @@
  *      Author: jordan
  */
 #include "applogic.h"
+#include "canopen_bridge.h"
 #include <string.h>
 
 /* ---- Static Handler Prototypes ---- */
@@ -18,7 +19,6 @@ static void State_Recovery(AppStateMachine *sm);
 static void ProcessCANCommands(AppStateMachine *sm);
 static void ProcessEEPROMCommands(AppStateMachine *sm);
 static ErrorCode CheckUndervoltage(AppStateMachine *sm);
-static void BroadcastDeviceStatusEx(AppState state, ErrorCode errCode);
 
 /*=========================================================================
  *  AppLogic_Init
@@ -101,7 +101,7 @@ static void State_LoadConfig(AppStateMachine *sm)
     }
 
     /* Apply config to CAN thresholds (used as runtime defaults
-       until a VOLTAGESET or LIGHTSET CAN message overrides them) */
+       until an SDO write overrides them) */
     can_rxMessage.under_voltage_24   = sm->config.under_voltage_24;
     can_rxMessage.under_voltage_17_5 = sm->config.under_voltage_17_5;
     can_rxMessage.pwm[0] = (uint16_t)sm->config.pwm0;
@@ -121,75 +121,70 @@ static void State_LoadConfig(AppStateMachine *sm)
  *  STATE_RUNNING
  *  Non-blocking tick-driven main operation:
  *
+ *  Every loop iteration:
+ *    - Process CANopen RX frames (NMT + SDO)
+ *    - Transmit queued CANopen TX frames
+ *    - Apply latest SDO-written PWM values
+ *    - Handle EEPROM commands
+ *
  *  Every 100ms:
- *    - Read ADC voltage values (from previous DMA transfer)
+ *    - Read ADC voltage values
  *    - Check undervoltage thresholds
- *    - Trigger next ADC measurement
  *
  *  Every 500ms:
- *    - Broadcast LED status over CAN
- *    - Broadcast device status over CAN
- *
- *  Continuously (every loop iteration):
- *    - Apply latest CAN RX PWM values
- *    - Handle EEPROM commands (write/reset flags)
+ *    - Send CANopen heartbeat
  *=========================================================================*/
 static void State_Running(AppStateMachine *sm)
-{	if(can_rxMessage.flashdetected==0){
-    uint32_t now = HAL_GetTick();
+{
+    if (can_rxMessage.flashdetected == 0) {
+        uint32_t now = HAL_GetTick();
 
-    /* ---- 100ms: ADC + undervoltage check ---- */
-    if (now - sm->lastAdcTick >= TICK_ADC_INTERVAL_MS) {
-        sm->lastAdcTick = now;
+        /* ---- CANopen: process RX and send TX every iteration ---- */
+        CanOpenBridge_ProcessRx();
+        CanOpenBridge_SendPending();
 
-        /* Read voltages from previous DMA transfer */
-        sm->ledStatus.voltage_24   = READADC(V24_CHANNEL);
-        sm->ledStatus.voltage_17_5 = READADC(V17_5_CHANNEL);
+        /* ---- 100ms: ADC + undervoltage check ---- */
+        if (now - sm->lastAdcTick >= TICK_ADC_INTERVAL_MS) {
+            sm->lastAdcTick = now;
 
-        /* Trigger next ADC measurement for the next cycle */
-//        TrigerADCMEasurement();
+            /* Read voltages from previous DMA transfer */
+            sm->ledStatus.voltage_24   = READADC(V24_CHANNEL);
+            sm->ledStatus.voltage_17_5 = READADC(V17_5_CHANNEL);
 
-        /* Check undervoltage */
-        ErrorCode err = CheckUndervoltage(sm);
-        if (err != ERR_NONE) {
-            sm->errorCode = err;
-            sm->state = STATE_ERROR;
-            return;
+            /* Check undervoltage */
+            ErrorCode err = CheckUndervoltage(sm);
+            if (err != ERR_NONE) {
+                sm->errorCode = err;
+                sm->state = STATE_ERROR;
+                return;
+            }
         }
+
+        /* ---- 500ms: CANopen heartbeat ---- */
+        if (now - sm->lastCanStatusTick >= TICK_CAN_STATUS_INTERVAL_MS) {
+            sm->lastCanStatusTick = now;
+
+            /* Update PWM values in status */
+            sm->ledStatus.pwm[0] = can_rxMessage.pwm[0];
+            sm->ledStatus.pwm[1] = can_rxMessage.pwm[1];
+            sm->ledStatus.pwm[2] = can_rxMessage.pwm[2];
+
+            CanOpenBridge_SendHeartbeat();
+        }
+
+        /* ---- Continuous: process CAN RX + EEPROM commands ---- */
+        ProcessCANCommands(sm);
+        ProcessEEPROMCommands(sm);
+    } else {
+        FOCdetection();
     }
-
-    /* ---- 500ms: CAN status broadcasts ---- */
-    if (now - sm->lastCanStatusTick >= TICK_CAN_STATUS_INTERVAL_MS) {
-        sm->lastCanStatusTick = now;
-
-        /* Update PWM values in status before broadcast */
-        sm->ledStatus.pwm[0] = can_rxMessage.pwm[0];
-        sm->ledStatus.pwm[1] = can_rxMessage.pwm[1];
-        sm->ledStatus.pwm[2] = can_rxMessage.pwm[2];
-
-        braodcastLEDStatus(sm->ledStatus);
-        BroadcastDeviceStatusEx(sm->state, sm->errorCode);
-    }
-
-    if(now - sm->lastEEPROMTick >= TICK_EEPROM_DATA_MS){
-    	sm->lastEEPROMTick = now;
-    	broadcastEEPROMData(&sm->config);
-    }
-
-    /* ---- Continuous: process CAN RX + EEPROM commands ---- */
-    ProcessCANCommands(sm);
-    ProcessEEPROMCommands(sm);
-}
-else{
-	FOCdetection();
-}
 }
 
 /*=========================================================================
  *  STATE_ERROR
  *  - Disable buck converter (protect hardware)
  *  - Set all PWM to 0
- *  - Broadcast error status over CAN every 500ms
+ *  - Send heartbeat every 500ms
  *  - Continue ADC reads every 100ms to detect recovery
  *=========================================================================*/
 static void State_Error(AppStateMachine *sm)
@@ -210,6 +205,10 @@ static void State_Error(AppStateMachine *sm)
         enteredError = 1;
     }
 
+    /* ---- CANopen: keep processing RX/TX even in error state ---- */
+    CanOpenBridge_ProcessRx();
+    CanOpenBridge_SendPending();
+
     /* ---- 100ms: re-read ADC to detect recovery ---- */
     if (now - sm->lastAdcTick >= TICK_ADC_INTERVAL_MS) {
         sm->lastAdcTick = now;
@@ -228,11 +227,10 @@ static void State_Error(AppStateMachine *sm)
         }
     }
 
-    /* ---- 500ms: broadcast error status ---- */
+    /* ---- 500ms: heartbeat ---- */
     if (now - sm->lastCanStatusTick >= TICK_CAN_STATUS_INTERVAL_MS) {
         sm->lastCanStatusTick = now;
-        braodcastLEDStatus(sm->ledStatus);
-        BroadcastDeviceStatusEx(sm->state, sm->errorCode);
+        CanOpenBridge_SendHeartbeat();
     }
 }
 
@@ -281,21 +279,22 @@ static void State_Recovery(AppStateMachine *sm)
 
 /*=========================================================================
  *  HELPER: ProcessCANCommands
- *  Apply PWM values from can_rxMessage (set by FDCAN RX ISR) to hardware.
+ *  Apply PWM values from can_rxMessage (set by SDO write callbacks) to hardware.
  *=========================================================================*/
 static void ProcessCANCommands(AppStateMachine *sm)
-{	if(can_rxMessage.newcommandreceived){
-    sm->ledCtrl.pwm[0] = (uint8_t)can_rxMessage.pwm[0];
-    sm->ledCtrl.pwm[1] = (uint8_t)can_rxMessage.pwm[1];
-    sm->ledCtrl.pwm[2] = (uint8_t)can_rxMessage.pwm[2];
-    apply_pwm(&sm->ledCtrl);
-}
-can_rxMessage.newcommandreceived = 0;
+{
+    if (can_rxMessage.newcommandreceived) {
+        sm->ledCtrl.pwm[0] = (uint8_t)can_rxMessage.pwm[0];
+        sm->ledCtrl.pwm[1] = (uint8_t)can_rxMessage.pwm[1];
+        sm->ledCtrl.pwm[2] = (uint8_t)can_rxMessage.pwm[2];
+        apply_pwm(&sm->ledCtrl);
+    }
+    can_rxMessage.newcommandreceived = 0;
 }
 
 /*=========================================================================
  *  HELPER: ProcessEEPROMCommands
- *  Handle eeprom_cmd flags set by CAN RX ISR (EEPROMSET 0x125).
+ *  Handle eeprom_cmd flags set by SDO write callback (0x6004).
  *=========================================================================*/
 static void ProcessEEPROMCommands(AppStateMachine *sm)
 {
@@ -312,7 +311,6 @@ static void ProcessEEPROMCommands(AppStateMachine *sm)
         sm->config.pwm2               = can_rxMessage.pwm[2];
 
         EEPROM_Write_Config(EEPROM_CONFIG_PAGE, EEPROM_CONFIG_OFFSET, &sm->config);
-        broadcastEEPROMData(&sm->config);
     }
 
     /* Reset to factory defaults */
@@ -328,14 +326,12 @@ static void ProcessEEPROMCommands(AppStateMachine *sm)
         can_rxMessage.pwm[0] = (uint16_t)sm->config.pwm0;
         can_rxMessage.pwm[1] = (uint16_t)sm->config.pwm1;
         can_rxMessage.pwm[2] = (uint16_t)sm->config.pwm2;
-
-        broadcastEEPROMData(&sm->config);
     }
 }
 
 /*=========================================================================
  *  HELPER: CheckUndervoltage
- *  Compare last-read ADC voltages against CAN-configured thresholds.
+ *  Compare last-read ADC voltages against SDO-configured thresholds.
  *  Threshold of 0 means "check disabled".
  *  Returns a bitmask ErrorCode.
  *=========================================================================*/
@@ -356,33 +352,4 @@ static ErrorCode CheckUndervoltage(AppStateMachine *sm)
     }
 
     return err;
-}
-
-/*=========================================================================
- *  HELPER: BroadcastDeviceStatusEx
- *  Send actual state and error code on DEVSTATUS (0x128).
- *
- *  data[0] = system state:
- *            0x01=INIT, 0x02=LOAD_CONFIG, 0x03=RUNNING,
- *            0x04=ERROR, 0x05=RECOVERY
- *  data[1] = error code bitmask:
- *            Bit 0 = 24V undervoltage
- *            Bit 1 = 17.5V undervoltage
- *=========================================================================*/
-static void BroadcastDeviceStatusEx(AppState state, ErrorCode errCode)
-{
-//    uint8_t data[2];
-//
-//    switch (state) {
-//        case STATE_INIT:        data[0] = 0x01; break;
-//        case STATE_LOAD_CONFIG: data[0] = 0x02; break;
-//        case STATE_RUNNING:     data[0] = 0x03; break;
-//        case STATE_ERROR:       data[0] = 0x04; break;
-//        case STATE_RECOVERY:    data[0] = 0x05; break;
-//        default:                data[0] = 0x00; break;
-//    }
-
-//    data[1] = (uint8_t)errCode;
-    broadcastDeviceStatus(state,errCode);
-//    CAN_Send(DEVSTATUS, data, 2);
 }

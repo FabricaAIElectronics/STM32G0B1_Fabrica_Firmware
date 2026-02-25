@@ -2,10 +2,9 @@
 ../Core/Src/applogic.c:40:6:AppLogic_Run	6
 ../Core/Src/applogic.c:71:13:State_Init	1
 ../Core/Src/applogic.c:91:13:State_LoadConfig	2
-../Core/Src/applogic.c:137:13:State_Running	6
-../Core/Src/applogic.c:195:13:State_Error	5
-../Core/Src/applogic.c:247:13:State_Recovery	4
-../Core/Src/applogic.c:286:13:ProcessCANCommands	2
-../Core/Src/applogic.c:300:13:ProcessEEPROMCommands	3
-../Core/Src/applogic.c:342:18:CheckUndervoltage	5
-../Core/Src/applogic.c:372:13:BroadcastDeviceStatusEx	1
+../Core/Src/applogic.c:137:13:State_Running	5
+../Core/Src/applogic.c:190:13:State_Error	5
+../Core/Src/applogic.c:245:13:State_Recovery	4
+../Core/Src/applogic.c:284:13:ProcessCANCommands	2
+../Core/Src/applogic.c:299:13:ProcessEEPROMCommands	3
+../Core/Src/applogic.c:338:18:CheckUndervoltage	5

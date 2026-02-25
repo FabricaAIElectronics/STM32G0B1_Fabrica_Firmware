@@ -1,0 +1,11 @@
+../canopen/Src/canopen_nmt.c:5:22:CanOpen_Nmt_CreateControlFrame	64	static
+../canopen/Src/canopen_nmt.c:17:6:CanOpen_Nmt_SetState	16	static
+../canopen/Src/canopen_nmt.c:27:21:CanOpen_Nmt_GetState	8	static
+../canopen/Src/canopen_nmt.c:29:6:CanOpen_Nmt_ProcessFrame	24	static
+../canopen/Src/canopen_nmt.c:54:15:CanOpen_Nmt_CreateStartNodeFrame	16	static
+../canopen/Src/canopen_nmt.c:58:15:CanOpen_Nmt_CreateStopFrame	16	static
+../canopen/Src/canopen_nmt.c:62:15:CanOpen_Nmt_CreatePreOpFrame	16	static
+../canopen/Src/canopen_nmt.c:66:15:CanOpen_Nmt_CreateResetNodeFrame	16	static
+../canopen/Src/canopen_nmt.c:70:15:CanOpen_Nmt_CreateResetCommunicationsFrame	16	static
+../canopen/Src/canopen_nmt.c:74:28:CanOpen_Nmt_InitCompleteCallback	8	static
+../canopen/Src/canopen_nmt.c:83:28:CanOpen_Nmt_OnResetCallback	8	static

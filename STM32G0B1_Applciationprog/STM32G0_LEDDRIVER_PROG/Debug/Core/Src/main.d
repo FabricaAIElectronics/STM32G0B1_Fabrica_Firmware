@@ -44,7 +44,12 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Core/Inc/eeprom_driver.h ../Core/Inc/can_operation.h \
  ../Core/Inc/main.h ../Core/Inc/eeprom_driver.h ../Core/Inc/peripheral.h \
  ../Core/Inc/applogic.h ../Core/Inc/can_operation.h \
- ../Core/Inc/peripheral.h
+ ../Core/Inc/peripheral.h ../Core/Inc/canopen_bridge.h \
+ ../canopen/Inc/canopen.h ../canopen/Inc/can_structs.h \
+ ../canopen/Inc/canopen_buffer.h ../canopen/Inc/canopen_frame.h \
+ ../canopen/Inc/canopen_heartbeat.h ../canopen/Inc/canopen_nmt.h \
+ ../canopen/Inc/canopen_obj_dict.h ../canopen/Inc/canopen_sdo.h \
+ ../canopen/Inc/canopen_pdo.h
 ../Core/Inc/main.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal.h:
 ../Core/Inc/stm32g0xx_hal_conf.h:
@@ -96,3 +101,13 @@ C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciation
 ../Core/Inc/applogic.h:
 ../Core/Inc/can_operation.h:
 ../Core/Inc/peripheral.h:
+../Core/Inc/canopen_bridge.h:
+../canopen/Inc/canopen.h:
+../canopen/Inc/can_structs.h:
+../canopen/Inc/canopen_buffer.h:
+../canopen/Inc/canopen_frame.h:
+../canopen/Inc/canopen_heartbeat.h:
+../canopen/Inc/canopen_nmt.h:
+../canopen/Inc/canopen_obj_dict.h:
+../canopen/Inc/canopen_sdo.h:
+../canopen/Inc/canopen_pdo.h:

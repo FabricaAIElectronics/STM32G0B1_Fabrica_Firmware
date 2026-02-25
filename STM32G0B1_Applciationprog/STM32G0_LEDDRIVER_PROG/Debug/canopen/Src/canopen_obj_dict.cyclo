@@ -1,0 +1,8 @@
+../canopen/Src/canopen_obj_dict.c:11:8:ObjDict_CreateEntry	8
+../canopen/Src/canopen_obj_dict.c:49:6:ObjDict_Reset	1
+../canopen/Src/canopen_obj_dict.c:57:5:__VerifyEntryPermissions	5
+../canopen/Src/canopen_obj_dict.c:82:5:__SubindexCheck	2
+../canopen/Src/canopen_obj_dict.c:93:5:__WriteDataCheck	3
+../canopen/Src/canopen_obj_dict.c:109:5:__VerifyFrame	5
+../canopen/Src/canopen_obj_dict.c:125:6:__ProcessFrameByEntry	8
+../canopen/Src/canopen_obj_dict.c:166:15:ObjDict_HandleSdo	3

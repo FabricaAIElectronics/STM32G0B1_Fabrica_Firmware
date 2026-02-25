@@ -1,0 +1,5 @@
+../canopen/Src/canopen_heartbeat.c:4:15:CanOpen_Heartbeat_CreateHeartbeatFrame	72	static
+../canopen/Src/canopen_heartbeat.c:23:15:CanOpen_Heartbeat_CreateStartStateFrame	16	static
+../canopen/Src/canopen_heartbeat.c:27:15:CanOpen_Heartbeat_CreateStopStateFrame	16	static
+../canopen/Src/canopen_heartbeat.c:31:15:CanOpen_Heartbeat_CreateRunStateFrame	16	static
+../canopen/Src/canopen_heartbeat.c:35:15:CanOpen_Heartbeat_CreatePreOpStateFrame	16	static

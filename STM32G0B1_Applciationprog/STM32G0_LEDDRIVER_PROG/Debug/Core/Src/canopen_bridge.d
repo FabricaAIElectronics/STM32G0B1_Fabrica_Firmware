@@ -1,0 +1,109 @@
+Core/Src/canopen_bridge.o: ../Core/Src/canopen_bridge.c \
+ ../Core/Inc/canopen_bridge.h ../canopen/Inc/canopen.h \
+ ../canopen/Inc/can_structs.h ../canopen/Inc/canopen_buffer.h \
+ ../canopen/Inc/canopen_frame.h ../canopen/Inc/canopen_heartbeat.h \
+ ../canopen/Inc/canopen_nmt.h ../canopen/Inc/canopen_obj_dict.h \
+ ../canopen/Inc/canopen_sdo.h ../canopen/Inc/canopen_pdo.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal.h \
+ ../Core/Inc/stm32g0xx_hal_conf.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_rcc.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_def.h \
+ ../Drivers/CMSIS/Device/ST/STM32G0xx/Include/stm32g0xx.h \
+ ../Drivers/CMSIS/Device/ST/STM32G0xx/Include/stm32g0b1xx.h \
+ ../Drivers/CMSIS/Include/core_cm0plus.h \
+ ../Drivers/CMSIS/Include/cmsis_version.h \
+ ../Drivers/CMSIS/Include/cmsis_compiler.h \
+ ../Drivers/CMSIS/Include/cmsis_gcc.h \
+ ../Drivers/CMSIS/Include/mpu_armv7.h \
+ ../Drivers/CMSIS/Device/ST/STM32G0xx/Include/system_stm32g0xx.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_ll_rcc.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_rcc_ex.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_gpio.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_gpio_ex.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_dma.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_ll_dma.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_ll_dmamux.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_dma_ex.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_cortex.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_adc.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_ll_adc.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_adc_ex.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_adc_ex.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_exti.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_flash.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_flash_ex.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_fdcan.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_i2c.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_i2c_ex.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr_ex.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h \
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h \
+ ../Core/Inc/can_operation.h ../Core/Inc/main.h \
+ ../Core/Inc/eeprom_driver.h ../Core/Inc/applogic.h \
+ C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/header.h \
+ C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/blt_conf.h \
+ C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/app.h \
+ C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/boot.h \
+ C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/led.h \
+ C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/timer.h \
+ ../Core/Inc/can_operation.h ../Core/Inc/peripheral.h
+../Core/Inc/canopen_bridge.h:
+../canopen/Inc/canopen.h:
+../canopen/Inc/can_structs.h:
+../canopen/Inc/canopen_buffer.h:
+../canopen/Inc/canopen_frame.h:
+../canopen/Inc/canopen_heartbeat.h:
+../canopen/Inc/canopen_nmt.h:
+../canopen/Inc/canopen_obj_dict.h:
+../canopen/Inc/canopen_sdo.h:
+../canopen/Inc/canopen_pdo.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal.h:
+../Core/Inc/stm32g0xx_hal_conf.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_rcc.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_def.h:
+../Drivers/CMSIS/Device/ST/STM32G0xx/Include/stm32g0xx.h:
+../Drivers/CMSIS/Device/ST/STM32G0xx/Include/stm32g0b1xx.h:
+../Drivers/CMSIS/Include/core_cm0plus.h:
+../Drivers/CMSIS/Include/cmsis_version.h:
+../Drivers/CMSIS/Include/cmsis_compiler.h:
+../Drivers/CMSIS/Include/cmsis_gcc.h:
+../Drivers/CMSIS/Include/mpu_armv7.h:
+../Drivers/CMSIS/Device/ST/STM32G0xx/Include/system_stm32g0xx.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/Legacy/stm32_hal_legacy.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_ll_rcc.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_rcc_ex.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_gpio.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_gpio_ex.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_dma.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_ll_dma.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_ll_dmamux.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_dma_ex.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_cortex.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_adc.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_ll_adc.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_adc_ex.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_adc_ex.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_exti.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_flash.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_flash_ex.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_fdcan.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_i2c.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_i2c_ex.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr_ex.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h:
+../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h:
+../Core/Inc/can_operation.h:
+../Core/Inc/main.h:
+../Core/Inc/eeprom_driver.h:
+../Core/Inc/applogic.h:
+C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/header.h:
+C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/blt_conf.h:
+C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/app.h:
+C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/boot.h:
+C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/led.h:
+C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/App/timer.h:
+../Core/Inc/can_operation.h:
+../Core/Inc/peripheral.h:

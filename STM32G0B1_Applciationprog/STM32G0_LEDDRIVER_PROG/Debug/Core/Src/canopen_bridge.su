@@ -1,0 +1,17 @@
+../Drivers/CMSIS/Include/core_cm0plus.h:985:34:__NVIC_SystemReset	8	static,ignoring_inline_asm
+../Core/Src/canopen_bridge.c:40:6:CanOpenBridge_Init	240	static
+../Core/Src/canopen_bridge.c:81:6:CanOpenBridge_OnRxIsr	48	static
+../Core/Src/canopen_bridge.c:95:6:CanOpenBridge_OnNmtRxIsr	48	static
+../Core/Src/canopen_bridge.c:112:6:CanOpenBridge_ProcessRx	48	static
+../Core/Src/canopen_bridge.c:139:6:CanOpenBridge_SendPending	32	static
+../Core/Src/canopen_bridge.c:150:6:CanOpenBridge_SendHeartbeat	64	static
+../Core/Src/canopen_bridge.c:168:6:CanOpen_Nmt_InitCompleteCallback	32	static
+../Core/Src/canopen_bridge.c:175:6:CanOpen_Nmt_OnResetCallback	8	static
+../Core/Src/canopen_bridge.c:187:17:PwmReadCb	16	static
+../Core/Src/canopen_bridge.c:195:17:PwmWriteCb	24	static
+../Core/Src/canopen_bridge.c:209:17:VoltageThreshReadCb	16	static
+../Core/Src/canopen_bridge.c:221:17:VoltageThreshWriteCb	16	static
+../Core/Src/canopen_bridge.c:236:17:AdcReadCb	16	static
+../Core/Src/canopen_bridge.c:251:17:DeviceStatusReadCb	16	static
+../Core/Src/canopen_bridge.c:266:17:EepromCmdWriteCb	16	static
+../Core/Src/canopen_bridge.c:280:17:BootloaderWriteCb	16	static

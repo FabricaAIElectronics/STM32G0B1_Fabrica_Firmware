@@ -321,7 +321,7 @@ static void ProcessEEPROMCommands(AppStateMachine *sm)
 
         LoadDefault(&sm->config);
         EEPROM_Write_Config(EEPROM_CONFIG_PAGE, EEPROM_CONFIG_OFFSET, &sm->config);
-
+        State_LoadConfig(sm);
         /* Apply defaults to running state */
         can_rxMessage.under_voltage_24   = sm->config.under_voltage_24;
         can_rxMessage.under_voltage_17_5 = sm->config.under_voltage_17_5;

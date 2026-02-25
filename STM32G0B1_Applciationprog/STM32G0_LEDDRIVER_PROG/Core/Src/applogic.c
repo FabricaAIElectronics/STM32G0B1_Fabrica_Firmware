@@ -147,7 +147,7 @@ static void State_Running(AppStateMachine *sm)
         sm->ledStatus.voltage_17_5 = READADC(V17_5_CHANNEL);
 
         /* Trigger next ADC measurement for the next cycle */
-        TrigerADCMEasurement();
+//        TrigerADCMEasurement();
 
         /* Check undervoltage */
         ErrorCode err = CheckUndervoltage(sm);

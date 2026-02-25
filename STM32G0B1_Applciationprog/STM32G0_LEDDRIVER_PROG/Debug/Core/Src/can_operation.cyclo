@@ -1,7 +1,8 @@
 ../Drivers/CMSIS/Include/core_cm0plus.h:985:34:__NVIC_SystemReset	1
-../Core/Src/can_operation.c:24:6:CAN_Init	1
-../Core/Src/can_operation.c:29:6:CAN_Send	3
-../Core/Src/can_operation.c:43:6:HAL_FDCAN_RxFifo0Callback	8
-../Core/Src/can_operation.c:77:6:broadcastEEPROMData	1
-../Core/Src/can_operation.c:90:6:braodcastLEDStatus	2
-../Core/Src/can_operation.c:112:6:broadcastDeviceStatus	1
+../Core/Src/can_operation.c:25:6:CAN_Init	1
+../Core/Src/can_operation.c:30:6:CAN_Send	3
+../Core/Src/can_operation.c:44:6:HAL_FDCAN_RxFifo0Callback	12
+../Core/Src/can_operation.c:95:6:broadcastEEPROMData	1
+../Core/Src/can_operation.c:108:6:braodcastLEDStatus	2
+../Core/Src/can_operation.c:130:6:broadcastDeviceStatus	1
+../Core/Src/can_operation.c:144:6:FOCdetection	2

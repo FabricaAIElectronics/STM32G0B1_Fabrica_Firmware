@@ -5,17 +5,19 @@
 #include "header.h"
 #include "eeprom_driver.h"
 extern FDCAN_HandleTypeDef canHandle;
-#define DEVICEID 0x667
-#define LIGHTSET 0x123
-#define LIGHTSTATUS 0x127
-#define DEVSTATUS 0x128
-#define VOLTAGESET 0x124
-#define EEPROMSET 0x125
-#define EEPROMDATA 0x126
+#define DEVICEID 0x1F100000
+#define LIGHTSET 0x1F100123
+#define LIGHTSTATUS 0x1F100127
+#define DEVSTATUS 0x1F100128
+#define VOLTAGESET 0x1F100124
+#define EEPROMSET 0x1F100125
+#define EEPROMDATA 0x1F100126
 typedef struct {
     uint16_t 	under_voltage_24;
     uint16_t    under_voltage_17_5;
     uint16_t	pwm[3];
+    uint8_t 	newcommandreceived;
+    uint8_t		flashdetected;
 } CAN_RXMessage;
 
 extern CAN_RXMessage can_rxMessage;
@@ -42,5 +44,6 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 void broadcastEEPROMData(Config *config);
 void braodcastLEDStatus(LED_Peripheral_STATUS status);
 void broadcastDeviceStatus(uint8_t state, uint8_t errorCode);
+void FOCdetection(void);
 
 #endif /*CAN_OPERATION_H*/

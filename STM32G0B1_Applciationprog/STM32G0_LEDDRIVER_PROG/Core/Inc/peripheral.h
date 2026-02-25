@@ -11,9 +11,9 @@
 extern uint16_t ADC_VALUE[2];
 
 typedef struct {
-	uint8_t pwm[3];
-	uint16_t V24_Value; //24VDC in mV
-	uint16_t V17_5_Value; //17.5VDC in mV
+	volatile uint8_t pwm[3];
+	volatile uint16_t V24_Value; //24VDC in mV
+	volatile uint16_t V17_5_Value; //17.5VDC in mV
 
 }AppContext;
 

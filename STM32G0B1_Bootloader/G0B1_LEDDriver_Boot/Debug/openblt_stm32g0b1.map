@@ -3253,7 +3253,7 @@ Discarded input sections
  .debug_macro   0x00000000      0x1cd ./Loader/ARMCM0_STM32G0/mbrtu.o
  .debug_macro   0x00000000       0x28 ./Loader/ARMCM0_STM32G0/mbrtu.o
  .debug_line    0x00000000      0x14b ./Loader/ARMCM0_STM32G0/mbrtu.o
- .debug_str     0x00000000     0x3d98 ./Loader/ARMCM0_STM32G0/mbrtu.o
+ .debug_str     0x00000000     0x3dba ./Loader/ARMCM0_STM32G0/mbrtu.o
  .comment       0x00000000       0x44 ./Loader/ARMCM0_STM32G0/mbrtu.o
  .ARM.attributes
                 0x00000000       0x2c ./Loader/ARMCM0_STM32G0/mbrtu.o
@@ -3305,7 +3305,7 @@ Discarded input sections
  .debug_macro   0x00000000      0x1cd ./Loader/ARMCM0_STM32G0/rs232.o
  .debug_macro   0x00000000       0x28 ./Loader/ARMCM0_STM32G0/rs232.o
  .debug_line    0x00000000      0x14b ./Loader/ARMCM0_STM32G0/rs232.o
- .debug_str     0x00000000     0x3d98 ./Loader/ARMCM0_STM32G0/rs232.o
+ .debug_str     0x00000000     0x3dba ./Loader/ARMCM0_STM32G0/rs232.o
  .comment       0x00000000       0x44 ./Loader/ARMCM0_STM32G0/rs232.o
  .ARM.attributes
                 0x00000000       0x2c ./Loader/ARMCM0_STM32G0/rs232.o
@@ -3586,7 +3586,7 @@ Discarded input sections
  .debug_macro   0x00000000       0x20 ./Loader/file.o
  .debug_macro   0x00000000      0x11f ./Loader/file.o
  .debug_line    0x00000000      0x654 ./Loader/file.o
- .debug_str     0x00000000     0x7e7a ./Loader/file.o
+ .debug_str     0x00000000     0x7e9c ./Loader/file.o
  .comment       0x00000000       0x44 ./Loader/file.o
  .ARM.attributes
                 0x00000000       0x2c ./Loader/file.o
@@ -3617,7 +3617,7 @@ Discarded input sections
  .debug_macro   0x00000000      0x1cd ./Loader/infotable.o
  .debug_macro   0x00000000       0x28 ./Loader/infotable.o
  .debug_line    0x00000000      0x14f ./Loader/infotable.o
- .debug_str     0x00000000     0x3d8d ./Loader/infotable.o
+ .debug_str     0x00000000     0x3daf ./Loader/infotable.o
  .comment       0x00000000       0x44 ./Loader/infotable.o
  .ARM.attributes
                 0x00000000       0x2c ./Loader/infotable.o
@@ -3648,7 +3648,7 @@ Discarded input sections
  .debug_macro   0x00000000      0x1cd ./Loader/mb.o
  .debug_macro   0x00000000       0x28 ./Loader/mb.o
  .debug_line    0x00000000      0x148 ./Loader/mb.o
- .debug_str     0x00000000     0x3d86 ./Loader/mb.o
+ .debug_str     0x00000000     0x3da8 ./Loader/mb.o
  .comment       0x00000000       0x44 ./Loader/mb.o
  .ARM.attributes
                 0x00000000       0x2c ./Loader/mb.o
@@ -3679,7 +3679,7 @@ Discarded input sections
  .debug_macro   0x00000000      0x1cd ./Loader/net.o
  .debug_macro   0x00000000       0x28 ./Loader/net.o
  .debug_line    0x00000000      0x149 ./Loader/net.o
- .debug_str     0x00000000     0x3d87 ./Loader/net.o
+ .debug_str     0x00000000     0x3da9 ./Loader/net.o
  .comment       0x00000000       0x44 ./Loader/net.o
  .ARM.attributes
                 0x00000000       0x2c ./Loader/net.o
@@ -4036,7 +4036,7 @@ LOAD C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.exte
                 0x08000000                g_pfnVectors
                 0x080000bc                        . = ALIGN (0x4)
 
-.text           0x080000c0     0x1eb0
+.text           0x080000c0     0x1ec0
                 0x080000c0                        . = ALIGN (0x4)
  *(.text)
  .text          0x080000c0       0x48 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v6-m/nofp/crtbegin.o
@@ -4252,243 +4252,243 @@ LOAD C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.exte
  .text.CpuIrqEnable
                 0x08001250        0x4 ./Loader/ARMCM0_STM32G0/GCC/cpu_comp.o
                 0x08001250                CpuIrqEnable
- .text.CanInit  0x08001254      0x124 ./Loader/ARMCM0_STM32G0/can.o
+ .text.CanInit  0x08001254      0x12c ./Loader/ARMCM0_STM32G0/can.o
                 0x08001254                CanInit
  .text.CanTransmitPacket
-                0x08001378       0x7c ./Loader/ARMCM0_STM32G0/can.o
-                0x08001378                CanTransmitPacket
+                0x08001380       0x80 ./Loader/ARMCM0_STM32G0/can.o
+                0x08001380                CanTransmitPacket
  .text.CanReceivePacket
-                0x080013f4       0x60 ./Loader/ARMCM0_STM32G0/can.o
-                0x080013f4                CanReceivePacket
- .text.CpuInit  0x08001454        0x8 ./Loader/ARMCM0_STM32G0/cpu.o
-                0x08001454                CpuInit
+                0x08001400       0x64 ./Loader/ARMCM0_STM32G0/can.o
+                0x08001400                CanReceivePacket
+ .text.CpuInit  0x08001464        0x8 ./Loader/ARMCM0_STM32G0/cpu.o
+                0x08001464                CpuInit
  .text.CpuStartUserProgram
-                0x0800145c       0x40 ./Loader/ARMCM0_STM32G0/cpu.o
-                0x0800145c                CpuStartUserProgram
+                0x0800146c       0x40 ./Loader/ARMCM0_STM32G0/cpu.o
+                0x0800146c                CpuStartUserProgram
  .text.CpuMemCopy
-                0x0800149c       0x22 ./Loader/ARMCM0_STM32G0/cpu.o
-                0x0800149c                CpuMemCopy
- *fill*         0x080014be        0x2 
+                0x080014ac       0x22 ./Loader/ARMCM0_STM32G0/cpu.o
+                0x080014ac                CpuMemCopy
+ *fill*         0x080014ce        0x2 
  .text.FlashGetSector
-                0x080014c0       0x38 ./Loader/ARMCM0_STM32G0/flash.o
+                0x080014d0       0x38 ./Loader/ARMCM0_STM32G0/flash.o
  .text.FlashGetSectorBaseAddr
-                0x080014f8       0x30 ./Loader/ARMCM0_STM32G0/flash.o
+                0x08001508       0x30 ./Loader/ARMCM0_STM32G0/flash.o
  .text.FlashGetBank
-                0x08001528       0x8c ./Loader/ARMCM0_STM32G0/flash.o
+                0x08001538       0x8c ./Loader/ARMCM0_STM32G0/flash.o
  .text.FlashWriteBlock
-                0x080015b4       0x62 ./Loader/ARMCM0_STM32G0/flash.o
- *fill*         0x08001616        0x2 
+                0x080015c4       0x62 ./Loader/ARMCM0_STM32G0/flash.o
+ *fill*         0x08001626        0x2 
  .text.FlashSwitchBlock
-                0x08001618       0x54 ./Loader/ARMCM0_STM32G0/flash.o
+                0x08001628       0x54 ./Loader/ARMCM0_STM32G0/flash.o
  .text.FlashAddToBlock
-                0x0800166c       0x74 ./Loader/ARMCM0_STM32G0/flash.o
+                0x0800167c       0x74 ./Loader/ARMCM0_STM32G0/flash.o
  .text.FlashInit
-                0x080016e0       0x18 ./Loader/ARMCM0_STM32G0/flash.o
-                0x080016e0                FlashInit
+                0x080016f0       0x18 ./Loader/ARMCM0_STM32G0/flash.o
+                0x080016f0                FlashInit
  .text.FlashWrite
-                0x080016f8       0x54 ./Loader/ARMCM0_STM32G0/flash.o
-                0x080016f8                FlashWrite
+                0x08001708       0x54 ./Loader/ARMCM0_STM32G0/flash.o
+                0x08001708                FlashWrite
  .text.FlashErase
-                0x0800174c      0x1a8 ./Loader/ARMCM0_STM32G0/flash.o
-                0x0800174c                FlashErase
+                0x0800175c      0x1a8 ./Loader/ARMCM0_STM32G0/flash.o
+                0x0800175c                FlashErase
  .text.FlashWriteChecksum
-                0x080018f4       0x40 ./Loader/ARMCM0_STM32G0/flash.o
-                0x080018f4                FlashWriteChecksum
+                0x08001904       0x40 ./Loader/ARMCM0_STM32G0/flash.o
+                0x08001904                FlashWriteChecksum
  .text.FlashVerifyChecksum
-                0x08001934       0x58 ./Loader/ARMCM0_STM32G0/flash.o
-                0x08001934                FlashVerifyChecksum
+                0x08001944       0x58 ./Loader/ARMCM0_STM32G0/flash.o
+                0x08001944                FlashVerifyChecksum
  .text.FlashDone
-                0x0800198c       0x34 ./Loader/ARMCM0_STM32G0/flash.o
-                0x0800198c                FlashDone
+                0x0800199c       0x34 ./Loader/ARMCM0_STM32G0/flash.o
+                0x0800199c                FlashDone
  .text.FlashGetUserProgBaseAddress
-                0x080019c0        0x8 ./Loader/ARMCM0_STM32G0/flash.o
-                0x080019c0                FlashGetUserProgBaseAddress
- .text.NvmInit  0x080019c8        0x8 ./Loader/ARMCM0_STM32G0/nvm.o
-                0x080019c8                NvmInit
+                0x080019d0        0x8 ./Loader/ARMCM0_STM32G0/flash.o
+                0x080019d0                FlashGetUserProgBaseAddress
+ .text.NvmInit  0x080019d8        0x8 ./Loader/ARMCM0_STM32G0/nvm.o
+                0x080019d8                NvmInit
  .text.NvmWrite
-                0x080019d0        0x8 ./Loader/ARMCM0_STM32G0/nvm.o
-                0x080019d0                NvmWrite
- .text.NvmErase
-                0x080019d8        0x8 ./Loader/ARMCM0_STM32G0/nvm.o
-                0x080019d8                NvmErase
- .text.NvmVerifyChecksum
                 0x080019e0        0x8 ./Loader/ARMCM0_STM32G0/nvm.o
-                0x080019e0                NvmVerifyChecksum
- .text.NvmGetUserProgBaseAddress
+                0x080019e0                NvmWrite
+ .text.NvmErase
                 0x080019e8        0x8 ./Loader/ARMCM0_STM32G0/nvm.o
-                0x080019e8                NvmGetUserProgBaseAddress
- .text.NvmDone  0x080019f0       0x10 ./Loader/ARMCM0_STM32G0/nvm.o
-                0x080019f0                NvmDone
+                0x080019e8                NvmErase
+ .text.NvmVerifyChecksum
+                0x080019f0        0x8 ./Loader/ARMCM0_STM32G0/nvm.o
+                0x080019f0                NvmVerifyChecksum
+ .text.NvmGetUserProgBaseAddress
+                0x080019f8        0x8 ./Loader/ARMCM0_STM32G0/nvm.o
+                0x080019f8                NvmGetUserProgBaseAddress
+ .text.NvmDone  0x08001a00       0x10 ./Loader/ARMCM0_STM32G0/nvm.o
+                0x08001a00                NvmDone
  .text.TimerInit
-                0x08001a00       0x90 ./Loader/ARMCM0_STM32G0/timer.o
-                0x08001a00                TimerInit
+                0x08001a10       0x90 ./Loader/ARMCM0_STM32G0/timer.o
+                0x08001a10                TimerInit
  .text.TimerReset
-                0x08001a90       0x40 ./Loader/ARMCM0_STM32G0/timer.o
-                0x08001a90                TimerReset
+                0x08001aa0       0x40 ./Loader/ARMCM0_STM32G0/timer.o
+                0x08001aa0                TimerReset
  .text.TimerUpdate
-                0x08001ad0       0x38 ./Loader/ARMCM0_STM32G0/timer.o
-                0x08001ad0                TimerUpdate
+                0x08001ae0       0x38 ./Loader/ARMCM0_STM32G0/timer.o
+                0x08001ae0                TimerUpdate
  .text.TimerGet
-                0x08001b08       0x10 ./Loader/ARMCM0_STM32G0/timer.o
-                0x08001b08                TimerGet
- .text.HAL_GetTick
                 0x08001b18       0x10 ./Loader/ARMCM0_STM32G0/timer.o
-                0x08001b18                HAL_GetTick
+                0x08001b18                TimerGet
+ .text.HAL_GetTick
+                0x08001b28       0x10 ./Loader/ARMCM0_STM32G0/timer.o
+                0x08001b28                HAL_GetTick
  .text.AssertFailure
-                0x08001b28        0x8 ./Loader/asserts.o
-                0x08001b28                AssertFailure
+                0x08001b38        0x8 ./Loader/asserts.o
+                0x08001b38                AssertFailure
  .text.BackDoorCheck
-                0x08001b30       0x40 ./Loader/backdoor.o
-                0x08001b30                BackDoorCheck
+                0x08001b40       0x40 ./Loader/backdoor.o
+                0x08001b40                BackDoorCheck
  .text.BackDoorRestartTimer
-                0x08001b70       0x1c ./Loader/backdoor.o
-                0x08001b70                BackDoorRestartTimer
+                0x08001b80       0x1c ./Loader/backdoor.o
+                0x08001b80                BackDoorRestartTimer
  .text.BackDoorInit
-                0x08001b8c       0x18 ./Loader/backdoor.o
-                0x08001b8c                BackDoorInit
+                0x08001b9c       0x18 ./Loader/backdoor.o
+                0x08001b9c                BackDoorInit
  .text.BootInit
-                0x08001ba4       0x1c ./Loader/boot.o
-                0x08001ba4                BootInit
+                0x08001bb4       0x1c ./Loader/boot.o
+                0x08001bb4                BootInit
  .text.BootTask
-                0x08001bc0       0x14 ./Loader/boot.o
-                0x08001bc0                BootTask
- .text.ComInit  0x08001bd4       0x18 ./Loader/com.o
-                0x08001bd4                ComInit
- .text.ComTask  0x08001bec       0x2c ./Loader/com.o
-                0x08001bec                ComTask
- .text.ComFree  0x08001c18        0x2 ./Loader/com.o
-                0x08001c18                ComFree
- *fill*         0x08001c1a        0x2 
+                0x08001bd0       0x14 ./Loader/boot.o
+                0x08001bd0                BootTask
+ .text.ComInit  0x08001be4       0x18 ./Loader/com.o
+                0x08001be4                ComInit
+ .text.ComTask  0x08001bfc       0x2c ./Loader/com.o
+                0x08001bfc                ComTask
+ .text.ComFree  0x08001c28        0x2 ./Loader/com.o
+                0x08001c28                ComFree
+ *fill*         0x08001c2a        0x2 
  .text.ComTransmitPacket
-                0x08001c1c       0x1c ./Loader/com.o
-                0x08001c1c                ComTransmitPacket
+                0x08001c2c       0x1c ./Loader/com.o
+                0x08001c2c                ComTransmitPacket
  .text.ComGetActiveInterfaceMaxRxLen
-                0x08001c38       0x24 ./Loader/com.o
-                0x08001c38                ComGetActiveInterfaceMaxRxLen
+                0x08001c48       0x24 ./Loader/com.o
+                0x08001c48                ComGetActiveInterfaceMaxRxLen
  .text.ComGetActiveInterfaceMaxTxLen
-                0x08001c5c        0x8 ./Loader/com.o
-                0x08001c5c                ComGetActiveInterfaceMaxTxLen
+                0x08001c6c        0x8 ./Loader/com.o
+                0x08001c6c                ComGetActiveInterfaceMaxTxLen
  .text.ComIsConnected
-                0x08001c64        0xe ./Loader/com.o
-                0x08001c64                ComIsConnected
- .text.CopInit  0x08001c72        0x8 ./Loader/cop.o
-                0x08001c72                CopInit
+                0x08001c74        0xe ./Loader/com.o
+                0x08001c74                ComIsConnected
+ .text.CopInit  0x08001c82        0x8 ./Loader/cop.o
+                0x08001c82                CopInit
  .text.CopService
-                0x08001c7a        0x8 ./Loader/cop.o
-                0x08001c7a                CopService
- *fill*         0x08001c82        0x2 
+                0x08001c8a        0x8 ./Loader/cop.o
+                0x08001c8a                CopService
+ *fill*         0x08001c92        0x2 
  .text.XcpSetCtoError
-                0x08001c84       0x14 ./Loader/xcp.o
+                0x08001c94       0x14 ./Loader/xcp.o
  .text.XcpGetOrderedLong
-                0x08001c98       0x16 ./Loader/xcp.o
- *fill*         0x08001cae        0x2 
- .text.XcpInit  0x08001cb0       0x10 ./Loader/xcp.o
-                0x08001cb0                XcpInit
+                0x08001ca8       0x16 ./Loader/xcp.o
+ *fill*         0x08001cbe        0x2 
+ .text.XcpInit  0x08001cc0       0x10 ./Loader/xcp.o
+                0x08001cc0                XcpInit
  .text.XcpIsConnected
-                0x08001cc0       0x10 ./Loader/xcp.o
-                0x08001cc0                XcpIsConnected
+                0x08001cd0       0x10 ./Loader/xcp.o
+                0x08001cd0                XcpIsConnected
  .text.XcpPacketTransmitted
-                0x08001cd0        0xc ./Loader/xcp.o
-                0x08001cd0                XcpPacketTransmitted
+                0x08001ce0        0xc ./Loader/xcp.o
+                0x08001ce0                XcpPacketTransmitted
  .text.XcpPacketReceived
-                0x08001cdc      0x210 ./Loader/xcp.o
-                0x08001cdc                XcpPacketReceived
- .text.memset   0x08001eec       0x10 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v6-m/nofp\libc_nano.a(libc_a-memset.o)
-                0x08001eec                memset
+                0x08001cec      0x210 ./Loader/xcp.o
+                0x08001cec                XcpPacketReceived
+ .text.memset   0x08001efc       0x10 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v6-m/nofp\libc_nano.a(libc_a-memset.o)
+                0x08001efc                memset
  .text.__libc_init_array
-                0x08001efc       0x48 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v6-m/nofp\libc_nano.a(libc_a-init.o)
-                0x08001efc                __libc_init_array
+                0x08001f0c       0x48 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v6-m/nofp\libc_nano.a(libc_a-init.o)
+                0x08001f0c                __libc_init_array
  *(.glue_7)
- .glue_7        0x08001f44        0x0 linker stubs
+ .glue_7        0x08001f54        0x0 linker stubs
  *(.glue_7t)
- .glue_7t       0x08001f44        0x0 linker stubs
+ .glue_7t       0x08001f54        0x0 linker stubs
  *(.eh_frame)
- .eh_frame      0x08001f44        0x0 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v6-m/nofp/crtbegin.o
+ .eh_frame      0x08001f54        0x0 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v6-m/nofp/crtbegin.o
  *(.init)
- .init          0x08001f44        0x4 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v6-m/nofp/crti.o
-                0x08001f44                _init
- .init          0x08001f48        0x8 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v6-m/nofp/crtn.o
+ .init          0x08001f54        0x4 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v6-m/nofp/crti.o
+                0x08001f54                _init
+ .init          0x08001f58        0x8 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v6-m/nofp/crtn.o
  *(.fini)
- .fini          0x08001f50        0x4 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v6-m/nofp/crti.o
-                0x08001f50                _fini
- .fini          0x08001f54        0x8 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v6-m/nofp/crtn.o
- *fill*         0x08001f5c        0x4 
- .fini.__stub   0x08001f60       0x10 linker stubs
-                0x08001f70                        . = ALIGN (0x4)
-                0x08001f70                        _etext = .
+ .fini          0x08001f60        0x4 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v6-m/nofp/crti.o
+                0x08001f60                _fini
+ .fini          0x08001f64        0x8 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v6-m/nofp/crtn.o
+ *fill*         0x08001f6c        0x4 
+ .fini.__stub   0x08001f70       0x10 linker stubs
+                0x08001f80                        . = ALIGN (0x4)
+                0x08001f80                        _etext = .
 
-.vfp11_veneer   0x08001f70        0x0
- .vfp11_veneer  0x08001f70        0x0 linker stubs
+.vfp11_veneer   0x08001f80        0x0
+ .vfp11_veneer  0x08001f80        0x0 linker stubs
 
-.v4_bx          0x08001f70        0x0
- .v4_bx         0x08001f70        0x0 linker stubs
+.v4_bx          0x08001f80        0x0
+ .v4_bx         0x08001f80        0x0 linker stubs
 
-.iplt           0x08001f70        0x0
- .iplt          0x08001f70        0x0 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v6-m/nofp/crtbegin.o
+.iplt           0x08001f80        0x0
+ .iplt          0x08001f80        0x0 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v6-m/nofp/crtbegin.o
 
-.rodata         0x08001f70      0x23c
-                0x08001f70                        . = ALIGN (0x4)
+.rodata         0x08001f80      0x23c
+                0x08001f80                        . = ALIGN (0x4)
  *(.rodata)
  *(.rodata*)
  .rodata.APBPrescTable
-                0x08001f70       0x20 ./Core/Src/system_stm32g0xx.o
-                0x08001f70                APBPrescTable
+                0x08001f80       0x20 ./Core/Src/system_stm32g0xx.o
+                0x08001f80                APBPrescTable
  .rodata.AHBPrescTable
-                0x08001f90       0x40 ./Core/Src/system_stm32g0xx.o
-                0x08001f90                AHBPrescTable
+                0x08001fa0       0x40 ./Core/Src/system_stm32g0xx.o
+                0x08001fa0                AHBPrescTable
  .rodata.DLCtoBytes
-                0x08001fd0       0x10 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_fdcan.o
+                0x08001fe0       0x10 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_fdcan.o
  .rodata.CanInit.str1.1
-                0x08001fe0       0x98 ./Loader/ARMCM0_STM32G0/can.o
+                0x08001ff0       0x98 ./Loader/ARMCM0_STM32G0/can.o
                                  0x4b (size before relaxing)
  .rodata.FlashGetBank.str1.1
-                0x08002078        0x0 ./Loader/ARMCM0_STM32G0/flash.o
+                0x08002088        0x0 ./Loader/ARMCM0_STM32G0/flash.o
                                  0x4d (size before relaxing)
  .rodata.flashLayout
-                0x08002078      0x12c ./Loader/ARMCM0_STM32G0/flash.o
+                0x08002088      0x12c ./Loader/ARMCM0_STM32G0/flash.o
  .rodata.xcpStationId
-                0x080021a4        0x8 ./Loader/xcp.o
-                0x080021ac                        . = ALIGN (0x4)
+                0x080021b4        0x8 ./Loader/xcp.o
+                0x080021bc                        . = ALIGN (0x4)
 
-.ARM.extab      0x080021ac        0x0
-                0x080021ac                        . = ALIGN (0x4)
+.ARM.extab      0x080021bc        0x0
+                0x080021bc                        . = ALIGN (0x4)
  *(.ARM.extab* .gnu.linkonce.armextab.*)
-                0x080021ac                        . = ALIGN (0x4)
+                0x080021bc                        . = ALIGN (0x4)
 
-.ARM            0x080021ac        0x0
-                0x080021ac                        . = ALIGN (0x4)
-                0x080021ac                        __exidx_start = .
+.ARM            0x080021bc        0x0
+                0x080021bc                        . = ALIGN (0x4)
+                0x080021bc                        __exidx_start = .
  *(.ARM.exidx*)
-                0x080021ac                        __exidx_end = .
-                0x080021ac                        . = ALIGN (0x4)
+                0x080021bc                        __exidx_end = .
+                0x080021bc                        . = ALIGN (0x4)
 
-.preinit_array  0x080021ac        0x0
-                0x080021ac                        . = ALIGN (0x4)
-                0x080021ac                        PROVIDE (__preinit_array_start = .)
+.preinit_array  0x080021bc        0x0
+                0x080021bc                        . = ALIGN (0x4)
+                0x080021bc                        PROVIDE (__preinit_array_start = .)
  *(.preinit_array*)
-                0x080021ac                        PROVIDE (__preinit_array_end = .)
-                0x080021ac                        . = ALIGN (0x4)
+                0x080021bc                        PROVIDE (__preinit_array_end = .)
+                0x080021bc                        . = ALIGN (0x4)
 
-.init_array     0x080021ac        0x4
-                0x080021ac                        . = ALIGN (0x4)
-                0x080021ac                        PROVIDE (__init_array_start = .)
+.init_array     0x080021bc        0x4
+                0x080021bc                        . = ALIGN (0x4)
+                0x080021bc                        PROVIDE (__init_array_start = .)
  *(SORT_BY_NAME(.init_array.*))
  *(.init_array*)
- .init_array    0x080021ac        0x4 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v6-m/nofp/crtbegin.o
-                0x080021b0                        PROVIDE (__init_array_end = .)
-                0x080021b0                        . = ALIGN (0x4)
+ .init_array    0x080021bc        0x4 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v6-m/nofp/crtbegin.o
+                0x080021c0                        PROVIDE (__init_array_end = .)
+                0x080021c0                        . = ALIGN (0x4)
 
-.fini_array     0x080021b0        0x4
-                0x080021b0                        . = ALIGN (0x4)
+.fini_array     0x080021c0        0x4
+                0x080021c0                        . = ALIGN (0x4)
                 [!provide]                        PROVIDE (__fini_array_start = .)
  *(SORT_BY_NAME(.fini_array.*))
  *(.fini_array*)
- .fini_array    0x080021b0        0x4 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v6-m/nofp/crtbegin.o
+ .fini_array    0x080021c0        0x4 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v6-m/nofp/crtbegin.o
                 [!provide]                        PROVIDE (__fini_array_end = .)
-                0x080021b4                        . = ALIGN (0x4)
-                0x080021b4                        _sidata = LOADADDR (.data)
+                0x080021c4                        . = ALIGN (0x4)
+                0x080021c4                        _sidata = LOADADDR (.data)
 
-.data           0x20000000       0x48 load address 0x080021b4
+.data           0x20000000       0x48 load address 0x080021c4
                 0x20000000                        . = ALIGN (0x4)
                 0x20000000                        _sdata = .
  *(.data)
@@ -4512,11 +4512,11 @@ LOAD C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.exte
                 0x20000048                        . = ALIGN (0x4)
                 0x20000048                        _edata = .
 
-.igot.plt       0x20000048        0x0 load address 0x080021fc
+.igot.plt       0x20000048        0x0 load address 0x0800220c
  .igot.plt      0x20000048        0x0 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v6-m/nofp/crtbegin.o
                 0x20000048                        . = ALIGN (0x4)
 
-.bss            0x20000048      0x4e4 load address 0x080021fc
+.bss            0x20000048      0x4e4 load address 0x0800220c
                 0x20000048                        _sbss = .
                 0x20000048                        __bss_start__ = _sbss
  *(.bss)
@@ -4559,11 +4559,11 @@ LOAD C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.exte
                 0x2000052c                        _ebss = .
                 0x2000052c                        __bss_end__ = _ebss
 
-.rel.dyn        0x2000052c        0x0 load address 0x080021fc
+.rel.dyn        0x2000052c        0x0 load address 0x0800220c
  .rel.iplt      0x2000052c        0x0 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v6-m/nofp/crtbegin.o
 
 ._user_heap_stack
-                0x2000052c      0x604 load address 0x080021fc
+                0x2000052c      0x604 load address 0x0800220c
                 0x20000530                        . = ALIGN (0x8)
  *fill*         0x2000052c        0x4 
                 [!provide]                        PROVIDE (end = .)
@@ -4666,7 +4666,7 @@ LOAD C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.exte
 LOAD C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/../../../../arm-none-eabi/lib/thumb/v6-m/nofp\libm.a
 LOAD C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v6-m/nofp\libgcc.a
 
-.debug_info     0x00000000     0xe837
+.debug_info     0x00000000     0xe845
  .debug_info    0x00000000       0xb9 ./App/app.o
  .debug_info    0x000000b9      0x15e ./App/hooks.o
  .debug_info    0x00000217      0x329 ./App/led.o
@@ -4686,19 +4686,19 @@ LOAD C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.exte
  .debug_info    0x00008d33     0x117d ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_ll_rcc.o
  .debug_info    0x00009eb0      0xcd3 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_ll_utils.o
  .debug_info    0x0000ab83       0x91 ./Loader/ARMCM0_STM32G0/GCC/cpu_comp.o
- .debug_info    0x0000ac14      0xe5d ./Loader/ARMCM0_STM32G0/can.o
- .debug_info    0x0000ba71      0x3cc ./Loader/ARMCM0_STM32G0/cpu.o
- .debug_info    0x0000be3d      0xd91 ./Loader/ARMCM0_STM32G0/flash.o
- .debug_info    0x0000cbce      0x275 ./Loader/ARMCM0_STM32G0/nvm.o
- .debug_info    0x0000ce43      0x7ce ./Loader/ARMCM0_STM32G0/timer.o
- .debug_info    0x0000d611       0xd7 ./Loader/asserts.o
- .debug_info    0x0000d6e8      0x1ba ./Loader/backdoor.o
- .debug_info    0x0000d8a2      0x145 ./Loader/boot.o
- .debug_info    0x0000d9e7      0x2f3 ./Loader/com.o
- .debug_info    0x0000dcda       0xb9 ./Loader/cop.o
- .debug_info    0x0000dd93      0xaa4 ./Loader/xcp.o
+ .debug_info    0x0000ac14      0xe6b ./Loader/ARMCM0_STM32G0/can.o
+ .debug_info    0x0000ba7f      0x3cc ./Loader/ARMCM0_STM32G0/cpu.o
+ .debug_info    0x0000be4b      0xd91 ./Loader/ARMCM0_STM32G0/flash.o
+ .debug_info    0x0000cbdc      0x275 ./Loader/ARMCM0_STM32G0/nvm.o
+ .debug_info    0x0000ce51      0x7ce ./Loader/ARMCM0_STM32G0/timer.o
+ .debug_info    0x0000d61f       0xd7 ./Loader/asserts.o
+ .debug_info    0x0000d6f6      0x1ba ./Loader/backdoor.o
+ .debug_info    0x0000d8b0      0x145 ./Loader/boot.o
+ .debug_info    0x0000d9f5      0x2f3 ./Loader/com.o
+ .debug_info    0x0000dce8       0xb9 ./Loader/cop.o
+ .debug_info    0x0000dda1      0xaa4 ./Loader/xcp.o
 
-.debug_abbrev   0x00000000     0x3bea
+.debug_abbrev   0x00000000     0x3bc8
  .debug_abbrev  0x00000000       0x7e ./App/app.o
  .debug_abbrev  0x0000007e       0xe9 ./App/hooks.o
  .debug_abbrev  0x00000167      0x185 ./App/led.o
@@ -4718,17 +4718,17 @@ LOAD C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.exte
  .debug_abbrev  0x000021d7      0x368 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_ll_rcc.o
  .debug_abbrev  0x0000253f      0x331 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_ll_utils.o
  .debug_abbrev  0x00002870       0x47 ./Loader/ARMCM0_STM32G0/GCC/cpu_comp.o
- .debug_abbrev  0x000028b7      0x309 ./Loader/ARMCM0_STM32G0/can.o
- .debug_abbrev  0x00002bc0      0x1b7 ./Loader/ARMCM0_STM32G0/cpu.o
- .debug_abbrev  0x00002d77      0x331 ./Loader/ARMCM0_STM32G0/flash.o
- .debug_abbrev  0x000030a8      0x10e ./Loader/ARMCM0_STM32G0/nvm.o
- .debug_abbrev  0x000031b6      0x229 ./Loader/ARMCM0_STM32G0/timer.o
- .debug_abbrev  0x000033df       0x93 ./Loader/asserts.o
- .debug_abbrev  0x00003472      0x12e ./Loader/backdoor.o
- .debug_abbrev  0x000035a0       0x7c ./Loader/boot.o
- .debug_abbrev  0x0000361c      0x22c ./Loader/com.o
- .debug_abbrev  0x00003848       0x7e ./Loader/cop.o
- .debug_abbrev  0x000038c6      0x324 ./Loader/xcp.o
+ .debug_abbrev  0x000028b7      0x2e7 ./Loader/ARMCM0_STM32G0/can.o
+ .debug_abbrev  0x00002b9e      0x1b7 ./Loader/ARMCM0_STM32G0/cpu.o
+ .debug_abbrev  0x00002d55      0x331 ./Loader/ARMCM0_STM32G0/flash.o
+ .debug_abbrev  0x00003086      0x10e ./Loader/ARMCM0_STM32G0/nvm.o
+ .debug_abbrev  0x00003194      0x229 ./Loader/ARMCM0_STM32G0/timer.o
+ .debug_abbrev  0x000033bd       0x93 ./Loader/asserts.o
+ .debug_abbrev  0x00003450      0x12e ./Loader/backdoor.o
+ .debug_abbrev  0x0000357e       0x7c ./Loader/boot.o
+ .debug_abbrev  0x000035fa      0x22c ./Loader/com.o
+ .debug_abbrev  0x00003826       0x7e ./Loader/cop.o
+ .debug_abbrev  0x000038a4      0x324 ./Loader/xcp.o
 
 .debug_aranges  0x00000000      0xb68
  .debug_aranges
@@ -4793,7 +4793,7 @@ LOAD C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.exte
                 0x00000b20       0x48 ./Loader/xcp.o
 
 .debug_rnglists
-                0x00000000      0xd56
+                0x00000000      0xd57
  .debug_rnglists
                 0x00000000       0x19 ./App/app.o
  .debug_rnglists
@@ -4833,27 +4833,27 @@ LOAD C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.exte
  .debug_rnglists
                 0x00000a75       0x19 ./Loader/ARMCM0_STM32G0/GCC/cpu_comp.o
  .debug_rnglists
-                0x00000a8e       0x31 ./Loader/ARMCM0_STM32G0/can.o
+                0x00000a8e       0x32 ./Loader/ARMCM0_STM32G0/can.o
  .debug_rnglists
-                0x00000abf       0x25 ./Loader/ARMCM0_STM32G0/cpu.o
+                0x00000ac0       0x25 ./Loader/ARMCM0_STM32G0/cpu.o
  .debug_rnglists
-                0x00000ae4       0x82 ./Loader/ARMCM0_STM32G0/flash.o
+                0x00000ae5       0x82 ./Loader/ARMCM0_STM32G0/flash.o
  .debug_rnglists
-                0x00000b66       0x31 ./Loader/ARMCM0_STM32G0/nvm.o
+                0x00000b67       0x31 ./Loader/ARMCM0_STM32G0/nvm.o
  .debug_rnglists
-                0x00000b97       0x62 ./Loader/ARMCM0_STM32G0/timer.o
+                0x00000b98       0x62 ./Loader/ARMCM0_STM32G0/timer.o
  .debug_rnglists
-                0x00000bf9       0x13 ./Loader/asserts.o
+                0x00000bfa       0x13 ./Loader/asserts.o
  .debug_rnglists
-                0x00000c0c       0x2b ./Loader/backdoor.o
+                0x00000c0d       0x2b ./Loader/backdoor.o
  .debug_rnglists
-                0x00000c37       0x19 ./Loader/boot.o
+                0x00000c38       0x19 ./Loader/boot.o
  .debug_rnglists
-                0x00000c50       0x37 ./Loader/com.o
+                0x00000c51       0x37 ./Loader/com.o
  .debug_rnglists
-                0x00000c87       0x19 ./Loader/cop.o
+                0x00000c88       0x19 ./Loader/cop.o
  .debug_rnglists
-                0x00000ca0       0xb6 ./Loader/xcp.o
+                0x00000ca1       0xb6 ./Loader/xcp.o
 
 .debug_macro    0x00000000    0x1d82f
  .debug_macro   0x00000000       0x9b ./App/app.o
@@ -4944,7 +4944,7 @@ LOAD C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.exte
  .debug_macro   0x0001d6f9       0x9b ./Loader/cop.o
  .debug_macro   0x0001d794       0x9b ./Loader/xcp.o
 
-.debug_line     0x00000000    0x12634
+.debug_line     0x00000000    0x12633
  .debug_line    0x00000000      0x185 ./App/app.o
  .debug_line    0x00000185      0x8b9 ./App/hooks.o
  .debug_line    0x00000a3e      0x92e ./App/led.o
@@ -4964,79 +4964,79 @@ LOAD C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.exte
  .debug_line    0x0000bf9e     0x153d ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_ll_rcc.o
  .debug_line    0x0000d4db      0xd92 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_ll_utils.o
  .debug_line    0x0000e26d      0x1c7 ./Loader/ARMCM0_STM32G0/GCC/cpu_comp.o
- .debug_line    0x0000e434      0xbad ./Loader/ARMCM0_STM32G0/can.o
- .debug_line    0x0000efe1      0x95c ./Loader/ARMCM0_STM32G0/cpu.o
- .debug_line    0x0000f93d      0xfa0 ./Loader/ARMCM0_STM32G0/flash.o
- .debug_line    0x000108dd      0x236 ./Loader/ARMCM0_STM32G0/nvm.o
- .debug_line    0x00010b13      0xa98 ./Loader/ARMCM0_STM32G0/timer.o
- .debug_line    0x000115ab      0x16e ./Loader/asserts.o
- .debug_line    0x00011719      0x25d ./Loader/backdoor.o
- .debug_line    0x00011976      0x1ad ./Loader/boot.o
- .debug_line    0x00011b23      0x292 ./Loader/com.o
- .debug_line    0x00011db5      0x185 ./Loader/cop.o
- .debug_line    0x00011f3a      0x6fa ./Loader/xcp.o
+ .debug_line    0x0000e434      0xbac ./Loader/ARMCM0_STM32G0/can.o
+ .debug_line    0x0000efe0      0x95c ./Loader/ARMCM0_STM32G0/cpu.o
+ .debug_line    0x0000f93c      0xfa0 ./Loader/ARMCM0_STM32G0/flash.o
+ .debug_line    0x000108dc      0x236 ./Loader/ARMCM0_STM32G0/nvm.o
+ .debug_line    0x00010b12      0xa98 ./Loader/ARMCM0_STM32G0/timer.o
+ .debug_line    0x000115aa      0x16e ./Loader/asserts.o
+ .debug_line    0x00011718      0x25d ./Loader/backdoor.o
+ .debug_line    0x00011975      0x1ad ./Loader/boot.o
+ .debug_line    0x00011b22      0x292 ./Loader/com.o
+ .debug_line    0x00011db4      0x185 ./Loader/cop.o
+ .debug_line    0x00011f39      0x6fa ./Loader/xcp.o
 
-.debug_str      0x00000000    0xb4022
- .debug_str     0x00000000    0xb4022 ./App/app.o
-                               0x3d7a (size before relaxing)
- .debug_str     0x000b4022        0x0 ./App/hooks.o
-                              0xaa6a7 (size before relaxing)
- .debug_str     0x000b4022        0x0 ./App/led.o
-                              0xaa73a (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Core/Src/main.o
+.debug_str      0x00000000    0xb4044
+ .debug_str     0x00000000    0xb4044 ./App/app.o
+                               0x3d9c (size before relaxing)
+ .debug_str     0x000b4044        0x0 ./App/hooks.o
+                              0xaa6c9 (size before relaxing)
+ .debug_str     0x000b4044        0x0 ./App/led.o
+                              0xaa75c (size before relaxing)
+ .debug_str     0x000b4044        0x0 ./Core/Src/main.o
                               0xadd84 (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Core/Src/stm32g0xx_hal_msp.o
+ .debug_str     0x000b4044        0x0 ./Core/Src/stm32g0xx_hal_msp.o
                               0xadc0c (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Core/Src/stm32g0xx_it.o
+ .debug_str     0x000b4044        0x0 ./Core/Src/stm32g0xx_it.o
                               0xad5fe (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Core/Src/system_stm32g0xx.o
+ .debug_str     0x000b4044        0x0 ./Core/Src/system_stm32g0xx.o
                               0xa9116 (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Core/Startup/startup_stm32g0b1retx.o
+ .debug_str     0x000b4044        0x0 ./Core/Startup/startup_stm32g0b1retx.o
                                  0xae (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal.o
+ .debug_str     0x000b4044        0x0 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal.o
                               0xa99ef (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_cortex.o
+ .debug_str     0x000b4044        0x0 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_cortex.o
                               0xa9619 (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_fdcan.o
+ .debug_str     0x000b4044        0x0 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_fdcan.o
                               0xaa7b8 (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_flash.o
+ .debug_str     0x000b4044        0x0 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_flash.o
                               0xa937c (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_flash_ex.o
+ .debug_str     0x000b4044        0x0 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_flash_ex.o
                               0xa95be (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_gpio.o
+ .debug_str     0x000b4044        0x0 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_gpio.o
                               0xa926b (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_rcc.o
+ .debug_str     0x000b4044        0x0 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_hal_rcc.o
                               0xa98e2 (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_ll_gpio.o
+ .debug_str     0x000b4044        0x0 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_ll_gpio.o
                               0xaa7b3 (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_ll_rcc.o
+ .debug_str     0x000b4044        0x0 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_ll_rcc.o
                               0xa9c99 (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_ll_utils.o
+ .debug_str     0x000b4044        0x0 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_ll_utils.o
                               0xab82c (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Loader/ARMCM0_STM32G0/GCC/cpu_comp.o
-                               0x3dba (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Loader/ARMCM0_STM32G0/can.o
-                              0xaa74c (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Loader/ARMCM0_STM32G0/cpu.o
-                              0xab62f (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Loader/ARMCM0_STM32G0/flash.o
-                              0xaa3fa (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Loader/ARMCM0_STM32G0/nvm.o
-                               0x3e8b (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Loader/ARMCM0_STM32G0/timer.o
-                              0xaabf5 (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Loader/asserts.o
-                               0x3dc2 (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Loader/backdoor.o
-                               0x3e8c (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Loader/boot.o
-                               0x3dfe (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Loader/com.o
-                               0x3f1e (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Loader/cop.o
-                               0x3db5 (size before relaxing)
- .debug_str     0x000b4022        0x0 ./Loader/xcp.o
-                               0x40f5 (size before relaxing)
+ .debug_str     0x000b4044        0x0 ./Loader/ARMCM0_STM32G0/GCC/cpu_comp.o
+                               0x3ddc (size before relaxing)
+ .debug_str     0x000b4044        0x0 ./Loader/ARMCM0_STM32G0/can.o
+                              0xaa76e (size before relaxing)
+ .debug_str     0x000b4044        0x0 ./Loader/ARMCM0_STM32G0/cpu.o
+                              0xab651 (size before relaxing)
+ .debug_str     0x000b4044        0x0 ./Loader/ARMCM0_STM32G0/flash.o
+                              0xaa41c (size before relaxing)
+ .debug_str     0x000b4044        0x0 ./Loader/ARMCM0_STM32G0/nvm.o
+                               0x3ead (size before relaxing)
+ .debug_str     0x000b4044        0x0 ./Loader/ARMCM0_STM32G0/timer.o
+                              0xaac17 (size before relaxing)
+ .debug_str     0x000b4044        0x0 ./Loader/asserts.o
+                               0x3de4 (size before relaxing)
+ .debug_str     0x000b4044        0x0 ./Loader/backdoor.o
+                               0x3eae (size before relaxing)
+ .debug_str     0x000b4044        0x0 ./Loader/boot.o
+                               0x3e20 (size before relaxing)
+ .debug_str     0x000b4044        0x0 ./Loader/com.o
+                               0x3f40 (size before relaxing)
+ .debug_str     0x000b4044        0x0 ./Loader/cop.o
+                               0x3dd7 (size before relaxing)
+ .debug_str     0x000b4044        0x0 ./Loader/xcp.o
+                               0x4117 (size before relaxing)
 
 .comment        0x00000000       0x43
  .comment       0x00000000       0x43 ./App/app.o
@@ -5133,7 +5133,7 @@ LOAD C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.exte
  .debug_frame   0x000018ac       0x20 C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.13.3.rel1.win32_1.0.100.202509120712/tools/bin/../lib/gcc/arm-none-eabi/13.3.1/thumb/v6-m/nofp\libgcc.a(_udivsi3.o)
 
 .debug_loclists
-                0x00000000     0x4fa1
+                0x00000000     0x5019
  .debug_loclists
                 0x00000000       0x5d ./App/led.o
  .debug_loclists
@@ -5163,21 +5163,21 @@ LOAD C:/ST/STM32CubeIDE_2.0.0/STM32CubeIDE/plugins/com.st.stm32cube.ide.mcu.exte
  .debug_loclists
                 0x00003599      0x502 ./Drivers/STM32G0xx_HAL_Driver/Src/stm32g0xx_ll_utils.o
  .debug_loclists
-                0x00003a9b      0x357 ./Loader/ARMCM0_STM32G0/can.o
+                0x00003a9b      0x3cf ./Loader/ARMCM0_STM32G0/can.o
  .debug_loclists
-                0x00003df2      0x199 ./Loader/ARMCM0_STM32G0/cpu.o
+                0x00003e6a      0x199 ./Loader/ARMCM0_STM32G0/cpu.o
  .debug_loclists
-                0x00003f8b      0x8d3 ./Loader/ARMCM0_STM32G0/flash.o
+                0x00004003      0x8d3 ./Loader/ARMCM0_STM32G0/flash.o
  .debug_loclists
-                0x0000485e       0x9d ./Loader/ARMCM0_STM32G0/nvm.o
+                0x000048d6       0x9d ./Loader/ARMCM0_STM32G0/nvm.o
  .debug_loclists
-                0x000048fb       0x9c ./Loader/ARMCM0_STM32G0/timer.o
+                0x00004973       0x9c ./Loader/ARMCM0_STM32G0/timer.o
  .debug_loclists
-                0x00004997       0x46 ./Loader/asserts.o
+                0x00004a0f       0x46 ./Loader/asserts.o
  .debug_loclists
-                0x000049dd       0x6c ./Loader/com.o
+                0x00004a55       0x6c ./Loader/com.o
  .debug_loclists
-                0x00004a49      0x558 ./Loader/xcp.o
+                0x00004ac1      0x558 ./Loader/xcp.o
 
 .debug_line_str
                 0x00000000       0x92

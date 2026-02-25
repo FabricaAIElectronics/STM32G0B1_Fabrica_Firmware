@@ -39,6 +39,7 @@ typedef enum {
 #define TICK_ADC_INTERVAL_MS        100
 #define TICK_CAN_STATUS_INTERVAL_MS 200
 #define TICK_RECOVERY_DELAY_MS      200
+#define TICK_EEPROM_DATA_MS			1000
 
 /* ---- State Machine Context ---- */
 typedef struct {
@@ -56,11 +57,14 @@ typedef struct {
     uint32_t    lastAdcTick;
     uint32_t    lastCanStatusTick;
     uint32_t    recoveryEntryTick;
+    uint32_t	lastEEPROMTick;
 
 } AppStateMachine;
 
 /* ---- Public API ---- */
 void AppLogic_Init(AppStateMachine *sm);
 void AppLogic_Run(AppStateMachine *sm);
+
+
 
 #endif /* INC_APPLOGIC_H_ */

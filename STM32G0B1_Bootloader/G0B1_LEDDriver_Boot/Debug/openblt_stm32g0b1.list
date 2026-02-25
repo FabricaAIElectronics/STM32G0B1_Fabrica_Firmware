@@ -5,49 +5,49 @@ Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
   0 .isr_vector   000000bc  08000000  08000000  00001000  2**0
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  1 .text         00001eb0  080000c0  080000c0  000010c0  2**3
+  1 .text         00001ec0  080000c0  080000c0  000010c0  2**3
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .rodata       0000023c  08001f70  08001f70  00002f70  2**2
+  2 .rodata       0000023c  08001f80  08001f80  00002f80  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  3 .ARM.extab    00000000  080021ac  080021ac  00004048  2**0
+  3 .ARM.extab    00000000  080021bc  080021bc  00004048  2**0
                   CONTENTS, READONLY
-  4 .ARM          00000000  080021ac  080021ac  00004048  2**0
+  4 .ARM          00000000  080021bc  080021bc  00004048  2**0
                   CONTENTS, READONLY
-  5 .preinit_array 00000000  080021ac  080021ac  00004048  2**0
+  5 .preinit_array 00000000  080021bc  080021bc  00004048  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  6 .init_array   00000004  080021ac  080021ac  000031ac  2**2
+  6 .init_array   00000004  080021bc  080021bc  000031bc  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  7 .fini_array   00000004  080021b0  080021b0  000031b0  2**2
+  7 .fini_array   00000004  080021c0  080021c0  000031c0  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  8 .data         00000048  20000000  080021b4  00004000  2**2
+  8 .data         00000048  20000000  080021c4  00004000  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  9 .bss          000004e4  20000048  080021fc  00004048  2**2
+  9 .bss          000004e4  20000048  0800220c  00004048  2**2
                   ALLOC, READONLY
- 10 ._user_heap_stack 00000604  2000052c  080021fc  0000452c  2**0
+ 10 ._user_heap_stack 00000604  2000052c  0800220c  0000452c  2**0
                   ALLOC
  11 .ARM.attributes 00000028  00000000  00000000  00004048  2**0
                   CONTENTS, READONLY
- 12 .debug_info   0000e837  00000000  00000000  00004070  2**0
+ 12 .debug_info   0000e845  00000000  00000000  00004070  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 13 .debug_abbrev 00003bea  00000000  00000000  000128a7  2**0
+ 13 .debug_abbrev 00003bc8  00000000  00000000  000128b5  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_aranges 00000b68  00000000  00000000  00016498  2**3
+ 14 .debug_aranges 00000b68  00000000  00000000  00016480  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_rnglists 00000d56  00000000  00000000  00017000  2**0
+ 15 .debug_rnglists 00000d57  00000000  00000000  00016fe8  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_macro  0001d82f  00000000  00000000  00017d56  2**0
+ 16 .debug_macro  0001d82f  00000000  00000000  00017d3f  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   00012634  00000000  00000000  00035585  2**0
+ 17 .debug_line   00012633  00000000  00000000  0003556e  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    000b4022  00000000  00000000  00047bb9  2**0
+ 18 .debug_str    000b4044  00000000  00000000  00047ba1  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000043  00000000  00000000  000fbbdb  2**0
+ 19 .comment      00000043  00000000  00000000  000fbbe5  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  000018cc  00000000  00000000  000fbc20  2**2
+ 20 .debug_frame  000018cc  00000000  00000000  000fbc28  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .debug_loclists 00004fa1  00000000  00000000  000fd4ec  2**0
+ 21 .debug_loclists 00005019  00000000  00000000  000fd4f4  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 22 .debug_line_str 00000092  00000000  00000000  0010248d  2**0
+ 22 .debug_line_str 00000092  00000000  00000000  0010250d  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -69,7 +69,7 @@ Disassembly of section .text:
  80000da:	bd10      	pop	{r4, pc}
  80000dc:	20000048 	.word	0x20000048
  80000e0:	00000000 	.word	0x00000000
- 80000e4:	08001f44 	.word	0x08001f44
+ 80000e4:	08001f54 	.word	0x08001f54
 
 080000e8 <frame_dummy>:
  80000e8:	4b04      	ldr	r3, [pc, #16]	@ (80000fc <frame_dummy+0x14>)
@@ -84,7 +84,7 @@ Disassembly of section .text:
  80000fa:	46c0      	nop			@ (mov r8, r8)
  80000fc:	00000000 	.word	0x00000000
  8000100:	2000004c 	.word	0x2000004c
- 8000104:	08001f44 	.word	0x08001f44
+ 8000104:	08001f54 	.word	0x08001f54
 
 08000108 <__gnu_thumb1_case_sqi>:
  8000108:	b402      	push	{r1}
@@ -265,7 +265,7 @@ void AppInit(void)
  8000248:	b510      	push	{r4, lr}
   /* initialize the bootloader */
   BootInit();
- 800024a:	f001 fcab 	bl	8001ba4 <BootInit>
+ 800024a:	f001 fcb3 	bl	8001bb4 <BootInit>
 } /*** end of AppInit ***/
  800024e:	bd10      	pop	{r4, pc}
 
@@ -279,7 +279,7 @@ void AppTask(void)
  8000250:	b510      	push	{r4, lr}
   /* Run the bootloader task. */
   BootTask();
- 8000252:	f001 fcb5 	bl	8001bc0 <BootTask>
+ 8000252:	f001 fcbd 	bl	8001bd0 <BootTask>
 } /*** end of AppTask ***/
  8000256:	bd10      	pop	{r4, pc}
 
@@ -366,7 +366,7 @@ void LedBlinkTask(void)
 
   /* check for blink event */
   if (TimerGet() >= nextBlinkEvent)
- 8000282:	f001 fc41 	bl	8001b08 <TimerGet>
+ 8000282:	f001 fc49 	bl	8001b18 <TimerGet>
  8000286:	4c0c      	ldr	r4, [pc, #48]	@ (80002b8 <LedBlinkTask+0x38>)
  8000288:	6823      	ldr	r3, [r4, #0]
  800028a:	4298      	cmp	r0, r3
@@ -398,7 +398,7 @@ __STATIC_INLINE void LL_GPIO_SetOutputPin(GPIO_TypeDef *GPIOx, uint32_t PinMask)
     }
     /* schedule the next blink event */
     nextBlinkEvent = TimerGet() + ledBlinkIntervalMs;
- 80002a2:	f001 fc31 	bl	8001b08 <TimerGet>
+ 80002a2:	f001 fc39 	bl	8001b18 <TimerGet>
  80002a6:	4b06      	ldr	r3, [pc, #24]	@ (80002c0 <LedBlinkTask+0x40>)
  80002a8:	881b      	ldrh	r3, [r3, #0]
  80002aa:	181b      	adds	r3, r3, r0
@@ -637,7 +637,7 @@ void Error_Handler(void)
  80003a8:	2210      	movs	r2, #16
  80003aa:	2100      	movs	r1, #0
  80003ac:	a802      	add	r0, sp, #8
- 80003ae:	f001 fd9d 	bl	8001eec <memset>
+ 80003ae:	f001 fda5 	bl	8001efc <memset>
   LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOC);
  80003b2:	2004      	movs	r0, #4
  80003b4:	f7ff ff8c 	bl	80002d0 <LL_IOP_GRP1_EnableClock>
@@ -766,7 +766,7 @@ void HAL_FDCAN_MspInit(FDCAN_HandleTypeDef* hfdcan)
  8000442:	2214      	movs	r2, #20
  8000444:	2100      	movs	r1, #0
  8000446:	a803      	add	r0, sp, #12
- 8000448:	f001 fd50 	bl	8001eec <memset>
+ 8000448:	f001 fd58 	bl	8001efc <memset>
   if(hfdcan->Instance==FDCAN1)
  800044c:	4b19      	ldr	r3, [pc, #100]	@ (80004b4 <HAL_FDCAN_MspInit+0x78>)
  800044e:	6822      	ldr	r2, [r4, #0]
@@ -1072,7 +1072,7 @@ LoopFillZerobss:
 
 /* Call static constructors */
   bl __libc_init_array
- 800055a:	f001 fccf 	bl	8001efc <__libc_init_array>
+ 800055a:	f001 fcd7 	bl	8001f0c <__libc_init_array>
 /* Call the application s entry point.*/
   bl main
  800055e:	f7ff ff1d 	bl	800039c <main>
@@ -1089,7 +1089,7 @@ LoopForever:
   ldr r1, =_edata
  800056c:	20000048 	.word	0x20000048
   ldr r2, =_sidata
- 8000570:	080021b4 	.word	0x080021b4
+ 8000570:	080021c4 	.word	0x080021c4
   ldr r2, =_sbss
  8000574:	20000048 	.word	0x20000048
   ldr r4, =_ebss
@@ -1459,7 +1459,7 @@ HAL_StatusTypeDef HAL_FDCAN_Init(FDCAN_HandleTypeDef *hfdcan)
  80006fe:	438b      	bics	r3, r1
  8000700:	6193      	str	r3, [r2, #24]
   tickstart = HAL_GetTick();
- 8000702:	f001 fa09 	bl	8001b18 <HAL_GetTick>
+ 8000702:	f001 fa11 	bl	8001b28 <HAL_GetTick>
  8000706:	0006      	movs	r6, r0
   while ((hfdcan->Instance->CCCR & FDCAN_CCCR_CSA) == FDCAN_CCCR_CSA)
  8000708:	6823      	ldr	r3, [r4, #0]
@@ -1480,7 +1480,7 @@ HAL_StatusTypeDef HAL_FDCAN_Init(FDCAN_HandleTypeDef *hfdcan)
 
   /* Get tick */
   tickstart = HAL_GetTick();
- 800071a:	f001 f9fd 	bl	8001b18 <HAL_GetTick>
+ 800071a:	f001 fa05 	bl	8001b28 <HAL_GetTick>
  800071e:	0007      	movs	r7, r0
 
   /* Wait until the INIT bit into CCCR register is set */
@@ -1776,7 +1776,7 @@ HAL_StatusTypeDef HAL_FDCAN_Init(FDCAN_HandleTypeDef *hfdcan)
  800084e:	3ad3      	subs	r2, #211	@ 0xd3
  8000850:	2100      	movs	r1, #0
  8000852:	0092      	lsls	r2, r2, #2
- 8000854:	f001 fb4a 	bl	8001eec <memset>
+ 8000854:	f001 fb52 	bl	8001efc <memset>
   hfdcan->LatestTxFifoQRequest = 0U;
  8000858:	2000      	movs	r0, #0
   hfdcan->State = HAL_FDCAN_STATE_READY;
@@ -1790,7 +1790,7 @@ HAL_StatusTypeDef HAL_FDCAN_Init(FDCAN_HandleTypeDef *hfdcan)
   return HAL_OK;
  8000862:	e00c      	b.n	800087e <HAL_FDCAN_Init+0x1a6>
     if ((HAL_GetTick() - tickstart) > FDCAN_TIMEOUT_VALUE)
- 8000864:	f001 f958 	bl	8001b18 <HAL_GetTick>
+ 8000864:	f001 f960 	bl	8001b28 <HAL_GetTick>
  8000868:	1b80      	subs	r0, r0, r6
  800086a:	280a      	cmp	r0, #10
  800086c:	d800      	bhi.n	8000870 <HAL_FDCAN_Init+0x198>
@@ -1808,7 +1808,7 @@ HAL_StatusTypeDef HAL_FDCAN_Init(FDCAN_HandleTypeDef *hfdcan)
 }
  800087e:	bdf8      	pop	{r3, r4, r5, r6, r7, pc}
     if ((HAL_GetTick() - tickstart) > FDCAN_TIMEOUT_VALUE)
- 8000880:	f001 f94a 	bl	8001b18 <HAL_GetTick>
+ 8000880:	f001 f952 	bl	8001b28 <HAL_GetTick>
  8000884:	1bc0      	subs	r0, r0, r7
  8000886:	280a      	cmp	r0, #10
  8000888:	d800      	bhi.n	800088c <HAL_FDCAN_Init+0x1b4>
@@ -2188,7 +2188,7 @@ HAL_StatusTypeDef HAL_FDCAN_Init(FDCAN_HandleTypeDef *hfdcan)
  8000a6a:	2308      	movs	r3, #8
  8000a6c:	6e02      	ldr	r2, [r0, #96]	@ 0x60
  8000a6e:	e7ac      	b.n	80009ca <HAL_FDCAN_AddMessageToTxFifoQ+0x1e>
- 8000a70:	08001fd0 	.word	0x08001fd0
+ 8000a70:	08001fe0 	.word	0x08001fe0
 
 08000a74 <HAL_FDCAN_GetLatestTxFifoQRequestBuffer>:
   return hfdcan->LatestTxFifoQRequest;
@@ -2396,7 +2396,7 @@ HAL_StatusTypeDef HAL_FDCAN_Init(FDCAN_HandleTypeDef *hfdcan)
  8000b8a:	6e02      	ldr	r2, [r0, #96]	@ 0x60
  8000b8c:	e788      	b.n	8000aa0 <HAL_FDCAN_GetRxMessage+0x28>
  8000b8e:	46c0      	nop			@ (mov r8, r8)
- 8000b90:	08001fd0 	.word	0x08001fd0
+ 8000b90:	08001fe0 	.word	0x08001fe0
 
 08000b94 <HAL_FDCAN_IsTxBufferMessagePending>:
   if ((hfdcan->Instance->TXBRP & TxBufferIndex) == 0U)
@@ -2477,7 +2477,7 @@ HAL_StatusTypeDef FLASH_WaitForLastOperation(uint32_t Timeout)
  8000bde:	0004      	movs	r4, r0
   uint32_t error;
   uint32_t tickstart = HAL_GetTick();
- 8000be0:	f000 ff9a 	bl	8001b18 <HAL_GetTick>
+ 8000be0:	f000 ffa2 	bl	8001b28 <HAL_GetTick>
   error = (FLASH_SR_BSY1 | FLASH_SR_BSY2);
 #else
   error = FLASH_SR_BSY1;
@@ -2533,7 +2533,7 @@ HAL_StatusTypeDef FLASH_WaitForLastOperation(uint32_t Timeout)
  8000c12:	d0f8      	beq.n	8000c06 <FLASH_WaitForLastOperation+0x2a>
     {
       if ((HAL_GetTick() - tickstart) >= Timeout)
- 8000c14:	f000 ff80 	bl	8001b18 <HAL_GetTick>
+ 8000c14:	f000 ff88 	bl	8001b28 <HAL_GetTick>
  8000c18:	1b80      	subs	r0, r0, r6
  8000c1a:	42a0      	cmp	r0, r4
  8000c1c:	d3f3      	bcc.n	8000c06 <FLASH_WaitForLastOperation+0x2a>
@@ -2542,7 +2542,7 @@ HAL_StatusTypeDef FLASH_WaitForLastOperation(uint32_t Timeout)
  8000c20:	1c63      	adds	r3, r4, #1
  8000c22:	d0e3      	beq.n	8000bec <FLASH_WaitForLastOperation+0x10>
       if ((HAL_GetTick() - tickstart) >= Timeout)
- 8000c24:	f000 ff78 	bl	8001b18 <HAL_GetTick>
+ 8000c24:	f000 ff80 	bl	8001b28 <HAL_GetTick>
  8000c28:	1b80      	subs	r0, r0, r6
  8000c2a:	42a0      	cmp	r0, r4
  8000c2c:	d3dd      	bcc.n	8000bea <FLASH_WaitForLastOperation+0xe>
@@ -2653,7 +2653,7 @@ __STATIC_FORCEINLINE void __ISB(void)
       FLASH_Program_Fast(Address, (uint32_t)Data);
  8000ca0:	0028      	movs	r0, r5
  8000ca2:	9900      	ldr	r1, [sp, #0]
- 8000ca4:	f001 f95c 	bl	8001f60 <__FLASH_Program_Fast_veneer>
+ 8000ca4:	f001 f964 	bl	8001f70 <__FLASH_Program_Fast_veneer>
  8000ca8:	e7f0      	b.n	8000c8c <HAL_FLASH_Program+0x40>
  8000caa:	46c0      	nop			@ (mov r8, r8)
  8000cac:	20000074 	.word	0x20000074
@@ -3114,7 +3114,7 @@ HAL_StatusTypeDef HAL_RCC_DeInit(void)
 
   /* Get Start Tick*/
   tickstart = HAL_GetTick();
- 8000f12:	f000 fe01 	bl	8001b18 <HAL_GetTick>
+ 8000f12:	f000 fe09 	bl	8001b28 <HAL_GetTick>
 
   /* Set HSION bit to the reset value */
   SET_BIT(RCC->CR, RCC_CR_HSION);
@@ -3150,7 +3150,7 @@ HAL_StatusTypeDef HAL_RCC_DeInit(void)
 
   /* Get Start Tick*/
   tickstart = HAL_GetTick();
- 8000f34:	f000 fdf0 	bl	8001b18 <HAL_GetTick>
+ 8000f34:	f000 fdf8 	bl	8001b28 <HAL_GetTick>
 
   /* Reset CFGR register (HSI is selected as system clock source) */
   RCC->CFGR = 0x00000000u;
@@ -3183,7 +3183,7 @@ HAL_StatusTypeDef HAL_RCC_DeInit(void)
 
   /* Get Start Tick*/
   tickstart = HAL_GetTick();
- 8000f4e:	f000 fde3 	bl	8001b18 <HAL_GetTick>
+ 8000f4e:	f000 fdeb 	bl	8001b28 <HAL_GetTick>
 
   /* Wait till PLL is ready */
   while (READ_BIT(RCC->CR, RCC_CR_PLLRDY) != 0U)
@@ -3235,7 +3235,7 @@ HAL_StatusTypeDef HAL_RCC_DeInit(void)
  8000f82:	b2c0      	uxtb	r0, r0
  8000f84:	e005      	b.n	8000f92 <HAL_RCC_DeInit+0x82>
     if ((HAL_GetTick() - tickstart) > HSI_TIMEOUT_VALUE)
- 8000f86:	f000 fdc7 	bl	8001b18 <HAL_GetTick>
+ 8000f86:	f000 fdcf 	bl	8001b28 <HAL_GetTick>
  8000f8a:	1b40      	subs	r0, r0, r5
  8000f8c:	2802      	cmp	r0, #2
  8000f8e:	d9cb      	bls.n	8000f28 <HAL_RCC_DeInit+0x18>
@@ -3249,14 +3249,14 @@ HAL_StatusTypeDef HAL_RCC_DeInit(void)
 }
  8000f92:	bd70      	pop	{r4, r5, r6, pc}
     if ((HAL_GetTick() - tickstart) > CLOCKSWITCH_TIMEOUT_VALUE)
- 8000f94:	f000 fdc0 	bl	8001b18 <HAL_GetTick>
+ 8000f94:	f000 fdc8 	bl	8001b28 <HAL_GetTick>
  8000f98:	4b09      	ldr	r3, [pc, #36]	@ (8000fc0 <HAL_RCC_DeInit+0xb0>)
  8000f9a:	1b40      	subs	r0, r0, r5
  8000f9c:	4298      	cmp	r0, r3
  8000f9e:	d9cf      	bls.n	8000f40 <HAL_RCC_DeInit+0x30>
  8000fa0:	e7f6      	b.n	8000f90 <HAL_RCC_DeInit+0x80>
     if ((HAL_GetTick() - tickstart) > PLL_TIMEOUT_VALUE)
- 8000fa2:	f000 fdb9 	bl	8001b18 <HAL_GetTick>
+ 8000fa2:	f000 fdc1 	bl	8001b28 <HAL_GetTick>
  8000fa6:	1b40      	subs	r0, r0, r5
  8000fa8:	2802      	cmp	r0, #2
  8000faa:	d9d5      	bls.n	8000f58 <HAL_RCC_DeInit+0x48>
@@ -3526,7 +3526,7 @@ static uint32_t RCC_GetHCLKClockFreq(uint32_t SYSCLK_Frequency)
  8001118:	4770      	bx	lr
  800111a:	46c0      	nop			@ (mov r8, r8)
  800111c:	40021000 	.word	0x40021000
- 8001120:	08001f90 	.word	0x08001f90
+ 8001120:	08001fa0 	.word	0x08001fa0
 
 08001124 <RCC_GetPCLK1ClockFreq>:
   return (uint32_t)(READ_BIT(RCC->CFGR, RCC_CFGR_PPRE));
@@ -3550,7 +3550,7 @@ static uint32_t RCC_GetPCLK1ClockFreq(uint32_t HCLK_Frequency)
  8001138:	4770      	bx	lr
  800113a:	46c0      	nop			@ (mov r8, r8)
  800113c:	40021000 	.word	0x40021000
- 8001140:	08001f70 	.word	0x08001f70
+ 8001140:	08001f80 	.word	0x08001f80
 
 08001144 <RCC_GetSystemClockFreq>:
   return (uint32_t)(READ_BIT(RCC->CFGR, RCC_CFGR_SWS));
@@ -3779,8 +3779,8 @@ void CanInit(void)
 
   /* set the CAN controller channel, which is needed by HAL_FDCAN_MspInit(). */
   canHandle.Instance = CAN_CHANNEL;
- 8001256:	4c41      	ldr	r4, [pc, #260]	@ (800135c <CanInit+0x108>)
- 8001258:	4b41      	ldr	r3, [pc, #260]	@ (8001360 <CanInit+0x10c>)
+ 8001256:	4c43      	ldr	r4, [pc, #268]	@ (8001364 <CanInit+0x110>)
+ 8001258:	4b43      	ldr	r3, [pc, #268]	@ (8001368 <CanInit+0x114>)
 {
  800125a:	b08d      	sub	sp, #52	@ 0x34
    * done before calling HAL_FDCAN_Init(). explicitly calling HAL_FDCAN_MspInit() here
@@ -3804,2684 +3804,2697 @@ void CanInit(void)
  8001266:	0080      	lsls	r0, r0, #2
  8001268:	f7ff ffc2 	bl	80011f0 <LL_RCC_GetFDCANClockFreq>
       if (periph_params->base_freq < (baud * bitTqMin))
- 800126c:	4b3d      	ldr	r3, [pc, #244]	@ (8001364 <CanInit+0x110>)
+ 800126c:	4b3f      	ldr	r3, [pc, #252]	@ (800136c <CanInit+0x118>)
   periphParams.base_freq = LL_RCC_GetFDCANClockFreq(LL_RCC_FDCAN_CLKSOURCE);
  800126e:	9004      	str	r0, [sp, #16]
       if (periph_params->base_freq < (baud * bitTqMin))
  8001270:	4298      	cmp	r0, r3
- 8001272:	d969      	bls.n	8001348 <CanInit+0xf4>
- 8001274:	2701      	movs	r7, #1
- 8001276:	b2bb      	uxth	r3, r7
- 8001278:	0039      	movs	r1, r7
- 800127a:	9804      	ldr	r0, [sp, #16]
- 800127c:	9305      	str	r3, [sp, #20]
+ 8001272:	d800      	bhi.n	8001276 <CanInit+0x22>
+ 8001274:	e06c      	b.n	8001350 <CanInit+0xfc>
+ 8001276:	2701      	movs	r7, #1
+ 8001278:	b2bb      	uxth	r3, r7
+ 800127a:	0039      	movs	r1, r7
+ 800127c:	9804      	ldr	r0, [sp, #16]
+ 800127e:	9305      	str	r3, [sp, #20]
       if ( ((periph_params->base_freq % prescaler) == 0U) &&
- 800127e:	f7fe ffdd 	bl	800023c <__aeabi_uidivmod>
- 8001282:	0005      	movs	r5, r0
- 8001284:	2900      	cmp	r1, #0
- 8001286:	d15b      	bne.n	8001340 <CanInit+0xec>
+ 8001280:	f7fe ffdc 	bl	800023c <__aeabi_uidivmod>
+ 8001284:	0005      	movs	r5, r0
+ 8001286:	2900      	cmp	r1, #0
+ 8001288:	d15d      	bne.n	8001346 <CanInit+0xf2>
            (((periph_params->base_freq / prescaler) % baud) == 0U) )
- 8001288:	0028      	movs	r0, r5
- 800128a:	4937      	ldr	r1, [pc, #220]	@ (8001368 <CanInit+0x114>)
- 800128c:	f7fe ffd6 	bl	800023c <__aeabi_uidivmod>
+ 800128a:	0028      	movs	r0, r5
+ 800128c:	4938      	ldr	r1, [pc, #224]	@ (8001370 <CanInit+0x11c>)
+ 800128e:	f7fe ffd5 	bl	800023c <__aeabi_uidivmod>
       if ( ((periph_params->base_freq % prescaler) == 0U) &&
- 8001290:	2900      	cmp	r1, #0
- 8001292:	d155      	bne.n	8001340 <CanInit+0xec>
+ 8001292:	2900      	cmp	r1, #0
+ 8001294:	d157      	bne.n	8001346 <CanInit+0xf2>
         bitTq = (periph_params->base_freq / prescaler) / baud;
- 8001294:	0028      	movs	r0, r5
- 8001296:	4934      	ldr	r1, [pc, #208]	@ (8001368 <CanInit+0x114>)
- 8001298:	f7fe ff4a 	bl	8000130 <__udivsi3>
+ 8001296:	0028      	movs	r0, r5
+ 8001298:	4935      	ldr	r1, [pc, #212]	@ (8001370 <CanInit+0x11c>)
+ 800129a:	f7fe ff49 	bl	8000130 <__udivsi3>
         if ( (bitTq >= bitTqMin) && (bitTq <= bitTqMax) )
- 800129c:	22bf      	movs	r2, #191	@ 0xbf
- 800129e:	1ec3      	subs	r3, r0, #3
+ 800129e:	22bf      	movs	r2, #191	@ 0xbf
+ 80012a0:	1ec3      	subs	r3, r0, #3
         bitTq = (periph_params->base_freq / prescaler) / baud;
- 80012a0:	0006      	movs	r6, r0
+ 80012a2:	0006      	movs	r6, r0
         if ( (bitTq >= bitTqMin) && (bitTq <= bitTqMax) )
- 80012a2:	0052      	lsls	r2, r2, #1
- 80012a4:	4293      	cmp	r3, r2
- 80012a6:	d84b      	bhi.n	8001340 <CanInit+0xec>
+ 80012a4:	0052      	lsls	r2, r2, #1
+ 80012a6:	4293      	cmp	r3, r2
+ 80012a8:	d84d      	bhi.n	8001346 <CanInit+0xf2>
           tseg2 = ((bitTq * 2U) + 9U) / 10U;
- 80012a8:	0040      	lsls	r0, r0, #1
- 80012aa:	210a      	movs	r1, #10
- 80012ac:	3009      	adds	r0, #9
- 80012ae:	f7fe ff3f 	bl	8000130 <__udivsi3>
- 80012b2:	b285      	uxth	r5, r0
+ 80012aa:	0040      	lsls	r0, r0, #1
+ 80012ac:	210a      	movs	r1, #10
+ 80012ae:	3009      	adds	r0, #9
+ 80012b0:	f7fe ff3e 	bl	8000130 <__udivsi3>
+ 80012b4:	b285      	uxth	r5, r0
           tseg1 = (bitTq - tseg2) - 1U;
- 80012b4:	1b73      	subs	r3, r6, r5
- 80012b6:	b29b      	uxth	r3, r3
+ 80012b6:	1b73      	subs	r3, r6, r5
+ 80012b8:	b29b      	uxth	r3, r3
           if ( (tseg1 >= periph_params->tseg1_min) &&
- 80012b8:	1e9a      	subs	r2, r3, #2
- 80012ba:	2aff      	cmp	r2, #255	@ 0xff
- 80012bc:	d840      	bhi.n	8001340 <CanInit+0xec>
+ 80012ba:	1e9a      	subs	r2, r3, #2
+ 80012bc:	2aff      	cmp	r2, #255	@ 0xff
+ 80012be:	d842      	bhi.n	8001346 <CanInit+0xf2>
             samplePoint = (blt_int8u)(((1U + tseg1) * 100UL) / bitTq);
- 80012be:	2064      	movs	r0, #100	@ 0x64
+ 80012c0:	2064      	movs	r0, #100	@ 0x64
           tseg1 = (bitTq - tseg2) - 1U;
- 80012c0:	3b01      	subs	r3, #1
- 80012c2:	b29b      	uxth	r3, r3
- 80012c4:	9303      	str	r3, [sp, #12]
+ 80012c2:	3b01      	subs	r3, #1
+ 80012c4:	b29b      	uxth	r3, r3
+ 80012c6:	9303      	str	r3, [sp, #12]
             samplePoint = (blt_int8u)(((1U + tseg1) * 100UL) / bitTq);
- 80012c6:	3301      	adds	r3, #1
- 80012c8:	0031      	movs	r1, r6
- 80012ca:	4358      	muls	r0, r3
- 80012cc:	f7fe ff30 	bl	8000130 <__udivsi3>
+ 80012c8:	3301      	adds	r3, #1
+ 80012ca:	0031      	movs	r1, r6
+ 80012cc:	4358      	muls	r0, r3
+ 80012ce:	f7fe ff2f 	bl	8000130 <__udivsi3>
             if ( (samplePoint >= 65U) && (samplePoint <= 80U) )
- 80012d0:	3841      	subs	r0, #65	@ 0x41
- 80012d2:	b2c0      	uxtb	r0, r0
- 80012d4:	280f      	cmp	r0, #15
- 80012d6:	d833      	bhi.n	8001340 <CanInit+0xec>
+ 80012d2:	3841      	subs	r0, #65	@ 0x41
+ 80012d4:	b2c0      	uxtb	r0, r0
+ 80012d6:	280f      	cmp	r0, #15
+ 80012d8:	d835      	bhi.n	8001346 <CanInit+0xf2>
                 bittiming_config->sjw = 1U;
- 80012d8:	2301      	movs	r3, #1
+ 80012da:	2301      	movs	r3, #1
               if (bittiming_config->sjw == 0U)
- 80012da:	429d      	cmp	r5, r3
- 80012dc:	d000      	beq.n	80012e0 <CanInit+0x8c>
+ 80012dc:	429d      	cmp	r5, r3
+ 80012de:	d000      	beq.n	80012e2 <CanInit+0x8e>
               bittiming_config->sjw = bittiming_config->tseg2 / 2U;
- 80012de:	086b      	lsrs	r3, r5, #1
+ 80012e0:	086b      	lsrs	r3, r5, #1
 
   /* set the CAN controller configuration. */
   canHandle.Init.ClockDivider = FDCAN_CLOCK_DIV1;
   canHandle.Init.FrameFormat = FDCAN_FRAME_CLASSIC;
   canHandle.Init.Mode = FDCAN_MODE_NORMAL;
   canHandle.Init.AutoRetransmission = ENABLE;
- 80012e0:	2202      	movs	r2, #2
+ 80012e2:	2202      	movs	r2, #2
   canHandle.Init.ClockDivider = FDCAN_CLOCK_DIV1;
- 80012e2:	2600      	movs	r6, #0
+ 80012e4:	2600      	movs	r6, #0
   canHandle.Init.TransmitPause = ENABLE;
   canHandle.Init.ProtocolException = DISABLE;
   canHandle.Init.NominalPrescaler = bittimingConfig.prescaler;
   canHandle.Init.NominalTimeSeg1 = bittimingConfig.tseg1;
   canHandle.Init.NominalTimeSeg2 = bittimingConfig.tseg2;
- 80012e4:	6225      	str	r5, [r4, #32]
+ 80012e6:	6225      	str	r5, [r4, #32]
   canHandle.Init.NominalSyncJumpWidth = bittimingConfig.sjw;
   canHandle.Init.DataPrescaler = 1;
- 80012e6:	2501      	movs	r5, #1
+ 80012e8:	2501      	movs	r5, #1
   canHandle.Init.AutoRetransmission = ENABLE;
- 80012e8:	32ff      	adds	r2, #255	@ 0xff
- 80012ea:	8222      	strh	r2, [r4, #16]
+ 80012ea:	32ff      	adds	r2, #255	@ 0xff
+ 80012ec:	8222      	strh	r2, [r4, #16]
   canHandle.Init.NominalPrescaler = bittimingConfig.prescaler;
- 80012ec:	9a05      	ldr	r2, [sp, #20]
+ 80012ee:	9a05      	ldr	r2, [sp, #20]
   canHandle.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
   /* initialize the CAN controller. this only fails if the CAN controller hardware is
    * faulty. no need to evaluate the return value as there is nothing we can do about
    * a faulty CAN controller.
    */
   (void)HAL_FDCAN_Init(&canHandle);
- 80012ee:	0020      	movs	r0, r4
+ 80012f0:	0020      	movs	r0, r4
   canHandle.Init.NominalPrescaler = bittimingConfig.prescaler;
- 80012f0:	6162      	str	r2, [r4, #20]
+ 80012f2:	6162      	str	r2, [r4, #20]
   canHandle.Init.NominalTimeSeg1 = bittimingConfig.tseg1;
- 80012f2:	9a03      	ldr	r2, [sp, #12]
+ 80012f4:	9a03      	ldr	r2, [sp, #12]
   canHandle.Init.NominalSyncJumpWidth = bittimingConfig.sjw;
- 80012f4:	61a3      	str	r3, [r4, #24]
+ 80012f6:	61a3      	str	r3, [r4, #24]
   canHandle.Init.NominalTimeSeg1 = bittimingConfig.tseg1;
- 80012f6:	61e2      	str	r2, [r4, #28]
+ 80012f8:	61e2      	str	r2, [r4, #28]
   canHandle.Init.ClockDivider = FDCAN_CLOCK_DIV1;
- 80012f8:	6066      	str	r6, [r4, #4]
+ 80012fa:	6066      	str	r6, [r4, #4]
   canHandle.Init.FrameFormat = FDCAN_FRAME_CLASSIC;
- 80012fa:	60a6      	str	r6, [r4, #8]
+ 80012fc:	60a6      	str	r6, [r4, #8]
   canHandle.Init.Mode = FDCAN_MODE_NORMAL;
- 80012fc:	60e6      	str	r6, [r4, #12]
+ 80012fe:	60e6      	str	r6, [r4, #12]
   canHandle.Init.ProtocolException = DISABLE;
- 80012fe:	74a6      	strb	r6, [r4, #18]
+ 8001300:	74a6      	strb	r6, [r4, #18]
   canHandle.Init.DataPrescaler = 1;
- 8001300:	6265      	str	r5, [r4, #36]	@ 0x24
+ 8001302:	6265      	str	r5, [r4, #36]	@ 0x24
   canHandle.Init.DataSyncJumpWidth = 1;
- 8001302:	62a5      	str	r5, [r4, #40]	@ 0x28
+ 8001304:	62a5      	str	r5, [r4, #40]	@ 0x28
   canHandle.Init.DataTimeSeg1 = 1;
- 8001304:	62e5      	str	r5, [r4, #44]	@ 0x2c
+ 8001306:	62e5      	str	r5, [r4, #44]	@ 0x2c
   canHandle.Init.DataTimeSeg2 = 1;
- 8001306:	6325      	str	r5, [r4, #48]	@ 0x30
-    canHandle.Init.StdFiltersNbr = 1;
- 8001308:	6365      	str	r5, [r4, #52]	@ 0x34
-    canHandle.Init.ExtFiltersNbr = 0;
- 800130a:	63a6      	str	r6, [r4, #56]	@ 0x38
+ 8001308:	6325      	str	r5, [r4, #48]	@ 0x30
+    canHandle.Init.StdFiltersNbr = 0;
+ 800130a:	6366      	str	r6, [r4, #52]	@ 0x34
+    canHandle.Init.ExtFiltersNbr = 1;
+ 800130c:	63a5      	str	r5, [r4, #56]	@ 0x38
   canHandle.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
- 800130c:	63e6      	str	r6, [r4, #60]	@ 0x3c
+ 800130e:	63e6      	str	r6, [r4, #60]	@ 0x3c
   (void)HAL_FDCAN_Init(&canHandle);
- 800130e:	f7ff f9e3 	bl	80006d8 <HAL_FDCAN_Init>
+ 8001310:	f7ff f9e2 	bl	80006d8 <HAL_FDCAN_Init>
+  {
+    filterConfig.IdType = FDCAN_STANDARD_ID;
+  }
+  else
+  {
+    filterConfig.IdType = FDCAN_EXTENDED_ID;
+ 8001314:	2380      	movs	r3, #128	@ 0x80
+ 8001316:	05db      	lsls	r3, r3, #23
+ 8001318:	9306      	str	r3, [sp, #24]
     rxMsgId &= ~0x80000000;
   }
   filterConfig.FilterIndex = 0;
   filterConfig.FilterType = FDCAN_FILTER_DUAL;
   filterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
   filterConfig.FilterID1 = rxMsgId;
- 8001312:	4b16      	ldr	r3, [pc, #88]	@ (800136c <CanInit+0x118>)
+ 800131a:	4b16      	ldr	r3, [pc, #88]	@ (8001374 <CanInit+0x120>)
   filterConfig.FilterID2 = rxMsgId;
   (void)HAL_FDCAN_ConfigFilter(&canHandle, &filterConfig);
- 8001314:	a906      	add	r1, sp, #24
- 8001316:	0020      	movs	r0, r4
+ 800131c:	a906      	add	r1, sp, #24
+ 800131e:	0020      	movs	r0, r4
   filterConfig.FilterID1 = rxMsgId;
- 8001318:	930a      	str	r3, [sp, #40]	@ 0x28
+ 8001320:	930a      	str	r3, [sp, #40]	@ 0x28
   filterConfig.FilterID2 = rxMsgId;
- 800131a:	930b      	str	r3, [sp, #44]	@ 0x2c
-    filterConfig.IdType = FDCAN_STANDARD_ID;
- 800131c:	9606      	str	r6, [sp, #24]
+ 8001322:	930b      	str	r3, [sp, #44]	@ 0x2c
   filterConfig.FilterIndex = 0;
- 800131e:	9607      	str	r6, [sp, #28]
+ 8001324:	9607      	str	r6, [sp, #28]
   filterConfig.FilterType = FDCAN_FILTER_DUAL;
- 8001320:	9508      	str	r5, [sp, #32]
+ 8001326:	9508      	str	r5, [sp, #32]
   filterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
- 8001322:	9509      	str	r5, [sp, #36]	@ 0x24
+ 8001328:	9509      	str	r5, [sp, #36]	@ 0x24
   (void)HAL_FDCAN_ConfigFilter(&canHandle, &filterConfig);
- 8001324:	f7ff fae6 	bl	80008f4 <HAL_FDCAN_ConfigFilter>
+ 800132a:	f7ff fae3 	bl	80008f4 <HAL_FDCAN_ConfigFilter>
 
   /* configure global filter to reject all non-matching frames. */
   HAL_FDCAN_ConfigGlobalFilter(&canHandle, FDCAN_REJECT, FDCAN_REJECT, 
- 8001328:	2202      	movs	r2, #2
- 800132a:	002b      	movs	r3, r5
- 800132c:	0011      	movs	r1, r2
- 800132e:	0020      	movs	r0, r4
- 8001330:	9500      	str	r5, [sp, #0]
- 8001332:	f7ff fb08 	bl	8000946 <HAL_FDCAN_ConfigGlobalFilter>
+ 800132e:	2202      	movs	r2, #2
+ 8001330:	002b      	movs	r3, r5
+ 8001332:	0011      	movs	r1, r2
+ 8001334:	0020      	movs	r0, r4
+ 8001336:	9500      	str	r5, [sp, #0]
+ 8001338:	f7ff fb05 	bl	8000946 <HAL_FDCAN_ConfigGlobalFilter>
   }
 #endif
 
   /* start the CAN peripheral. no need to evaluate the return value as there is nothing
    * we can do about a faulty CAN controller. */
   (void)HAL_FDCAN_Start(&canHandle);
- 8001336:	0020      	movs	r0, r4
- 8001338:	f7ff fb21 	bl	800097e <HAL_FDCAN_Start>
+ 800133c:	0020      	movs	r0, r4
+ 800133e:	f7ff fb1e 	bl	800097e <HAL_FDCAN_Start>
 } /*** end of CanInit ***/
- 800133c:	b00d      	add	sp, #52	@ 0x34
- 800133e:	bdf0      	pop	{r4, r5, r6, r7, pc}
+ 8001342:	b00d      	add	sp, #52	@ 0x34
+ 8001344:	bdf0      	pop	{r4, r5, r6, r7, pc}
          prescaler <= periph_params->prescaler_max; prescaler++)
- 8001340:	4b0b      	ldr	r3, [pc, #44]	@ (8001370 <CanInit+0x11c>)
- 8001342:	3701      	adds	r7, #1
- 8001344:	429f      	cmp	r7, r3
- 8001346:	d196      	bne.n	8001276 <CanInit+0x22>
+ 8001346:	4b0c      	ldr	r3, [pc, #48]	@ (8001378 <CanInit+0x124>)
+ 8001348:	3701      	adds	r7, #1
+ 800134a:	429f      	cmp	r7, r3
+ 800134c:	d000      	beq.n	8001350 <CanInit+0xfc>
+ 800134e:	e793      	b.n	8001278 <CanInit+0x24>
     ASSERT_RT(BLT_FALSE);
- 8001348:	219d      	movs	r1, #157	@ 0x9d
- 800134a:	480a      	ldr	r0, [pc, #40]	@ (8001374 <CanInit+0x120>)
- 800134c:	0049      	lsls	r1, r1, #1
- 800134e:	f000 fbeb 	bl	8001b28 <AssertFailure>
+ 8001350:	219d      	movs	r1, #157	@ 0x9d
+ 8001352:	480a      	ldr	r0, [pc, #40]	@ (800137c <CanInit+0x128>)
+ 8001354:	0049      	lsls	r1, r1, #1
+ 8001356:	f000 fbef 	bl	8001b38 <AssertFailure>
   tCanBitTimingConfig bittimingConfig = { 0 };
- 8001352:	2300      	movs	r3, #0
- 8001354:	001d      	movs	r5, r3
- 8001356:	9303      	str	r3, [sp, #12]
- 8001358:	9305      	str	r3, [sp, #20]
- 800135a:	e7c1      	b.n	80012e0 <CanInit+0x8c>
- 800135c:	20000090 	.word	0x20000090
- 8001360:	40006400 	.word	0x40006400
- 8001364:	0016e35f 	.word	0x0016e35f
- 8001368:	0007a120 	.word	0x0007a120
- 800136c:	00000667 	.word	0x00000667
- 8001370:	00000201 	.word	0x00000201
- 8001374:	08001fe0 	.word	0x08001fe0
+ 800135a:	2300      	movs	r3, #0
+ 800135c:	001d      	movs	r5, r3
+ 800135e:	9303      	str	r3, [sp, #12]
+ 8001360:	9305      	str	r3, [sp, #20]
+ 8001362:	e7be      	b.n	80012e2 <CanInit+0x8e>
+ 8001364:	20000090 	.word	0x20000090
+ 8001368:	40006400 	.word	0x40006400
+ 800136c:	0016e35f 	.word	0x0016e35f
+ 8001370:	0007a120 	.word	0x0007a120
+ 8001374:	1f100000 	.word	0x1f100000
+ 8001378:	00000201 	.word	0x00000201
+ 800137c:	08001ff0 	.word	0x08001ff0
 
-08001378 <CanTransmitPacket>:
+08001380 <CanTransmitPacket>:
 ** \param     len  Number of bytes that are to be transmitted.
 ** \return    none.
 **
 ****************************************************************************************/
 void CanTransmitPacket(blt_int8u *data, blt_int8u len)
 {
- 8001378:	b570      	push	{r4, r5, r6, lr}
- 800137a:	0006      	movs	r6, r0
- 800137c:	000c      	movs	r4, r1
- 800137e:	b08a      	sub	sp, #40	@ 0x28
+ 8001380:	b570      	push	{r4, r5, r6, lr}
+ 8001382:	0006      	movs	r6, r0
+ 8001384:	000c      	movs	r4, r1
+ 8001386:	b08a      	sub	sp, #40	@ 0x28
                                        15, 15, 15, 15, 15, 15, 15, 15,      /* 49 - 56 */
                                        15, 15, 15, 15, 15, 15, 15, 15 };    /* 57 - 64 */
 #endif
 
   /* validate the specified length. */
   ASSERT_RT(len <= BOOT_COM_CAN_TX_MAX_DATA);
- 8001380:	2908      	cmp	r1, #8
- 8001382:	d904      	bls.n	800138e <CanTransmitPacket+0x16>
- 8001384:	21da      	movs	r1, #218	@ 0xda
- 8001386:	4818      	ldr	r0, [pc, #96]	@ (80013e8 <CanTransmitPacket+0x70>)
- 8001388:	0049      	lsls	r1, r1, #1
- 800138a:	f000 fbcd 	bl	8001b28 <AssertFailure>
-
-  /* configure the message that should be transmitted. */
-  if ((txMsgId & 0x80000000) == 0)
+ 8001388:	2908      	cmp	r1, #8
+ 800138a:	d904      	bls.n	8001396 <CanTransmitPacket+0x16>
+ 800138c:	21da      	movs	r1, #218	@ 0xda
+ 800138e:	4819      	ldr	r0, [pc, #100]	@ (80013f4 <CanTransmitPacket+0x74>)
+ 8001390:	0049      	lsls	r1, r1, #1
+ 8001392:	f000 fbd1 	bl	8001b38 <AssertFailure>
+  else
   {
-    /* set the 11-bit CAN identifier. */
+    /* negate the ID-type bit. */
+    txMsgId &= ~0x80000000;
+    /* set the 29-bit CAN identifier. */
     txMsgHeader.Identifier = txMsgId;
- 800138e:	4b17      	ldr	r3, [pc, #92]	@ (80013ec <CanTransmitPacket+0x74>)
+ 8001396:	4b18      	ldr	r3, [pc, #96]	@ (80013f8 <CanTransmitPacket+0x78>)
 
   txMsgHeader.TxFrameType = FDCAN_DATA_FRAME;
   txMsgHeader.FDFormat = FDCAN_CLASSIC_CAN;
   txMsgHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
   txMsgHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
   txMsgHeader.MessageMarker = 0x52;
- 8001390:	2252      	movs	r2, #82	@ 0x52
+ 8001398:	2252      	movs	r2, #82	@ 0x52
     txMsgHeader.Identifier = txMsgId;
- 8001392:	9301      	str	r3, [sp, #4]
-    txMsgHeader.IdType = FDCAN_STANDARD_ID;
- 8001394:	2300      	movs	r3, #0
+ 800139a:	9301      	str	r3, [sp, #4]
+    txMsgHeader.IdType = FDCAN_EXTENDED_ID;
+ 800139c:	2380      	movs	r3, #128	@ 0x80
+ 800139e:	05db      	lsls	r3, r3, #23
+ 80013a0:	9302      	str	r3, [sp, #8]
+  txMsgHeader.TxFrameType = FDCAN_DATA_FRAME;
+ 80013a2:	2300      	movs	r3, #0
     txMsgHeader.BitRateSwitch = FDCAN_BRS_ON;
   }
 #endif
 
   /* add the message to the transmit FIFO to request its transmission. */
   status = HAL_FDCAN_AddMessageToTxFifoQ(&canHandle, &txMsgHeader, data);
- 8001396:	4d16      	ldr	r5, [pc, #88]	@ (80013f0 <CanTransmitPacket+0x78>)
+ 80013a4:	4d15      	ldr	r5, [pc, #84]	@ (80013fc <CanTransmitPacket+0x7c>)
   txMsgHeader.MessageMarker = 0x52;
- 8001398:	9209      	str	r2, [sp, #36]	@ 0x24
+ 80013a6:	9209      	str	r2, [sp, #36]	@ 0x24
   status = HAL_FDCAN_AddMessageToTxFifoQ(&canHandle, &txMsgHeader, data);
- 800139a:	a901      	add	r1, sp, #4
- 800139c:	0032      	movs	r2, r6
- 800139e:	0028      	movs	r0, r5
-    txMsgHeader.IdType = FDCAN_STANDARD_ID;
- 80013a0:	9302      	str	r3, [sp, #8]
+ 80013a8:	a901      	add	r1, sp, #4
+ 80013aa:	0032      	movs	r2, r6
+ 80013ac:	0028      	movs	r0, r5
   txMsgHeader.TxFrameType = FDCAN_DATA_FRAME;
- 80013a2:	9303      	str	r3, [sp, #12]
+ 80013ae:	9303      	str	r3, [sp, #12]
   txMsgHeader.FDFormat = FDCAN_CLASSIC_CAN;
- 80013a4:	9307      	str	r3, [sp, #28]
+ 80013b0:	9307      	str	r3, [sp, #28]
   txMsgHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
- 80013a6:	9305      	str	r3, [sp, #20]
+ 80013b2:	9305      	str	r3, [sp, #20]
   txMsgHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
- 80013a8:	9308      	str	r3, [sp, #32]
+ 80013b4:	9308      	str	r3, [sp, #32]
   txMsgHeader.BitRateSwitch = FDCAN_BRS_OFF;
- 80013aa:	9306      	str	r3, [sp, #24]
+ 80013b6:	9306      	str	r3, [sp, #24]
   txMsgHeader.DataLength = len;
- 80013ac:	9404      	str	r4, [sp, #16]
+ 80013b8:	9404      	str	r4, [sp, #16]
   status = HAL_FDCAN_AddMessageToTxFifoQ(&canHandle, &txMsgHeader, data);
- 80013ae:	f7ff fafd 	bl	80009ac <HAL_FDCAN_AddMessageToTxFifoQ>
- 80013b2:	0006      	movs	r6, r0
+ 80013ba:	f7ff faf7 	bl	80009ac <HAL_FDCAN_AddMessageToTxFifoQ>
+ 80013be:	0006      	movs	r6, r0
   /* read out which FIFO buffer was used for the last transmit request. */
   txMsgBuffer = HAL_FDCAN_GetLatestTxFifoQRequestBuffer(&canHandle);
- 80013b4:	0028      	movs	r0, r5
- 80013b6:	f7ff fb5d 	bl	8000a74 <HAL_FDCAN_GetLatestTxFifoQRequestBuffer>
- 80013ba:	0004      	movs	r4, r0
+ 80013c0:	0028      	movs	r0, r5
+ 80013c2:	f7ff fb57 	bl	8000a74 <HAL_FDCAN_GetLatestTxFifoQRequestBuffer>
+ 80013c6:	0004      	movs	r4, r0
 
   /* only continue with polling for transmit completion if the message transmit request
    * could be submitted to a valid FIFO buffer.
    */
   if ((status == HAL_OK) && (txMsgBuffer != 0))
- 80013bc:	2e00      	cmp	r6, #0
- 80013be:	d111      	bne.n	80013e4 <CanTransmitPacket+0x6c>
- 80013c0:	2800      	cmp	r0, #0
- 80013c2:	d00f      	beq.n	80013e4 <CanTransmitPacket+0x6c>
+ 80013c8:	2e00      	cmp	r6, #0
+ 80013ca:	d111      	bne.n	80013f0 <CanTransmitPacket+0x70>
+ 80013cc:	2800      	cmp	r0, #0
+ 80013ce:	d00f      	beq.n	80013f0 <CanTransmitPacket+0x70>
   {
     /* determine timeout time for the transmit completion. */
     timeout = TimerGet() + CAN_MSG_TX_TIMEOUT_MS;
- 80013c4:	f000 fba0 	bl	8001b08 <TimerGet>
- 80013c8:	3032      	adds	r0, #50	@ 0x32
- 80013ca:	0006      	movs	r6, r0
+ 80013d0:	f000 fba2 	bl	8001b18 <TimerGet>
+ 80013d4:	3032      	adds	r0, #50	@ 0x32
+ 80013d6:	0006      	movs	r6, r0
     /* poll for completion of the transmit operation. */
     while (HAL_FDCAN_IsTxBufferMessagePending(&canHandle, txMsgBuffer) != 0)
- 80013cc:	0021      	movs	r1, r4
- 80013ce:	0028      	movs	r0, r5
- 80013d0:	f7ff fbe0 	bl	8000b94 <HAL_FDCAN_IsTxBufferMessagePending>
- 80013d4:	2800      	cmp	r0, #0
- 80013d6:	d005      	beq.n	80013e4 <CanTransmitPacket+0x6c>
+ 80013d8:	0021      	movs	r1, r4
+ 80013da:	0028      	movs	r0, r5
+ 80013dc:	f7ff fbda 	bl	8000b94 <HAL_FDCAN_IsTxBufferMessagePending>
+ 80013e0:	2800      	cmp	r0, #0
+ 80013e2:	d005      	beq.n	80013f0 <CanTransmitPacket+0x70>
     {
       /* service the watchdog. */
       CopService();
- 80013d8:	f000 fc4f 	bl	8001c7a <CopService>
+ 80013e4:	f000 fc51 	bl	8001c8a <CopService>
       /* break loop upon timeout. this would indicate a hardware failure or no other
        * nodes connected to the bus.
        */
       if (TimerGet() > timeout)
- 80013dc:	f000 fb94 	bl	8001b08 <TimerGet>
- 80013e0:	42b0      	cmp	r0, r6
- 80013e2:	d9f3      	bls.n	80013cc <CanTransmitPacket+0x54>
+ 80013e8:	f000 fb96 	bl	8001b18 <TimerGet>
+ 80013ec:	42b0      	cmp	r0, r6
+ 80013ee:	d9f3      	bls.n	80013d8 <CanTransmitPacket+0x58>
       {
         break;
       }
     }
   }
 } /*** end of CanTransmitPacket ***/
- 80013e4:	b00a      	add	sp, #40	@ 0x28
- 80013e6:	bd70      	pop	{r4, r5, r6, pc}
- 80013e8:	08001fe0 	.word	0x08001fe0
- 80013ec:	000007e1 	.word	0x000007e1
- 80013f0:	20000090 	.word	0x20000090
+ 80013f0:	b00a      	add	sp, #40	@ 0x28
+ 80013f2:	bd70      	pop	{r4, r5, r6, pc}
+ 80013f4:	08001ff0 	.word	0x08001ff0
+ 80013f8:	000007e1 	.word	0x000007e1
+ 80013fc:	20000090 	.word	0x20000090
 
-080013f4 <CanReceivePacket>:
+08001400 <CanReceivePacket>:
 ** \param     len Pointer where the length of the packet is to be stored.
 ** \return    BLT_TRUE is a packet was received, BLT_FALSE otherwise.
 **
 ****************************************************************************************/
 blt_bool CanReceivePacket(blt_int8u *data, blt_int8u *len)
 {
- 80013f4:	b570      	push	{r4, r5, r6, lr}
+ 8001400:	b570      	push	{r4, r5, r6, lr}
   static const blt_int8u dlc2len[] = { 0,  1,  2,  3,  4,  5,  6,  7,
                                        8, 12, 16, 20, 24, 32, 48, 64 };
 #endif
 
   /* check if the expected CAN message was received? */
   if (HAL_FDCAN_GetRxFifoFillLevel(&canHandle, FDCAN_RX_FIFO0) > 0)
- 80013f6:	4e13      	ldr	r6, [pc, #76]	@ (8001444 <CanReceivePacket+0x50>)
+ 8001402:	4e14      	ldr	r6, [pc, #80]	@ (8001454 <CanReceivePacket+0x54>)
 {
- 80013f8:	0005      	movs	r5, r0
- 80013fa:	000c      	movs	r4, r1
- 80013fc:	b08a      	sub	sp, #40	@ 0x28
+ 8001404:	0005      	movs	r5, r0
+ 8001406:	000c      	movs	r4, r1
+ 8001408:	b08a      	sub	sp, #40	@ 0x28
   if (HAL_FDCAN_GetRxFifoFillLevel(&canHandle, FDCAN_RX_FIFO0) > 0)
- 80013fe:	2140      	movs	r1, #64	@ 0x40
- 8001400:	0030      	movs	r0, r6
- 8001402:	f7ff fbcf 	bl	8000ba4 <HAL_FDCAN_GetRxFifoFillLevel>
- 8001406:	2800      	cmp	r0, #0
- 8001408:	d102      	bne.n	8001410 <CanReceivePacket+0x1c>
+ 800140a:	2140      	movs	r1, #64	@ 0x40
+ 800140c:	0030      	movs	r0, r6
+ 800140e:	f7ff fbc9 	bl	8000ba4 <HAL_FDCAN_GetRxFifoFillLevel>
+ 8001412:	2800      	cmp	r0, #0
+ 8001414:	d102      	bne.n	800141c <CanReceivePacket+0x1c>
   blt_bool               result = BLT_FALSE;
- 800140a:	2000      	movs	r0, #0
+ 8001416:	2000      	movs	r0, #0
     }
   }
 
   /* give the result back to the caller. */
   return result;
 } /*** end of CanReceivePacket ***/
- 800140c:	b00a      	add	sp, #40	@ 0x28
- 800140e:	bd70      	pop	{r4, r5, r6, pc}
+ 8001418:	b00a      	add	sp, #40	@ 0x28
+ 800141a:	bd70      	pop	{r4, r5, r6, pc}
     rxStatus = HAL_FDCAN_GetRxMessage(&canHandle, FDCAN_RX_FIFO0, &rxMsgHeader, data);
- 8001410:	002b      	movs	r3, r5
- 8001412:	466a      	mov	r2, sp
- 8001414:	2140      	movs	r1, #64	@ 0x40
- 8001416:	0030      	movs	r0, r6
- 8001418:	f7ff fb2e 	bl	8000a78 <HAL_FDCAN_GetRxMessage>
+ 800141c:	002b      	movs	r3, r5
+ 800141e:	466a      	mov	r2, sp
+ 8001420:	2140      	movs	r1, #64	@ 0x40
+ 8001422:	0030      	movs	r0, r6
+ 8001424:	f7ff fb28 	bl	8000a78 <HAL_FDCAN_GetRxMessage>
   if (rxStatus == HAL_OK)
- 800141c:	2800      	cmp	r0, #0
- 800141e:	d1f4      	bne.n	800140a <CanReceivePacket+0x16>
+ 8001428:	2800      	cmp	r0, #0
+ 800142a:	d1f4      	bne.n	8001416 <CanReceivePacket+0x16>
       if ( (rxMsgHeader.Identifier == rxMsgId) &&
- 8001420:	4b09      	ldr	r3, [pc, #36]	@ (8001448 <CanReceivePacket+0x54>)
- 8001422:	9a00      	ldr	r2, [sp, #0]
- 8001424:	429a      	cmp	r2, r3
- 8001426:	d1f0      	bne.n	800140a <CanReceivePacket+0x16>
- 8001428:	9b01      	ldr	r3, [sp, #4]
- 800142a:	2b00      	cmp	r3, #0
- 800142c:	d1ed      	bne.n	800140a <CanReceivePacket+0x16>
+ 800142c:	4b0a      	ldr	r3, [pc, #40]	@ (8001458 <CanReceivePacket+0x58>)
+ 800142e:	9a00      	ldr	r2, [sp, #0]
+ 8001430:	429a      	cmp	r2, r3
+ 8001432:	d1f0      	bne.n	8001416 <CanReceivePacket+0x16>
+ 8001434:	2380      	movs	r3, #128	@ 0x80
+ 8001436:	9a01      	ldr	r2, [sp, #4]
+ 8001438:	05db      	lsls	r3, r3, #23
+ 800143a:	429a      	cmp	r2, r3
+ 800143c:	d1eb      	bne.n	8001416 <CanReceivePacket+0x16>
       *len = (blt_int8u)(rxMsgHeader.DataLength);
- 800142e:	9b03      	ldr	r3, [sp, #12]
- 8001430:	b2db      	uxtb	r3, r3
- 8001432:	7023      	strb	r3, [r4, #0]
+ 800143e:	9b03      	ldr	r3, [sp, #12]
+ 8001440:	b2db      	uxtb	r3, r3
+ 8001442:	7023      	strb	r3, [r4, #0]
       ASSERT_RT(*len <= BOOT_COM_CAN_RX_MAX_DATA);
- 8001434:	2b08      	cmp	r3, #8
- 8001436:	d903      	bls.n	8001440 <CanReceivePacket+0x4c>
- 8001438:	4804      	ldr	r0, [pc, #16]	@ (800144c <CanReceivePacket+0x58>)
- 800143a:	4905      	ldr	r1, [pc, #20]	@ (8001450 <CanReceivePacket+0x5c>)
- 800143c:	f000 fb74 	bl	8001b28 <AssertFailure>
+ 8001444:	2b08      	cmp	r3, #8
+ 8001446:	d903      	bls.n	8001450 <CanReceivePacket+0x50>
+ 8001448:	4804      	ldr	r0, [pc, #16]	@ (800145c <CanReceivePacket+0x5c>)
+ 800144a:	4905      	ldr	r1, [pc, #20]	@ (8001460 <CanReceivePacket+0x60>)
+ 800144c:	f000 fb74 	bl	8001b38 <AssertFailure>
         result = BLT_TRUE;
- 8001440:	2001      	movs	r0, #1
- 8001442:	e7e3      	b.n	800140c <CanReceivePacket+0x18>
- 8001444:	20000090 	.word	0x20000090
- 8001448:	00000667 	.word	0x00000667
- 800144c:	08001fe0 	.word	0x08001fe0
- 8001450:	00000233 	.word	0x00000233
+ 8001450:	2001      	movs	r0, #1
+ 8001452:	e7e1      	b.n	8001418 <CanReceivePacket+0x18>
+ 8001454:	20000090 	.word	0x20000090
+ 8001458:	1f100000 	.word	0x1f100000
+ 800145c:	08001ff0 	.word	0x08001ff0
+ 8001460:	00000233 	.word	0x00000233
 
-08001454 <CpuInit>:
+08001464 <CpuInit>:
 ** \brief     Initializes the CPU module.
 ** \return    none.
 **
 ****************************************************************************************/
 void CpuInit(void)
 {
- 8001454:	b510      	push	{r4, lr}
+ 8001464:	b510      	push	{r4, lr}
   /* bootloader runs in polling mode so disable the global interrupts. this is done for
    * safety reasons. if the bootloader was started from a running user program, it could 
    * be that the user program did not properly disable the interrupt generation of 
    * peripherals. */
   CpuIrqDisable();
- 8001456:	f7ff fef9 	bl	800124c <CpuIrqDisable>
+ 8001466:	f7ff fef1 	bl	800124c <CpuIrqDisable>
 } /*** end of CpuInit ***/
- 800145a:	bd10      	pop	{r4, pc}
+ 800146a:	bd10      	pop	{r4, pc}
 
-0800145c <CpuStartUserProgram>:
+0800146c <CpuStartUserProgram>:
 **            does not return.
 ** \return    none.
 **
 ****************************************************************************************/
 void CpuStartUserProgram(void)
 {
- 800145c:	b510      	push	{r4, lr}
+ 800146c:	b510      	push	{r4, lr}
   void (*pProgResetHandler)(void);
 
   /* check if a user program is present by verifying the checksum */
   if (NvmVerifyChecksum() == BLT_FALSE)
- 800145e:	f000 fabf 	bl	80019e0 <NvmVerifyChecksum>
- 8001462:	2800      	cmp	r0, #0
- 8001464:	d015      	beq.n	8001492 <CpuStartUserProgram+0x36>
+ 800146e:	f000 fabf 	bl	80019f0 <NvmVerifyChecksum>
+ 8001472:	2800      	cmp	r0, #0
+ 8001474:	d015      	beq.n	80014a2 <CpuStartUserProgram+0x36>
     /* not a valid user program so it cannot be started */
     return;
   }
 #if (BOOT_CPU_USER_PROGRAM_START_HOOK > 0)
   /* invoke callback */
   if (CpuUserProgramStartHook() == BLT_FALSE)
- 8001466:	f7fe fef7 	bl	8000258 <CpuUserProgramStartHook>
- 800146a:	2800      	cmp	r0, #0
- 800146c:	d011      	beq.n	8001492 <CpuStartUserProgram+0x36>
+ 8001476:	f7fe feef 	bl	8000258 <CpuUserProgramStartHook>
+ 800147a:	2800      	cmp	r0, #0
+ 800147c:	d011      	beq.n	80014a2 <CpuStartUserProgram+0x36>
     return;
   }
 #endif
 #if (BOOT_COM_ENABLE > 0)
   /* release the communication interface */
   ComFree();
- 800146e:	f000 fbd3 	bl	8001c18 <ComFree>
+ 800147e:	f000 fbd3 	bl	8001c28 <ComFree>
 #endif
   /* reset the HAL */
   HAL_DeInit();
- 8001472:	f7ff f885 	bl	8000580 <HAL_DeInit>
+ 8001482:	f7ff f87d 	bl	8000580 <HAL_DeInit>
   /* reset the timer */
   TimerReset();
- 8001476:	f000 fb0b 	bl	8001a90 <TimerReset>
+ 8001486:	f000 fb0b 	bl	8001aa0 <TimerReset>
   /* remap user program's vector table */
   SCB->VTOR = CPU_USER_PROGRAM_VECTABLE_OFFSET & (blt_int32u)0x1FFFFF80;
- 800147a:	f000 fab5 	bl	80019e8 <NvmGetUserProgBaseAddress>
- 800147e:	4b05      	ldr	r3, [pc, #20]	@ (8001494 <CpuStartUserProgram+0x38>)
- 8001480:	4018      	ands	r0, r3
- 8001482:	4b05      	ldr	r3, [pc, #20]	@ (8001498 <CpuStartUserProgram+0x3c>)
- 8001484:	6098      	str	r0, [r3, #8]
+ 800148a:	f000 fab5 	bl	80019f8 <NvmGetUserProgBaseAddress>
+ 800148e:	4b05      	ldr	r3, [pc, #20]	@ (80014a4 <CpuStartUserProgram+0x38>)
+ 8001490:	4018      	ands	r0, r3
+ 8001492:	4b05      	ldr	r3, [pc, #20]	@ (80014a8 <CpuStartUserProgram+0x3c>)
+ 8001494:	6098      	str	r0, [r3, #8]
   /* set the address where the bootloader needs to jump to. this is the address of
    * the 2nd entry in the user program's vector table. this address points to the
    * user program's reset handler.
    */
   pProgResetHandler = (void(*)(void))(*((blt_addr *)CPU_USER_PROGRAM_STARTADDR_PTR));
- 8001486:	f000 faaf 	bl	80019e8 <NvmGetUserProgBaseAddress>
- 800148a:	6844      	ldr	r4, [r0, #4]
+ 8001496:	f000 faaf 	bl	80019f8 <NvmGetUserProgBaseAddress>
+ 800149a:	6844      	ldr	r4, [r0, #4]
   /* the Cortex-M0+ core has interrupts enabled out of reset. the bootloader
    * explicitly disables these for security reasons. Enable them here again, so it does 
    * not have to be done by the user program.
    */
   CpuIrqEnable();
- 800148c:	f7ff fee0 	bl	8001250 <CpuIrqEnable>
+ 800149c:	f7ff fed8 	bl	8001250 <CpuIrqEnable>
   /* start the user program by activating its reset interrupt service routine */
   pProgResetHandler();
- 8001490:	47a0      	blx	r4
+ 80014a0:	47a0      	blx	r4
    * for whatever reason, make sure all communication interfaces are initialized so that
    * firmware updates can be started.
    */
   ComDeferredInit();
 #endif
 } /*** end of CpuStartUserProgram ***/
- 8001492:	bd10      	pop	{r4, pc}
- 8001494:	1fffff80 	.word	0x1fffff80
- 8001498:	e000ed00 	.word	0xe000ed00
+ 80014a2:	bd10      	pop	{r4, pc}
+ 80014a4:	1fffff80 	.word	0x1fffff80
+ 80014a8:	e000ed00 	.word	0xe000ed00
 
-0800149c <CpuMemCopy>:
+080014ac <CpuMemCopy>:
 ** \param     len  length of the data in bytes.
 ** \return    none.
 **
 ****************************************************************************************/
 void CpuMemCopy(blt_addr dest, blt_addr src, blt_int16u len)
 {
- 800149c:	b5f8      	push	{r3, r4, r5, r6, r7, lr}
- 800149e:	0006      	movs	r6, r0
- 80014a0:	000c      	movs	r4, r1
+ 80014ac:	b5f8      	push	{r3, r4, r5, r6, r7, lr}
+ 80014ae:	0006      	movs	r6, r0
+ 80014b0:	000c      	movs	r4, r1
   blt_int8u *from, *to;
 
   /* set casted pointers */
   from = (blt_int8u *)src;
- 80014a2:	000b      	movs	r3, r1
+ 80014b2:	000b      	movs	r3, r1
   to = (blt_int8u *)dest;
 
   /* copy all bytes from source address to destination address */
   while (len-- > 0)
- 80014a4:	1855      	adds	r5, r2, r1
- 80014a6:	1b32      	subs	r2, r6, r4
- 80014a8:	189a      	adds	r2, r3, r2
- 80014aa:	42ab      	cmp	r3, r5
- 80014ac:	d100      	bne.n	80014b0 <CpuMemCopy+0x14>
+ 80014b4:	1855      	adds	r5, r2, r1
+ 80014b6:	1b32      	subs	r2, r6, r4
+ 80014b8:	189a      	adds	r2, r3, r2
+ 80014ba:	42ab      	cmp	r3, r5
+ 80014bc:	d100      	bne.n	80014c0 <CpuMemCopy+0x14>
     /* store byte value from source to destination */
     *to++ = *from++;
     /* keep the watchdog happy */
     CopService();
   }
 } /*** end of CpuMemCopy ***/
- 80014ae:	bdf8      	pop	{r3, r4, r5, r6, r7, pc}
+ 80014be:	bdf8      	pop	{r3, r4, r5, r6, r7, pc}
     *to++ = *from++;
- 80014b0:	1c5f      	adds	r7, r3, #1
- 80014b2:	781b      	ldrb	r3, [r3, #0]
- 80014b4:	7013      	strb	r3, [r2, #0]
+ 80014c0:	1c5f      	adds	r7, r3, #1
+ 80014c2:	781b      	ldrb	r3, [r3, #0]
+ 80014c4:	7013      	strb	r3, [r2, #0]
     CopService();
- 80014b6:	f000 fbe0 	bl	8001c7a <CopService>
+ 80014c6:	f000 fbe0 	bl	8001c8a <CopService>
     *to++ = *from++;
- 80014ba:	003b      	movs	r3, r7
- 80014bc:	e7f3      	b.n	80014a6 <CpuMemCopy+0xa>
+ 80014ca:	003b      	movs	r3, r7
+ 80014cc:	e7f3      	b.n	80014b6 <CpuMemCopy+0xa>
 	...
 
-080014c0 <FlashGetSector>:
+080014d0 <FlashGetSector>:
 ** \param     address Address in the flash sector.
 ** \return    Flash sector number or FLASH_INVALID_SECTOR.
 **
 ****************************************************************************************/
 static blt_int8u FlashGetSector(blt_addr address)
 {
- 80014c0:	b5f8      	push	{r3, r4, r5, r6, r7, lr}
- 80014c2:	4c0c      	ldr	r4, [pc, #48]	@ (80014f4 <FlashGetSector+0x34>)
- 80014c4:	0007      	movs	r7, r0
- 80014c6:	2600      	movs	r6, #0
- 80014c8:	0025      	movs	r5, r4
+ 80014d0:	b5f8      	push	{r3, r4, r5, r6, r7, lr}
+ 80014d2:	4c0c      	ldr	r4, [pc, #48]	@ (8001504 <FlashGetSector+0x34>)
+ 80014d4:	0007      	movs	r7, r0
+ 80014d6:	2600      	movs	r6, #0
+ 80014d8:	0025      	movs	r5, r4
 
   /* search through the sectors to find the right one */
   for (sectorIdx = 0; sectorIdx < FLASH_TOTAL_SECTORS; sectorIdx++)
   {
     /* keep the watchdog happy */
     CopService();
- 80014ca:	f000 fbd6 	bl	8001c7a <CopService>
+ 80014da:	f000 fbd6 	bl	8001c8a <CopService>
     /* is the address in this sector? */
     if ((address >= flashLayout[sectorIdx].sector_start) && \
- 80014ce:	6823      	ldr	r3, [r4, #0]
- 80014d0:	42bb      	cmp	r3, r7
- 80014d2:	d808      	bhi.n	80014e6 <FlashGetSector+0x26>
+ 80014de:	6823      	ldr	r3, [r4, #0]
+ 80014e0:	42bb      	cmp	r3, r7
+ 80014e2:	d808      	bhi.n	80014f6 <FlashGetSector+0x26>
         (address < (flashLayout[sectorIdx].sector_start + \
- 80014d4:	6862      	ldr	r2, [r4, #4]
- 80014d6:	189b      	adds	r3, r3, r2
+ 80014e4:	6862      	ldr	r2, [r4, #4]
+ 80014e6:	189b      	adds	r3, r3, r2
     if ((address >= flashLayout[sectorIdx].sector_start) && \
- 80014d8:	42bb      	cmp	r3, r7
- 80014da:	d904      	bls.n	80014e6 <FlashGetSector+0x26>
+ 80014e8:	42bb      	cmp	r3, r7
+ 80014ea:	d904      	bls.n	80014f6 <FlashGetSector+0x26>
                     flashLayout[sectorIdx].sector_size)))
     {
       /* return the sector number */
       return flashLayout[sectorIdx].sector_num;
- 80014dc:	230c      	movs	r3, #12
- 80014de:	4373      	muls	r3, r6
- 80014e0:	18eb      	adds	r3, r5, r3
- 80014e2:	7a18      	ldrb	r0, [r3, #8]
+ 80014ec:	230c      	movs	r3, #12
+ 80014ee:	4373      	muls	r3, r6
+ 80014f0:	18eb      	adds	r3, r5, r3
+ 80014f2:	7a18      	ldrb	r0, [r3, #8]
     }
   }
   /* still here so no valid sector found */
   return FLASH_INVALID_SECTOR;
 } /*** end of FlashGetSector ***/
- 80014e4:	bdf8      	pop	{r3, r4, r5, r6, r7, pc}
+ 80014f4:	bdf8      	pop	{r3, r4, r5, r6, r7, pc}
   for (sectorIdx = 0; sectorIdx < FLASH_TOTAL_SECTORS; sectorIdx++)
- 80014e6:	3601      	adds	r6, #1
- 80014e8:	340c      	adds	r4, #12
- 80014ea:	2e19      	cmp	r6, #25
- 80014ec:	d1ed      	bne.n	80014ca <FlashGetSector+0xa>
+ 80014f6:	3601      	adds	r6, #1
+ 80014f8:	340c      	adds	r4, #12
+ 80014fa:	2e19      	cmp	r6, #25
+ 80014fc:	d1ed      	bne.n	80014da <FlashGetSector+0xa>
   return FLASH_INVALID_SECTOR;
- 80014ee:	20ff      	movs	r0, #255	@ 0xff
- 80014f0:	e7f8      	b.n	80014e4 <FlashGetSector+0x24>
- 80014f2:	46c0      	nop			@ (mov r8, r8)
- 80014f4:	08002078 	.word	0x08002078
+ 80014fe:	20ff      	movs	r0, #255	@ 0xff
+ 8001500:	e7f8      	b.n	80014f4 <FlashGetSector+0x24>
+ 8001502:	46c0      	nop			@ (mov r8, r8)
+ 8001504:	08002088 	.word	0x08002088
 
-080014f8 <FlashGetSectorBaseAddr>:
+08001508 <FlashGetSectorBaseAddr>:
 ** \param     sector Sector to get the base address of.
 ** \return    Flash sector base address or FLASH_INVALID_ADDRESS.
 **
 ****************************************************************************************/
 static blt_addr FlashGetSectorBaseAddr(blt_int8u sector)
 {
- 80014f8:	b5f8      	push	{r3, r4, r5, r6, r7, lr}
- 80014fa:	4d0a      	ldr	r5, [pc, #40]	@ (8001524 <FlashGetSectorBaseAddr+0x2c>)
- 80014fc:	0006      	movs	r6, r0
- 80014fe:	2400      	movs	r4, #0
- 8001500:	002f      	movs	r7, r5
+ 8001508:	b5f8      	push	{r3, r4, r5, r6, r7, lr}
+ 800150a:	4d0a      	ldr	r5, [pc, #40]	@ (8001534 <FlashGetSectorBaseAddr+0x2c>)
+ 800150c:	0006      	movs	r6, r0
+ 800150e:	2400      	movs	r4, #0
+ 8001510:	002f      	movs	r7, r5
 
   /* search through the sectors to find the right one */
   for (sectorIdx = 0; sectorIdx < FLASH_TOTAL_SECTORS; sectorIdx++)
   {
     /* keep the watchdog happy */
     CopService();
- 8001502:	f000 fbba 	bl	8001c7a <CopService>
+ 8001512:	f000 fbba 	bl	8001c8a <CopService>
     if (flashLayout[sectorIdx].sector_num == sector)
- 8001506:	7a2b      	ldrb	r3, [r5, #8]
- 8001508:	42b3      	cmp	r3, r6
- 800150a:	d103      	bne.n	8001514 <FlashGetSectorBaseAddr+0x1c>
+ 8001516:	7a2b      	ldrb	r3, [r5, #8]
+ 8001518:	42b3      	cmp	r3, r6
+ 800151a:	d103      	bne.n	8001524 <FlashGetSectorBaseAddr+0x1c>
     {
       return flashLayout[sectorIdx].sector_start;
- 800150c:	230c      	movs	r3, #12
- 800150e:	4363      	muls	r3, r4
- 8001510:	58f8      	ldr	r0, [r7, r3]
+ 800151c:	230c      	movs	r3, #12
+ 800151e:	4363      	muls	r3, r4
+ 8001520:	58f8      	ldr	r0, [r7, r3]
     }
   }
   /* still here so no valid sector found */
   return FLASH_INVALID_ADDRESS;
 } /*** end of FlashGetSectorBaseAddr ***/
- 8001512:	bdf8      	pop	{r3, r4, r5, r6, r7, pc}
+ 8001522:	bdf8      	pop	{r3, r4, r5, r6, r7, pc}
   for (sectorIdx = 0; sectorIdx < FLASH_TOTAL_SECTORS; sectorIdx++)
- 8001514:	3401      	adds	r4, #1
- 8001516:	350c      	adds	r5, #12
- 8001518:	2c19      	cmp	r4, #25
- 800151a:	d1f2      	bne.n	8001502 <FlashGetSectorBaseAddr+0xa>
+ 8001524:	3401      	adds	r4, #1
+ 8001526:	350c      	adds	r5, #12
+ 8001528:	2c19      	cmp	r4, #25
+ 800152a:	d1f2      	bne.n	8001512 <FlashGetSectorBaseAddr+0xa>
   return FLASH_INVALID_ADDRESS;
- 800151c:	2001      	movs	r0, #1
- 800151e:	4240      	negs	r0, r0
- 8001520:	e7f7      	b.n	8001512 <FlashGetSectorBaseAddr+0x1a>
- 8001522:	46c0      	nop			@ (mov r8, r8)
- 8001524:	08002078 	.word	0x08002078
+ 800152c:	2001      	movs	r0, #1
+ 800152e:	4240      	negs	r0, r0
+ 8001530:	e7f7      	b.n	8001522 <FlashGetSectorBaseAddr+0x1a>
+ 8001532:	46c0      	nop			@ (mov r8, r8)
+ 8001534:	08002088 	.word	0x08002088
 
-08001528 <FlashGetBank>:
+08001538 <FlashGetBank>:
 static blt_int32u FlashGetBank(blt_addr address)
 {
   blt_int32u result = FLASH_BANK_1;
 
   /* assert that the address is actually a valid flash address */
   ASSERT_RT(address >= FLASH_BASE);
- 8001528:	2380      	movs	r3, #128	@ 0x80
+ 8001538:	2380      	movs	r3, #128	@ 0x80
 {
- 800152a:	b570      	push	{r4, r5, r6, lr}
+ 800153a:	b570      	push	{r4, r5, r6, lr}
   ASSERT_RT(address >= FLASH_BASE);
- 800152c:	051b      	lsls	r3, r3, #20
+ 800153c:	051b      	lsls	r3, r3, #20
 {
- 800152e:	0004      	movs	r4, r0
+ 800153e:	0004      	movs	r4, r0
   ASSERT_RT(address >= FLASH_BASE);
- 8001530:	4298      	cmp	r0, r3
- 8001532:	d204      	bcs.n	800153e <FlashGetBank+0x16>
- 8001534:	21e9      	movs	r1, #233	@ 0xe9
- 8001536:	4818      	ldr	r0, [pc, #96]	@ (8001598 <FlashGetBank+0x70>)
- 8001538:	0089      	lsls	r1, r1, #2
- 800153a:	f000 faf5 	bl	8001b28 <AssertFailure>
+ 8001540:	4298      	cmp	r0, r3
+ 8001542:	d204      	bcs.n	800154e <FlashGetBank+0x16>
+ 8001544:	21e9      	movs	r1, #233	@ 0xe9
+ 8001546:	4818      	ldr	r0, [pc, #96]	@ (80015a8 <FlashGetBank+0x70>)
+ 8001548:	0089      	lsls	r1, r1, #2
+ 800154a:	f000 faf5 	bl	8001b38 <AssertFailure>
   ASSERT_RT((address - FLASH_BASE) < FLASH_SIZE);
- 800153e:	23f8      	movs	r3, #248	@ 0xf8
- 8001540:	4e16      	ldr	r6, [pc, #88]	@ (800159c <FlashGetBank+0x74>)
- 8001542:	061b      	lsls	r3, r3, #24
- 8001544:	18e4      	adds	r4, r4, r3
- 8001546:	6833      	ldr	r3, [r6, #0]
- 8001548:	4d15      	ldr	r5, [pc, #84]	@ (80015a0 <FlashGetBank+0x78>)
- 800154a:	029b      	lsls	r3, r3, #10
- 800154c:	402b      	ands	r3, r5
- 800154e:	429c      	cmp	r4, r3
- 8001550:	d303      	bcc.n	800155a <FlashGetBank+0x32>
- 8001552:	4811      	ldr	r0, [pc, #68]	@ (8001598 <FlashGetBank+0x70>)
- 8001554:	4913      	ldr	r1, [pc, #76]	@ (80015a4 <FlashGetBank+0x7c>)
- 8001556:	f000 fae7 	bl	8001b28 <AssertFailure>
+ 800154e:	23f8      	movs	r3, #248	@ 0xf8
+ 8001550:	4e16      	ldr	r6, [pc, #88]	@ (80015ac <FlashGetBank+0x74>)
+ 8001552:	061b      	lsls	r3, r3, #24
+ 8001554:	18e4      	adds	r4, r4, r3
+ 8001556:	6833      	ldr	r3, [r6, #0]
+ 8001558:	4d15      	ldr	r5, [pc, #84]	@ (80015b0 <FlashGetBank+0x78>)
+ 800155a:	029b      	lsls	r3, r3, #10
+ 800155c:	402b      	ands	r3, r5
+ 800155e:	429c      	cmp	r4, r3
+ 8001560:	d303      	bcc.n	800156a <FlashGetBank+0x32>
+ 8001562:	4811      	ldr	r0, [pc, #68]	@ (80015a8 <FlashGetBank+0x70>)
+ 8001564:	4913      	ldr	r1, [pc, #76]	@ (80015b4 <FlashGetBank+0x7c>)
+ 8001566:	f000 fae7 	bl	8001b38 <AssertFailure>
   /* bank 2 is only possible on dual bank flash devices. for these devices, macro
    * FLASH_DBANK_SUPPORT is defined.
    */
 #if defined (FLASH_DBANK_SUPPORT)
   /* is the address in bank 2? */
   if ((address - FLASH_BASE) >= FLASH_BANK_SIZE)
- 800155a:	4b13      	ldr	r3, [pc, #76]	@ (80015a8 <FlashGetBank+0x80>)
- 800155c:	681a      	ldr	r2, [r3, #0]
- 800155e:	23c0      	movs	r3, #192	@ 0xc0
- 8001560:	0011      	movs	r1, r2
- 8001562:	049b      	lsls	r3, r3, #18
- 8001564:	4019      	ands	r1, r3
- 8001566:	421a      	tst	r2, r3
- 8001568:	d007      	beq.n	800157a <FlashGetBank+0x52>
- 800156a:	2380      	movs	r3, #128	@ 0x80
- 800156c:	045b      	lsls	r3, r3, #17
- 800156e:	4299      	cmp	r1, r3
- 8001570:	d10c      	bne.n	800158c <FlashGetBank+0x64>
- 8001572:	4b0e      	ldr	r3, [pc, #56]	@ (80015ac <FlashGetBank+0x84>)
- 8001574:	681b      	ldr	r3, [r3, #0]
- 8001576:	029b      	lsls	r3, r3, #10
- 8001578:	d408      	bmi.n	800158c <FlashGetBank+0x64>
- 800157a:	6833      	ldr	r3, [r6, #0]
- 800157c:	029b      	lsls	r3, r3, #10
- 800157e:	402b      	ands	r3, r5
+ 800156a:	4b13      	ldr	r3, [pc, #76]	@ (80015b8 <FlashGetBank+0x80>)
+ 800156c:	681a      	ldr	r2, [r3, #0]
+ 800156e:	23c0      	movs	r3, #192	@ 0xc0
+ 8001570:	0011      	movs	r1, r2
+ 8001572:	049b      	lsls	r3, r3, #18
+ 8001574:	4019      	ands	r1, r3
+ 8001576:	421a      	tst	r2, r3
+ 8001578:	d007      	beq.n	800158a <FlashGetBank+0x52>
+ 800157a:	2380      	movs	r3, #128	@ 0x80
+ 800157c:	045b      	lsls	r3, r3, #17
+ 800157e:	4299      	cmp	r1, r3
+ 8001580:	d10c      	bne.n	800159c <FlashGetBank+0x64>
+ 8001582:	4b0e      	ldr	r3, [pc, #56]	@ (80015bc <FlashGetBank+0x84>)
+ 8001584:	681b      	ldr	r3, [r3, #0]
+ 8001586:	029b      	lsls	r3, r3, #10
+ 8001588:	d408      	bmi.n	800159c <FlashGetBank+0x64>
+ 800158a:	6833      	ldr	r3, [r6, #0]
+ 800158c:	029b      	lsls	r3, r3, #10
+ 800158e:	402b      	ands	r3, r5
   blt_int32u result = FLASH_BANK_1;
- 8001580:	2004      	movs	r0, #4
+ 8001590:	2004      	movs	r0, #4
   if ((address - FLASH_BASE) >= FLASH_BANK_SIZE)
- 8001582:	429c      	cmp	r4, r3
- 8001584:	d301      	bcc.n	800158a <FlashGetBank+0x62>
+ 8001592:	429c      	cmp	r4, r3
+ 8001594:	d301      	bcc.n	800159a <FlashGetBank+0x62>
   {
     /* update the result */
     result = FLASH_BANK_2;
- 8001586:	2080      	movs	r0, #128	@ 0x80
- 8001588:	0200      	lsls	r0, r0, #8
+ 8001596:	2080      	movs	r0, #128	@ 0x80
+ 8001598:	0200      	lsls	r0, r0, #8
   }
 #endif
 
   /* give the result back to the caller */
   return result;
 } /** end of FlashGetBank ***/
- 800158a:	bd70      	pop	{r4, r5, r6, pc}
+ 800159a:	bd70      	pop	{r4, r5, r6, pc}
   if ((address - FLASH_BASE) >= FLASH_BANK_SIZE)
- 800158c:	6833      	ldr	r3, [r6, #0]
- 800158e:	4a08      	ldr	r2, [pc, #32]	@ (80015b0 <FlashGetBank+0x88>)
- 8001590:	025b      	lsls	r3, r3, #9
- 8001592:	4013      	ands	r3, r2
- 8001594:	e7f4      	b.n	8001580 <FlashGetBank+0x58>
- 8001596:	46c0      	nop			@ (mov r8, r8)
- 8001598:	0800202b 	.word	0x0800202b
- 800159c:	1fff75e0 	.word	0x1fff75e0
- 80015a0:	000ffc00 	.word	0x000ffc00
- 80015a4:	000003a5 	.word	0x000003a5
- 80015a8:	1fff7500 	.word	0x1fff7500
- 80015ac:	40022020 	.word	0x40022020
- 80015b0:	0007fe00 	.word	0x0007fe00
+ 800159c:	6833      	ldr	r3, [r6, #0]
+ 800159e:	4a08      	ldr	r2, [pc, #32]	@ (80015c0 <FlashGetBank+0x88>)
+ 80015a0:	025b      	lsls	r3, r3, #9
+ 80015a2:	4013      	ands	r3, r2
+ 80015a4:	e7f4      	b.n	8001590 <FlashGetBank+0x58>
+ 80015a6:	46c0      	nop			@ (mov r8, r8)
+ 80015a8:	0800203b 	.word	0x0800203b
+ 80015ac:	1fff75e0 	.word	0x1fff75e0
+ 80015b0:	000ffc00 	.word	0x000ffc00
+ 80015b4:	000003a5 	.word	0x000003a5
+ 80015b8:	1fff7500 	.word	0x1fff7500
+ 80015bc:	40022020 	.word	0x40022020
+ 80015c0:	0007fe00 	.word	0x0007fe00
 
-080015b4 <FlashWriteBlock>:
+080015c4 <FlashWriteBlock>:
 {
- 80015b4:	b5f7      	push	{r0, r1, r2, r4, r5, r6, r7, lr}
- 80015b6:	0006      	movs	r6, r0
+ 80015c4:	b5f7      	push	{r0, r1, r2, r4, r5, r6, r7, lr}
+ 80015c6:	0006      	movs	r6, r0
   if (FlashGetSector(block->base_addr) == FLASH_INVALID_SECTOR)
- 80015b8:	6800      	ldr	r0, [r0, #0]
- 80015ba:	f7ff ff81 	bl	80014c0 <FlashGetSector>
+ 80015c8:	6800      	ldr	r0, [r0, #0]
+ 80015ca:	f7ff ff81 	bl	80014d0 <FlashGetSector>
     result = BLT_FALSE;
- 80015be:	2400      	movs	r4, #0
+ 80015ce:	2400      	movs	r4, #0
   if (FlashGetSector(block->base_addr) == FLASH_INVALID_SECTOR)
- 80015c0:	28ff      	cmp	r0, #255	@ 0xff
- 80015c2:	d024      	beq.n	800160e <FlashWriteBlock+0x5a>
+ 80015d0:	28ff      	cmp	r0, #255	@ 0xff
+ 80015d2:	d024      	beq.n	800161e <FlashWriteBlock+0x5a>
     HAL_FLASH_Unlock();
- 80015c4:	f7ff faf8 	bl	8000bb8 <HAL_FLASH_Unlock>
- 80015c8:	0025      	movs	r5, r4
+ 80015d4:	f7ff faf0 	bl	8000bb8 <HAL_FLASH_Unlock>
+ 80015d8:	0025      	movs	r5, r4
       prog_addr = block->base_addr + (word_cnt * sizeof(prog_data));
- 80015ca:	0033      	movs	r3, r6
- 80015cc:	cb80      	ldmia	r3!, {r7}
- 80015ce:	19ef      	adds	r7, r5, r7
+ 80015da:	0033      	movs	r3, r6
+ 80015dc:	cb80      	ldmia	r3!, {r7}
+ 80015de:	19ef      	adds	r7, r5, r7
       prog_data = *(volatile blt_int64u *)(&block->data[word_cnt * sizeof(prog_data)]);
- 80015d0:	195b      	adds	r3, r3, r5
- 80015d2:	685c      	ldr	r4, [r3, #4]
- 80015d4:	681b      	ldr	r3, [r3, #0]
- 80015d6:	9300      	str	r3, [sp, #0]
- 80015d8:	9401      	str	r4, [sp, #4]
+ 80015e0:	195b      	adds	r3, r3, r5
+ 80015e2:	685c      	ldr	r4, [r3, #4]
+ 80015e4:	681b      	ldr	r3, [r3, #0]
+ 80015e6:	9300      	str	r3, [sp, #0]
+ 80015e8:	9401      	str	r4, [sp, #4]
       CopService();
- 80015da:	f000 fb4e 	bl	8001c7a <CopService>
+ 80015ea:	f000 fb4e 	bl	8001c8a <CopService>
       if (HAL_FLASH_Program(FLASH_TYPEPROGRAM_DOUBLEWORD, prog_addr, prog_data) != HAL_OK)
- 80015de:	9a00      	ldr	r2, [sp, #0]
- 80015e0:	9b01      	ldr	r3, [sp, #4]
- 80015e2:	0039      	movs	r1, r7
- 80015e4:	2001      	movs	r0, #1
- 80015e6:	f7ff fb31 	bl	8000c4c <HAL_FLASH_Program>
- 80015ea:	1e04      	subs	r4, r0, #0
- 80015ec:	d111      	bne.n	8001612 <FlashWriteBlock+0x5e>
+ 80015ee:	9a00      	ldr	r2, [sp, #0]
+ 80015f0:	9b01      	ldr	r3, [sp, #4]
+ 80015f2:	0039      	movs	r1, r7
+ 80015f4:	2001      	movs	r0, #1
+ 80015f6:	f7ff fb29 	bl	8000c4c <HAL_FLASH_Program>
+ 80015fa:	1e04      	subs	r4, r0, #0
+ 80015fc:	d111      	bne.n	8001622 <FlashWriteBlock+0x5e>
       if (*(volatile blt_int64u *)prog_addr != prog_data)
- 80015ee:	683a      	ldr	r2, [r7, #0]
- 80015f0:	687b      	ldr	r3, [r7, #4]
- 80015f2:	9900      	ldr	r1, [sp, #0]
- 80015f4:	4291      	cmp	r1, r2
- 80015f6:	d108      	bne.n	800160a <FlashWriteBlock+0x56>
- 80015f8:	9901      	ldr	r1, [sp, #4]
- 80015fa:	4299      	cmp	r1, r3
- 80015fc:	d105      	bne.n	800160a <FlashWriteBlock+0x56>
+ 80015fe:	683a      	ldr	r2, [r7, #0]
+ 8001600:	687b      	ldr	r3, [r7, #4]
+ 8001602:	9900      	ldr	r1, [sp, #0]
+ 8001604:	4291      	cmp	r1, r2
+ 8001606:	d108      	bne.n	800161a <FlashWriteBlock+0x56>
+ 8001608:	9901      	ldr	r1, [sp, #4]
+ 800160a:	4299      	cmp	r1, r3
+ 800160c:	d105      	bne.n	800161a <FlashWriteBlock+0x56>
     for (word_cnt=0; word_cnt<(FLASH_WRITE_BLOCK_SIZE/sizeof(prog_data)); word_cnt++)
- 80015fe:	2380      	movs	r3, #128	@ 0x80
- 8001600:	3508      	adds	r5, #8
- 8001602:	009b      	lsls	r3, r3, #2
- 8001604:	429d      	cmp	r5, r3
- 8001606:	d1e0      	bne.n	80015ca <FlashWriteBlock+0x16>
+ 800160e:	2380      	movs	r3, #128	@ 0x80
+ 8001610:	3508      	adds	r5, #8
+ 8001612:	009b      	lsls	r3, r3, #2
+ 8001614:	429d      	cmp	r5, r3
+ 8001616:	d1e0      	bne.n	80015da <FlashWriteBlock+0x16>
   blt_bool   result = BLT_TRUE;
- 8001608:	3401      	adds	r4, #1
+ 8001618:	3401      	adds	r4, #1
     HAL_FLASH_Lock();
- 800160a:	f7ff fb53 	bl	8000cb4 <HAL_FLASH_Lock>
+ 800161a:	f7ff fb4b 	bl	8000cb4 <HAL_FLASH_Lock>
 } /*** end of FlashWriteBlock ***/
- 800160e:	0020      	movs	r0, r4
- 8001610:	bdfe      	pop	{r1, r2, r3, r4, r5, r6, r7, pc}
+ 800161e:	0020      	movs	r0, r4
+ 8001620:	bdfe      	pop	{r1, r2, r3, r4, r5, r6, r7, pc}
         result = BLT_FALSE;
- 8001612:	2400      	movs	r4, #0
- 8001614:	e7f9      	b.n	800160a <FlashWriteBlock+0x56>
+ 8001622:	2400      	movs	r4, #0
+ 8001624:	e7f9      	b.n	800161a <FlashWriteBlock+0x56>
 	...
 
-08001618 <FlashSwitchBlock>:
+08001628 <FlashSwitchBlock>:
   if (block == &bootBlockInfo)
- 8001618:	4b11      	ldr	r3, [pc, #68]	@ (8001660 <FlashSwitchBlock+0x48>)
+ 8001628:	4b11      	ldr	r3, [pc, #68]	@ (8001670 <FlashSwitchBlock+0x48>)
 {
- 800161a:	b570      	push	{r4, r5, r6, lr}
- 800161c:	0004      	movs	r4, r0
- 800161e:	000d      	movs	r5, r1
+ 800162a:	b570      	push	{r4, r5, r6, lr}
+ 800162c:	0004      	movs	r4, r0
+ 800162e:	000d      	movs	r5, r1
   if (block == &bootBlockInfo)
- 8001620:	4298      	cmp	r0, r3
- 8001622:	d018      	beq.n	8001656 <FlashSwitchBlock+0x3e>
+ 8001630:	4298      	cmp	r0, r3
+ 8001632:	d018      	beq.n	8001666 <FlashSwitchBlock+0x3e>
   else if (base_addr == flashLayout[0].sector_start)
- 8001624:	4a0f      	ldr	r2, [pc, #60]	@ (8001664 <FlashSwitchBlock+0x4c>)
- 8001626:	4291      	cmp	r1, r2
- 8001628:	d017      	beq.n	800165a <FlashSwitchBlock+0x42>
+ 8001634:	4a0f      	ldr	r2, [pc, #60]	@ (8001674 <FlashSwitchBlock+0x4c>)
+ 8001636:	4291      	cmp	r1, r2
+ 8001638:	d017      	beq.n	800166a <FlashSwitchBlock+0x42>
     if (FlashWriteBlock(block) == BLT_TRUE)
- 800162a:	f7ff ffc3 	bl	80015b4 <FlashWriteBlock>
- 800162e:	2801      	cmp	r0, #1
- 8001630:	d002      	beq.n	8001638 <FlashSwitchBlock+0x20>
+ 800163a:	f7ff ffc3 	bl	80015c4 <FlashWriteBlock>
+ 800163e:	2801      	cmp	r0, #1
+ 8001640:	d002      	beq.n	8001648 <FlashSwitchBlock+0x20>
     block = &bootBlockInfo;
- 8001632:	2400      	movs	r4, #0
+ 8001642:	2400      	movs	r4, #0
 } /*** end of FlashSwitchBlock ***/
- 8001634:	0020      	movs	r0, r4
- 8001636:	bd70      	pop	{r4, r5, r6, pc}
+ 8001644:	0020      	movs	r0, r4
+ 8001646:	bd70      	pop	{r4, r5, r6, pc}
   if (result != BLT_NULL)
- 8001638:	2c00      	cmp	r4, #0
- 800163a:	d0fa      	beq.n	8001632 <FlashSwitchBlock+0x1a>
+ 8001648:	2c00      	cmp	r4, #0
+ 800164a:	d0fa      	beq.n	8001642 <FlashSwitchBlock+0x1a>
   if ((address % FLASH_WRITE_BLOCK_SIZE) != 0)
- 800163c:	05eb      	lsls	r3, r5, #23
- 800163e:	d1f8      	bne.n	8001632 <FlashSwitchBlock+0x1a>
+ 800164c:	05eb      	lsls	r3, r5, #23
+ 800164e:	d1f8      	bne.n	8001642 <FlashSwitchBlock+0x1a>
     if (block->base_addr != address)
- 8001640:	6823      	ldr	r3, [r4, #0]
- 8001642:	429d      	cmp	r5, r3
- 8001644:	d0f6      	beq.n	8001634 <FlashSwitchBlock+0x1c>
+ 8001650:	6823      	ldr	r3, [r4, #0]
+ 8001652:	429d      	cmp	r5, r3
+ 8001654:	d0f6      	beq.n	8001644 <FlashSwitchBlock+0x1c>
       block->base_addr = address;
- 8001646:	0020      	movs	r0, r4
+ 8001656:	0020      	movs	r0, r4
       CpuMemCopy((blt_addr)block->data, address, FLASH_WRITE_BLOCK_SIZE);
- 8001648:	2280      	movs	r2, #128	@ 0x80
- 800164a:	0029      	movs	r1, r5
+ 8001658:	2280      	movs	r2, #128	@ 0x80
+ 800165a:	0029      	movs	r1, r5
       block->base_addr = address;
- 800164c:	c020      	stmia	r0!, {r5}
+ 800165c:	c020      	stmia	r0!, {r5}
       CpuMemCopy((blt_addr)block->data, address, FLASH_WRITE_BLOCK_SIZE);
- 800164e:	0092      	lsls	r2, r2, #2
- 8001650:	f7ff ff24 	bl	800149c <CpuMemCopy>
+ 800165e:	0092      	lsls	r2, r2, #2
+ 8001660:	f7ff ff24 	bl	80014ac <CpuMemCopy>
   return result;
- 8001654:	e7ee      	b.n	8001634 <FlashSwitchBlock+0x1c>
+ 8001664:	e7ee      	b.n	8001644 <FlashSwitchBlock+0x1c>
     block = &blockInfo;
- 8001656:	4c04      	ldr	r4, [pc, #16]	@ (8001668 <FlashSwitchBlock+0x50>)
- 8001658:	e7f0      	b.n	800163c <FlashSwitchBlock+0x24>
+ 8001666:	4c04      	ldr	r4, [pc, #16]	@ (8001678 <FlashSwitchBlock+0x50>)
+ 8001668:	e7f0      	b.n	800164c <FlashSwitchBlock+0x24>
     block = &bootBlockInfo;
- 800165a:	001c      	movs	r4, r3
- 800165c:	e7f0      	b.n	8001640 <FlashSwitchBlock+0x28>
- 800165e:	46c0      	nop			@ (mov r8, r8)
- 8001660:	200000f4 	.word	0x200000f4
- 8001664:	08003000 	.word	0x08003000
- 8001668:	200002f8 	.word	0x200002f8
+ 800166a:	001c      	movs	r4, r3
+ 800166c:	e7f0      	b.n	8001650 <FlashSwitchBlock+0x28>
+ 800166e:	46c0      	nop			@ (mov r8, r8)
+ 8001670:	200000f4 	.word	0x200000f4
+ 8001674:	08003000 	.word	0x08003000
+ 8001678:	200002f8 	.word	0x200002f8
 
-0800166c <FlashAddToBlock>:
+0800167c <FlashAddToBlock>:
 {
- 800166c:	b5f7      	push	{r0, r1, r2, r4, r5, r6, r7, lr}
- 800166e:	9301      	str	r3, [sp, #4]
+ 800167c:	b5f7      	push	{r0, r1, r2, r4, r5, r6, r7, lr}
+ 800167e:	9301      	str	r3, [sp, #4]
   if (block->base_addr == FLASH_INVALID_ADDRESS)
- 8001670:	6803      	ldr	r3, [r0, #0]
+ 8001680:	6803      	ldr	r3, [r0, #0]
   current_base_addr = (address/FLASH_WRITE_BLOCK_SIZE)*FLASH_WRITE_BLOCK_SIZE;
- 8001672:	0a4e      	lsrs	r6, r1, #9
+ 8001682:	0a4e      	lsrs	r6, r1, #9
 {
- 8001674:	0004      	movs	r4, r0
- 8001676:	000d      	movs	r5, r1
- 8001678:	0017      	movs	r7, r2
+ 8001684:	0004      	movs	r4, r0
+ 8001686:	000d      	movs	r5, r1
+ 8001688:	0017      	movs	r7, r2
   current_base_addr = (address/FLASH_WRITE_BLOCK_SIZE)*FLASH_WRITE_BLOCK_SIZE;
- 800167a:	0276      	lsls	r6, r6, #9
+ 800168a:	0276      	lsls	r6, r6, #9
   if (block->base_addr == FLASH_INVALID_ADDRESS)
- 800167c:	3301      	adds	r3, #1
- 800167e:	d105      	bne.n	800168c <FlashAddToBlock+0x20>
+ 800168c:	3301      	adds	r3, #1
+ 800168e:	d105      	bne.n	800169c <FlashAddToBlock+0x20>
       CpuMemCopy((blt_addr)block->data, address, FLASH_WRITE_BLOCK_SIZE);
- 8001680:	2280      	movs	r2, #128	@ 0x80
- 8001682:	0031      	movs	r1, r6
+ 8001690:	2280      	movs	r2, #128	@ 0x80
+ 8001692:	0031      	movs	r1, r6
       block->base_addr = address;
- 8001684:	c040      	stmia	r0!, {r6}
+ 8001694:	c040      	stmia	r0!, {r6}
       CpuMemCopy((blt_addr)block->data, address, FLASH_WRITE_BLOCK_SIZE);
- 8001686:	0092      	lsls	r2, r2, #2
- 8001688:	f7ff ff08 	bl	800149c <CpuMemCopy>
+ 8001696:	0092      	lsls	r2, r2, #2
+ 8001698:	f7ff ff08 	bl	80014ac <CpuMemCopy>
     if (block->base_addr != current_base_addr)
- 800168c:	6823      	ldr	r3, [r4, #0]
- 800168e:	42b3      	cmp	r3, r6
- 8001690:	d005      	beq.n	800169e <FlashAddToBlock+0x32>
+ 800169c:	6823      	ldr	r3, [r4, #0]
+ 800169e:	42b3      	cmp	r3, r6
+ 80016a0:	d005      	beq.n	80016ae <FlashAddToBlock+0x32>
       block = FlashSwitchBlock(block, current_base_addr);
- 8001692:	0020      	movs	r0, r4
- 8001694:	0031      	movs	r1, r6
- 8001696:	f7ff ffbf 	bl	8001618 <FlashSwitchBlock>
- 800169a:	1e04      	subs	r4, r0, #0
+ 80016a2:	0020      	movs	r0, r4
+ 80016a4:	0031      	movs	r1, r6
+ 80016a6:	f7ff ffbf 	bl	8001628 <FlashSwitchBlock>
+ 80016aa:	1e04      	subs	r4, r0, #0
       if (block == BLT_NULL)
- 800169c:	d01e      	beq.n	80016dc <FlashAddToBlock+0x70>
+ 80016ac:	d01e      	beq.n	80016ec <FlashAddToBlock+0x70>
     src = data;
- 800169e:	003e      	movs	r6, r7
+ 80016ae:	003e      	movs	r6, r7
     dst = &(block->data[address - block->base_addr]);
- 80016a0:	6823      	ldr	r3, [r4, #0]
- 80016a2:	3504      	adds	r5, #4
- 80016a4:	1aed      	subs	r5, r5, r3
- 80016a6:	1965      	adds	r5, r4, r5
+ 80016b0:	6823      	ldr	r3, [r4, #0]
+ 80016b2:	3504      	adds	r5, #4
+ 80016b4:	1aed      	subs	r5, r5, r3
+ 80016b6:	1965      	adds	r5, r4, r5
       CopService();
- 80016a8:	f000 fae7 	bl	8001c7a <CopService>
+ 80016b8:	f000 fae7 	bl	8001c8a <CopService>
       if ((blt_addr)(dst-&(block->data[0])) >= FLASH_WRITE_BLOCK_SIZE)
- 80016ac:	2280      	movs	r2, #128	@ 0x80
- 80016ae:	1d23      	adds	r3, r4, #4
- 80016b0:	1aeb      	subs	r3, r5, r3
- 80016b2:	0092      	lsls	r2, r2, #2
- 80016b4:	4293      	cmp	r3, r2
- 80016b6:	d307      	bcc.n	80016c8 <FlashAddToBlock+0x5c>
+ 80016bc:	2280      	movs	r2, #128	@ 0x80
+ 80016be:	1d23      	adds	r3, r4, #4
+ 80016c0:	1aeb      	subs	r3, r5, r3
+ 80016c2:	0092      	lsls	r2, r2, #2
+ 80016c4:	4293      	cmp	r3, r2
+ 80016c6:	d307      	bcc.n	80016d8 <FlashAddToBlock+0x5c>
         block = FlashSwitchBlock(block, block->base_addr+FLASH_WRITE_BLOCK_SIZE);
- 80016b8:	6821      	ldr	r1, [r4, #0]
- 80016ba:	0020      	movs	r0, r4
- 80016bc:	1889      	adds	r1, r1, r2
- 80016be:	f7ff ffab 	bl	8001618 <FlashSwitchBlock>
- 80016c2:	1e04      	subs	r4, r0, #0
+ 80016c8:	6821      	ldr	r1, [r4, #0]
+ 80016ca:	0020      	movs	r0, r4
+ 80016cc:	1889      	adds	r1, r1, r2
+ 80016ce:	f7ff ffab 	bl	8001628 <FlashSwitchBlock>
+ 80016d2:	1e04      	subs	r4, r0, #0
         if (block == BLT_NULL)
- 80016c4:	d00a      	beq.n	80016dc <FlashAddToBlock+0x70>
+ 80016d4:	d00a      	beq.n	80016ec <FlashAddToBlock+0x70>
         dst = &(block->data[0]);
- 80016c6:	1d05      	adds	r5, r0, #4
+ 80016d6:	1d05      	adds	r5, r0, #4
       *dst = *src;
- 80016c8:	7833      	ldrb	r3, [r6, #0]
+ 80016d8:	7833      	ldrb	r3, [r6, #0]
       src++;
- 80016ca:	3601      	adds	r6, #1
+ 80016da:	3601      	adds	r6, #1
       *dst = *src;
- 80016cc:	702b      	strb	r3, [r5, #0]
+ 80016dc:	702b      	strb	r3, [r5, #0]
     while (len > 0);
- 80016ce:	9b01      	ldr	r3, [sp, #4]
+ 80016de:	9b01      	ldr	r3, [sp, #4]
       dst++;
- 80016d0:	3501      	adds	r5, #1
+ 80016e0:	3501      	adds	r5, #1
     while (len > 0);
- 80016d2:	18fb      	adds	r3, r7, r3
- 80016d4:	429e      	cmp	r6, r3
- 80016d6:	d1e7      	bne.n	80016a8 <FlashAddToBlock+0x3c>
- 80016d8:	2001      	movs	r0, #1
+ 80016e2:	18fb      	adds	r3, r7, r3
+ 80016e4:	429e      	cmp	r6, r3
+ 80016e6:	d1e7      	bne.n	80016b8 <FlashAddToBlock+0x3c>
+ 80016e8:	2001      	movs	r0, #1
 } /*** end of FlashAddToBlock ***/
- 80016da:	bdfe      	pop	{r1, r2, r3, r4, r5, r6, r7, pc}
+ 80016ea:	bdfe      	pop	{r1, r2, r3, r4, r5, r6, r7, pc}
       result = BLT_FALSE;
- 80016dc:	2000      	movs	r0, #0
- 80016de:	e7fc      	b.n	80016da <FlashAddToBlock+0x6e>
+ 80016ec:	2000      	movs	r0, #0
+ 80016ee:	e7fc      	b.n	80016ea <FlashAddToBlock+0x6e>
 
-080016e0 <FlashInit>:
+080016f0 <FlashInit>:
   blockInfo.base_addr = FLASH_INVALID_ADDRESS;
- 80016e0:	2201      	movs	r2, #1
- 80016e2:	4b03      	ldr	r3, [pc, #12]	@ (80016f0 <FlashInit+0x10>)
- 80016e4:	4252      	negs	r2, r2
- 80016e6:	601a      	str	r2, [r3, #0]
+ 80016f0:	2201      	movs	r2, #1
+ 80016f2:	4b03      	ldr	r3, [pc, #12]	@ (8001700 <FlashInit+0x10>)
+ 80016f4:	4252      	negs	r2, r2
+ 80016f6:	601a      	str	r2, [r3, #0]
   bootBlockInfo.base_addr = FLASH_INVALID_ADDRESS;
- 80016e8:	4b02      	ldr	r3, [pc, #8]	@ (80016f4 <FlashInit+0x14>)
- 80016ea:	601a      	str	r2, [r3, #0]
+ 80016f8:	4b02      	ldr	r3, [pc, #8]	@ (8001704 <FlashInit+0x14>)
+ 80016fa:	601a      	str	r2, [r3, #0]
 } /*** end of FlashInit ***/
- 80016ec:	4770      	bx	lr
- 80016ee:	46c0      	nop			@ (mov r8, r8)
- 80016f0:	200002f8 	.word	0x200002f8
- 80016f4:	200000f4 	.word	0x200000f4
+ 80016fc:	4770      	bx	lr
+ 80016fe:	46c0      	nop			@ (mov r8, r8)
+ 8001700:	200002f8 	.word	0x200002f8
+ 8001704:	200000f4 	.word	0x200000f4
 
-080016f8 <FlashWrite>:
+08001708 <FlashWrite>:
   if ((len - 1) > (FLASH_END_ADDRESS - addr))
- 80016f8:	4b10      	ldr	r3, [pc, #64]	@ (800173c <FlashWrite+0x44>)
+ 8001708:	4b10      	ldr	r3, [pc, #64]	@ (800174c <FlashWrite+0x44>)
 {
- 80016fa:	b570      	push	{r4, r5, r6, lr}
- 80016fc:	0016      	movs	r6, r2
+ 800170a:	b570      	push	{r4, r5, r6, lr}
+ 800170c:	0016      	movs	r6, r2
   if ((len - 1) > (FLASH_END_ADDRESS - addr))
- 80016fe:	1e4a      	subs	r2, r1, #1
+ 800170e:	1e4a      	subs	r2, r1, #1
 {
- 8001700:	0004      	movs	r4, r0
- 8001702:	000d      	movs	r5, r1
+ 8001710:	0004      	movs	r4, r0
+ 8001712:	000d      	movs	r5, r1
   if ((len - 1) > (FLASH_END_ADDRESS - addr))
- 8001704:	1a1b      	subs	r3, r3, r0
- 8001706:	429a      	cmp	r2, r3
- 8001708:	d901      	bls.n	800170e <FlashWrite+0x16>
+ 8001714:	1a1b      	subs	r3, r3, r0
+ 8001716:	429a      	cmp	r2, r3
+ 8001718:	d901      	bls.n	800171e <FlashWrite+0x16>
     return BLT_FALSE;
- 800170a:	2000      	movs	r0, #0
+ 800171a:	2000      	movs	r0, #0
 } /*** end of FlashWrite ***/
- 800170c:	bd70      	pop	{r4, r5, r6, pc}
+ 800171c:	bd70      	pop	{r4, r5, r6, pc}
   if ((FlashGetSector(addr)       == FLASH_INVALID_SECTOR) ||
- 800170e:	f7ff fed7 	bl	80014c0 <FlashGetSector>
- 8001712:	28ff      	cmp	r0, #255	@ 0xff
- 8001714:	d0f9      	beq.n	800170a <FlashWrite+0x12>
+ 800171e:	f7ff fed7 	bl	80014d0 <FlashGetSector>
+ 8001722:	28ff      	cmp	r0, #255	@ 0xff
+ 8001724:	d0f9      	beq.n	800171a <FlashWrite+0x12>
       (FlashGetSector(addr+len-1) == FLASH_INVALID_SECTOR))
- 8001716:	1e60      	subs	r0, r4, #1
- 8001718:	1940      	adds	r0, r0, r5
- 800171a:	f7ff fed1 	bl	80014c0 <FlashGetSector>
+ 8001726:	1e60      	subs	r0, r4, #1
+ 8001728:	1940      	adds	r0, r0, r5
+ 800172a:	f7ff fed1 	bl	80014d0 <FlashGetSector>
   if ((FlashGetSector(addr)       == FLASH_INVALID_SECTOR) ||
- 800171e:	28ff      	cmp	r0, #255	@ 0xff
- 8001720:	d0f3      	beq.n	800170a <FlashWrite+0x12>
+ 800172e:	28ff      	cmp	r0, #255	@ 0xff
+ 8001730:	d0f3      	beq.n	800171a <FlashWrite+0x12>
     if (base_addr == flashLayout[0].sector_start)
- 8001722:	4a07      	ldr	r2, [pc, #28]	@ (8001740 <FlashWrite+0x48>)
+ 8001732:	4a07      	ldr	r2, [pc, #28]	@ (8001750 <FlashWrite+0x48>)
     base_addr = (addr/FLASH_WRITE_BLOCK_SIZE)*FLASH_WRITE_BLOCK_SIZE;
- 8001724:	0a63      	lsrs	r3, r4, #9
+ 8001734:	0a63      	lsrs	r3, r4, #9
     return FlashAddToBlock(&bootBlockInfo, addr, data, len);
- 8001726:	4807      	ldr	r0, [pc, #28]	@ (8001744 <FlashWrite+0x4c>)
+ 8001736:	4807      	ldr	r0, [pc, #28]	@ (8001754 <FlashWrite+0x4c>)
     base_addr = (addr/FLASH_WRITE_BLOCK_SIZE)*FLASH_WRITE_BLOCK_SIZE;
- 8001728:	025b      	lsls	r3, r3, #9
+ 8001738:	025b      	lsls	r3, r3, #9
     if (base_addr == flashLayout[0].sector_start)
- 800172a:	4293      	cmp	r3, r2
- 800172c:	d000      	beq.n	8001730 <FlashWrite+0x38>
+ 800173a:	4293      	cmp	r3, r2
+ 800173c:	d000      	beq.n	8001740 <FlashWrite+0x38>
   return FlashAddToBlock(&blockInfo, addr, data, len);
- 800172e:	4806      	ldr	r0, [pc, #24]	@ (8001748 <FlashWrite+0x50>)
- 8001730:	002b      	movs	r3, r5
- 8001732:	0032      	movs	r2, r6
- 8001734:	0021      	movs	r1, r4
- 8001736:	f7ff ff99 	bl	800166c <FlashAddToBlock>
- 800173a:	e7e7      	b.n	800170c <FlashWrite+0x14>
- 800173c:	0807ffff 	.word	0x0807ffff
- 8001740:	08003000 	.word	0x08003000
- 8001744:	200000f4 	.word	0x200000f4
- 8001748:	200002f8 	.word	0x200002f8
+ 800173e:	4806      	ldr	r0, [pc, #24]	@ (8001758 <FlashWrite+0x50>)
+ 8001740:	002b      	movs	r3, r5
+ 8001742:	0032      	movs	r2, r6
+ 8001744:	0021      	movs	r1, r4
+ 8001746:	f7ff ff99 	bl	800167c <FlashAddToBlock>
+ 800174a:	e7e7      	b.n	800171c <FlashWrite+0x14>
+ 800174c:	0807ffff 	.word	0x0807ffff
+ 8001750:	08003000 	.word	0x08003000
+ 8001754:	200000f4 	.word	0x200000f4
+ 8001758:	200002f8 	.word	0x200002f8
 
-0800174c <FlashErase>:
+0800175c <FlashErase>:
 {
- 800174c:	b5f0      	push	{r4, r5, r6, r7, lr}
+ 800175c:	b5f0      	push	{r4, r5, r6, r7, lr}
   if ((len - 1) > (FLASH_END_ADDRESS - addr))
- 800174e:	4b60      	ldr	r3, [pc, #384]	@ (80018d0 <FlashErase+0x184>)
- 8001750:	1e4a      	subs	r2, r1, #1
+ 800175e:	4b60      	ldr	r3, [pc, #384]	@ (80018e0 <FlashErase+0x184>)
+ 8001760:	1e4a      	subs	r2, r1, #1
 {
- 8001752:	0004      	movs	r4, r0
- 8001754:	000d      	movs	r5, r1
- 8001756:	b089      	sub	sp, #36	@ 0x24
+ 8001762:	0004      	movs	r4, r0
+ 8001764:	000d      	movs	r5, r1
+ 8001766:	b089      	sub	sp, #36	@ 0x24
   if ((len - 1) > (FLASH_END_ADDRESS - addr))
- 8001758:	1a1b      	subs	r3, r3, r0
- 800175a:	429a      	cmp	r2, r3
- 800175c:	d903      	bls.n	8001766 <FlashErase+0x1a>
+ 8001768:	1a1b      	subs	r3, r3, r0
+ 800176a:	429a      	cmp	r2, r3
+ 800176c:	d903      	bls.n	8001776 <FlashErase+0x1a>
     result = BLT_FALSE;
- 800175e:	2400      	movs	r4, #0
+ 800176e:	2400      	movs	r4, #0
 } /*** end of FlashErase ***/
- 8001760:	0020      	movs	r0, r4
- 8001762:	b009      	add	sp, #36	@ 0x24
- 8001764:	bdf0      	pop	{r4, r5, r6, r7, pc}
+ 8001770:	0020      	movs	r0, r4
+ 8001772:	b009      	add	sp, #36	@ 0x24
+ 8001774:	bdf0      	pop	{r4, r5, r6, r7, pc}
     first_sector = FlashGetSector(addr);
- 8001766:	f7ff feab 	bl	80014c0 <FlashGetSector>
+ 8001776:	f7ff feab 	bl	80014d0 <FlashGetSector>
     last_sector  = FlashGetSector(addr+len-1);
- 800176a:	3c01      	subs	r4, #1
+ 800177a:	3c01      	subs	r4, #1
     first_sector = FlashGetSector(addr);
- 800176c:	0007      	movs	r7, r0
+ 800177c:	0007      	movs	r7, r0
     last_sector  = FlashGetSector(addr+len-1);
- 800176e:	1960      	adds	r0, r4, r5
- 8001770:	f7ff fea6 	bl	80014c0 <FlashGetSector>
- 8001774:	0006      	movs	r6, r0
+ 800177e:	1960      	adds	r0, r4, r5
+ 8001780:	f7ff fea6 	bl	80014d0 <FlashGetSector>
+ 8001784:	0006      	movs	r6, r0
     if ((first_sector == FLASH_INVALID_SECTOR) ||
- 8001776:	2fff      	cmp	r7, #255	@ 0xff
- 8001778:	d0f1      	beq.n	800175e <FlashErase+0x12>
- 800177a:	28ff      	cmp	r0, #255	@ 0xff
- 800177c:	d0ef      	beq.n	800175e <FlashErase+0x12>
+ 8001786:	2fff      	cmp	r7, #255	@ 0xff
+ 8001788:	d0f1      	beq.n	800176e <FlashErase+0x12>
+ 800178a:	28ff      	cmp	r0, #255	@ 0xff
+ 800178c:	d0ef      	beq.n	800176e <FlashErase+0x12>
   blt_int32u pageError = 0;
- 800177e:	2500      	movs	r5, #0
+ 800178e:	2500      	movs	r5, #0
     result = BLT_FALSE;
- 8001780:	002c      	movs	r4, r5
+ 8001790:	002c      	movs	r4, r5
   blt_int32u pageError = 0;
- 8001782:	9503      	str	r5, [sp, #12]
+ 8001792:	9503      	str	r5, [sp, #12]
   if (first_sector > last_sector)
- 8001784:	4287      	cmp	r7, r0
- 8001786:	d8eb      	bhi.n	8001760 <FlashErase+0x14>
+ 8001794:	4287      	cmp	r7, r0
+ 8001796:	d8eb      	bhi.n	8001770 <FlashErase+0x14>
     if ((first_sector < flashLayout[0].sector_num) || \
- 8001788:	2f05      	cmp	r7, #5
- 800178a:	d9e9      	bls.n	8001760 <FlashErase+0x14>
- 800178c:	281e      	cmp	r0, #30
- 800178e:	d8e7      	bhi.n	8001760 <FlashErase+0x14>
+ 8001798:	2f05      	cmp	r7, #5
+ 800179a:	d9e9      	bls.n	8001770 <FlashErase+0x14>
+ 800179c:	281e      	cmp	r0, #30
+ 800179e:	d8e7      	bhi.n	8001770 <FlashErase+0x14>
     start_addr = FlashGetSectorBaseAddr(first_sector);
- 8001790:	0038      	movs	r0, r7
- 8001792:	f7ff feb1 	bl	80014f8 <FlashGetSectorBaseAddr>
- 8001796:	0004      	movs	r4, r0
+ 80017a0:	0038      	movs	r0, r7
+ 80017a2:	f7ff feb1 	bl	8001508 <FlashGetSectorBaseAddr>
+ 80017a6:	0004      	movs	r4, r0
     end_addr   = FlashGetSectorBaseAddr(last_sector) + 
- 8001798:	0030      	movs	r0, r6
- 800179a:	f7ff fead 	bl	80014f8 <FlashGetSectorBaseAddr>
- 800179e:	4f4d      	ldr	r7, [pc, #308]	@ (80018d4 <FlashErase+0x188>)
- 80017a0:	9000      	str	r0, [sp, #0]
+ 80017a8:	0030      	movs	r0, r6
+ 80017aa:	f7ff fead 	bl	8001508 <FlashGetSectorBaseAddr>
+ 80017ae:	4f4d      	ldr	r7, [pc, #308]	@ (80018e4 <FlashErase+0x188>)
+ 80017b0:	9000      	str	r0, [sp, #0]
     CopService();
- 80017a2:	f000 fa6a 	bl	8001c7a <CopService>
+ 80017b2:	f000 fa6a 	bl	8001c8a <CopService>
     if (flashLayout[sectorIdx].sector_num == sector)
- 80017a6:	7a3b      	ldrb	r3, [r7, #8]
- 80017a8:	42b3      	cmp	r3, r6
- 80017aa:	d119      	bne.n	80017e0 <FlashErase+0x94>
+ 80017b6:	7a3b      	ldrb	r3, [r7, #8]
+ 80017b8:	42b3      	cmp	r3, r6
+ 80017ba:	d119      	bne.n	80017f0 <FlashErase+0x94>
       return flashLayout[sectorIdx].sector_size;
- 80017ac:	230c      	movs	r3, #12
- 80017ae:	436b      	muls	r3, r5
- 80017b0:	4a48      	ldr	r2, [pc, #288]	@ (80018d4 <FlashErase+0x188>)
- 80017b2:	18d3      	adds	r3, r2, r3
- 80017b4:	685d      	ldr	r5, [r3, #4]
+ 80017bc:	230c      	movs	r3, #12
+ 80017be:	436b      	muls	r3, r5
+ 80017c0:	4a48      	ldr	r2, [pc, #288]	@ (80018e4 <FlashErase+0x188>)
+ 80017c2:	18d3      	adds	r3, r2, r3
+ 80017c4:	685d      	ldr	r5, [r3, #4]
     eraseInitStruct.TypeErase = FLASH_TYPEERASE_PAGES;
- 80017b6:	2302      	movs	r3, #2
- 80017b8:	9304      	str	r3, [sp, #16]
+ 80017c6:	2302      	movs	r3, #2
+ 80017c8:	9304      	str	r3, [sp, #16]
     eraseInitStruct.NbPages   = 1;
- 80017ba:	3b01      	subs	r3, #1
- 80017bc:	9307      	str	r3, [sp, #28]
+ 80017ca:	3b01      	subs	r3, #1
+ 80017cc:	9307      	str	r3, [sp, #28]
     HAL_FLASH_Unlock();
- 80017be:	f7ff f9fb 	bl	8000bb8 <HAL_FLASH_Unlock>
+ 80017ce:	f7ff f9f3 	bl	8000bb8 <HAL_FLASH_Unlock>
     nr_of_blocks = (end_addr - start_addr + 1) / FLASH_ERASE_BLOCK_SIZE;
- 80017c2:	9b00      	ldr	r3, [sp, #0]
- 80017c4:	1b1b      	subs	r3, r3, r4
- 80017c6:	195b      	adds	r3, r3, r5
- 80017c8:	0adb      	lsrs	r3, r3, #11
- 80017ca:	b29b      	uxth	r3, r3
- 80017cc:	02db      	lsls	r3, r3, #11
- 80017ce:	191b      	adds	r3, r3, r4
- 80017d0:	9301      	str	r3, [sp, #4]
+ 80017d2:	9b00      	ldr	r3, [sp, #0]
+ 80017d4:	1b1b      	subs	r3, r3, r4
+ 80017d6:	195b      	adds	r3, r3, r5
+ 80017d8:	0adb      	lsrs	r3, r3, #11
+ 80017da:	b29b      	uxth	r3, r3
+ 80017dc:	02db      	lsls	r3, r3, #11
+ 80017de:	191b      	adds	r3, r3, r4
+ 80017e0:	9301      	str	r3, [sp, #4]
     for (block_cnt=0; block_cnt<nr_of_blocks; block_cnt++)
- 80017d2:	9b01      	ldr	r3, [sp, #4]
- 80017d4:	42a3      	cmp	r3, r4
- 80017d6:	d109      	bne.n	80017ec <FlashErase+0xa0>
- 80017d8:	2401      	movs	r4, #1
+ 80017e2:	9b01      	ldr	r3, [sp, #4]
+ 80017e4:	42a3      	cmp	r3, r4
+ 80017e6:	d109      	bne.n	80017fc <FlashErase+0xa0>
+ 80017e8:	2401      	movs	r4, #1
     HAL_FLASH_Lock();
- 80017da:	f7ff fa6b 	bl	8000cb4 <HAL_FLASH_Lock>
- 80017de:	e7bf      	b.n	8001760 <FlashErase+0x14>
+ 80017ea:	f7ff fa63 	bl	8000cb4 <HAL_FLASH_Lock>
+ 80017ee:	e7bf      	b.n	8001770 <FlashErase+0x14>
   for (sectorIdx = 0; sectorIdx < FLASH_TOTAL_SECTORS; sectorIdx++)
- 80017e0:	3501      	adds	r5, #1
- 80017e2:	370c      	adds	r7, #12
- 80017e4:	2d19      	cmp	r5, #25
- 80017e6:	d1dc      	bne.n	80017a2 <FlashErase+0x56>
+ 80017f0:	3501      	adds	r5, #1
+ 80017f2:	370c      	adds	r7, #12
+ 80017f4:	2d19      	cmp	r5, #25
+ 80017f6:	d1dc      	bne.n	80017b2 <FlashErase+0x56>
   return 0;
- 80017e8:	2500      	movs	r5, #0
- 80017ea:	e7e4      	b.n	80017b6 <FlashErase+0x6a>
+ 80017f8:	2500      	movs	r5, #0
+ 80017fa:	e7e4      	b.n	80017c6 <FlashErase+0x6a>
 static blt_int32u FlashGetPage(blt_addr address)
 {
   blt_int32u result = 0;
 
   /* assert that the address is actually a valid flash address */
   ASSERT_RT(address >= FLASH_BASE);
- 80017ec:	2380      	movs	r3, #128	@ 0x80
- 80017ee:	051b      	lsls	r3, r3, #20
- 80017f0:	429c      	cmp	r4, r3
- 80017f2:	d203      	bcs.n	80017fc <FlashErase+0xb0>
- 80017f4:	4838      	ldr	r0, [pc, #224]	@ (80018d8 <FlashErase+0x18c>)
- 80017f6:	4939      	ldr	r1, [pc, #228]	@ (80018dc <FlashErase+0x190>)
- 80017f8:	f000 f996 	bl	8001b28 <AssertFailure>
+ 80017fc:	2380      	movs	r3, #128	@ 0x80
+ 80017fe:	051b      	lsls	r3, r3, #20
+ 8001800:	429c      	cmp	r4, r3
+ 8001802:	d203      	bcs.n	800180c <FlashErase+0xb0>
+ 8001804:	4838      	ldr	r0, [pc, #224]	@ (80018e8 <FlashErase+0x18c>)
+ 8001806:	4939      	ldr	r1, [pc, #228]	@ (80018ec <FlashErase+0x190>)
+ 8001808:	f000 f996 	bl	8001b38 <AssertFailure>
   ASSERT_RT((address - FLASH_BASE) < FLASH_SIZE);
- 80017fc:	23f8      	movs	r3, #248	@ 0xf8
- 80017fe:	4d38      	ldr	r5, [pc, #224]	@ (80018e0 <FlashErase+0x194>)
- 8001800:	061b      	lsls	r3, r3, #24
- 8001802:	18e3      	adds	r3, r4, r3
- 8001804:	9300      	str	r3, [sp, #0]
- 8001806:	682b      	ldr	r3, [r5, #0]
- 8001808:	4e36      	ldr	r6, [pc, #216]	@ (80018e4 <FlashErase+0x198>)
- 800180a:	9a00      	ldr	r2, [sp, #0]
- 800180c:	029b      	lsls	r3, r3, #10
- 800180e:	4033      	ands	r3, r6
- 8001810:	429a      	cmp	r2, r3
- 8001812:	d304      	bcc.n	800181e <FlashErase+0xd2>
- 8001814:	21f1      	movs	r1, #241	@ 0xf1
- 8001816:	4830      	ldr	r0, [pc, #192]	@ (80018d8 <FlashErase+0x18c>)
- 8001818:	0089      	lsls	r1, r1, #2
- 800181a:	f000 f985 	bl	8001b28 <AssertFailure>
+ 800180c:	23f8      	movs	r3, #248	@ 0xf8
+ 800180e:	4d38      	ldr	r5, [pc, #224]	@ (80018f0 <FlashErase+0x194>)
+ 8001810:	061b      	lsls	r3, r3, #24
+ 8001812:	18e3      	adds	r3, r4, r3
+ 8001814:	9300      	str	r3, [sp, #0]
+ 8001816:	682b      	ldr	r3, [r5, #0]
+ 8001818:	4e36      	ldr	r6, [pc, #216]	@ (80018f4 <FlashErase+0x198>)
+ 800181a:	9a00      	ldr	r2, [sp, #0]
+ 800181c:	029b      	lsls	r3, r3, #10
+ 800181e:	4033      	ands	r3, r6
+ 8001820:	429a      	cmp	r2, r3
+ 8001822:	d304      	bcc.n	800182e <FlashErase+0xd2>
+ 8001824:	21f1      	movs	r1, #241	@ 0xf1
+ 8001826:	4830      	ldr	r0, [pc, #192]	@ (80018e8 <FlashErase+0x18c>)
+ 8001828:	0089      	lsls	r1, r1, #2
+ 800182a:	f000 f985 	bl	8001b38 <AssertFailure>
 
   /* is the address in the first bank? */
   if (FlashGetBank(address) == FLASH_BANK_1)
- 800181e:	0020      	movs	r0, r4
- 8001820:	f7ff fe82 	bl	8001528 <FlashGetBank>
- 8001824:	2804      	cmp	r0, #4
- 8001826:	d112      	bne.n	800184e <FlashErase+0x102>
+ 800182e:	0020      	movs	r0, r4
+ 8001830:	f7ff fe82 	bl	8001538 <FlashGetBank>
+ 8001834:	2804      	cmp	r0, #4
+ 8001836:	d112      	bne.n	800185e <FlashErase+0x102>
   {
     result = (address - FLASH_BASE) / FLASH_ERASE_BLOCK_SIZE;
- 8001828:	9b00      	ldr	r3, [sp, #0]
- 800182a:	0adb      	lsrs	r3, r3, #11
+ 8001838:	9b00      	ldr	r3, [sp, #0]
+ 800183a:	0adb      	lsrs	r3, r3, #11
       eraseInitStruct.Banks = FlashGetBank(start_addr);
- 800182c:	0020      	movs	r0, r4
+ 800183c:	0020      	movs	r0, r4
       eraseInitStruct.Page  = FlashGetPage(start_addr);
- 800182e:	9306      	str	r3, [sp, #24]
+ 800183e:	9306      	str	r3, [sp, #24]
       eraseInitStruct.Banks = FlashGetBank(start_addr);
- 8001830:	f7ff fe7a 	bl	8001528 <FlashGetBank>
- 8001834:	9005      	str	r0, [sp, #20]
+ 8001840:	f7ff fe7a 	bl	8001538 <FlashGetBank>
+ 8001844:	9005      	str	r0, [sp, #20]
       CopService();
- 8001836:	f000 fa20 	bl	8001c7a <CopService>
+ 8001846:	f000 fa20 	bl	8001c8a <CopService>
       if (HAL_FLASHEx_Erase(&eraseInitStruct, (uint32_t *)&pageError) != HAL_OK)
- 800183a:	a903      	add	r1, sp, #12
- 800183c:	a804      	add	r0, sp, #16
- 800183e:	f7ff fa65 	bl	8000d0c <HAL_FLASHEx_Erase>
- 8001842:	2800      	cmp	r0, #0
- 8001844:	d142      	bne.n	80018cc <FlashErase+0x180>
+ 800184a:	a903      	add	r1, sp, #12
+ 800184c:	a804      	add	r0, sp, #16
+ 800184e:	f7ff fa5d 	bl	8000d0c <HAL_FLASHEx_Erase>
+ 8001852:	2800      	cmp	r0, #0
+ 8001854:	d142      	bne.n	80018dc <FlashErase+0x180>
       start_addr += FLASH_ERASE_BLOCK_SIZE;
- 8001846:	2380      	movs	r3, #128	@ 0x80
- 8001848:	011b      	lsls	r3, r3, #4
- 800184a:	18e4      	adds	r4, r4, r3
+ 8001856:	2380      	movs	r3, #128	@ 0x80
+ 8001858:	011b      	lsls	r3, r3, #4
+ 800185a:	18e4      	adds	r4, r4, r3
     for (block_cnt=0; block_cnt<nr_of_blocks; block_cnt++)
- 800184c:	e7c1      	b.n	80017d2 <FlashErase+0x86>
+ 800185c:	e7c1      	b.n	80017e2 <FlashErase+0x86>
   else
   {
     /* sanity check. the address must be equal or greater than the start address of
      * the second bank.
      */
     ASSERT_RT(address >= (FLASH_BASE + FLASH_BANK_SIZE));
- 800184e:	4f26      	ldr	r7, [pc, #152]	@ (80018e8 <FlashErase+0x19c>)
- 8001850:	23c0      	movs	r3, #192	@ 0xc0
- 8001852:	683a      	ldr	r2, [r7, #0]
- 8001854:	049b      	lsls	r3, r3, #18
- 8001856:	0011      	movs	r1, r2
- 8001858:	4019      	ands	r1, r3
- 800185a:	421a      	tst	r2, r3
- 800185c:	d007      	beq.n	800186e <FlashErase+0x122>
- 800185e:	2380      	movs	r3, #128	@ 0x80
- 8001860:	045b      	lsls	r3, r3, #17
- 8001862:	4299      	cmp	r1, r3
- 8001864:	d128      	bne.n	80018b8 <FlashErase+0x16c>
- 8001866:	4b21      	ldr	r3, [pc, #132]	@ (80018ec <FlashErase+0x1a0>)
- 8001868:	681b      	ldr	r3, [r3, #0]
- 800186a:	029b      	lsls	r3, r3, #10
- 800186c:	d424      	bmi.n	80018b8 <FlashErase+0x16c>
- 800186e:	682b      	ldr	r3, [r5, #0]
- 8001870:	029b      	lsls	r3, r3, #10
- 8001872:	4033      	ands	r3, r6
- 8001874:	2280      	movs	r2, #128	@ 0x80
- 8001876:	0512      	lsls	r2, r2, #20
- 8001878:	189b      	adds	r3, r3, r2
- 800187a:	429c      	cmp	r4, r3
- 800187c:	d204      	bcs.n	8001888 <FlashErase+0x13c>
- 800187e:	21f5      	movs	r1, #245	@ 0xf5
- 8001880:	4815      	ldr	r0, [pc, #84]	@ (80018d8 <FlashErase+0x18c>)
- 8001882:	0089      	lsls	r1, r1, #2
- 8001884:	f000 f950 	bl	8001b28 <AssertFailure>
+ 800185e:	4f26      	ldr	r7, [pc, #152]	@ (80018f8 <FlashErase+0x19c>)
+ 8001860:	23c0      	movs	r3, #192	@ 0xc0
+ 8001862:	683a      	ldr	r2, [r7, #0]
+ 8001864:	049b      	lsls	r3, r3, #18
+ 8001866:	0011      	movs	r1, r2
+ 8001868:	4019      	ands	r1, r3
+ 800186a:	421a      	tst	r2, r3
+ 800186c:	d007      	beq.n	800187e <FlashErase+0x122>
+ 800186e:	2380      	movs	r3, #128	@ 0x80
+ 8001870:	045b      	lsls	r3, r3, #17
+ 8001872:	4299      	cmp	r1, r3
+ 8001874:	d128      	bne.n	80018c8 <FlashErase+0x16c>
+ 8001876:	4b21      	ldr	r3, [pc, #132]	@ (80018fc <FlashErase+0x1a0>)
+ 8001878:	681b      	ldr	r3, [r3, #0]
+ 800187a:	029b      	lsls	r3, r3, #10
+ 800187c:	d424      	bmi.n	80018c8 <FlashErase+0x16c>
+ 800187e:	682b      	ldr	r3, [r5, #0]
+ 8001880:	029b      	lsls	r3, r3, #10
+ 8001882:	4033      	ands	r3, r6
+ 8001884:	2280      	movs	r2, #128	@ 0x80
+ 8001886:	0512      	lsls	r2, r2, #20
+ 8001888:	189b      	adds	r3, r3, r2
+ 800188a:	429c      	cmp	r4, r3
+ 800188c:	d204      	bcs.n	8001898 <FlashErase+0x13c>
+ 800188e:	21f5      	movs	r1, #245	@ 0xf5
+ 8001890:	4815      	ldr	r0, [pc, #84]	@ (80018e8 <FlashErase+0x18c>)
+ 8001892:	0089      	lsls	r1, r1, #2
+ 8001894:	f000 f950 	bl	8001b38 <AssertFailure>
 
     /* in the second bank, the page number always starts at 256. start by getting the
      * page number from the start of the bank. next, add the 256 offset.
      */
     result  = (address - FLASH_BASE - FLASH_BANK_SIZE) / FLASH_ERASE_BLOCK_SIZE;
- 8001888:	683a      	ldr	r2, [r7, #0]
- 800188a:	23c0      	movs	r3, #192	@ 0xc0
- 800188c:	0011      	movs	r1, r2
- 800188e:	049b      	lsls	r3, r3, #18
- 8001890:	4019      	ands	r1, r3
- 8001892:	421a      	tst	r2, r3
- 8001894:	d007      	beq.n	80018a6 <FlashErase+0x15a>
- 8001896:	2380      	movs	r3, #128	@ 0x80
- 8001898:	045b      	lsls	r3, r3, #17
- 800189a:	4299      	cmp	r1, r3
- 800189c:	d111      	bne.n	80018c2 <FlashErase+0x176>
- 800189e:	4b13      	ldr	r3, [pc, #76]	@ (80018ec <FlashErase+0x1a0>)
- 80018a0:	681b      	ldr	r3, [r3, #0]
- 80018a2:	029b      	lsls	r3, r3, #10
- 80018a4:	d40d      	bmi.n	80018c2 <FlashErase+0x176>
- 80018a6:	682b      	ldr	r3, [r5, #0]
- 80018a8:	029b      	lsls	r3, r3, #10
- 80018aa:	4033      	ands	r3, r6
- 80018ac:	9a00      	ldr	r2, [sp, #0]
- 80018ae:	1ad3      	subs	r3, r2, r3
- 80018b0:	0adb      	lsrs	r3, r3, #11
+ 8001898:	683a      	ldr	r2, [r7, #0]
+ 800189a:	23c0      	movs	r3, #192	@ 0xc0
+ 800189c:	0011      	movs	r1, r2
+ 800189e:	049b      	lsls	r3, r3, #18
+ 80018a0:	4019      	ands	r1, r3
+ 80018a2:	421a      	tst	r2, r3
+ 80018a4:	d007      	beq.n	80018b6 <FlashErase+0x15a>
+ 80018a6:	2380      	movs	r3, #128	@ 0x80
+ 80018a8:	045b      	lsls	r3, r3, #17
+ 80018aa:	4299      	cmp	r1, r3
+ 80018ac:	d111      	bne.n	80018d2 <FlashErase+0x176>
+ 80018ae:	4b13      	ldr	r3, [pc, #76]	@ (80018fc <FlashErase+0x1a0>)
+ 80018b0:	681b      	ldr	r3, [r3, #0]
+ 80018b2:	029b      	lsls	r3, r3, #10
+ 80018b4:	d40d      	bmi.n	80018d2 <FlashErase+0x176>
+ 80018b6:	682b      	ldr	r3, [r5, #0]
+ 80018b8:	029b      	lsls	r3, r3, #10
+ 80018ba:	4033      	ands	r3, r6
+ 80018bc:	9a00      	ldr	r2, [sp, #0]
+ 80018be:	1ad3      	subs	r3, r2, r3
+ 80018c0:	0adb      	lsrs	r3, r3, #11
     result += 256U;
- 80018b2:	3301      	adds	r3, #1
- 80018b4:	33ff      	adds	r3, #255	@ 0xff
- 80018b6:	e7b9      	b.n	800182c <FlashErase+0xe0>
+ 80018c2:	3301      	adds	r3, #1
+ 80018c4:	33ff      	adds	r3, #255	@ 0xff
+ 80018c6:	e7b9      	b.n	800183c <FlashErase+0xe0>
     ASSERT_RT(address >= (FLASH_BASE + FLASH_BANK_SIZE));
- 80018b8:	682b      	ldr	r3, [r5, #0]
- 80018ba:	4a0d      	ldr	r2, [pc, #52]	@ (80018f0 <FlashErase+0x1a4>)
- 80018bc:	025b      	lsls	r3, r3, #9
- 80018be:	4013      	ands	r3, r2
- 80018c0:	e7d8      	b.n	8001874 <FlashErase+0x128>
+ 80018c8:	682b      	ldr	r3, [r5, #0]
+ 80018ca:	4a0d      	ldr	r2, [pc, #52]	@ (8001900 <FlashErase+0x1a4>)
+ 80018cc:	025b      	lsls	r3, r3, #9
+ 80018ce:	4013      	ands	r3, r2
+ 80018d0:	e7d8      	b.n	8001884 <FlashErase+0x128>
     result  = (address - FLASH_BASE - FLASH_BANK_SIZE) / FLASH_ERASE_BLOCK_SIZE;
- 80018c2:	682b      	ldr	r3, [r5, #0]
- 80018c4:	4a0a      	ldr	r2, [pc, #40]	@ (80018f0 <FlashErase+0x1a4>)
- 80018c6:	025b      	lsls	r3, r3, #9
- 80018c8:	4013      	ands	r3, r2
- 80018ca:	e7ef      	b.n	80018ac <FlashErase+0x160>
+ 80018d2:	682b      	ldr	r3, [r5, #0]
+ 80018d4:	4a0a      	ldr	r2, [pc, #40]	@ (8001900 <FlashErase+0x1a4>)
+ 80018d6:	025b      	lsls	r3, r3, #9
+ 80018d8:	4013      	ands	r3, r2
+ 80018da:	e7ef      	b.n	80018bc <FlashErase+0x160>
         result = BLT_FALSE;
- 80018cc:	2400      	movs	r4, #0
- 80018ce:	e784      	b.n	80017da <FlashErase+0x8e>
- 80018d0:	0807ffff 	.word	0x0807ffff
- 80018d4:	08002078 	.word	0x08002078
- 80018d8:	0800202b 	.word	0x0800202b
- 80018dc:	000003c3 	.word	0x000003c3
- 80018e0:	1fff75e0 	.word	0x1fff75e0
- 80018e4:	000ffc00 	.word	0x000ffc00
- 80018e8:	1fff7500 	.word	0x1fff7500
- 80018ec:	40022020 	.word	0x40022020
- 80018f0:	0007fe00 	.word	0x0007fe00
+ 80018dc:	2400      	movs	r4, #0
+ 80018de:	e784      	b.n	80017ea <FlashErase+0x8e>
+ 80018e0:	0807ffff 	.word	0x0807ffff
+ 80018e4:	08002088 	.word	0x08002088
+ 80018e8:	0800203b 	.word	0x0800203b
+ 80018ec:	000003c3 	.word	0x000003c3
+ 80018f0:	1fff75e0 	.word	0x1fff75e0
+ 80018f4:	000ffc00 	.word	0x000ffc00
+ 80018f8:	1fff7500 	.word	0x1fff7500
+ 80018fc:	40022020 	.word	0x40022020
+ 8001900:	0007fe00 	.word	0x0007fe00
 
-080018f4 <FlashWriteChecksum>:
+08001904 <FlashWriteChecksum>:
 {
- 80018f4:	b507      	push	{r0, r1, r2, lr}
+ 8001904:	b507      	push	{r0, r1, r2, lr}
   if (bootBlockInfo.base_addr != FLASH_INVALID_ADDRESS)
- 80018f6:	4a0d      	ldr	r2, [pc, #52]	@ (800192c <FlashWriteChecksum+0x38>)
+ 8001906:	4a0d      	ldr	r2, [pc, #52]	@ (800193c <FlashWriteChecksum+0x38>)
   blt_bool   result = BLT_TRUE;
- 80018f8:	2001      	movs	r0, #1
+ 8001908:	2001      	movs	r0, #1
   if (bootBlockInfo.base_addr != FLASH_INVALID_ADDRESS)
- 80018fa:	6813      	ldr	r3, [r2, #0]
- 80018fc:	3301      	adds	r3, #1
- 80018fe:	d013      	beq.n	8001928 <FlashWriteChecksum+0x34>
+ 800190a:	6813      	ldr	r3, [r2, #0]
+ 800190c:	3301      	adds	r3, #1
+ 800190e:	d013      	beq.n	8001938 <FlashWriteChecksum+0x34>
       signature_checksum += *((blt_int32u *)(&bootBlockInfo.data[0+0x04]));
- 8001900:	6891      	ldr	r1, [r2, #8]
- 8001902:	6853      	ldr	r3, [r2, #4]
+ 8001910:	6891      	ldr	r1, [r2, #8]
+ 8001912:	6853      	ldr	r3, [r2, #4]
       result = FlashWrite(flashLayout[0].sector_start+BOOT_FLASH_VECTOR_TABLE_CS_OFFSET,
- 8001904:	480a      	ldr	r0, [pc, #40]	@ (8001930 <FlashWriteChecksum+0x3c>)
+ 8001914:	480a      	ldr	r0, [pc, #40]	@ (8001940 <FlashWriteChecksum+0x3c>)
       signature_checksum += *((blt_int32u *)(&bootBlockInfo.data[0+0x04]));
- 8001906:	185b      	adds	r3, r3, r1
+ 8001916:	185b      	adds	r3, r3, r1
       signature_checksum += *((blt_int32u *)(&bootBlockInfo.data[0+0x08]));
- 8001908:	68d1      	ldr	r1, [r2, #12]
- 800190a:	185b      	adds	r3, r3, r1
+ 8001918:	68d1      	ldr	r1, [r2, #12]
+ 800191a:	185b      	adds	r3, r3, r1
       signature_checksum += *((blt_int32u *)(&bootBlockInfo.data[0+0x0C]));
- 800190c:	6911      	ldr	r1, [r2, #16]
- 800190e:	185b      	adds	r3, r3, r1
+ 800191c:	6911      	ldr	r1, [r2, #16]
+ 800191e:	185b      	adds	r3, r3, r1
       signature_checksum += *((blt_int32u *)(&bootBlockInfo.data[0+0x10]));
- 8001910:	6951      	ldr	r1, [r2, #20]
- 8001912:	185b      	adds	r3, r3, r1
+ 8001920:	6951      	ldr	r1, [r2, #20]
+ 8001922:	185b      	adds	r3, r3, r1
       signature_checksum += *((blt_int32u *)(&bootBlockInfo.data[0+0x14]));
- 8001914:	6991      	ldr	r1, [r2, #24]
+ 8001924:	6991      	ldr	r1, [r2, #24]
       signature_checksum += *((blt_int32u *)(&bootBlockInfo.data[0+0x18]));
- 8001916:	69d2      	ldr	r2, [r2, #28]
+ 8001926:	69d2      	ldr	r2, [r2, #28]
       signature_checksum += *((blt_int32u *)(&bootBlockInfo.data[0+0x14]));
- 8001918:	185b      	adds	r3, r3, r1
+ 8001928:	185b      	adds	r3, r3, r1
       signature_checksum += *((blt_int32u *)(&bootBlockInfo.data[0+0x18]));
- 800191a:	189b      	adds	r3, r3, r2
+ 800192a:	189b      	adds	r3, r3, r2
       signature_checksum += 1; /* two's complement */
- 800191c:	425b      	negs	r3, r3
+ 800192c:	425b      	negs	r3, r3
       result = FlashWrite(flashLayout[0].sector_start+BOOT_FLASH_VECTOR_TABLE_CS_OFFSET,
- 800191e:	2104      	movs	r1, #4
- 8001920:	aa01      	add	r2, sp, #4
+ 800192e:	2104      	movs	r1, #4
+ 8001930:	aa01      	add	r2, sp, #4
       signature_checksum += 1; /* two's complement */
- 8001922:	9301      	str	r3, [sp, #4]
+ 8001932:	9301      	str	r3, [sp, #4]
       result = FlashWrite(flashLayout[0].sector_start+BOOT_FLASH_VECTOR_TABLE_CS_OFFSET,
- 8001924:	f7ff fee8 	bl	80016f8 <FlashWrite>
+ 8001934:	f7ff fee8 	bl	8001708 <FlashWrite>
 } /*** end of FlashWriteChecksum ***/
- 8001928:	bd0e      	pop	{r1, r2, r3, pc}
- 800192a:	46c0      	nop			@ (mov r8, r8)
- 800192c:	200000f4 	.word	0x200000f4
- 8001930:	080030bc 	.word	0x080030bc
+ 8001938:	bd0e      	pop	{r1, r2, r3, pc}
+ 800193a:	46c0      	nop			@ (mov r8, r8)
+ 800193c:	200000f4 	.word	0x200000f4
+ 8001940:	080030bc 	.word	0x080030bc
 
-08001934 <FlashVerifyChecksum>:
+08001944 <FlashVerifyChecksum>:
   signature_checksum += *((blt_int32u *)(flashLayout[0].sector_start+0x04));
- 8001934:	4b0d      	ldr	r3, [pc, #52]	@ (800196c <FlashVerifyChecksum+0x38>)
- 8001936:	6818      	ldr	r0, [r3, #0]
- 8001938:	4b0d      	ldr	r3, [pc, #52]	@ (8001970 <FlashVerifyChecksum+0x3c>)
- 800193a:	681b      	ldr	r3, [r3, #0]
- 800193c:	18c0      	adds	r0, r0, r3
+ 8001944:	4b0d      	ldr	r3, [pc, #52]	@ (800197c <FlashVerifyChecksum+0x38>)
+ 8001946:	6818      	ldr	r0, [r3, #0]
+ 8001948:	4b0d      	ldr	r3, [pc, #52]	@ (8001980 <FlashVerifyChecksum+0x3c>)
+ 800194a:	681b      	ldr	r3, [r3, #0]
+ 800194c:	18c0      	adds	r0, r0, r3
   signature_checksum += *((blt_int32u *)(flashLayout[0].sector_start+0x08));
- 800193e:	4b0d      	ldr	r3, [pc, #52]	@ (8001974 <FlashVerifyChecksum+0x40>)
- 8001940:	681b      	ldr	r3, [r3, #0]
- 8001942:	18c0      	adds	r0, r0, r3
+ 800194e:	4b0d      	ldr	r3, [pc, #52]	@ (8001984 <FlashVerifyChecksum+0x40>)
+ 8001950:	681b      	ldr	r3, [r3, #0]
+ 8001952:	18c0      	adds	r0, r0, r3
   signature_checksum += *((blt_int32u *)(flashLayout[0].sector_start+0x0C));
- 8001944:	4b0c      	ldr	r3, [pc, #48]	@ (8001978 <FlashVerifyChecksum+0x44>)
- 8001946:	681b      	ldr	r3, [r3, #0]
- 8001948:	18c0      	adds	r0, r0, r3
+ 8001954:	4b0c      	ldr	r3, [pc, #48]	@ (8001988 <FlashVerifyChecksum+0x44>)
+ 8001956:	681b      	ldr	r3, [r3, #0]
+ 8001958:	18c0      	adds	r0, r0, r3
   signature_checksum += *((blt_int32u *)(flashLayout[0].sector_start+0x10));
- 800194a:	4b0c      	ldr	r3, [pc, #48]	@ (800197c <FlashVerifyChecksum+0x48>)
- 800194c:	681b      	ldr	r3, [r3, #0]
- 800194e:	18c0      	adds	r0, r0, r3
+ 800195a:	4b0c      	ldr	r3, [pc, #48]	@ (800198c <FlashVerifyChecksum+0x48>)
+ 800195c:	681b      	ldr	r3, [r3, #0]
+ 800195e:	18c0      	adds	r0, r0, r3
   signature_checksum += *((blt_int32u *)(flashLayout[0].sector_start+0x14));
- 8001950:	4b0b      	ldr	r3, [pc, #44]	@ (8001980 <FlashVerifyChecksum+0x4c>)
- 8001952:	681b      	ldr	r3, [r3, #0]
- 8001954:	18c0      	adds	r0, r0, r3
+ 8001960:	4b0b      	ldr	r3, [pc, #44]	@ (8001990 <FlashVerifyChecksum+0x4c>)
+ 8001962:	681b      	ldr	r3, [r3, #0]
+ 8001964:	18c0      	adds	r0, r0, r3
   signature_checksum += *((blt_int32u *)(flashLayout[0].sector_start+0x18));
- 8001956:	4b0b      	ldr	r3, [pc, #44]	@ (8001984 <FlashVerifyChecksum+0x50>)
- 8001958:	681b      	ldr	r3, [r3, #0]
- 800195a:	18c0      	adds	r0, r0, r3
+ 8001966:	4b0b      	ldr	r3, [pc, #44]	@ (8001994 <FlashVerifyChecksum+0x50>)
+ 8001968:	681b      	ldr	r3, [r3, #0]
+ 800196a:	18c0      	adds	r0, r0, r3
   signature_checksum += *((blt_int32u *)(flashLayout[0].sector_start+BOOT_FLASH_VECTOR_TABLE_CS_OFFSET));
- 800195c:	4b0a      	ldr	r3, [pc, #40]	@ (8001988 <FlashVerifyChecksum+0x54>)
- 800195e:	681b      	ldr	r3, [r3, #0]
- 8001960:	18c0      	adds	r0, r0, r3
+ 800196c:	4b0a      	ldr	r3, [pc, #40]	@ (8001998 <FlashVerifyChecksum+0x54>)
+ 800196e:	681b      	ldr	r3, [r3, #0]
+ 8001970:	18c0      	adds	r0, r0, r3
   if (signature_checksum != 0)
- 8001962:	4243      	negs	r3, r0
- 8001964:	4158      	adcs	r0, r3
+ 8001972:	4243      	negs	r3, r0
+ 8001974:	4158      	adcs	r0, r3
   return result;
- 8001966:	b2c0      	uxtb	r0, r0
+ 8001976:	b2c0      	uxtb	r0, r0
 } /*** end of FlashVerifyChecksum ***/
- 8001968:	4770      	bx	lr
- 800196a:	46c0      	nop			@ (mov r8, r8)
- 800196c:	08003000 	.word	0x08003000
- 8001970:	08003004 	.word	0x08003004
- 8001974:	08003008 	.word	0x08003008
- 8001978:	0800300c 	.word	0x0800300c
- 800197c:	08003010 	.word	0x08003010
- 8001980:	08003014 	.word	0x08003014
- 8001984:	08003018 	.word	0x08003018
- 8001988:	080030bc 	.word	0x080030bc
+ 8001978:	4770      	bx	lr
+ 800197a:	46c0      	nop			@ (mov r8, r8)
+ 800197c:	08003000 	.word	0x08003000
+ 8001980:	08003004 	.word	0x08003004
+ 8001984:	08003008 	.word	0x08003008
+ 8001988:	0800300c 	.word	0x0800300c
+ 800198c:	08003010 	.word	0x08003010
+ 8001990:	08003014 	.word	0x08003014
+ 8001994:	08003018 	.word	0x08003018
+ 8001998:	080030bc 	.word	0x080030bc
 
-0800198c <FlashDone>:
+0800199c <FlashDone>:
   if (bootBlockInfo.base_addr != FLASH_INVALID_ADDRESS)
- 800198c:	480a      	ldr	r0, [pc, #40]	@ (80019b8 <FlashDone+0x2c>)
+ 800199c:	480a      	ldr	r0, [pc, #40]	@ (80019c8 <FlashDone+0x2c>)
 {
- 800198e:	b510      	push	{r4, lr}
+ 800199e:	b510      	push	{r4, lr}
   if (bootBlockInfo.base_addr != FLASH_INVALID_ADDRESS)
- 8001990:	6803      	ldr	r3, [r0, #0]
- 8001992:	3301      	adds	r3, #1
- 8001994:	d105      	bne.n	80019a2 <FlashDone+0x16>
+ 80019a0:	6803      	ldr	r3, [r0, #0]
+ 80019a2:	3301      	adds	r3, #1
+ 80019a4:	d105      	bne.n	80019b2 <FlashDone+0x16>
     if (blockInfo.base_addr != FLASH_INVALID_ADDRESS)
- 8001996:	4809      	ldr	r0, [pc, #36]	@ (80019bc <FlashDone+0x30>)
- 8001998:	6803      	ldr	r3, [r0, #0]
- 800199a:	3301      	adds	r3, #1
- 800199c:	d106      	bne.n	80019ac <FlashDone+0x20>
- 800199e:	2001      	movs	r0, #1
+ 80019a6:	4809      	ldr	r0, [pc, #36]	@ (80019cc <FlashDone+0x30>)
+ 80019a8:	6803      	ldr	r3, [r0, #0]
+ 80019aa:	3301      	adds	r3, #1
+ 80019ac:	d106      	bne.n	80019bc <FlashDone+0x20>
+ 80019ae:	2001      	movs	r0, #1
 } /*** end of FlashDone ***/
- 80019a0:	bd10      	pop	{r4, pc}
+ 80019b0:	bd10      	pop	{r4, pc}
     if (FlashWriteBlock(&bootBlockInfo) == BLT_FALSE)
- 80019a2:	f7ff fe07 	bl	80015b4 <FlashWriteBlock>
- 80019a6:	2800      	cmp	r0, #0
- 80019a8:	d0fa      	beq.n	80019a0 <FlashDone+0x14>
- 80019aa:	e7f4      	b.n	8001996 <FlashDone+0xa>
+ 80019b2:	f7ff fe07 	bl	80015c4 <FlashWriteBlock>
+ 80019b6:	2800      	cmp	r0, #0
+ 80019b8:	d0fa      	beq.n	80019b0 <FlashDone+0x14>
+ 80019ba:	e7f4      	b.n	80019a6 <FlashDone+0xa>
       if (FlashWriteBlock(&blockInfo) == BLT_FALSE)
- 80019ac:	f7ff fe02 	bl	80015b4 <FlashWriteBlock>
- 80019b0:	1e43      	subs	r3, r0, #1
- 80019b2:	4198      	sbcs	r0, r3
- 80019b4:	b2c0      	uxtb	r0, r0
- 80019b6:	e7f3      	b.n	80019a0 <FlashDone+0x14>
- 80019b8:	200000f4 	.word	0x200000f4
- 80019bc:	200002f8 	.word	0x200002f8
+ 80019bc:	f7ff fe02 	bl	80015c4 <FlashWriteBlock>
+ 80019c0:	1e43      	subs	r3, r0, #1
+ 80019c2:	4198      	sbcs	r0, r3
+ 80019c4:	b2c0      	uxtb	r0, r0
+ 80019c6:	e7f3      	b.n	80019b0 <FlashDone+0x14>
+ 80019c8:	200000f4 	.word	0x200000f4
+ 80019cc:	200002f8 	.word	0x200002f8
 
-080019c0 <FlashGetUserProgBaseAddress>:
+080019d0 <FlashGetUserProgBaseAddress>:
 } /*** end of FlashGetUserProgBaseAddress ***/
- 80019c0:	4800      	ldr	r0, [pc, #0]	@ (80019c4 <FlashGetUserProgBaseAddress+0x4>)
- 80019c2:	4770      	bx	lr
- 80019c4:	08003000 	.word	0x08003000
+ 80019d0:	4800      	ldr	r0, [pc, #0]	@ (80019d4 <FlashGetUserProgBaseAddress+0x4>)
+ 80019d2:	4770      	bx	lr
+ 80019d4:	08003000 	.word	0x08003000
 
-080019c8 <NvmInit>:
+080019d8 <NvmInit>:
 ** \brief     Initializes the NVM driver.
 ** \return    none.
 **
 ****************************************************************************************/
 void NvmInit(void)
 {
- 80019c8:	b510      	push	{r4, lr}
+ 80019d8:	b510      	push	{r4, lr}
    */
   NvmInitHook();
 #endif
 
   /* init the internal driver */
   FlashInit();
- 80019ca:	f7ff fe89 	bl	80016e0 <FlashInit>
+ 80019da:	f7ff fe89 	bl	80016f0 <FlashInit>
 } /*** end of NvmInit ***/
- 80019ce:	bd10      	pop	{r4, pc}
+ 80019de:	bd10      	pop	{r4, pc}
 
-080019d0 <NvmWrite>:
+080019e0 <NvmWrite>:
 ** \param     data Pointer to the data buffer.
 ** \return    BLT_TRUE if successful, BLT_FALSE otherwise.
 **
 ****************************************************************************************/
 blt_bool NvmWrite(blt_addr addr, blt_int32u len, blt_int8u *data)
 {
- 80019d0:	b510      	push	{r4, lr}
+ 80019e0:	b510      	push	{r4, lr}
     return BLT_FALSE;
   }
 #endif
 
   /* still here so the internal driver should try and perform the program operation */
   return FlashWrite(addr, len, data);
- 80019d2:	f7ff fe91 	bl	80016f8 <FlashWrite>
+ 80019e2:	f7ff fe91 	bl	8001708 <FlashWrite>
 } /*** end of NvmWrite ***/
- 80019d6:	bd10      	pop	{r4, pc}
+ 80019e6:	bd10      	pop	{r4, pc}
 
-080019d8 <NvmErase>:
+080019e8 <NvmErase>:
 ** \param     len  Length in bytes.
 ** \return    BLT_TRUE if successful, BLT_FALSE otherwise.
 **
 ****************************************************************************************/
 blt_bool NvmErase(blt_addr addr, blt_int32u len)
 {
- 80019d8:	b510      	push	{r4, lr}
+ 80019e8:	b510      	push	{r4, lr}
     return BLT_FALSE;
   }
 #endif
 
   /* still here so the internal driver should try and perform the erase operation */
   return FlashErase(addr, len);
- 80019da:	f7ff feb7 	bl	800174c <FlashErase>
+ 80019ea:	f7ff feb7 	bl	800175c <FlashErase>
 } /*** end of NvmErase ***/
- 80019de:	bd10      	pop	{r4, pc}
+ 80019ee:	bd10      	pop	{r4, pc}
 
-080019e0 <NvmVerifyChecksum>:
+080019f0 <NvmVerifyChecksum>:
 **            present and can be started.
 ** \return    BLT_TRUE if successful, BLT_FALSE otherwise.
 **
 ****************************************************************************************/
 blt_bool NvmVerifyChecksum(void)
 {
- 80019e0:	b510      	push	{r4, lr}
+ 80019f0:	b510      	push	{r4, lr}
 #if (BOOT_NVM_CHECKSUM_HOOKS_ENABLE > 0)
   /* check checksum using the application specific method. */
   return NvmVerifyChecksumHook();
 #else
   /* check checksum using the interally supported method. */
   return FlashVerifyChecksum();
- 80019e2:	f7ff ffa7 	bl	8001934 <FlashVerifyChecksum>
+ 80019f2:	f7ff ffa7 	bl	8001944 <FlashVerifyChecksum>
 #endif
 } /*** end of NvmVerifyChecksum ***/
- 80019e6:	bd10      	pop	{r4, pc}
+ 80019f6:	bd10      	pop	{r4, pc}
 
-080019e8 <NvmGetUserProgBaseAddress>:
+080019f8 <NvmGetUserProgBaseAddress>:
 **            program. This is typically that start of the vector table.
 ** \return    Base address.
 **
 ****************************************************************************************/
 blt_addr NvmGetUserProgBaseAddress(void)
 {
- 80019e8:	b510      	push	{r4, lr}
+ 80019f8:	b510      	push	{r4, lr}
   return FlashGetUserProgBaseAddress();
- 80019ea:	f7ff ffe9 	bl	80019c0 <FlashGetUserProgBaseAddress>
+ 80019fa:	f7ff ffe9 	bl	80019d0 <FlashGetUserProgBaseAddress>
 } /*** end of NvmGetUserProgBaseAddress ***/
- 80019ee:	bd10      	pop	{r4, pc}
+ 80019fe:	bd10      	pop	{r4, pc}
 
-080019f0 <NvmDone>:
+08001a00 <NvmDone>:
 **            to determine if a valid user program is present in flash.
 ** \return    BLT_TRUE if successful, BLT_FALSE otherwise.
 **
 ****************************************************************************************/
 blt_bool NvmDone(void)
 {
- 80019f0:	b510      	push	{r4, lr}
+ 8001a00:	b510      	push	{r4, lr}
   {
     return BLT_FALSE;
   }
 #else
   /* compute and write checksum, which is programmed by the internal driver. */
   if (FlashWriteChecksum() == BLT_FALSE)
- 80019f2:	f7ff ff7f 	bl	80018f4 <FlashWriteChecksum>
- 80019f6:	2800      	cmp	r0, #0
- 80019f8:	d001      	beq.n	80019fe <NvmDone+0xe>
+ 8001a02:	f7ff ff7f 	bl	8001904 <FlashWriteChecksum>
+ 8001a06:	2800      	cmp	r0, #0
+ 8001a08:	d001      	beq.n	8001a0e <NvmDone+0xe>
     return BLT_FALSE;
   }
 #endif
 
   /* finish up internal driver operations */
   return FlashDone();
- 80019fa:	f7ff ffc7 	bl	800198c <FlashDone>
+ 8001a0a:	f7ff ffc7 	bl	800199c <FlashDone>
 } /*** end of NvmDone ***/
- 80019fe:	bd10      	pop	{r4, pc}
+ 8001a0e:	bd10      	pop	{r4, pc}
 
-08001a00 <TimerInit>:
+08001a10 <TimerInit>:
   MODIFY_REG(RCC->CCIPR, (TIMxSource & 0xFFFF0000U), (TIMxSource << 16));
- 8001a00:	4b1a      	ldr	r3, [pc, #104]	@ (8001a6c <TimerInit+0x6c>)
+ 8001a10:	4b1a      	ldr	r3, [pc, #104]	@ (8001a7c <TimerInit+0x6c>)
 **            inline functions.
 ** \return    none.
 **
 ****************************************************************************************/
 void TimerInit(void)
 {
- 8001a02:	b537      	push	{r0, r1, r2, r4, r5, lr}
- 8001a04:	6d5a      	ldr	r2, [r3, #84]	@ 0x54
- 8001a06:	491a      	ldr	r1, [pc, #104]	@ (8001a70 <TimerInit+0x70>)
+ 8001a12:	b537      	push	{r0, r1, r2, r4, r5, lr}
+ 8001a14:	6d5a      	ldr	r2, [r3, #84]	@ 0x54
+ 8001a16:	491a      	ldr	r1, [pc, #104]	@ (8001a80 <TimerInit+0x70>)
    * The RCC LL drivers call PCLK PCLK1 and APB APB1. Therefore the following lines
    * use the PCLK1/APB1 APIs, even though TIM1 is actually on ABP2.
    */
   LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM1);
   /* The TIM1 peripheral clock is derived from PCLK. Obtain the PCLK frequency. */
   pclk_frequency = __LL_RCC_CALC_PCLK1_FREQ(SystemCoreClock, LL_RCC_GetAPB1Prescaler());
- 8001a08:	481a      	ldr	r0, [pc, #104]	@ (8001a74 <TimerInit+0x74>)
- 8001a0a:	400a      	ands	r2, r1
+ 8001a18:	481a      	ldr	r0, [pc, #104]	@ (8001a84 <TimerInit+0x74>)
+ 8001a1a:	400a      	ands	r2, r1
   SET_BIT(RCC->APBENR2, Periphs);
- 8001a0c:	2180      	movs	r1, #128	@ 0x80
- 8001a0e:	655a      	str	r2, [r3, #84]	@ 0x54
- 8001a10:	6c1a      	ldr	r2, [r3, #64]	@ 0x40
- 8001a12:	0109      	lsls	r1, r1, #4
- 8001a14:	430a      	orrs	r2, r1
- 8001a16:	641a      	str	r2, [r3, #64]	@ 0x40
+ 8001a1c:	2180      	movs	r1, #128	@ 0x80
+ 8001a1e:	655a      	str	r2, [r3, #84]	@ 0x54
+ 8001a20:	6c1a      	ldr	r2, [r3, #64]	@ 0x40
+ 8001a22:	0109      	lsls	r1, r1, #4
+ 8001a24:	430a      	orrs	r2, r1
+ 8001a26:	641a      	str	r2, [r3, #64]	@ 0x40
   tmpreg = READ_BIT(RCC->APBENR2, Periphs);
- 8001a18:	6c1a      	ldr	r2, [r3, #64]	@ 0x40
- 8001a1a:	2401      	movs	r4, #1
- 8001a1c:	400a      	ands	r2, r1
- 8001a1e:	9201      	str	r2, [sp, #4]
+ 8001a28:	6c1a      	ldr	r2, [r3, #64]	@ 0x40
+ 8001a2a:	2401      	movs	r4, #1
+ 8001a2c:	400a      	ands	r2, r1
+ 8001a2e:	9201      	str	r2, [sp, #4]
   (void)tmpreg;
- 8001a20:	9a01      	ldr	r2, [sp, #4]
+ 8001a30:	9a01      	ldr	r2, [sp, #4]
   return (uint32_t)(READ_BIT(RCC->CFGR, RCC_CFGR_PPRE));
- 8001a22:	689a      	ldr	r2, [r3, #8]
- 8001a24:	4914      	ldr	r1, [pc, #80]	@ (8001a78 <TimerInit+0x78>)
- 8001a26:	0452      	lsls	r2, r2, #17
- 8001a28:	0f52      	lsrs	r2, r2, #29
- 8001a2a:	0092      	lsls	r2, r2, #2
- 8001a2c:	5812      	ldr	r2, [r2, r0]
- 8001a2e:	201f      	movs	r0, #31
- 8001a30:	4002      	ands	r2, r0
- 8001a32:	6808      	ldr	r0, [r1, #0]
- 8001a34:	689b      	ldr	r3, [r3, #8]
- 8001a36:	40d0      	lsrs	r0, r2
- 8001a38:	22e0      	movs	r2, #224	@ 0xe0
- 8001a3a:	01d2      	lsls	r2, r2, #7
- 8001a3c:	4013      	ands	r3, r2
+ 8001a32:	689a      	ldr	r2, [r3, #8]
+ 8001a34:	4914      	ldr	r1, [pc, #80]	@ (8001a88 <TimerInit+0x78>)
+ 8001a36:	0452      	lsls	r2, r2, #17
+ 8001a38:	0f52      	lsrs	r2, r2, #29
+ 8001a3a:	0092      	lsls	r2, r2, #2
+ 8001a3c:	5812      	ldr	r2, [r2, r0]
+ 8001a3e:	201f      	movs	r0, #31
+ 8001a40:	4002      	ands	r2, r0
+ 8001a42:	6808      	ldr	r0, [r1, #0]
+ 8001a44:	689b      	ldr	r3, [r3, #8]
+ 8001a46:	40d0      	lsrs	r0, r2
+ 8001a48:	22e0      	movs	r2, #224	@ 0xe0
+ 8001a4a:	01d2      	lsls	r2, r2, #7
+ 8001a4c:	4013      	ands	r3, r2
   /* According to the clock tree diagram in the RCC chapter of the reference manual,
    * the TPCLK frequency = PLCK * 1, when the APB1 prescaler is 1, otherwise it is
    * PCLK * 2.
    */
   tim_multiplier = (LL_RCC_GetAPB1Prescaler() == LL_RCC_APB1_DIV_1) ? 1U : 2U;
- 8001a3e:	1e5a      	subs	r2, r3, #1
- 8001a40:	4193      	sbcs	r3, r2
+ 8001a4e:	1e5a      	subs	r2, r3, #1
+ 8001a50:	4193      	sbcs	r3, r2
   /* Obtain the TPCLK frequency. */
   pclk_tim_frequency = pclk_frequency * tim_multiplier;
   /* Configure the free running counter as a 16-bit upwards counter that runs at the
    * desired frequency and enable it.
    */
   TIM1->CR1 = TIM_CR1_CEN;
- 8001a42:	4d0e      	ldr	r5, [pc, #56]	@ (8001a7c <TimerInit+0x7c>)
+ 8001a52:	4d0e      	ldr	r5, [pc, #56]	@ (8001a8c <TimerInit+0x7c>)
   TIM1->ARR = 65535U;
- 8001a44:	4a0e      	ldr	r2, [pc, #56]	@ (8001a80 <TimerInit+0x80>)
+ 8001a54:	4a0e      	ldr	r2, [pc, #56]	@ (8001a90 <TimerInit+0x80>)
   tim_multiplier = (LL_RCC_GetAPB1Prescaler() == LL_RCC_APB1_DIV_1) ? 1U : 2U;
- 8001a46:	191b      	adds	r3, r3, r4
+ 8001a56:	191b      	adds	r3, r3, r4
   TIM1->CR1 = TIM_CR1_CEN;
- 8001a48:	602c      	str	r4, [r5, #0]
+ 8001a58:	602c      	str	r4, [r5, #0]
   pclk_tim_frequency = pclk_frequency * tim_multiplier;
- 8001a4a:	4358      	muls	r0, r3
+ 8001a5a:	4358      	muls	r0, r3
   TIM1->ARR = 65535U;
- 8001a4c:	62ea      	str	r2, [r5, #44]	@ 0x2c
+ 8001a5c:	62ea      	str	r2, [r5, #44]	@ 0x2c
   TIM1->PSC = (pclk_tim_frequency / TIMER_COUNTER_FREQ_HZ) - 1U;
- 8001a4e:	490d      	ldr	r1, [pc, #52]	@ (8001a84 <TimerInit+0x84>)
- 8001a50:	f7fe fb6e 	bl	8000130 <__udivsi3>
+ 8001a5e:	490d      	ldr	r1, [pc, #52]	@ (8001a94 <TimerInit+0x84>)
+ 8001a60:	f7fe fb66 	bl	8000130 <__udivsi3>
   /* Generate an update event to reload the prescaler immediately. */
   TIM1->EGR |= TIM_EGR_UG;
   /* Initialize locals. */
   millisecond_counter = 0;
- 8001a54:	2200      	movs	r2, #0
+ 8001a64:	2200      	movs	r2, #0
   TIM1->PSC = (pclk_tim_frequency / TIMER_COUNTER_FREQ_HZ) - 1U;
- 8001a56:	3801      	subs	r0, #1
- 8001a58:	62a8      	str	r0, [r5, #40]	@ 0x28
+ 8001a66:	3801      	subs	r0, #1
+ 8001a68:	62a8      	str	r0, [r5, #40]	@ 0x28
   TIM1->EGR |= TIM_EGR_UG;
- 8001a5a:	696b      	ldr	r3, [r5, #20]
- 8001a5c:	431c      	orrs	r4, r3
+ 8001a6a:	696b      	ldr	r3, [r5, #20]
+ 8001a6c:	431c      	orrs	r4, r3
   millisecond_counter = 0;
- 8001a5e:	4b0a      	ldr	r3, [pc, #40]	@ (8001a88 <TimerInit+0x88>)
+ 8001a6e:	4b0a      	ldr	r3, [pc, #40]	@ (8001a98 <TimerInit+0x88>)
   TIM1->EGR |= TIM_EGR_UG;
- 8001a60:	616c      	str	r4, [r5, #20]
+ 8001a70:	616c      	str	r4, [r5, #20]
   millisecond_counter = 0;
- 8001a62:	601a      	str	r2, [r3, #0]
+ 8001a72:	601a      	str	r2, [r3, #0]
   free_running_counter_last = (blt_int16u)TIM1->CNT;
- 8001a64:	6a6a      	ldr	r2, [r5, #36]	@ 0x24
- 8001a66:	4b09      	ldr	r3, [pc, #36]	@ (8001a8c <TimerInit+0x8c>)
- 8001a68:	801a      	strh	r2, [r3, #0]
+ 8001a74:	6a6a      	ldr	r2, [r5, #36]	@ 0x24
+ 8001a76:	4b09      	ldr	r3, [pc, #36]	@ (8001a9c <TimerInit+0x8c>)
+ 8001a78:	801a      	strh	r2, [r3, #0]
 } /*** end of TimerInit ***/
- 8001a6a:	bd37      	pop	{r0, r1, r2, r4, r5, pc}
- 8001a6c:	40021000 	.word	0x40021000
- 8001a70:	ffbfffff 	.word	0xffbfffff
- 8001a74:	08001f70 	.word	0x08001f70
- 8001a78:	20000000 	.word	0x20000000
- 8001a7c:	40012c00 	.word	0x40012c00
- 8001a80:	0000ffff 	.word	0x0000ffff
- 8001a84:	000186a0 	.word	0x000186a0
- 8001a88:	20000500 	.word	0x20000500
- 8001a8c:	200004fc 	.word	0x200004fc
+ 8001a7a:	bd37      	pop	{r0, r1, r2, r4, r5, pc}
+ 8001a7c:	40021000 	.word	0x40021000
+ 8001a80:	ffbfffff 	.word	0xffbfffff
+ 8001a84:	08001f80 	.word	0x08001f80
+ 8001a88:	20000000 	.word	0x20000000
+ 8001a8c:	40012c00 	.word	0x40012c00
+ 8001a90:	0000ffff 	.word	0x0000ffff
+ 8001a94:	000186a0 	.word	0x000186a0
+ 8001a98:	20000500 	.word	0x20000500
+ 8001a9c:	200004fc 	.word	0x200004fc
 
-08001a90 <TimerReset>:
+08001aa0 <TimerReset>:
   SET_BIT(RCC->APBRSTR2, Periphs);
- 8001a90:	2280      	movs	r2, #128	@ 0x80
- 8001a92:	4b0b      	ldr	r3, [pc, #44]	@ (8001ac0 <TimerReset+0x30>)
- 8001a94:	0112      	lsls	r2, r2, #4
- 8001a96:	6b19      	ldr	r1, [r3, #48]	@ 0x30
- 8001a98:	430a      	orrs	r2, r1
- 8001a9a:	631a      	str	r2, [r3, #48]	@ 0x30
+ 8001aa0:	2280      	movs	r2, #128	@ 0x80
+ 8001aa2:	4b0b      	ldr	r3, [pc, #44]	@ (8001ad0 <TimerReset+0x30>)
+ 8001aa4:	0112      	lsls	r2, r2, #4
+ 8001aa6:	6b19      	ldr	r1, [r3, #48]	@ 0x30
+ 8001aa8:	430a      	orrs	r2, r1
+ 8001aaa:	631a      	str	r2, [r3, #48]	@ 0x30
   CLEAR_BIT(RCC->APBRSTR2, Periphs);
- 8001a9c:	6b1a      	ldr	r2, [r3, #48]	@ 0x30
- 8001a9e:	4909      	ldr	r1, [pc, #36]	@ (8001ac4 <TimerReset+0x34>)
- 8001aa0:	400a      	ands	r2, r1
- 8001aa2:	631a      	str	r2, [r3, #48]	@ 0x30
+ 8001aac:	6b1a      	ldr	r2, [r3, #48]	@ 0x30
+ 8001aae:	4909      	ldr	r1, [pc, #36]	@ (8001ad4 <TimerReset+0x34>)
+ 8001ab0:	400a      	ands	r2, r1
+ 8001ab2:	631a      	str	r2, [r3, #48]	@ 0x30
   CLEAR_BIT(RCC->APBENR2, Periphs);
- 8001aa4:	6c1a      	ldr	r2, [r3, #64]	@ 0x40
- 8001aa6:	400a      	ands	r2, r1
- 8001aa8:	641a      	str	r2, [r3, #64]	@ 0x40
+ 8001ab4:	6c1a      	ldr	r2, [r3, #64]	@ 0x40
+ 8001ab6:	400a      	ands	r2, r1
+ 8001ab8:	641a      	str	r2, [r3, #64]	@ 0x40
   LL_APB2_GRP1_ReleaseReset(LL_APB2_GRP1_PERIPH_TIM1);
   LL_APB2_GRP1_DisableClock(LL_APB2_GRP1_PERIPH_TIM1);
   /* Set the SysTick's registers back into the default reset value. Note that this module
    * does not use the SysTick, but HAL_Init() did initialize it.
    */
   SysTick->CTRL = 0;
- 8001aaa:	2200      	movs	r2, #0
- 8001aac:	4b06      	ldr	r3, [pc, #24]	@ (8001ac8 <TimerReset+0x38>)
- 8001aae:	601a      	str	r2, [r3, #0]
+ 8001aba:	2200      	movs	r2, #0
+ 8001abc:	4b06      	ldr	r3, [pc, #24]	@ (8001ad8 <TimerReset+0x38>)
+ 8001abe:	601a      	str	r2, [r3, #0]
   SysTick->LOAD = 0;
- 8001ab0:	605a      	str	r2, [r3, #4]
+ 8001ac0:	605a      	str	r2, [r3, #4]
   SysTick->VAL = 0;
- 8001ab2:	609a      	str	r2, [r3, #8]
+ 8001ac2:	609a      	str	r2, [r3, #8]
   SCB->ICSR = SCB_ICSR_PENDSTCLR_Msk;
- 8001ab4:	2280      	movs	r2, #128	@ 0x80
- 8001ab6:	4b05      	ldr	r3, [pc, #20]	@ (8001acc <TimerReset+0x3c>)
- 8001ab8:	0492      	lsls	r2, r2, #18
- 8001aba:	605a      	str	r2, [r3, #4]
+ 8001ac4:	2280      	movs	r2, #128	@ 0x80
+ 8001ac6:	4b05      	ldr	r3, [pc, #20]	@ (8001adc <TimerReset+0x3c>)
+ 8001ac8:	0492      	lsls	r2, r2, #18
+ 8001aca:	605a      	str	r2, [r3, #4]
 } /* end of TimerReset */
- 8001abc:	4770      	bx	lr
- 8001abe:	46c0      	nop			@ (mov r8, r8)
- 8001ac0:	40021000 	.word	0x40021000
- 8001ac4:	fffff7ff 	.word	0xfffff7ff
- 8001ac8:	e000e010 	.word	0xe000e010
- 8001acc:	e000ed00 	.word	0xe000ed00
+ 8001acc:	4770      	bx	lr
+ 8001ace:	46c0      	nop			@ (mov r8, r8)
+ 8001ad0:	40021000 	.word	0x40021000
+ 8001ad4:	fffff7ff 	.word	0xfffff7ff
+ 8001ad8:	e000e010 	.word	0xe000e010
+ 8001adc:	e000ed00 	.word	0xe000ed00
 
-08001ad0 <TimerUpdate>:
+08001ae0 <TimerUpdate>:
 ** \brief     Updates the millisecond timer.
 ** \return    none.
 **
 ****************************************************************************************/
 void TimerUpdate(void)
 {
- 8001ad0:	b570      	push	{r4, r5, r6, lr}
+ 8001ae0:	b570      	push	{r4, r5, r6, lr}
   blt_int16u free_running_counter_now;
   blt_int16u delta_counts;
   blt_int16u ms_counts;
 
   /* Get the current value of the free running counter. */
   free_running_counter_now = (blt_int16u)TIM1->CNT;
- 8001ad2:	4b0a      	ldr	r3, [pc, #40]	@ (8001afc <TimerUpdate+0x2c>)
+ 8001ae2:	4b0a      	ldr	r3, [pc, #40]	@ (8001b0c <TimerUpdate+0x2c>)
   /* Calculate the number of counts that passed since the detection of the last
    * millisecond event. Note that this calculation also works, in case the free running
    * counter overflowed, thanks to integer math.
    */
   delta_counts = free_running_counter_now - free_running_counter_last;
- 8001ad4:	4d0a      	ldr	r5, [pc, #40]	@ (8001b00 <TimerUpdate+0x30>)
+ 8001ae4:	4d0a      	ldr	r5, [pc, #40]	@ (8001b10 <TimerUpdate+0x30>)
   free_running_counter_now = (blt_int16u)TIM1->CNT;
- 8001ad6:	6a58      	ldr	r0, [r3, #36]	@ 0x24
+ 8001ae6:	6a58      	ldr	r0, [r3, #36]	@ 0x24
   delta_counts = free_running_counter_now - free_running_counter_last;
- 8001ad8:	882c      	ldrh	r4, [r5, #0]
- 8001ada:	1b00      	subs	r0, r0, r4
- 8001adc:	b280      	uxth	r0, r0
+ 8001ae8:	882c      	ldrh	r4, [r5, #0]
+ 8001aea:	1b00      	subs	r0, r0, r4
+ 8001aec:	b280      	uxth	r0, r0
 
   /* Did one or more milliseconds pass since the last event? */
   if (delta_counts >= TIMER_COUNTS_PER_MS)
- 8001ade:	2863      	cmp	r0, #99	@ 0x63
- 8001ae0:	d90b      	bls.n	8001afa <TimerUpdate+0x2a>
+ 8001aee:	2863      	cmp	r0, #99	@ 0x63
+ 8001af0:	d90b      	bls.n	8001b0a <TimerUpdate+0x2a>
   {
     /* Calculate how many milliseconds passed. */
     ms_counts = delta_counts / TIMER_COUNTS_PER_MS;
- 8001ae2:	2164      	movs	r1, #100	@ 0x64
- 8001ae4:	f7fe fb24 	bl	8000130 <__udivsi3>
+ 8001af2:	2164      	movs	r1, #100	@ 0x64
+ 8001af4:	f7fe fb1c 	bl	8000130 <__udivsi3>
     /* Update the millisecond counter. */
     millisecond_counter += ms_counts;
- 8001ae8:	4a06      	ldr	r2, [pc, #24]	@ (8001b04 <TimerUpdate+0x34>)
+ 8001af8:	4a06      	ldr	r2, [pc, #24]	@ (8001b14 <TimerUpdate+0x34>)
     ms_counts = delta_counts / TIMER_COUNTS_PER_MS;
- 8001aea:	b280      	uxth	r0, r0
+ 8001afa:	b280      	uxth	r0, r0
     millisecond_counter += ms_counts;
- 8001aec:	6813      	ldr	r3, [r2, #0]
- 8001aee:	181b      	adds	r3, r3, r0
- 8001af0:	6013      	str	r3, [r2, #0]
+ 8001afc:	6813      	ldr	r3, [r2, #0]
+ 8001afe:	181b      	adds	r3, r3, r0
+ 8001b00:	6013      	str	r3, [r2, #0]
     /* Store the counter value of the last millisecond event, to detect the next one. */
     free_running_counter_last += (ms_counts * TIMER_COUNTS_PER_MS);
- 8001af2:	2364      	movs	r3, #100	@ 0x64
- 8001af4:	4343      	muls	r3, r0
- 8001af6:	18e4      	adds	r4, r4, r3
- 8001af8:	802c      	strh	r4, [r5, #0]
+ 8001b02:	2364      	movs	r3, #100	@ 0x64
+ 8001b04:	4343      	muls	r3, r0
+ 8001b06:	18e4      	adds	r4, r4, r3
+ 8001b08:	802c      	strh	r4, [r5, #0]
   }
 } /*** end of TimerUpdate ***/
- 8001afa:	bd70      	pop	{r4, r5, r6, pc}
- 8001afc:	40012c00 	.word	0x40012c00
- 8001b00:	200004fc 	.word	0x200004fc
- 8001b04:	20000500 	.word	0x20000500
+ 8001b0a:	bd70      	pop	{r4, r5, r6, pc}
+ 8001b0c:	40012c00 	.word	0x40012c00
+ 8001b10:	200004fc 	.word	0x200004fc
+ 8001b14:	20000500 	.word	0x20000500
 
-08001b08 <TimerGet>:
+08001b18 <TimerGet>:
 ** \brief     Obtains the counter value of the millisecond timer.
 ** \return    Current value of the millisecond timer.
 **
 ****************************************************************************************/
 blt_int32u TimerGet(void)
 {
- 8001b08:	b510      	push	{r4, lr}
+ 8001b18:	b510      	push	{r4, lr}
   /* Updating timer here allows this function to be called in a loop with timeout
    * detection.
    */
   TimerUpdate();
- 8001b0a:	f7ff ffe1 	bl	8001ad0 <TimerUpdate>
+ 8001b1a:	f7ff ffe1 	bl	8001ae0 <TimerUpdate>
   /* Read and return the amount of milliseconds that passed since initialization. */
   return millisecond_counter;
- 8001b0e:	4b01      	ldr	r3, [pc, #4]	@ (8001b14 <TimerGet+0xc>)
- 8001b10:	6818      	ldr	r0, [r3, #0]
+ 8001b1e:	4b01      	ldr	r3, [pc, #4]	@ (8001b24 <TimerGet+0xc>)
+ 8001b20:	6818      	ldr	r0, [r3, #0]
 } /*** end of TimerGet ***/
- 8001b12:	bd10      	pop	{r4, pc}
- 8001b14:	20000500 	.word	0x20000500
+ 8001b22:	bd10      	pop	{r4, pc}
+ 8001b24:	20000500 	.word	0x20000500
 
-08001b18 <HAL_GetTick>:
+08001b28 <HAL_GetTick>:
 **            function to not work properly. As a result of this override, the HAL's
 **            tick functionality works in polling mode.
 ** \return    Current value of the millisecond timer.
 **
 ****************************************************************************************/
 uint32_t HAL_GetTick(void)
- 8001b18:	b510      	push	{r4, lr}
- 8001b1a:	f7ff ffd9 	bl	8001ad0 <TimerUpdate>
- 8001b1e:	4b01      	ldr	r3, [pc, #4]	@ (8001b24 <HAL_GetTick+0xc>)
- 8001b20:	6818      	ldr	r0, [r3, #0]
- 8001b22:	bd10      	pop	{r4, pc}
- 8001b24:	20000500 	.word	0x20000500
+ 8001b28:	b510      	push	{r4, lr}
+ 8001b2a:	f7ff ffd9 	bl	8001ae0 <TimerUpdate>
+ 8001b2e:	4b01      	ldr	r3, [pc, #4]	@ (8001b34 <HAL_GetTick+0xc>)
+ 8001b30:	6818      	ldr	r0, [r3, #0]
+ 8001b32:	bd10      	pop	{r4, pc}
+ 8001b34:	20000500 	.word	0x20000500
 
-08001b28 <AssertFailure>:
+08001b38 <AssertFailure>:
 ** \param     line   Linenumber in the source file where the assertion occurred.
 ** \return    none
 **
 ****************************************************************************************/
 void AssertFailure(blt_char *file, blt_int32u line)
 {
- 8001b28:	b510      	push	{r4, lr}
+ 8001b38:	b510      	push	{r4, lr}
   /* hang the software so that it requires a hard reset */
   for (;;)
   {
     /* keep servicing the watchdog so that this one does not cause a reset */
     CopService();
- 8001b2a:	f000 f8a6 	bl	8001c7a <CopService>
+ 8001b3a:	f000 f8a6 	bl	8001c8a <CopService>
   for (;;)
- 8001b2e:	e7fc      	b.n	8001b2a <AssertFailure+0x2>
+ 8001b3e:	e7fc      	b.n	8001b3a <AssertFailure+0x2>
 
-08001b30 <BackDoorCheck>:
+08001b40 <BackDoorCheck>:
 **            controls the opening/closing of the backdoor.
 ** \return    none
 **
 ****************************************************************************************/
 void BackDoorCheck(void)
 {
- 8001b30:	b510      	push	{r4, lr}
+ 8001b40:	b510      	push	{r4, lr}
 #if (BOOT_BACKDOOR_HOOKS_ENABLE == 0)
 #if (BOOT_COM_ENABLE > 0)
   /* check if a connection with the host was already established. in this case the
    * backdoor stays open anyway, so no need to check if it needs to be closed.
    */
   if (ComIsConnected() == BLT_TRUE)
- 8001b32:	f000 f897 	bl	8001c64 <ComIsConnected>
- 8001b36:	2801      	cmp	r0, #1
- 8001b38:	d012      	beq.n	8001b60 <BackDoorCheck+0x30>
+ 8001b42:	f000 f897 	bl	8001c74 <ComIsConnected>
+ 8001b46:	2801      	cmp	r0, #1
+ 8001b48:	d012      	beq.n	8001b70 <BackDoorCheck+0x30>
     return;
   }
 #endif
 
   /* when the backdoor is still open, check if it's time to close it */
   if (backdoorOpen == BLT_TRUE)
- 8001b3a:	4c0a      	ldr	r4, [pc, #40]	@ (8001b64 <BackDoorCheck+0x34>)
- 8001b3c:	7823      	ldrb	r3, [r4, #0]
- 8001b3e:	2b01      	cmp	r3, #1
- 8001b40:	d10e      	bne.n	8001b60 <BackDoorCheck+0x30>
+ 8001b4a:	4c0a      	ldr	r4, [pc, #40]	@ (8001b74 <BackDoorCheck+0x34>)
+ 8001b4c:	7823      	ldrb	r3, [r4, #0]
+ 8001b4e:	2b01      	cmp	r3, #1
+ 8001b50:	d10e      	bne.n	8001b70 <BackDoorCheck+0x30>
   {
     /* check if the backdoor entry time window elapsed */
     if (TimerGet() >= (BOOT_BACKDOOR_ENTRY_TIMEOUT_MS + backdoorExtensionTime + backdoorOpenTime))
- 8001b42:	f7ff ffe1 	bl	8001b08 <TimerGet>
- 8001b46:	4b08      	ldr	r3, [pc, #32]	@ (8001b68 <BackDoorCheck+0x38>)
- 8001b48:	4a08      	ldr	r2, [pc, #32]	@ (8001b6c <BackDoorCheck+0x3c>)
- 8001b4a:	681b      	ldr	r3, [r3, #0]
- 8001b4c:	6812      	ldr	r2, [r2, #0]
- 8001b4e:	189b      	adds	r3, r3, r2
- 8001b50:	33f5      	adds	r3, #245	@ 0xf5
- 8001b52:	33ff      	adds	r3, #255	@ 0xff
- 8001b54:	4298      	cmp	r0, r3
- 8001b56:	d303      	bcc.n	8001b60 <BackDoorCheck+0x30>
+ 8001b52:	f7ff ffe1 	bl	8001b18 <TimerGet>
+ 8001b56:	4b08      	ldr	r3, [pc, #32]	@ (8001b78 <BackDoorCheck+0x38>)
+ 8001b58:	4a08      	ldr	r2, [pc, #32]	@ (8001b7c <BackDoorCheck+0x3c>)
+ 8001b5a:	681b      	ldr	r3, [r3, #0]
+ 8001b5c:	6812      	ldr	r2, [r2, #0]
+ 8001b5e:	189b      	adds	r3, r3, r2
+ 8001b60:	33f5      	adds	r3, #245	@ 0xf5
+ 8001b62:	33ff      	adds	r3, #255	@ 0xff
+ 8001b64:	4298      	cmp	r0, r3
+ 8001b66:	d303      	bcc.n	8001b70 <BackDoorCheck+0x30>
     {
       /* close the backdoor */
       backdoorOpen = BLT_FALSE;
- 8001b58:	2300      	movs	r3, #0
- 8001b5a:	7023      	strb	r3, [r4, #0]
+ 8001b68:	2300      	movs	r3, #0
+ 8001b6a:	7023      	strb	r3, [r4, #0]
 #endif
       {
         /* no firmware update requests detected, so attempt to start the user program.
          * this function does not return if a valid user program is present.
          */
         CpuStartUserProgram();
- 8001b5c:	f7ff fc7e 	bl	800145c <CpuStartUserProgram>
+ 8001b6c:	f7ff fc7e 	bl	800146c <CpuStartUserProgram>
       }
     }
   }
 #endif
 } /*** end of BackDoorCheck ***/
- 8001b60:	bd10      	pop	{r4, pc}
- 8001b62:	46c0      	nop			@ (mov r8, r8)
- 8001b64:	2000050c 	.word	0x2000050c
- 8001b68:	20000504 	.word	0x20000504
- 8001b6c:	20000508 	.word	0x20000508
+ 8001b70:	bd10      	pop	{r4, pc}
+ 8001b72:	46c0      	nop			@ (mov r8, r8)
+ 8001b74:	2000050c 	.word	0x2000050c
+ 8001b78:	20000504 	.word	0x20000504
+ 8001b7c:	20000508 	.word	0x20000508
 
-08001b70 <BackDoorRestartTimer>:
+08001b80 <BackDoorRestartTimer>:
 **            called.
 ** \return    none
 **
 ****************************************************************************************/
 void BackDoorRestartTimer(void)
 {
- 8001b70:	b510      	push	{r4, lr}
+ 8001b80:	b510      	push	{r4, lr}
   /* only restart the time if the backdoor is actually still open */
   if (backdoorOpen == BLT_TRUE)
- 8001b72:	4b04      	ldr	r3, [pc, #16]	@ (8001b84 <BackDoorRestartTimer+0x14>)
- 8001b74:	781b      	ldrb	r3, [r3, #0]
- 8001b76:	2b01      	cmp	r3, #1
- 8001b78:	d103      	bne.n	8001b82 <BackDoorRestartTimer+0x12>
+ 8001b82:	4b04      	ldr	r3, [pc, #16]	@ (8001b94 <BackDoorRestartTimer+0x14>)
+ 8001b84:	781b      	ldrb	r3, [r3, #0]
+ 8001b86:	2b01      	cmp	r3, #1
+ 8001b88:	d103      	bne.n	8001b92 <BackDoorRestartTimer+0x12>
   {
     backdoorOpenTime = TimerGet();
- 8001b7a:	f7ff ffc5 	bl	8001b08 <TimerGet>
- 8001b7e:	4b02      	ldr	r3, [pc, #8]	@ (8001b88 <BackDoorRestartTimer+0x18>)
- 8001b80:	6018      	str	r0, [r3, #0]
+ 8001b8a:	f7ff ffc5 	bl	8001b18 <TimerGet>
+ 8001b8e:	4b02      	ldr	r3, [pc, #8]	@ (8001b98 <BackDoorRestartTimer+0x18>)
+ 8001b90:	6018      	str	r0, [r3, #0]
   }
 } /*** end of BackDoorRestartTimer ***/
- 8001b82:	bd10      	pop	{r4, pc}
- 8001b84:	2000050c 	.word	0x2000050c
- 8001b88:	20000508 	.word	0x20000508
+ 8001b92:	bd10      	pop	{r4, pc}
+ 8001b94:	2000050c 	.word	0x2000050c
+ 8001b98:	20000508 	.word	0x20000508
 
-08001b8c <BackDoorInit>:
+08001b9c <BackDoorInit>:
   backdoorOpen = BLT_TRUE;
- 8001b8c:	2201      	movs	r2, #1
+ 8001b9c:	2201      	movs	r2, #1
 {
- 8001b8e:	b510      	push	{r4, lr}
+ 8001b9e:	b510      	push	{r4, lr}
   backdoorOpen = BLT_TRUE;
- 8001b90:	4b03      	ldr	r3, [pc, #12]	@ (8001ba0 <BackDoorInit+0x14>)
- 8001b92:	701a      	strb	r2, [r3, #0]
+ 8001ba0:	4b03      	ldr	r3, [pc, #12]	@ (8001bb0 <BackDoorInit+0x14>)
+ 8001ba2:	701a      	strb	r2, [r3, #0]
   BackDoorRestartTimer();
- 8001b94:	f7ff ffec 	bl	8001b70 <BackDoorRestartTimer>
+ 8001ba4:	f7ff ffec 	bl	8001b80 <BackDoorRestartTimer>
   BackDoorCheck();
- 8001b98:	f7ff ffca 	bl	8001b30 <BackDoorCheck>
+ 8001ba8:	f7ff ffca 	bl	8001b40 <BackDoorCheck>
 } /*** end of BackDoorInit ***/
- 8001b9c:	bd10      	pop	{r4, pc}
- 8001b9e:	46c0      	nop			@ (mov r8, r8)
- 8001ba0:	2000050c 	.word	0x2000050c
+ 8001bac:	bd10      	pop	{r4, pc}
+ 8001bae:	46c0      	nop			@ (mov r8, r8)
+ 8001bb0:	2000050c 	.word	0x2000050c
 
-08001ba4 <BootInit>:
+08001bb4 <BootInit>:
 ** \brief     Initializes the bootloader core.
 ** \return    none
 **
 ****************************************************************************************/
 void BootInit(void)
 {
- 8001ba4:	b510      	push	{r4, lr}
+ 8001bb4:	b510      	push	{r4, lr}
   /* initialize the CPU */
   CpuInit();
- 8001ba6:	f7ff fc55 	bl	8001454 <CpuInit>
+ 8001bb6:	f7ff fc55 	bl	8001464 <CpuInit>
   /* initialize the watchdog */
   CopInit();
- 8001baa:	f000 f862 	bl	8001c72 <CopInit>
+ 8001bba:	f000 f862 	bl	8001c82 <CopInit>
   /* initialize the millisecond timer */
   TimerInit();
- 8001bae:	f7ff ff27 	bl	8001a00 <TimerInit>
+ 8001bbe:	f7ff ff27 	bl	8001a10 <TimerInit>
   /* initialize the non-volatile memory driver */
   NvmInit();
- 8001bb2:	f7ff ff09 	bl	80019c8 <NvmInit>
+ 8001bc2:	f7ff ff09 	bl	80019d8 <NvmInit>
   /* initialize the file system module */
   FileInit();
 #endif
 #if (BOOT_COM_ENABLE > 0)
   /* initialize the communication module */
   ComInit();
- 8001bb6:	f000 f80d 	bl	8001bd4 <ComInit>
+ 8001bc6:	f000 f80d 	bl	8001be4 <ComInit>
 #if (ADDON_GATEWAY_MOD_ENABLE > 0)
   /* initialize the gateway module */
   GatewayInit();
 #endif
   /* initialize the backdoor entry */
   BackDoorInit();
- 8001bba:	f7ff ffe7 	bl	8001b8c <BackDoorInit>
+ 8001bca:	f7ff ffe7 	bl	8001b9c <BackDoorInit>
 } /*** end of BootInit ***/
- 8001bbe:	bd10      	pop	{r4, pc}
+ 8001bce:	bd10      	pop	{r4, pc}
 
-08001bc0 <BootTask>:
+08001bd0 <BootTask>:
 ** \brief     Task function of the bootloader core that drives the program.
 ** \return    none
 **
 ****************************************************************************************/
 void BootTask(void)
 {
- 8001bc0:	b510      	push	{r4, lr}
+ 8001bd0:	b510      	push	{r4, lr}
   /* service the watchdog */
   CopService();
- 8001bc2:	f000 f85a 	bl	8001c7a <CopService>
+ 8001bd2:	f000 f85a 	bl	8001c8a <CopService>
   /* update the millisecond timer */
   TimerUpdate();
- 8001bc6:	f7ff ff83 	bl	8001ad0 <TimerUpdate>
+ 8001bd6:	f7ff ff83 	bl	8001ae0 <TimerUpdate>
   /* call worker task for updating firmware from locally attached file storage */
   FileTask();
 #endif /* BOOT_FILE_SYS_ENABLE > 0 */
 #if (BOOT_COM_ENABLE > 0)
   /* process possibly pending communication data */
   ComTask();
- 8001bca:	f000 f80f 	bl	8001bec <ComTask>
+ 8001bda:	f000 f80f 	bl	8001bfc <ComTask>
 #if (ADDON_GATEWAY_MOD_ENABLE > 0)
   /* run the gateway */
   GatewayTask();
 #endif
   /* control the backdoor */
   BackDoorCheck();
- 8001bce:	f7ff ffaf 	bl	8001b30 <BackDoorCheck>
+ 8001bde:	f7ff ffaf 	bl	8001b40 <BackDoorCheck>
 } /*** end of BootTask ***/
- 8001bd2:	bd10      	pop	{r4, pc}
+ 8001be2:	bd10      	pop	{r4, pc}
 
-08001bd4 <ComInit>:
+08001be4 <ComInit>:
 **            the communication.
 ** \return    none
 **
 ****************************************************************************************/
 void ComInit(void)
 {
- 8001bd4:	b510      	push	{r4, lr}
+ 8001be4:	b510      	push	{r4, lr}
   /* initialize the XCP communication protocol */
   XcpInit();
- 8001bd6:	f000 f86b 	bl	8001cb0 <XcpInit>
+ 8001be6:	f000 f86b 	bl	8001cc0 <XcpInit>
 #if (BOOT_COM_CAN_ENABLE > 0)
   /* initialize the CAN controller */
   CanInit();
- 8001bda:	f7ff fb3b 	bl	8001254 <CanInit>
+ 8001bea:	f7ff fb33 	bl	8001254 <CanInit>
   /* set it as active */
   comActiveInterface = COM_IF_CAN;
- 8001bde:	2202      	movs	r2, #2
- 8001be0:	4b01      	ldr	r3, [pc, #4]	@ (8001be8 <ComInit+0x14>)
- 8001be2:	701a      	strb	r2, [r3, #0]
+ 8001bee:	2202      	movs	r2, #2
+ 8001bf0:	4b01      	ldr	r3, [pc, #4]	@ (8001bf8 <ComInit+0x14>)
+ 8001bf2:	701a      	strb	r2, [r3, #0]
   NetInit();
   /* set it as active */
   comActiveInterface = COM_IF_NET;
   #endif
 #endif
 } /*** end of ComInit ***/
- 8001be4:	bd10      	pop	{r4, pc}
- 8001be6:	46c0      	nop			@ (mov r8, r8)
- 8001be8:	2000000c 	.word	0x2000000c
+ 8001bf4:	bd10      	pop	{r4, pc}
+ 8001bf6:	46c0      	nop			@ (mov r8, r8)
+ 8001bf8:	2000000c 	.word	0x2000000c
 
-08001bec <ComTask>:
+08001bfc <ComTask>:
 **            and submitting the request to process newly received data.
 ** \return    none
 **
 ****************************************************************************************/
 void ComTask(void)
 {
- 8001bec:	b537      	push	{r0, r1, r2, r4, r5, lr}
+ 8001bfc:	b537      	push	{r0, r1, r2, r4, r5, lr}
   blt_int8u xcpPacketLen;
   /* make xcpCtoReqPacket static for runtime efficiency */
   static blt_int8u xcpCtoReqPacket[BOOT_COM_RX_MAX_DATA];
 
 #if (BOOT_COM_CAN_ENABLE > 0)
   if (CanReceivePacket(&xcpCtoReqPacket[0], &xcpPacketLen) == BLT_TRUE)
- 8001bee:	466b      	mov	r3, sp
- 8001bf0:	4c07      	ldr	r4, [pc, #28]	@ (8001c10 <ComTask+0x24>)
- 8001bf2:	1ddd      	adds	r5, r3, #7
- 8001bf4:	0029      	movs	r1, r5
- 8001bf6:	0020      	movs	r0, r4
- 8001bf8:	f7ff fbfc 	bl	80013f4 <CanReceivePacket>
- 8001bfc:	2801      	cmp	r0, #1
- 8001bfe:	d106      	bne.n	8001c0e <ComTask+0x22>
+ 8001bfe:	466b      	mov	r3, sp
+ 8001c00:	4c07      	ldr	r4, [pc, #28]	@ (8001c20 <ComTask+0x24>)
+ 8001c02:	1ddd      	adds	r5, r3, #7
+ 8001c04:	0029      	movs	r1, r5
+ 8001c06:	0020      	movs	r0, r4
+ 8001c08:	f7ff fbfa 	bl	8001400 <CanReceivePacket>
+ 8001c0c:	2801      	cmp	r0, #1
+ 8001c0e:	d106      	bne.n	8001c1e <ComTask+0x22>
   {
     /* make this the active interface */
     comActiveInterface = COM_IF_CAN;
- 8001c00:	2202      	movs	r2, #2
- 8001c02:	4b04      	ldr	r3, [pc, #16]	@ (8001c14 <ComTask+0x28>)
+ 8001c10:	2202      	movs	r2, #2
+ 8001c12:	4b04      	ldr	r3, [pc, #16]	@ (8001c24 <ComTask+0x28>)
     /* process packet */
     XcpPacketReceived(&xcpCtoReqPacket[0], xcpPacketLen);
- 8001c04:	0020      	movs	r0, r4
- 8001c06:	7829      	ldrb	r1, [r5, #0]
+ 8001c14:	0020      	movs	r0, r4
+ 8001c16:	7829      	ldrb	r1, [r5, #0]
     comActiveInterface = COM_IF_CAN;
- 8001c08:	701a      	strb	r2, [r3, #0]
+ 8001c18:	701a      	strb	r2, [r3, #0]
     XcpPacketReceived(&xcpCtoReqPacket[0], xcpPacketLen);
- 8001c0a:	f000 f867 	bl	8001cdc <XcpPacketReceived>
+ 8001c1a:	f000 f867 	bl	8001cec <XcpPacketReceived>
     comActiveInterface = COM_IF_NET;
     /* process packet */
     XcpPacketReceived(&xcpCtoReqPacket[0], xcpPacketLen);
   }
 #endif
 } /*** end of ComTask ***/
- 8001c0e:	bd37      	pop	{r0, r1, r2, r4, r5, pc}
- 8001c10:	2000050d 	.word	0x2000050d
- 8001c14:	2000000c 	.word	0x2000000c
+ 8001c1e:	bd37      	pop	{r0, r1, r2, r4, r5, pc}
+ 8001c20:	2000050d 	.word	0x2000050d
+ 8001c24:	2000000c 	.word	0x2000000c
 
-08001c18 <ComFree>:
+08001c28 <ComFree>:
 {
 #if (BOOT_COM_USB_ENABLE > 0)
   /* disconnect the usb device from the usb host */
   UsbFree();
 #endif
 } /*** end of ComFree ***/
- 8001c18:	4770      	bx	lr
+ 8001c28:	4770      	bx	lr
 	...
 
-08001c1c <ComTransmitPacket>:
+08001c2c <ComTransmitPacket>:
 ** \param     len  Number of data bytes that need to be transmitted.
 ** \return    none
 **
 ****************************************************************************************/
 void ComTransmitPacket(blt_int8u *data, blt_int16u len)
 {
- 8001c1c:	b510      	push	{r4, lr}
+ 8001c2c:	b510      	push	{r4, lr}
 #if (BOOT_COM_CAN_ENABLE > 0)
   /* transmit the packet. note that len is limited to 8 in the plausibility check,
    * so cast is okay.
    */
   if (comActiveInterface == COM_IF_CAN)
- 8001c1e:	4b05      	ldr	r3, [pc, #20]	@ (8001c34 <ComTransmitPacket+0x18>)
- 8001c20:	781b      	ldrb	r3, [r3, #0]
- 8001c22:	2b02      	cmp	r3, #2
- 8001c24:	d102      	bne.n	8001c2c <ComTransmitPacket+0x10>
+ 8001c2e:	4b05      	ldr	r3, [pc, #20]	@ (8001c44 <ComTransmitPacket+0x18>)
+ 8001c30:	781b      	ldrb	r3, [r3, #0]
+ 8001c32:	2b02      	cmp	r3, #2
+ 8001c34:	d102      	bne.n	8001c3c <ComTransmitPacket+0x10>
   {
     CanTransmitPacket(data, (blt_int8u)len);
- 8001c26:	b2c9      	uxtb	r1, r1
- 8001c28:	f7ff fba6 	bl	8001378 <CanTransmitPacket>
+ 8001c36:	b2c9      	uxtb	r1, r1
+ 8001c38:	f7ff fba2 	bl	8001380 <CanTransmitPacket>
     NetTransmitPacket(data, len);
   }
 #endif
 
   /* send signal that the packet was transmitted */
   XcpPacketTransmitted();
- 8001c2c:	f000 f850 	bl	8001cd0 <XcpPacketTransmitted>
+ 8001c3c:	f000 f850 	bl	8001ce0 <XcpPacketTransmitted>
 } /*** end of ComTransmitPacket ***/
- 8001c30:	bd10      	pop	{r4, pc}
- 8001c32:	46c0      	nop			@ (mov r8, r8)
- 8001c34:	2000000c 	.word	0x2000000c
+ 8001c40:	bd10      	pop	{r4, pc}
+ 8001c42:	46c0      	nop			@ (mov r8, r8)
+ 8001c44:	2000000c 	.word	0x2000000c
 
-08001c38 <ComGetActiveInterfaceMaxRxLen>:
+08001c48 <ComGetActiveInterfaceMaxRxLen>:
 blt_int16u ComGetActiveInterfaceMaxRxLen(void)
 {
   blt_int16u result;
 
   /* filter on communication interface identifier */
   switch (comActiveInterface)
- 8001c38:	4b07      	ldr	r3, [pc, #28]	@ (8001c58 <ComGetActiveInterfaceMaxRxLen+0x20>)
- 8001c3a:	203f      	movs	r0, #63	@ 0x3f
- 8001c3c:	781b      	ldrb	r3, [r3, #0]
- 8001c3e:	2b03      	cmp	r3, #3
- 8001c40:	d004      	beq.n	8001c4c <ComGetActiveInterfaceMaxRxLen+0x14>
- 8001c42:	d804      	bhi.n	8001c4e <ComGetActiveInterfaceMaxRxLen+0x16>
+ 8001c48:	4b07      	ldr	r3, [pc, #28]	@ (8001c68 <ComGetActiveInterfaceMaxRxLen+0x20>)
+ 8001c4a:	203f      	movs	r0, #63	@ 0x3f
+ 8001c4c:	781b      	ldrb	r3, [r3, #0]
+ 8001c4e:	2b03      	cmp	r3, #3
+ 8001c50:	d004      	beq.n	8001c5c <ComGetActiveInterfaceMaxRxLen+0x14>
+ 8001c52:	d804      	bhi.n	8001c5e <ComGetActiveInterfaceMaxRxLen+0x16>
   {
     case COM_IF_RS232:
       result = BOOT_COM_RS232_RX_MAX_DATA;
- 8001c44:	3042      	adds	r0, #66	@ 0x42
+ 8001c54:	3042      	adds	r0, #66	@ 0x42
   switch (comActiveInterface)
- 8001c46:	2b02      	cmp	r3, #2
- 8001c48:	d100      	bne.n	8001c4c <ComGetActiveInterfaceMaxRxLen+0x14>
+ 8001c56:	2b02      	cmp	r3, #2
+ 8001c58:	d100      	bne.n	8001c5c <ComGetActiveInterfaceMaxRxLen+0x14>
     case COM_IF_NET:
       result = BOOT_COM_NET_RX_MAX_DATA;
       break;
 
     default:
       result = BOOT_COM_RX_MAX_DATA;
- 8001c4a:	3879      	subs	r0, #121	@ 0x79
+ 8001c5a:	3879      	subs	r0, #121	@ 0x79
       break;
   }
 
   return result;
 } /*** end of ComGetActiveInterfaceMaxRxLen ***/
- 8001c4c:	4770      	bx	lr
+ 8001c5c:	4770      	bx	lr
       result = BOOT_COM_RX_MAX_DATA;
- 8001c4e:	2008      	movs	r0, #8
+ 8001c5e:	2008      	movs	r0, #8
   switch (comActiveInterface)
- 8001c50:	2b04      	cmp	r3, #4
- 8001c52:	d1fb      	bne.n	8001c4c <ComGetActiveInterfaceMaxRxLen+0x14>
+ 8001c60:	2b04      	cmp	r3, #4
+ 8001c62:	d1fb      	bne.n	8001c5c <ComGetActiveInterfaceMaxRxLen+0x14>
       result = BOOT_COM_RS232_RX_MAX_DATA;
- 8001c54:	3079      	adds	r0, #121	@ 0x79
- 8001c56:	e7f9      	b.n	8001c4c <ComGetActiveInterfaceMaxRxLen+0x14>
- 8001c58:	2000000c 	.word	0x2000000c
+ 8001c64:	3079      	adds	r0, #121	@ 0x79
+ 8001c66:	e7f9      	b.n	8001c5c <ComGetActiveInterfaceMaxRxLen+0x14>
+ 8001c68:	2000000c 	.word	0x2000000c
 
-08001c5c <ComGetActiveInterfaceMaxTxLen>:
+08001c6c <ComGetActiveInterfaceMaxTxLen>:
 ** \brief     Obtains the maximum number of bytes that can be transmitted on the
 **            specified communication interface.
 ** \return    Maximum number of bytes that can be received.
 **
 ****************************************************************************************/
 blt_int16u ComGetActiveInterfaceMaxTxLen(void)
- 8001c5c:	b510      	push	{r4, lr}
- 8001c5e:	f7ff ffeb 	bl	8001c38 <ComGetActiveInterfaceMaxRxLen>
- 8001c62:	bd10      	pop	{r4, pc}
+ 8001c6c:	b510      	push	{r4, lr}
+ 8001c6e:	f7ff ffeb 	bl	8001c48 <ComGetActiveInterfaceMaxRxLen>
+ 8001c72:	bd10      	pop	{r4, pc}
 
-08001c64 <ComIsConnected>:
+08001c74 <ComIsConnected>:
 ** \brief     This function obtains the XCP connection state.
 ** \return    BLT_TRUE when an XCP connection is established, BLT_FALSE otherwise.
 **
 ****************************************************************************************/
 blt_bool ComIsConnected(void)
 {
- 8001c64:	b510      	push	{r4, lr}
+ 8001c74:	b510      	push	{r4, lr}
   blt_bool result = BLT_FALSE;
 
   /* Is there an active XCP connection? This indicates that the communication interface
    * is in the connection state. 
    */  
   if (XcpIsConnected())
- 8001c66:	f000 f82b 	bl	8001cc0 <XcpIsConnected>
- 8001c6a:	1e43      	subs	r3, r0, #1
- 8001c6c:	4198      	sbcs	r0, r3
+ 8001c76:	f000 f82b 	bl	8001cd0 <XcpIsConnected>
+ 8001c7a:	1e43      	subs	r3, r0, #1
+ 8001c7c:	4198      	sbcs	r0, r3
   {
     result = BLT_TRUE;
   }
 #endif
   /* give the result back to the caller. */
   return result;
- 8001c6e:	b2c0      	uxtb	r0, r0
+ 8001c7e:	b2c0      	uxtb	r0, r0
 } /*** end of ComIsConnected ***/
- 8001c70:	bd10      	pop	{r4, pc}
+ 8001c80:	bd10      	pop	{r4, pc}
 
-08001c72 <CopInit>:
+08001c82 <CopInit>:
 ** \brief     Watchdog initialization function.
 ** \return    none
 **
 ****************************************************************************************/
 void CopInit(void)
 {
- 8001c72:	b510      	push	{r4, lr}
+ 8001c82:	b510      	push	{r4, lr}
 #if (BOOT_COP_HOOKS_ENABLE > 0)
   CopInitHook();
- 8001c74:	f7fe faf5 	bl	8000262 <CopInitHook>
+ 8001c84:	f7fe faed 	bl	8000262 <CopInitHook>
 #endif
 } /*** end of CopInit ***/
- 8001c78:	bd10      	pop	{r4, pc}
+ 8001c88:	bd10      	pop	{r4, pc}
 
-08001c7a <CopService>:
+08001c8a <CopService>:
 ** \brief     Watchdog service function to prevent the watchdog from timing out.
 ** \return    none
 **
 ****************************************************************************************/
 void CopService(void)
 {
- 8001c7a:	b510      	push	{r4, lr}
+ 8001c8a:	b510      	push	{r4, lr}
 #if (BOOT_COP_HOOKS_ENABLE > 0)
   CopServiceHook();
- 8001c7c:	f7fe faf6 	bl	800026c <CopServiceHook>
+ 8001c8c:	f7fe faee 	bl	800026c <CopServiceHook>
 #endif
 } /*** end of CopService ***/
- 8001c80:	bd10      	pop	{r4, pc}
+ 8001c90:	bd10      	pop	{r4, pc}
 	...
 
-08001c84 <XcpSetCtoError>:
+08001c94 <XcpSetCtoError>:
 **
 ****************************************************************************************/
 static void XcpSetCtoError(blt_int8u error)
 {
   /* prepare the error packet */
   xcpInfo.ctoData[0] = XCP_PID_ERR;
- 8001c84:	22fe      	movs	r2, #254	@ 0xfe
- 8001c86:	4b03      	ldr	r3, [pc, #12]	@ (8001c94 <XcpSetCtoError+0x10>)
- 8001c88:	701a      	strb	r2, [r3, #0]
+ 8001c94:	22fe      	movs	r2, #254	@ 0xfe
+ 8001c96:	4b03      	ldr	r3, [pc, #12]	@ (8001ca4 <XcpSetCtoError+0x10>)
+ 8001c98:	701a      	strb	r2, [r3, #0]
   xcpInfo.ctoData[1] = error;
   xcpInfo.ctoLen = 2;
- 8001c8a:	3afc      	subs	r2, #252	@ 0xfc
+ 8001c9a:	3afc      	subs	r2, #252	@ 0xfc
   xcpInfo.ctoData[1] = error;
- 8001c8c:	7058      	strb	r0, [r3, #1]
+ 8001c9c:	7058      	strb	r0, [r3, #1]
   xcpInfo.ctoLen = 2;
- 8001c8e:	819a      	strh	r2, [r3, #12]
+ 8001c9e:	819a      	strh	r2, [r3, #12]
 } /*** end of XcpSetCtoError ***/
- 8001c90:	4770      	bx	lr
- 8001c92:	46c0      	nop			@ (mov r8, r8)
- 8001c94:	20000518 	.word	0x20000518
+ 8001ca0:	4770      	bx	lr
+ 8001ca2:	46c0      	nop			@ (mov r8, r8)
+ 8001ca4:	20000518 	.word	0x20000518
 
-08001c98 <XcpGetOrderedLong>:
+08001ca8 <XcpGetOrderedLong>:
 
 #if (BOOT_CPU_BYTE_ORDER_MOTOROLA	== 0)
   result |= (blt_int32u)data[0];
   result |= (blt_int32u)((blt_int32u)data[1] << 8);
   result |= (blt_int32u)((blt_int32u)data[2] << 16);
   result |= (blt_int32u)((blt_int32u)data[3] << 24);
- 8001c98:	7842      	ldrb	r2, [r0, #1]
- 8001c9a:	7803      	ldrb	r3, [r0, #0]
- 8001c9c:	0212      	lsls	r2, r2, #8
- 8001c9e:	431a      	orrs	r2, r3
- 8001ca0:	7883      	ldrb	r3, [r0, #2]
- 8001ca2:	78c0      	ldrb	r0, [r0, #3]
- 8001ca4:	041b      	lsls	r3, r3, #16
- 8001ca6:	4313      	orrs	r3, r2
- 8001ca8:	0600      	lsls	r0, r0, #24
- 8001caa:	4318      	orrs	r0, r3
+ 8001ca8:	7842      	ldrb	r2, [r0, #1]
+ 8001caa:	7803      	ldrb	r3, [r0, #0]
+ 8001cac:	0212      	lsls	r2, r2, #8
+ 8001cae:	431a      	orrs	r2, r3
+ 8001cb0:	7883      	ldrb	r3, [r0, #2]
+ 8001cb2:	78c0      	ldrb	r0, [r0, #3]
+ 8001cb4:	041b      	lsls	r3, r3, #16
+ 8001cb6:	4313      	orrs	r3, r2
+ 8001cb8:	0600      	lsls	r0, r0, #24
+ 8001cba:	4318      	orrs	r0, r3
   result |= (blt_int32u)((blt_int32u)data[1] << 16);
   result |= (blt_int32u)((blt_int32u)data[0] << 24);
 #endif
   /* Give the result back to the caller. */
   return result;
 } /*** end of XcpGetOrderedLong ***/
- 8001cac:	4770      	bx	lr
+ 8001cbc:	4770      	bx	lr
 	...
 
-08001cb0 <XcpInit>:
+08001cc0 <XcpInit>:
   xcpInfo.mta = 0;
- 8001cb0:	2200      	movs	r2, #0
- 8001cb2:	4b02      	ldr	r3, [pc, #8]	@ (8001cbc <XcpInit+0xc>)
- 8001cb4:	611a      	str	r2, [r3, #16]
+ 8001cc0:	2200      	movs	r2, #0
+ 8001cc2:	4b02      	ldr	r3, [pc, #8]	@ (8001ccc <XcpInit+0xc>)
+ 8001cc4:	611a      	str	r2, [r3, #16]
   xcpInfo.connected = 0;
- 8001cb6:	609a      	str	r2, [r3, #8]
+ 8001cc6:	609a      	str	r2, [r3, #8]
   xcpInfo.ctoLen = 0;
- 8001cb8:	819a      	strh	r2, [r3, #12]
+ 8001cc8:	819a      	strh	r2, [r3, #12]
 } /*** end of XcpInit ***/
- 8001cba:	4770      	bx	lr
- 8001cbc:	20000518 	.word	0x20000518
-
-08001cc0 <XcpIsConnected>:
-  if (xcpInfo.connected == 0)
- 8001cc0:	4b02      	ldr	r3, [pc, #8]	@ (8001ccc <XcpIsConnected+0xc>)
- 8001cc2:	7a18      	ldrb	r0, [r3, #8]
- 8001cc4:	1e43      	subs	r3, r0, #1
- 8001cc6:	4198      	sbcs	r0, r3
-} /*** end of XcpIsConnected ***/
- 8001cc8:	b2c0      	uxtb	r0, r0
  8001cca:	4770      	bx	lr
  8001ccc:	20000518 	.word	0x20000518
 
-08001cd0 <XcpPacketTransmitted>:
-  xcpInfo.ctoPending = 0;
- 8001cd0:	2200      	movs	r2, #0
- 8001cd2:	4b01      	ldr	r3, [pc, #4]	@ (8001cd8 <XcpPacketTransmitted+0x8>)
- 8001cd4:	72da      	strb	r2, [r3, #11]
-} /*** end of XcpPacketTransmitted ***/
- 8001cd6:	4770      	bx	lr
- 8001cd8:	20000518 	.word	0x20000518
+08001cd0 <XcpIsConnected>:
+  if (xcpInfo.connected == 0)
+ 8001cd0:	4b02      	ldr	r3, [pc, #8]	@ (8001cdc <XcpIsConnected+0xc>)
+ 8001cd2:	7a18      	ldrb	r0, [r3, #8]
+ 8001cd4:	1e43      	subs	r3, r0, #1
+ 8001cd6:	4198      	sbcs	r0, r3
+} /*** end of XcpIsConnected ***/
+ 8001cd8:	b2c0      	uxtb	r0, r0
+ 8001cda:	4770      	bx	lr
+ 8001cdc:	20000518 	.word	0x20000518
 
-08001cdc <XcpPacketReceived>:
+08001ce0 <XcpPacketTransmitted>:
+  xcpInfo.ctoPending = 0;
+ 8001ce0:	2200      	movs	r2, #0
+ 8001ce2:	4b01      	ldr	r3, [pc, #4]	@ (8001ce8 <XcpPacketTransmitted+0x8>)
+ 8001ce4:	72da      	strb	r2, [r3, #11]
+} /*** end of XcpPacketTransmitted ***/
+ 8001ce6:	4770      	bx	lr
+ 8001ce8:	20000518 	.word	0x20000518
+
+08001cec <XcpPacketReceived>:
 {
- 8001cdc:	b5f8      	push	{r3, r4, r5, r6, r7, lr}
- 8001cde:	0005      	movs	r5, r0
+ 8001cec:	b5f8      	push	{r3, r4, r5, r6, r7, lr}
+ 8001cee:	0005      	movs	r5, r0
   if (data[0] == XCP_CMD_CONNECT)
- 8001ce0:	7800      	ldrb	r0, [r0, #0]
- 8001ce2:	4c7e      	ldr	r4, [pc, #504]	@ (8001edc <XcpPacketReceived+0x200>)
- 8001ce4:	28ff      	cmp	r0, #255	@ 0xff
- 8001ce6:	d127      	bne.n	8001d38 <XcpPacketReceived+0x5c>
+ 8001cf0:	7800      	ldrb	r0, [r0, #0]
+ 8001cf2:	4c7e      	ldr	r4, [pc, #504]	@ (8001eec <XcpPacketReceived+0x200>)
+ 8001cf4:	28ff      	cmp	r0, #255	@ 0xff
+ 8001cf6:	d127      	bne.n	8001d48 <XcpPacketReceived+0x5c>
 
   /* enable resource protection */
   XcpProtectResources();
 
   /* indicate that the connection is established */
   xcpInfo.connected = 1;
- 8001ce8:	2301      	movs	r3, #1
- 8001cea:	8123      	strh	r3, [r4, #8]
+ 8001cf8:	2301      	movs	r3, #1
+ 8001cfa:	8123      	strh	r3, [r4, #8]
 
   /* set packet id to command response packet */
   xcpInfo.ctoData[0] = XCP_PID_RES;
- 8001cec:	4b7c      	ldr	r3, [pc, #496]	@ (8001ee0 <XcpPacketReceived+0x204>)
- 8001cee:	8023      	strh	r3, [r4, #0]
+ 8001cfc:	4b7c      	ldr	r3, [pc, #496]	@ (8001ef0 <XcpPacketReceived+0x204>)
+ 8001cfe:	8023      	strh	r3, [r4, #0]
 #if (XCP_RES_DATA_STIMULATION_EN == 1)
   xcpInfo.ctoData[1] |= XCP_RES_STIM;
 #endif
 
   /* report communication mode info. only byte granularity is supported */
   xcpInfo.ctoData[2] = 0;
- 8001cf0:	2300      	movs	r3, #0
- 8001cf2:	70a3      	strb	r3, [r4, #2]
+ 8001d00:	2300      	movs	r3, #0
+ 8001d02:	70a3      	strb	r3, [r4, #2]
   /* configure for motorola or intel byte ordering */
   xcpInfo.ctoData[2] |= XCP_MOTOROLA_FORMAT;
 
   /* report max cto data length */
   xcpInfo.ctoData[3] = (blt_int8u)XCP_CTO_PACKET_LEN;
- 8001cf4:	f7ff ffa0 	bl	8001c38 <ComGetActiveInterfaceMaxRxLen>
- 8001cf8:	70e0      	strb	r0, [r4, #3]
+ 8001d04:	f7ff ffa0 	bl	8001c48 <ComGetActiveInterfaceMaxRxLen>
+ 8001d08:	70e0      	strb	r0, [r4, #3]
 
   /* report max dto data length */
 #if (XCP_MOTOROLA_FORMAT == 0)
   xcpInfo.ctoData[4] = (blt_int8u)XCP_DTO_PACKET_LEN;
- 8001cfa:	f7ff ffaf 	bl	8001c5c <ComGetActiveInterfaceMaxTxLen>
- 8001cfe:	7120      	strb	r0, [r4, #4]
+ 8001d0a:	f7ff ffaf 	bl	8001c6c <ComGetActiveInterfaceMaxTxLen>
+ 8001d0e:	7120      	strb	r0, [r4, #4]
   xcpInfo.ctoData[5] = (blt_int8u)(XCP_DTO_PACKET_LEN >> 8);
- 8001d00:	f7ff ffac 	bl	8001c5c <ComGetActiveInterfaceMaxTxLen>
+ 8001d10:	f7ff ffac 	bl	8001c6c <ComGetActiveInterfaceMaxTxLen>
   xcpInfo.ctoData[4] = (blt_int8u)(XCP_DTO_PACKET_LEN >> 8);
   xcpInfo.ctoData[5] = (blt_int8u)XCP_DTO_PACKET_LEN;
 #endif
 
   /* report msb of protocol layer version number */
   xcpInfo.ctoData[6] = XCP_VERSION_PROTOCOL_LAYER >> 8;
- 8001d04:	2302      	movs	r3, #2
- 8001d06:	33ff      	adds	r3, #255	@ 0xff
+ 8001d14:	2302      	movs	r3, #2
+ 8001d16:	33ff      	adds	r3, #255	@ 0xff
   xcpInfo.ctoData[5] = (blt_int8u)(XCP_DTO_PACKET_LEN >> 8);
- 8001d08:	0a00      	lsrs	r0, r0, #8
+ 8001d18:	0a00      	lsrs	r0, r0, #8
   xcpInfo.ctoData[6] = XCP_VERSION_PROTOCOL_LAYER >> 8;
- 8001d0a:	80e3      	strh	r3, [r4, #6]
+ 8001d1a:	80e3      	strh	r3, [r4, #6]
 
   /* report msb of transport layer version number */
   xcpInfo.ctoData[7] = XCP_VERSION_TRANSPORT_LAYER >> 8;
 
   /* set packet length */
   xcpInfo.ctoLen = 8;
- 8001d0c:	3bf9      	subs	r3, #249	@ 0xf9
+ 8001d1c:	3bf9      	subs	r3, #249	@ 0xf9
   xcpInfo.ctoData[5] = (blt_int8u)(XCP_DTO_PACKET_LEN >> 8);
- 8001d0e:	7160      	strb	r0, [r4, #5]
+ 8001d1e:	7160      	strb	r0, [r4, #5]
   xcpInfo.ctoLen = 8;
- 8001d10:	81a3      	strh	r3, [r4, #12]
+ 8001d20:	81a3      	strh	r3, [r4, #12]
 
   /* reinit the NVM driver because a new firmware update is about the start */
   NvmInit();
- 8001d12:	f7ff fe59 	bl	80019c8 <NvmInit>
+ 8001d22:	f7ff fe59 	bl	80019d8 <NvmInit>
   if (xcpInfo.ctoPending == 1)
- 8001d16:	7ae3      	ldrb	r3, [r4, #11]
- 8001d18:	2b01      	cmp	r3, #1
- 8001d1a:	d102      	bne.n	8001d22 <XcpPacketReceived+0x46>
+ 8001d26:	7ae3      	ldrb	r3, [r4, #11]
+ 8001d28:	2b01      	cmp	r3, #1
+ 8001d2a:	d102      	bne.n	8001d32 <XcpPacketReceived+0x46>
     XcpSetCtoError(XCP_ERR_CMD_BUSY);
- 8001d1c:	2010      	movs	r0, #16
- 8001d1e:	f7ff ffb1 	bl	8001c84 <XcpSetCtoError>
+ 8001d2c:	2010      	movs	r0, #16
+ 8001d2e:	f7ff ffb1 	bl	8001c94 <XcpSetCtoError>
   if (xcpInfo.ctoLen > 0)
- 8001d22:	230c      	movs	r3, #12
- 8001d24:	5ee1      	ldrsh	r1, [r4, r3]
- 8001d26:	2900      	cmp	r1, #0
- 8001d28:	dd05      	ble.n	8001d36 <XcpPacketReceived+0x5a>
+ 8001d32:	230c      	movs	r3, #12
+ 8001d34:	5ee1      	ldrsh	r1, [r4, r3]
+ 8001d36:	2900      	cmp	r1, #0
+ 8001d38:	dd05      	ble.n	8001d46 <XcpPacketReceived+0x5a>
     xcpInfo.ctoPending = 1;
- 8001d2a:	2301      	movs	r3, #1
+ 8001d3a:	2301      	movs	r3, #1
   ComTransmitPacket(data, len);
- 8001d2c:	0020      	movs	r0, r4
- 8001d2e:	b289      	uxth	r1, r1
+ 8001d3c:	0020      	movs	r0, r4
+ 8001d3e:	b289      	uxth	r1, r1
     xcpInfo.ctoPending = 1;
- 8001d30:	72e3      	strb	r3, [r4, #11]
+ 8001d40:	72e3      	strb	r3, [r4, #11]
   ComTransmitPacket(data, len);
- 8001d32:	f7ff ff73 	bl	8001c1c <ComTransmitPacket>
+ 8001d42:	f7ff ff73 	bl	8001c2c <ComTransmitPacket>
 } /*** end of XcpPacketReceived ***/
- 8001d36:	bdf8      	pop	{r3, r4, r5, r6, r7, pc}
+ 8001d46:	bdf8      	pop	{r3, r4, r5, r6, r7, pc}
   else if (xcpInfo.connected == 1)
- 8001d38:	7a23      	ldrb	r3, [r4, #8]
- 8001d3a:	2b01      	cmp	r3, #1
- 8001d3c:	d1fb      	bne.n	8001d36 <XcpPacketReceived+0x5a>
+ 8001d48:	7a23      	ldrb	r3, [r4, #8]
+ 8001d4a:	2b01      	cmp	r3, #1
+ 8001d4c:	d1fb      	bne.n	8001d46 <XcpPacketReceived+0x5a>
     switch (data[0])
- 8001d3e:	28d2      	cmp	r0, #210	@ 0xd2
- 8001d40:	d812      	bhi.n	8001d68 <XcpPacketReceived+0x8c>
- 8001d42:	28c8      	cmp	r0, #200	@ 0xc8
- 8001d44:	d801      	bhi.n	8001d4a <XcpPacketReceived+0x6e>
+ 8001d4e:	28d2      	cmp	r0, #210	@ 0xd2
+ 8001d50:	d812      	bhi.n	8001d78 <XcpPacketReceived+0x8c>
+ 8001d52:	28c8      	cmp	r0, #200	@ 0xc8
+ 8001d54:	d801      	bhi.n	8001d5a <XcpPacketReceived+0x6e>
     XcpCmdUserSubCmdInfoTable(data);
     break;
 #endif
 
   default:
     XcpSetCtoError(XCP_ERR_CMD_UNKNOWN);
- 8001d46:	2020      	movs	r0, #32
- 8001d48:	e024      	b.n	8001d94 <XcpPacketReceived+0xb8>
+ 8001d56:	2020      	movs	r0, #32
+ 8001d58:	e024      	b.n	8001da4 <XcpPacketReceived+0xb8>
     switch (data[0])
- 8001d4a:	38c9      	subs	r0, #201	@ 0xc9
- 8001d4c:	2809      	cmp	r0, #9
- 8001d4e:	d8fa      	bhi.n	8001d46 <XcpPacketReceived+0x6a>
- 8001d50:	f7fe f9e4 	bl	800011c <__gnu_thumb1_case_shi>
- 8001d54:	fff90078 	.word	0xfff90078
- 8001d58:	0082fff9 	.word	0x0082fff9
- 8001d5c:	fff9fff9 	.word	0xfff9fff9
- 8001d60:	008c00c0 	.word	0x008c00c0
- 8001d64:	00aa00b5 	.word	0x00aa00b5
- 8001d68:	0003      	movs	r3, r0
- 8001d6a:	330d      	adds	r3, #13
- 8001d6c:	b2db      	uxtb	r3, r3
- 8001d6e:	2b0b      	cmp	r3, #11
- 8001d70:	d8e9      	bhi.n	8001d46 <XcpPacketReceived+0x6a>
- 8001d72:	38f3      	subs	r0, #243	@ 0xf3
- 8001d74:	280b      	cmp	r0, #11
- 8001d76:	d8e6      	bhi.n	8001d46 <XcpPacketReceived+0x6a>
- 8001d78:	f7fe f9c6 	bl	8000108 <__gnu_thumb1_case_sqi>
- 8001d7c:	2a061d32 	.word	0x2a061d32
- 8001d80:	4ce5e5e5 	.word	0x4ce5e5e5
- 8001d84:	5e5553e5 	.word	0x5e5553e5
+ 8001d5a:	38c9      	subs	r0, #201	@ 0xc9
+ 8001d5c:	2809      	cmp	r0, #9
+ 8001d5e:	d8fa      	bhi.n	8001d56 <XcpPacketReceived+0x6a>
+ 8001d60:	f7fe f9dc 	bl	800011c <__gnu_thumb1_case_shi>
+ 8001d64:	fff90078 	.word	0xfff90078
+ 8001d68:	0082fff9 	.word	0x0082fff9
+ 8001d6c:	fff9fff9 	.word	0xfff9fff9
+ 8001d70:	008c00c0 	.word	0x008c00c0
+ 8001d74:	00aa00b5 	.word	0x00aa00b5
+ 8001d78:	0003      	movs	r3, r0
+ 8001d7a:	330d      	adds	r3, #13
+ 8001d7c:	b2db      	uxtb	r3, r3
+ 8001d7e:	2b0b      	cmp	r3, #11
+ 8001d80:	d8e9      	bhi.n	8001d56 <XcpPacketReceived+0x6a>
+ 8001d82:	38f3      	subs	r0, #243	@ 0xf3
+ 8001d84:	280b      	cmp	r0, #11
+ 8001d86:	d8e6      	bhi.n	8001d56 <XcpPacketReceived+0x6a>
+ 8001d88:	f7fe f9be 	bl	8000108 <__gnu_thumb1_case_sqi>
+ 8001d8c:	2a061d32 	.word	0x2a061d32
+ 8001d90:	4ce5e5e5 	.word	0x4ce5e5e5
+ 8001d94:	5e5553e5 	.word	0x5e5553e5
   if (data[1] > (XCP_CTO_PACKET_LEN-1))
- 8001d88:	f7ff ff56 	bl	8001c38 <ComGetActiveInterfaceMaxRxLen>
- 8001d8c:	786a      	ldrb	r2, [r5, #1]
- 8001d8e:	4290      	cmp	r0, r2
- 8001d90:	d803      	bhi.n	8001d9a <XcpPacketReceived+0xbe>
+ 8001d98:	f7ff ff56 	bl	8001c48 <ComGetActiveInterfaceMaxRxLen>
+ 8001d9c:	786a      	ldrb	r2, [r5, #1]
+ 8001d9e:	4290      	cmp	r0, r2
+ 8001da0:	d803      	bhi.n	8001daa <XcpPacketReceived+0xbe>
     XcpSetCtoError(XCP_ERR_OUT_OF_RANGE);
- 8001d92:	2022      	movs	r0, #34	@ 0x22
+ 8001da2:	2022      	movs	r0, #34	@ 0x22
     XcpSetCtoError(XCP_ERR_CMD_UNKNOWN);
- 8001d94:	f7ff ff76 	bl	8001c84 <XcpSetCtoError>
+ 8001da4:	f7ff ff76 	bl	8001c94 <XcpSetCtoError>
     break;
   }
 } /*** end of XcpCmdUser ***/
- 8001d98:	e7bd      	b.n	8001d16 <XcpPacketReceived+0x3a>
+ 8001da8:	e7bd      	b.n	8001d26 <XcpPacketReceived+0x3a>
   CpuMemCopy((blt_addr)destPtr,(blt_addr)xcpInfo.mta, len);
- 8001d9a:	4852      	ldr	r0, [pc, #328]	@ (8001ee4 <XcpPacketReceived+0x208>)
- 8001d9c:	6921      	ldr	r1, [r4, #16]
+ 8001daa:	4852      	ldr	r0, [pc, #328]	@ (8001ef4 <XcpPacketReceived+0x208>)
+ 8001dac:	6921      	ldr	r1, [r4, #16]
   CpuMemCopy((blt_addr)destPtr,(blt_addr)xcpInfo.mta, len);
- 8001d9e:	f7ff fb7d 	bl	800149c <CpuMemCopy>
+ 8001dae:	f7ff fb7d 	bl	80014ac <CpuMemCopy>
   xcpInfo.ctoData[0] = XCP_PID_RES;
- 8001da2:	23ff      	movs	r3, #255	@ 0xff
+ 8001db2:	23ff      	movs	r3, #255	@ 0xff
   xcpInfo.mta += data[1];
- 8001da4:	786a      	ldrb	r2, [r5, #1]
+ 8001db4:	786a      	ldrb	r2, [r5, #1]
   xcpInfo.ctoData[0] = XCP_PID_RES;
- 8001da6:	7023      	strb	r3, [r4, #0]
+ 8001db6:	7023      	strb	r3, [r4, #0]
   xcpInfo.mta += data[1];
- 8001da8:	6923      	ldr	r3, [r4, #16]
- 8001daa:	189b      	adds	r3, r3, r2
- 8001dac:	6123      	str	r3, [r4, #16]
+ 8001db8:	6923      	ldr	r3, [r4, #16]
+ 8001dba:	189b      	adds	r3, r3, r2
+ 8001dbc:	6123      	str	r3, [r4, #16]
   xcpInfo.ctoLen = data[1]+1;
- 8001dae:	786b      	ldrb	r3, [r5, #1]
- 8001db0:	3301      	adds	r3, #1
+ 8001dbe:	786b      	ldrb	r3, [r5, #1]
+ 8001dc0:	3301      	adds	r3, #1
   xcpInfo.ctoLen = 1;
- 8001db2:	81a3      	strh	r3, [r4, #12]
+ 8001dc2:	81a3      	strh	r3, [r4, #12]
 } /*** end of XcpCmdProgramReset ***/
- 8001db4:	e7af      	b.n	8001d16 <XcpPacketReceived+0x3a>
+ 8001dc4:	e7af      	b.n	8001d26 <XcpPacketReceived+0x3a>
   if (data[1] > (XCP_CTO_PACKET_LEN-1))
- 8001db6:	f7ff ff3f 	bl	8001c38 <ComGetActiveInterfaceMaxRxLen>
- 8001dba:	786b      	ldrb	r3, [r5, #1]
- 8001dbc:	4283      	cmp	r3, r0
- 8001dbe:	d2e8      	bcs.n	8001d92 <XcpPacketReceived+0xb6>
+ 8001dc6:	f7ff ff3f 	bl	8001c48 <ComGetActiveInterfaceMaxRxLen>
+ 8001dca:	786b      	ldrb	r3, [r5, #1]
+ 8001dcc:	4283      	cmp	r3, r0
+ 8001dce:	d2e8      	bcs.n	8001da2 <XcpPacketReceived+0xb6>
   xcpInfo.mta = XcpGetOrderedLong(&data[4]);
- 8001dc0:	1d28      	adds	r0, r5, #4
- 8001dc2:	f7ff ff69 	bl	8001c98 <XcpGetOrderedLong>
- 8001dc6:	6120      	str	r0, [r4, #16]
- 8001dc8:	0001      	movs	r1, r0
+ 8001dd0:	1d28      	adds	r0, r5, #4
+ 8001dd2:	f7ff ff69 	bl	8001ca8 <XcpGetOrderedLong>
+ 8001dd6:	6120      	str	r0, [r4, #16]
+ 8001dd8:	0001      	movs	r1, r0
   CpuMemCopy((blt_addr)destPtr,(blt_addr)xcpInfo.mta, len);
- 8001dca:	786a      	ldrb	r2, [r5, #1]
- 8001dcc:	4845      	ldr	r0, [pc, #276]	@ (8001ee4 <XcpPacketReceived+0x208>)
- 8001dce:	e7e6      	b.n	8001d9e <XcpPacketReceived+0xc2>
-  xcpInfo.ctoData[0] = XCP_PID_RES;
- 8001dd0:	23ff      	movs	r3, #255	@ 0xff
-  xcpInfo.mta = XcpGetOrderedLong(&data[4]);
- 8001dd2:	1d28      	adds	r0, r5, #4
-  xcpInfo.ctoData[0] = XCP_PID_RES;
- 8001dd4:	7023      	strb	r3, [r4, #0]
-  xcpInfo.mta = XcpGetOrderedLong(&data[4]);
- 8001dd6:	f7ff ff5f 	bl	8001c98 <XcpGetOrderedLong>
-  xcpInfo.ctoLen = 1;
- 8001dda:	2301      	movs	r3, #1
-  xcpInfo.mta += XCP_CTO_PACKET_LEN-1;
- 8001ddc:	6120      	str	r0, [r4, #16]
-  xcpInfo.ctoLen = 1;
- 8001dde:	e7e8      	b.n	8001db2 <XcpPacketReceived+0xd6>
+ 8001dda:	786a      	ldrb	r2, [r5, #1]
+ 8001ddc:	4845      	ldr	r0, [pc, #276]	@ (8001ef4 <XcpPacketReceived+0x208>)
+ 8001dde:	e7e6      	b.n	8001dae <XcpPacketReceived+0xc2>
   xcpInfo.ctoData[0] = XCP_PID_RES;
  8001de0:	23ff      	movs	r3, #255	@ 0xff
-  checksumLen = XcpGetOrderedLong(&data[4]);
+  xcpInfo.mta = XcpGetOrderedLong(&data[4]);
  8001de2:	1d28      	adds	r0, r5, #4
   xcpInfo.ctoData[0] = XCP_PID_RES;
  8001de4:	7023      	strb	r3, [r4, #0]
-  checksumLen = XcpGetOrderedLong(&data[4]);
- 8001de6:	f7ff ff57 	bl	8001c98 <XcpGetOrderedLong>
-  blt_int8u cs = 0;
- 8001dea:	2600      	movs	r6, #0
-  checksumType = XcpComputeChecksum(xcpInfo.mta, checksumLen, &checksumVal);
- 8001dec:	6925      	ldr	r5, [r4, #16]
-  while (length-- > 0)
- 8001dee:	1947      	adds	r7, r0, r5
- 8001df0:	42bd      	cmp	r5, r7
- 8001df2:	d108      	bne.n	8001e06 <XcpPacketReceived+0x12a>
-  data[1] = (blt_int8u)(value >>  8);
- 8001df4:	2300      	movs	r3, #0
-  xcpInfo.ctoData[1] = checksumType;
- 8001df6:	2201      	movs	r2, #1
-  data[1] = (blt_int8u)(value >>  8);
- 8001df8:	7163      	strb	r3, [r4, #5]
-  data[2] = (blt_int8u)(value >> 16);
- 8001dfa:	80e3      	strh	r3, [r4, #6]
-  xcpInfo.ctoData[2] = 0;
- 8001dfc:	8063      	strh	r3, [r4, #2]
-  data[0] = (blt_int8u) value;
- 8001dfe:	7126      	strb	r6, [r4, #4]
-  xcpInfo.ctoData[1] = checksumType;
- 8001e00:	7062      	strb	r2, [r4, #1]
-  xcpInfo.ctoLen = 8;
- 8001e02:	3308      	adds	r3, #8
- 8001e04:	e7d5      	b.n	8001db2 <XcpPacketReceived+0xd6>
-    cs += *((blt_int8u *)(blt_addr)address);
- 8001e06:	782b      	ldrb	r3, [r5, #0]
-    address++;
- 8001e08:	3501      	adds	r5, #1
-    cs += *((blt_int8u *)(blt_addr)address);
- 8001e0a:	18f6      	adds	r6, r6, r3
- 8001e0c:	b2f6      	uxtb	r6, r6
-    CopService();
- 8001e0e:	f7ff ff34 	bl	8001c7a <CopService>
- 8001e12:	e7ed      	b.n	8001df0 <XcpPacketReceived+0x114>
-  xcpInfo.mta = (blt_int32u)&xcpStationId[0];
- 8001e14:	4b34      	ldr	r3, [pc, #208]	@ (8001ee8 <XcpPacketReceived+0x20c>)
- 8001e16:	6123      	str	r3, [r4, #16]
-  xcpInfo.ctoData[0] = XCP_PID_RES;
- 8001e18:	23ff      	movs	r3, #255	@ 0xff
- 8001e1a:	6023      	str	r3, [r4, #0]
-  data[0] = (blt_int8u) value;
- 8001e1c:	3bf8      	subs	r3, #248	@ 0xf8
- 8001e1e:	6063      	str	r3, [r4, #4]
-  xcpInfo.ctoLen = 8;
- 8001e20:	e7c6      	b.n	8001db0 <XcpPacketReceived+0xd4>
-  XcpSetCtoError(XCP_ERR_CMD_SYNCH);
- 8001e22:	2000      	movs	r0, #0
- 8001e24:	e7b6      	b.n	8001d94 <XcpPacketReceived+0xb8>
-  xcpInfo.ctoData[0] = XCP_PID_RES;
- 8001e26:	23ff      	movs	r3, #255	@ 0xff
- 8001e28:	8023      	strh	r3, [r4, #0]
-  xcpInfo.ctoData[2] = xcpInfo.protection;
- 8001e2a:	7a63      	ldrb	r3, [r4, #9]
- 8001e2c:	70a3      	strb	r3, [r4, #2]
-  xcpInfo.ctoData[3] = 0;
- 8001e2e:	2300      	movs	r3, #0
- 8001e30:	70e3      	strb	r3, [r4, #3]
-  xcpInfo.ctoData[4] = 0;
- 8001e32:	80a3      	strh	r3, [r4, #4]
-  xcpInfo.ctoLen = 6;
- 8001e34:	3306      	adds	r3, #6
- 8001e36:	e7bc      	b.n	8001db2 <XcpPacketReceived+0xd6>
-  xcpInfo.connected = 0;
- 8001e38:	2300      	movs	r3, #0
- 8001e3a:	8123      	strh	r3, [r4, #8]
-  xcpInfo.ctoData[0] = XCP_PID_RES;
- 8001e3c:	23ff      	movs	r3, #255	@ 0xff
- 8001e3e:	7023      	strb	r3, [r4, #0]
+  xcpInfo.mta = XcpGetOrderedLong(&data[4]);
+ 8001de6:	f7ff ff5f 	bl	8001ca8 <XcpGetOrderedLong>
   xcpInfo.ctoLen = 1;
- 8001e40:	3bfe      	subs	r3, #254	@ 0xfe
- 8001e42:	e7b6      	b.n	8001db2 <XcpPacketReceived+0xd6>
-  if (NvmWrite((blt_addr)xcpInfo.mta, XCP_CTO_PACKET_LEN-1, &data[1]) == BLT_FALSE)
- 8001e44:	6926      	ldr	r6, [r4, #16]
- 8001e46:	f7ff fef7 	bl	8001c38 <ComGetActiveInterfaceMaxRxLen>
- 8001e4a:	1c6a      	adds	r2, r5, #1
- 8001e4c:	1e41      	subs	r1, r0, #1
- 8001e4e:	0030      	movs	r0, r6
- 8001e50:	f7ff fdbe 	bl	80019d0 <NvmWrite>
- 8001e54:	2800      	cmp	r0, #0
- 8001e56:	d101      	bne.n	8001e5c <XcpPacketReceived+0x180>
-  XcpSetCtoError(XCP_ERR_GENERIC);
- 8001e58:	2031      	movs	r0, #49	@ 0x31
- 8001e5a:	e79b      	b.n	8001d94 <XcpPacketReceived+0xb8>
-  xcpInfo.ctoData[0] = XCP_PID_RES;
- 8001e5c:	23ff      	movs	r3, #255	@ 0xff
- 8001e5e:	7023      	strb	r3, [r4, #0]
+ 8001dea:	2301      	movs	r3, #1
   xcpInfo.mta += XCP_CTO_PACKET_LEN-1;
- 8001e60:	f7ff feea 	bl	8001c38 <ComGetActiveInterfaceMaxRxLen>
- 8001e64:	6923      	ldr	r3, [r4, #16]
- 8001e66:	3801      	subs	r0, #1
- 8001e68:	1818      	adds	r0, r3, r0
- 8001e6a:	e7b6      	b.n	8001dda <XcpPacketReceived+0xfe>
-  if (data[1] > (XCP_CTO_PACKET_LEN-2))
- 8001e6c:	f7ff fee4 	bl	8001c38 <ComGetActiveInterfaceMaxRxLen>
- 8001e70:	786b      	ldrb	r3, [r5, #1]
- 8001e72:	3801      	subs	r0, #1
- 8001e74:	4298      	cmp	r0, r3
- 8001e76:	dd8c      	ble.n	8001d92 <XcpPacketReceived+0xb6>
-  xcpInfo.ctoData[0] = XCP_PID_RES;
- 8001e78:	23ff      	movs	r3, #255	@ 0xff
- 8001e7a:	7023      	strb	r3, [r4, #0]
+ 8001dec:	6120      	str	r0, [r4, #16]
   xcpInfo.ctoLen = 1;
- 8001e7c:	3bfe      	subs	r3, #254	@ 0xfe
- 8001e7e:	81a3      	strh	r3, [r4, #12]
-  if (data[1] == 0)
- 8001e80:	7869      	ldrb	r1, [r5, #1]
- 8001e82:	2900      	cmp	r1, #0
- 8001e84:	d105      	bne.n	8001e92 <XcpPacketReceived+0x1b6>
-    if (NvmDone() == BLT_FALSE)
- 8001e86:	f7ff fdb3 	bl	80019f0 <NvmDone>
- 8001e8a:	2800      	cmp	r0, #0
- 8001e8c:	d000      	beq.n	8001e90 <XcpPacketReceived+0x1b4>
- 8001e8e:	e742      	b.n	8001d16 <XcpPacketReceived+0x3a>
- 8001e90:	e7e2      	b.n	8001e58 <XcpPacketReceived+0x17c>
-  if (NvmWrite((blt_addr)xcpInfo.mta, data[1], &data[2]) == BLT_FALSE)
- 8001e92:	6920      	ldr	r0, [r4, #16]
- 8001e94:	1caa      	adds	r2, r5, #2
- 8001e96:	f7ff fd9b 	bl	80019d0 <NvmWrite>
- 8001e9a:	2800      	cmp	r0, #0
- 8001e9c:	d0dc      	beq.n	8001e58 <XcpPacketReceived+0x17c>
-  xcpInfo.mta += data[1];
- 8001e9e:	786a      	ldrb	r2, [r5, #1]
- 8001ea0:	6923      	ldr	r3, [r4, #16]
- 8001ea2:	189b      	adds	r3, r3, r2
- 8001ea4:	6123      	str	r3, [r4, #16]
- 8001ea6:	e736      	b.n	8001d16 <XcpPacketReceived+0x3a>
+ 8001dee:	e7e8      	b.n	8001dc2 <XcpPacketReceived+0xd6>
   xcpInfo.ctoData[0] = XCP_PID_RES;
- 8001ea8:	23ff      	movs	r3, #255	@ 0xff
-  xcpInfo.ctoData[2] = 0;
- 8001eaa:	2500      	movs	r5, #0
+ 8001df0:	23ff      	movs	r3, #255	@ 0xff
+  checksumLen = XcpGetOrderedLong(&data[4]);
+ 8001df2:	1d28      	adds	r0, r5, #4
   xcpInfo.ctoData[0] = XCP_PID_RES;
- 8001eac:	8023      	strh	r3, [r4, #0]
+ 8001df4:	7023      	strb	r3, [r4, #0]
+  checksumLen = XcpGetOrderedLong(&data[4]);
+ 8001df6:	f7ff ff57 	bl	8001ca8 <XcpGetOrderedLong>
+  blt_int8u cs = 0;
+ 8001dfa:	2600      	movs	r6, #0
+  checksumType = XcpComputeChecksum(xcpInfo.mta, checksumLen, &checksumVal);
+ 8001dfc:	6925      	ldr	r5, [r4, #16]
+  while (length-- > 0)
+ 8001dfe:	1947      	adds	r7, r0, r5
+ 8001e00:	42bd      	cmp	r5, r7
+ 8001e02:	d108      	bne.n	8001e16 <XcpPacketReceived+0x12a>
+  data[1] = (blt_int8u)(value >>  8);
+ 8001e04:	2300      	movs	r3, #0
+  xcpInfo.ctoData[1] = checksumType;
+ 8001e06:	2201      	movs	r2, #1
+  data[1] = (blt_int8u)(value >>  8);
+ 8001e08:	7163      	strb	r3, [r4, #5]
+  data[2] = (blt_int8u)(value >> 16);
+ 8001e0a:	80e3      	strh	r3, [r4, #6]
   xcpInfo.ctoData[2] = 0;
- 8001eae:	70a5      	strb	r5, [r4, #2]
-  xcpInfo.ctoData[3] = (blt_int8u)XCP_CTO_PACKET_LEN;
- 8001eb0:	f7ff fec2 	bl	8001c38 <ComGetActiveInterfaceMaxRxLen>
-  xcpInfo.ctoLen = 7;
- 8001eb4:	2307      	movs	r3, #7
-  xcpInfo.ctoData[3] = (blt_int8u)XCP_CTO_PACKET_LEN;
- 8001eb6:	70e0      	strb	r0, [r4, #3]
+ 8001e0c:	8063      	strh	r3, [r4, #2]
+  data[0] = (blt_int8u) value;
+ 8001e0e:	7126      	strb	r6, [r4, #4]
+  xcpInfo.ctoData[1] = checksumType;
+ 8001e10:	7062      	strb	r2, [r4, #1]
+  xcpInfo.ctoLen = 8;
+ 8001e12:	3308      	adds	r3, #8
+ 8001e14:	e7d5      	b.n	8001dc2 <XcpPacketReceived+0xd6>
+    cs += *((blt_int8u *)(blt_addr)address);
+ 8001e16:	782b      	ldrb	r3, [r5, #0]
+    address++;
+ 8001e18:	3501      	adds	r5, #1
+    cs += *((blt_int8u *)(blt_addr)address);
+ 8001e1a:	18f6      	adds	r6, r6, r3
+ 8001e1c:	b2f6      	uxtb	r6, r6
+    CopService();
+ 8001e1e:	f7ff ff34 	bl	8001c8a <CopService>
+ 8001e22:	e7ed      	b.n	8001e00 <XcpPacketReceived+0x114>
+  xcpInfo.mta = (blt_int32u)&xcpStationId[0];
+ 8001e24:	4b34      	ldr	r3, [pc, #208]	@ (8001ef8 <XcpPacketReceived+0x20c>)
+ 8001e26:	6123      	str	r3, [r4, #16]
+  xcpInfo.ctoData[0] = XCP_PID_RES;
+ 8001e28:	23ff      	movs	r3, #255	@ 0xff
+ 8001e2a:	6023      	str	r3, [r4, #0]
+  data[0] = (blt_int8u) value;
+ 8001e2c:	3bf8      	subs	r3, #248	@ 0xf8
+ 8001e2e:	6063      	str	r3, [r4, #4]
+  xcpInfo.ctoLen = 8;
+ 8001e30:	e7c6      	b.n	8001dc0 <XcpPacketReceived+0xd4>
+  XcpSetCtoError(XCP_ERR_CMD_SYNCH);
+ 8001e32:	2000      	movs	r0, #0
+ 8001e34:	e7b6      	b.n	8001da4 <XcpPacketReceived+0xb8>
+  xcpInfo.ctoData[0] = XCP_PID_RES;
+ 8001e36:	23ff      	movs	r3, #255	@ 0xff
+ 8001e38:	8023      	strh	r3, [r4, #0]
+  xcpInfo.ctoData[2] = xcpInfo.protection;
+ 8001e3a:	7a63      	ldrb	r3, [r4, #9]
+ 8001e3c:	70a3      	strb	r3, [r4, #2]
+  xcpInfo.ctoData[3] = 0;
+ 8001e3e:	2300      	movs	r3, #0
+ 8001e40:	70e3      	strb	r3, [r4, #3]
   xcpInfo.ctoData[4] = 0;
- 8001eb8:	80a5      	strh	r5, [r4, #4]
-  xcpInfo.ctoData[6] = 0;
- 8001eba:	71a5      	strb	r5, [r4, #6]
+ 8001e42:	80a3      	strh	r3, [r4, #4]
+  xcpInfo.ctoLen = 6;
+ 8001e44:	3306      	adds	r3, #6
+ 8001e46:	e7bc      	b.n	8001dc2 <XcpPacketReceived+0xd6>
+  xcpInfo.connected = 0;
+ 8001e48:	2300      	movs	r3, #0
+ 8001e4a:	8123      	strh	r3, [r4, #8]
+  xcpInfo.ctoData[0] = XCP_PID_RES;
+ 8001e4c:	23ff      	movs	r3, #255	@ 0xff
+ 8001e4e:	7023      	strb	r3, [r4, #0]
+  xcpInfo.ctoLen = 1;
+ 8001e50:	3bfe      	subs	r3, #254	@ 0xfe
+ 8001e52:	e7b6      	b.n	8001dc2 <XcpPacketReceived+0xd6>
+  if (NvmWrite((blt_addr)xcpInfo.mta, XCP_CTO_PACKET_LEN-1, &data[1]) == BLT_FALSE)
+ 8001e54:	6926      	ldr	r6, [r4, #16]
+ 8001e56:	f7ff fef7 	bl	8001c48 <ComGetActiveInterfaceMaxRxLen>
+ 8001e5a:	1c6a      	adds	r2, r5, #1
+ 8001e5c:	1e41      	subs	r1, r0, #1
+ 8001e5e:	0030      	movs	r0, r6
+ 8001e60:	f7ff fdbe 	bl	80019e0 <NvmWrite>
+ 8001e64:	2800      	cmp	r0, #0
+ 8001e66:	d101      	bne.n	8001e6c <XcpPacketReceived+0x180>
+  XcpSetCtoError(XCP_ERR_GENERIC);
+ 8001e68:	2031      	movs	r0, #49	@ 0x31
+ 8001e6a:	e79b      	b.n	8001da4 <XcpPacketReceived+0xb8>
+  xcpInfo.ctoData[0] = XCP_PID_RES;
+ 8001e6c:	23ff      	movs	r3, #255	@ 0xff
+ 8001e6e:	7023      	strb	r3, [r4, #0]
+  xcpInfo.mta += XCP_CTO_PACKET_LEN-1;
+ 8001e70:	f7ff feea 	bl	8001c48 <ComGetActiveInterfaceMaxRxLen>
+ 8001e74:	6923      	ldr	r3, [r4, #16]
+ 8001e76:	3801      	subs	r0, #1
+ 8001e78:	1818      	adds	r0, r3, r0
+ 8001e7a:	e7b6      	b.n	8001dea <XcpPacketReceived+0xfe>
+  if (data[1] > (XCP_CTO_PACKET_LEN-2))
+ 8001e7c:	f7ff fee4 	bl	8001c48 <ComGetActiveInterfaceMaxRxLen>
+ 8001e80:	786b      	ldrb	r3, [r5, #1]
+ 8001e82:	3801      	subs	r0, #1
+ 8001e84:	4298      	cmp	r0, r3
+ 8001e86:	dd8c      	ble.n	8001da2 <XcpPacketReceived+0xb6>
+  xcpInfo.ctoData[0] = XCP_PID_RES;
+ 8001e88:	23ff      	movs	r3, #255	@ 0xff
+ 8001e8a:	7023      	strb	r3, [r4, #0]
+  xcpInfo.ctoLen = 1;
+ 8001e8c:	3bfe      	subs	r3, #254	@ 0xfe
+ 8001e8e:	81a3      	strh	r3, [r4, #12]
+  if (data[1] == 0)
+ 8001e90:	7869      	ldrb	r1, [r5, #1]
+ 8001e92:	2900      	cmp	r1, #0
+ 8001e94:	d105      	bne.n	8001ea2 <XcpPacketReceived+0x1b6>
+    if (NvmDone() == BLT_FALSE)
+ 8001e96:	f7ff fdb3 	bl	8001a00 <NvmDone>
+ 8001e9a:	2800      	cmp	r0, #0
+ 8001e9c:	d000      	beq.n	8001ea0 <XcpPacketReceived+0x1b4>
+ 8001e9e:	e742      	b.n	8001d26 <XcpPacketReceived+0x3a>
+ 8001ea0:	e7e2      	b.n	8001e68 <XcpPacketReceived+0x17c>
+  if (NvmWrite((blt_addr)xcpInfo.mta, data[1], &data[2]) == BLT_FALSE)
+ 8001ea2:	6920      	ldr	r0, [r4, #16]
+ 8001ea4:	1caa      	adds	r2, r5, #2
+ 8001ea6:	f7ff fd9b 	bl	80019e0 <NvmWrite>
+ 8001eaa:	2800      	cmp	r0, #0
+ 8001eac:	d0dc      	beq.n	8001e68 <XcpPacketReceived+0x17c>
+  xcpInfo.mta += data[1];
+ 8001eae:	786a      	ldrb	r2, [r5, #1]
+ 8001eb0:	6923      	ldr	r3, [r4, #16]
+ 8001eb2:	189b      	adds	r3, r3, r2
+ 8001eb4:	6123      	str	r3, [r4, #16]
+ 8001eb6:	e736      	b.n	8001d26 <XcpPacketReceived+0x3a>
+  xcpInfo.ctoData[0] = XCP_PID_RES;
+ 8001eb8:	23ff      	movs	r3, #255	@ 0xff
+  xcpInfo.ctoData[2] = 0;
+ 8001eba:	2500      	movs	r5, #0
+  xcpInfo.ctoData[0] = XCP_PID_RES;
+ 8001ebc:	8023      	strh	r3, [r4, #0]
+  xcpInfo.ctoData[2] = 0;
+ 8001ebe:	70a5      	strb	r5, [r4, #2]
+  xcpInfo.ctoData[3] = (blt_int8u)XCP_CTO_PACKET_LEN;
+ 8001ec0:	f7ff fec2 	bl	8001c48 <ComGetActiveInterfaceMaxRxLen>
   xcpInfo.ctoLen = 7;
- 8001ebc:	e779      	b.n	8001db2 <XcpPacketReceived+0xd6>
+ 8001ec4:	2307      	movs	r3, #7
+  xcpInfo.ctoData[3] = (blt_int8u)XCP_CTO_PACKET_LEN;
+ 8001ec6:	70e0      	strb	r0, [r4, #3]
+  xcpInfo.ctoData[4] = 0;
+ 8001ec8:	80a5      	strh	r5, [r4, #4]
+  xcpInfo.ctoData[6] = 0;
+ 8001eca:	71a5      	strb	r5, [r4, #6]
+  xcpInfo.ctoLen = 7;
+ 8001ecc:	e779      	b.n	8001dc2 <XcpPacketReceived+0xd6>
   eraseLen = XcpGetOrderedLong(&data[4]);
- 8001ebe:	1d28      	adds	r0, r5, #4
- 8001ec0:	f7ff feea 	bl	8001c98 <XcpGetOrderedLong>
+ 8001ece:	1d28      	adds	r0, r5, #4
+ 8001ed0:	f7ff feea 	bl	8001ca8 <XcpGetOrderedLong>
   eraseAddr = xcpInfo.mta;
- 8001ec4:	6926      	ldr	r6, [r4, #16]
+ 8001ed4:	6926      	ldr	r6, [r4, #16]
   eraseLen = XcpGetOrderedLong(&data[4]);
- 8001ec6:	0001      	movs	r1, r0
+ 8001ed6:	0001      	movs	r1, r0
   if (NvmErase(eraseAddr, eraseLen) == BLT_FALSE)
- 8001ec8:	0030      	movs	r0, r6
- 8001eca:	f7ff fd85 	bl	80019d8 <NvmErase>
- 8001ece:	2800      	cmp	r0, #0
- 8001ed0:	d1b4      	bne.n	8001e3c <XcpPacketReceived+0x160>
- 8001ed2:	e7c1      	b.n	8001e58 <XcpPacketReceived+0x17c>
+ 8001ed8:	0030      	movs	r0, r6
+ 8001eda:	f7ff fd85 	bl	80019e8 <NvmErase>
+ 8001ede:	2800      	cmp	r0, #0
+ 8001ee0:	d1b4      	bne.n	8001e4c <XcpPacketReceived+0x160>
+ 8001ee2:	e7c1      	b.n	8001e68 <XcpPacketReceived+0x17c>
   CpuStartUserProgram();
- 8001ed4:	f7ff fac2 	bl	800145c <CpuStartUserProgram>
- 8001ed8:	e7b0      	b.n	8001e3c <XcpPacketReceived+0x160>
- 8001eda:	46c0      	nop			@ (mov r8, r8)
- 8001edc:	20000518 	.word	0x20000518
- 8001ee0:	000010ff 	.word	0x000010ff
- 8001ee4:	20000519 	.word	0x20000519
- 8001ee8:	080021a4 	.word	0x080021a4
+ 8001ee4:	f7ff fac2 	bl	800146c <CpuStartUserProgram>
+ 8001ee8:	e7b0      	b.n	8001e4c <XcpPacketReceived+0x160>
+ 8001eea:	46c0      	nop			@ (mov r8, r8)
+ 8001eec:	20000518 	.word	0x20000518
+ 8001ef0:	000010ff 	.word	0x000010ff
+ 8001ef4:	20000519 	.word	0x20000519
+ 8001ef8:	080021b4 	.word	0x080021b4
 
-08001eec <memset>:
- 8001eec:	0003      	movs	r3, r0
- 8001eee:	1882      	adds	r2, r0, r2
- 8001ef0:	4293      	cmp	r3, r2
- 8001ef2:	d100      	bne.n	8001ef6 <memset+0xa>
- 8001ef4:	4770      	bx	lr
- 8001ef6:	7019      	strb	r1, [r3, #0]
- 8001ef8:	3301      	adds	r3, #1
- 8001efa:	e7f9      	b.n	8001ef0 <memset+0x4>
+08001efc <memset>:
+ 8001efc:	0003      	movs	r3, r0
+ 8001efe:	1882      	adds	r2, r0, r2
+ 8001f00:	4293      	cmp	r3, r2
+ 8001f02:	d100      	bne.n	8001f06 <memset+0xa>
+ 8001f04:	4770      	bx	lr
+ 8001f06:	7019      	strb	r1, [r3, #0]
+ 8001f08:	3301      	adds	r3, #1
+ 8001f0a:	e7f9      	b.n	8001f00 <memset+0x4>
 
-08001efc <__libc_init_array>:
- 8001efc:	b570      	push	{r4, r5, r6, lr}
- 8001efe:	2600      	movs	r6, #0
- 8001f00:	4c0c      	ldr	r4, [pc, #48]	@ (8001f34 <__libc_init_array+0x38>)
- 8001f02:	4d0d      	ldr	r5, [pc, #52]	@ (8001f38 <__libc_init_array+0x3c>)
- 8001f04:	1b64      	subs	r4, r4, r5
- 8001f06:	10a4      	asrs	r4, r4, #2
- 8001f08:	42a6      	cmp	r6, r4
- 8001f0a:	d109      	bne.n	8001f20 <__libc_init_array+0x24>
- 8001f0c:	2600      	movs	r6, #0
- 8001f0e:	f000 f819 	bl	8001f44 <_init>
- 8001f12:	4c0a      	ldr	r4, [pc, #40]	@ (8001f3c <__libc_init_array+0x40>)
- 8001f14:	4d0a      	ldr	r5, [pc, #40]	@ (8001f40 <__libc_init_array+0x44>)
- 8001f16:	1b64      	subs	r4, r4, r5
- 8001f18:	10a4      	asrs	r4, r4, #2
- 8001f1a:	42a6      	cmp	r6, r4
- 8001f1c:	d105      	bne.n	8001f2a <__libc_init_array+0x2e>
- 8001f1e:	bd70      	pop	{r4, r5, r6, pc}
- 8001f20:	00b3      	lsls	r3, r6, #2
- 8001f22:	58eb      	ldr	r3, [r5, r3]
- 8001f24:	4798      	blx	r3
- 8001f26:	3601      	adds	r6, #1
- 8001f28:	e7ee      	b.n	8001f08 <__libc_init_array+0xc>
- 8001f2a:	00b3      	lsls	r3, r6, #2
- 8001f2c:	58eb      	ldr	r3, [r5, r3]
- 8001f2e:	4798      	blx	r3
- 8001f30:	3601      	adds	r6, #1
- 8001f32:	e7f2      	b.n	8001f1a <__libc_init_array+0x1e>
- 8001f34:	080021ac 	.word	0x080021ac
- 8001f38:	080021ac 	.word	0x080021ac
- 8001f3c:	080021b0 	.word	0x080021b0
- 8001f40:	080021ac 	.word	0x080021ac
+08001f0c <__libc_init_array>:
+ 8001f0c:	b570      	push	{r4, r5, r6, lr}
+ 8001f0e:	2600      	movs	r6, #0
+ 8001f10:	4c0c      	ldr	r4, [pc, #48]	@ (8001f44 <__libc_init_array+0x38>)
+ 8001f12:	4d0d      	ldr	r5, [pc, #52]	@ (8001f48 <__libc_init_array+0x3c>)
+ 8001f14:	1b64      	subs	r4, r4, r5
+ 8001f16:	10a4      	asrs	r4, r4, #2
+ 8001f18:	42a6      	cmp	r6, r4
+ 8001f1a:	d109      	bne.n	8001f30 <__libc_init_array+0x24>
+ 8001f1c:	2600      	movs	r6, #0
+ 8001f1e:	f000 f819 	bl	8001f54 <_init>
+ 8001f22:	4c0a      	ldr	r4, [pc, #40]	@ (8001f4c <__libc_init_array+0x40>)
+ 8001f24:	4d0a      	ldr	r5, [pc, #40]	@ (8001f50 <__libc_init_array+0x44>)
+ 8001f26:	1b64      	subs	r4, r4, r5
+ 8001f28:	10a4      	asrs	r4, r4, #2
+ 8001f2a:	42a6      	cmp	r6, r4
+ 8001f2c:	d105      	bne.n	8001f3a <__libc_init_array+0x2e>
+ 8001f2e:	bd70      	pop	{r4, r5, r6, pc}
+ 8001f30:	00b3      	lsls	r3, r6, #2
+ 8001f32:	58eb      	ldr	r3, [r5, r3]
+ 8001f34:	4798      	blx	r3
+ 8001f36:	3601      	adds	r6, #1
+ 8001f38:	e7ee      	b.n	8001f18 <__libc_init_array+0xc>
+ 8001f3a:	00b3      	lsls	r3, r6, #2
+ 8001f3c:	58eb      	ldr	r3, [r5, r3]
+ 8001f3e:	4798      	blx	r3
+ 8001f40:	3601      	adds	r6, #1
+ 8001f42:	e7f2      	b.n	8001f2a <__libc_init_array+0x1e>
+ 8001f44:	080021bc 	.word	0x080021bc
+ 8001f48:	080021bc 	.word	0x080021bc
+ 8001f4c:	080021c0 	.word	0x080021c0
+ 8001f50:	080021bc 	.word	0x080021bc
 
-08001f44 <_init>:
- 8001f44:	b5f8      	push	{r3, r4, r5, r6, r7, lr}
- 8001f46:	46c0      	nop			@ (mov r8, r8)
- 8001f48:	bcf8      	pop	{r3, r4, r5, r6, r7}
- 8001f4a:	bc08      	pop	{r3}
- 8001f4c:	469e      	mov	lr, r3
- 8001f4e:	4770      	bx	lr
+08001f54 <_init>:
+ 8001f54:	b5f8      	push	{r3, r4, r5, r6, r7, lr}
+ 8001f56:	46c0      	nop			@ (mov r8, r8)
+ 8001f58:	bcf8      	pop	{r3, r4, r5, r6, r7}
+ 8001f5a:	bc08      	pop	{r3}
+ 8001f5c:	469e      	mov	lr, r3
+ 8001f5e:	4770      	bx	lr
 
-08001f50 <_fini>:
- 8001f50:	b5f8      	push	{r3, r4, r5, r6, r7, lr}
- 8001f52:	46c0      	nop			@ (mov r8, r8)
- 8001f54:	bcf8      	pop	{r3, r4, r5, r6, r7}
- 8001f56:	bc08      	pop	{r3}
- 8001f58:	469e      	mov	lr, r3
- 8001f5a:	4770      	bx	lr
- 8001f5c:	0000      	movs	r0, r0
+08001f60 <_fini>:
+ 8001f60:	b5f8      	push	{r3, r4, r5, r6, r7, lr}
+ 8001f62:	46c0      	nop			@ (mov r8, r8)
+ 8001f64:	bcf8      	pop	{r3, r4, r5, r6, r7}
+ 8001f66:	bc08      	pop	{r3}
+ 8001f68:	469e      	mov	lr, r3
+ 8001f6a:	4770      	bx	lr
+ 8001f6c:	0000      	movs	r0, r0
 	...
 
-08001f60 <__FLASH_Program_Fast_veneer>:
- 8001f60:	b401      	push	{r0}
- 8001f62:	4802      	ldr	r0, [pc, #8]	@ (8001f6c <__FLASH_Program_Fast_veneer+0xc>)
- 8001f64:	4684      	mov	ip, r0
- 8001f66:	bc01      	pop	{r0}
- 8001f68:	4760      	bx	ip
- 8001f6a:	bf00      	nop
- 8001f6c:	20000011 	.word	0x20000011
+08001f70 <__FLASH_Program_Fast_veneer>:
+ 8001f70:	b401      	push	{r0}
+ 8001f72:	4802      	ldr	r0, [pc, #8]	@ (8001f7c <__FLASH_Program_Fast_veneer+0xc>)
+ 8001f74:	4684      	mov	ip, r0
+ 8001f76:	bc01      	pop	{r0}
+ 8001f78:	4760      	bx	ip
+ 8001f7a:	bf00      	nop
+ 8001f7c:	20000011 	.word	0x20000011
 
 Disassembly of section .data:
 

@@ -6,7 +6,7 @@
 #include <string.h>
 
 static FDCAN_TxHeaderTypeDef txMsgHeader = {
-    .IdType = FDCAN_STANDARD_ID,
+    .IdType = FDCAN_EXTENDED_ID,
     .DataLength = FDCAN_DLC_BYTES_8,
     .ErrorStateIndicator = FDCAN_ESI_ACTIVE,
     .BitRateSwitch = FDCAN_BRS_OFF,
@@ -20,6 +20,7 @@ static uint8_t rxMsgData[8];
 
 CAN_RXMessage can_rxMessage = {0};
 eeprom_command eeprom_cmd = {0};
+static volatile uint32_t lastFlashMsgTick = 0;
 
 void CAN_Init(void){
     HAL_FDCAN_ActivateNotification(&canHandle, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
@@ -46,9 +47,18 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
         HAL_FDCAN_GetRxMessage(&canHandle, FDCAN_RX_FIFO0, &rxMsgHeader, rxMsgData);
         // Process the received message
         if (rxMsgHeader.Identifier == LIGHTSET) {
-            can_rxMessage.pwm[0] = rxMsgData[0];
-            can_rxMessage.pwm[1] = rxMsgData[1];
-            can_rxMessage.pwm[2] = rxMsgData[2];
+        	for(int i =0; i <3; i++){
+        		if(rxMsgData[i]>100)
+        			can_rxMessage.pwm[i] = 100;
+        		else if(rxMsgData[i]<0)
+        			can_rxMessage.pwm[i] = 0;
+        		else
+        			can_rxMessage.pwm[i] = rxMsgData[i];
+        	}
+//            can_rxMessage.pwm[0] = rxMsgData[0];
+//            can_rxMessage.pwm[1] = rxMsgData[1];
+//            can_rxMessage.pwm[2] = rxMsgData[2];
+            can_rxMessage.newcommandreceived = 1;
 
         }
         if (rxMsgHeader.Identifier == VOLTAGESET) {
@@ -56,11 +66,19 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
             can_rxMessage.under_voltage_24 = voltage;
             uint16_t voltage_1 = (rxMsgData[2] << 8) | rxMsgData[3];
             can_rxMessage.under_voltage_17_5 = voltage_1;
+            can_rxMessage.newcommandreceived = 1;
         }
-        if ((rxMsgHeader.Identifier == DEVICEID)&&(rxMsgData[0] == 0xFF)) {
+        if (rxMsgData[0] == 0xFF) {
             // jump to bootloader
-        	NVIC_SystemReset();
+        	if((rxMsgHeader.Identifier == DEVICEID)&&(rxMsgHeader.DataLength==2)){
+        		NVIC_SystemReset();
+        	}
+        	if(rxMsgHeader.DataLength==1){
+        	can_rxMessage.flashdetected = 1;
+        	lastFlashMsgTick = HAL_GetTick();
+        	}
         }
+
         if(rxMsgHeader.Identifier == EEPROMSET){
             //check what is the command needed, bit 1 for write config to eeprom, bit 2 for reset default
             if(rxMsgData[0] & 0x01){ 
@@ -121,5 +139,11 @@ void broadcastDeviceStatus(uint8_t state, uint8_t errorCode){
 
     CAN_Send(DEVSTATUS, data, 2);
 }
-
+// this function is to check is there flashing in progress
+// if no 0xFF message received for 500ms, allow CAN transmit again
+void FOCdetection(){
+	if(HAL_GetTick() - lastFlashMsgTick > 500){
+		can_rxMessage.flashdetected = 0;
+	}
+}
 

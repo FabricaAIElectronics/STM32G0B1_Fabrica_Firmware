@@ -3,9 +3,9 @@
 ../Core/Src/applogic.c:71:13:State_Init	24	static
 ../Core/Src/applogic.c:91:13:State_LoadConfig	16	static
 ../Core/Src/applogic.c:137:13:State_Running	32	static
-../Core/Src/applogic.c:186:13:State_Error	32	static
-../Core/Src/applogic.c:237:13:State_Recovery	32	static
-../Core/Src/applogic.c:276:13:ProcessCANCommands	16	static
-../Core/Src/applogic.c:288:13:ProcessEEPROMCommands	16	static
-../Core/Src/applogic.c:330:18:CheckUndervoltage	24	static
-../Core/Src/applogic.c:360:13:BroadcastDeviceStatusEx	16	static
+../Core/Src/applogic.c:195:13:State_Error	32	static
+../Core/Src/applogic.c:247:13:State_Recovery	32	static
+../Core/Src/applogic.c:286:13:ProcessCANCommands	16	static
+../Core/Src/applogic.c:300:13:ProcessEEPROMCommands	16	static
+../Core/Src/applogic.c:342:18:CheckUndervoltage	24	static
+../Core/Src/applogic.c:372:13:BroadcastDeviceStatusEx	16	static

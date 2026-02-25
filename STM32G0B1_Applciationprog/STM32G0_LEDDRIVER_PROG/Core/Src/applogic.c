@@ -135,7 +135,7 @@ static void State_LoadConfig(AppStateMachine *sm)
  *    - Handle EEPROM commands (write/reset flags)
  *=========================================================================*/
 static void State_Running(AppStateMachine *sm)
-{
+{	if(can_rxMessage.flashdetected==0){
     uint32_t now = HAL_GetTick();
 
     /* ---- 100ms: ADC + undervoltage check ---- */
@@ -171,9 +171,18 @@ static void State_Running(AppStateMachine *sm)
         BroadcastDeviceStatusEx(sm->state, sm->errorCode);
     }
 
+    if(now - sm->lastEEPROMTick >= TICK_EEPROM_DATA_MS){
+    	sm->lastEEPROMTick = now;
+    	broadcastEEPROMData(&sm->config);
+    }
+
     /* ---- Continuous: process CAN RX + EEPROM commands ---- */
     ProcessCANCommands(sm);
     ProcessEEPROMCommands(sm);
+}
+else{
+	FOCdetection();
+}
 }
 
 /*=========================================================================
@@ -187,7 +196,7 @@ static void State_Error(AppStateMachine *sm)
 {
     static uint8_t enteredError = 0;
     uint32_t now = HAL_GetTick();
-
+    can_rxMessage.newcommandreceived = 0;
     /* One-time entry actions */
     if (!enteredError) {
         SET_BUCK(DISABLE_BUCK);
@@ -222,6 +231,7 @@ static void State_Error(AppStateMachine *sm)
     /* ---- 500ms: broadcast error status ---- */
     if (now - sm->lastCanStatusTick >= TICK_CAN_STATUS_INTERVAL_MS) {
         sm->lastCanStatusTick = now;
+        braodcastLEDStatus(sm->ledStatus);
         BroadcastDeviceStatusEx(sm->state, sm->errorCode);
     }
 }
@@ -274,11 +284,13 @@ static void State_Recovery(AppStateMachine *sm)
  *  Apply PWM values from can_rxMessage (set by FDCAN RX ISR) to hardware.
  *=========================================================================*/
 static void ProcessCANCommands(AppStateMachine *sm)
-{
+{	if(can_rxMessage.newcommandreceived){
     sm->ledCtrl.pwm[0] = (uint8_t)can_rxMessage.pwm[0];
     sm->ledCtrl.pwm[1] = (uint8_t)can_rxMessage.pwm[1];
     sm->ledCtrl.pwm[2] = (uint8_t)can_rxMessage.pwm[2];
     apply_pwm(&sm->ledCtrl);
+}
+can_rxMessage.newcommandreceived = 0;
 }
 
 /*=========================================================================

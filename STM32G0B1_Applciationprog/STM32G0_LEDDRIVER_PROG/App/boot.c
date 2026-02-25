@@ -576,8 +576,8 @@ static void BootComCanInit(void)
   filterConfig.FilterIndex = 0;
   filterConfig.FilterType = FDCAN_FILTER_RANGE;
   filterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-  filterConfig.FilterID1 = 0x000;
-  filterConfig.FilterID2 = 0x7FF;
+  filterConfig.FilterID1 = 0x00000000;
+  filterConfig.FilterID2 = 0x1FFFFFFF;
   (void)HAL_FDCAN_ConfigFilter(&canHandle, &filterConfig);
 
   /* configure global filter to reject all non-matching frames. */

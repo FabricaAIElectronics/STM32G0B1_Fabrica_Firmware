@@ -1,0 +1,13 @@
+../Core/Src/CAN_Handler.c:39:6:can_register_handler	16	static
+../Core/Src/CAN_Handler.c:50:16:dlc_to_bytes	16	static
+../Core/Src/CAN_Handler.c:82:6:EnqueueCanFrame	24	static,ignoring_inline_asm
+../Core/Src/CAN_Handler.c:105:6:DequeueCanFrame	24	static,ignoring_inline_asm
+../Core/Src/CAN_Handler.c:125:6:HAL_FDCAN_RxFifo0Callback	88	static
+../Core/Src/CAN_Handler.c:148:13:VectorBase_Config	8	static
+../Core/Src/CAN_Handler.c:159:6:Pre_CAN_Handler_Init	8	static
+../Core/Src/CAN_Handler.c:164:6:CAN_Handler_Init	8	static
+../Core/Src/CAN_Handler.c:180:6:CAN_Handler_Dispatch_Process_One	40	static
+../Core/Src/CAN_Handler.c:208:5:CAN_Handler_Broadcast	64	static
+../Core/Src/CAN_Handler.c:294:13:handle_set_test_LED	24	static
+../Core/Src/CAN_Handler.c:306:6:send_ack	24	static
+../Core/Src/CAN_Handler.c:312:6:send_nack	24	static

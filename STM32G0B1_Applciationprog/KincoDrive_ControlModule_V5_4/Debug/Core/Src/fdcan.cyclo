@@ -1,0 +1,5 @@
+../Core/Src/fdcan.c:26:17:dlc_bytes_to_fdcan_dlc	9
+../Core/Src/fdcan.c:44:6:FDCAN_SendFrame	3
+../Core/Src/fdcan.c:69:6:MX_FDCAN1_Init	3
+../Core/Src/fdcan.c:126:6:HAL_FDCAN_MspInit	3
+../Core/Src/fdcan.c:171:6:HAL_FDCAN_MspDeInit	2

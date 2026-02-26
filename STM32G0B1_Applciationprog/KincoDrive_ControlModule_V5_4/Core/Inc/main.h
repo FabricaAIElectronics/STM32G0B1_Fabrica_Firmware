@@ -7,7 +7,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2025 STMicroelectronics.
+  * Copyright (c) 2026 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -36,7 +36,7 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
+extern FDCAN_HandleTypeDef canHandle;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -49,11 +49,8 @@ extern "C" {
 
 /* USER CODE END EM */
 
-void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
-
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
-void MX_FDCAN1_Init(void);
 
 /* USER CODE BEGIN EFP */
 
@@ -62,28 +59,28 @@ void MX_FDCAN1_Init(void);
 /* Private defines -----------------------------------------------------------*/
 #define FAN_PWM_5_Pin GPIO_PIN_12
 #define FAN_PWM_5_GPIO_Port GPIOC
-#define B1_Pin GPIO_PIN_13
-#define B1_GPIO_Port GPIOC
+#define BlueButton_Pin GPIO_PIN_13
+#define BlueButton_GPIO_Port GPIOC
 #define HS_DR_EN_Pin GPIO_PIN_1
 #define HS_DR_EN_GPIO_Port GPIOC
 #define HS_E_EN_Pin GPIO_PIN_2
 #define HS_E_EN_GPIO_Port GPIOC
 #define HS_SC_EN_Pin GPIO_PIN_3
 #define HS_SC_EN_GPIO_Port GPIOC
-#define PTC_1_Pin GPIO_PIN_0
-#define PTC_1_GPIO_Port GPIOA
-#define PTC_2_Pin GPIO_PIN_1
-#define PTC_2_GPIO_Port GPIOA
-#define PTC_3_Pin GPIO_PIN_2
-#define PTC_3_GPIO_Port GPIOA
-#define PTC_4_Pin GPIO_PIN_3
-#define PTC_4_GPIO_Port GPIOA
-#define PTC_5_Pin GPIO_PIN_4
-#define PTC_5_GPIO_Port GPIOA
-#define LED2_Pin GPIO_PIN_5
-#define LED2_GPIO_Port GPIOA
-#define PTC_6_Pin GPIO_PIN_6
-#define PTC_6_GPIO_Port GPIOA
+#define Temp_PTC_1_Pin GPIO_PIN_0
+#define Temp_PTC_1_GPIO_Port GPIOA
+#define Temp_PTC_2_Pin GPIO_PIN_1
+#define Temp_PTC_2_GPIO_Port GPIOA
+#define Temp_PTC_3_Pin GPIO_PIN_2
+#define Temp_PTC_3_GPIO_Port GPIOA
+#define Temp_PTC_4_Pin GPIO_PIN_3
+#define Temp_PTC_4_GPIO_Port GPIOA
+#define Temp_PTC_5_Pin GPIO_PIN_4
+#define Temp_PTC_5_GPIO_Port GPIOA
+#define LED_OUT_Pin GPIO_PIN_5
+#define LED_OUT_GPIO_Port GPIOA
+#define Temp_PTC_6_Pin GPIO_PIN_6
+#define Temp_PTC_6_GPIO_Port GPIOA
 #define CURR_MON_1_Pin GPIO_PIN_7
 #define CURR_MON_1_GPIO_Port GPIOA
 #define TACHO_1_Pin GPIO_PIN_4
@@ -100,12 +97,14 @@ void MX_FDCAN1_Init(void);
 #define VADC_12_GPIO_Port GPIOB
 #define TACHO_4_Pin GPIO_PIN_11
 #define TACHO_4_GPIO_Port GPIOB
-#define EStop_NO_Pin GPIO_PIN_13
-#define EStop_NO_GPIO_Port GPIOB
-#define EStop_NC_Pin GPIO_PIN_14
-#define EStop_NC_GPIO_Port GPIOB
-#define EStopLED_CTRL_Pin GPIO_PIN_15
-#define EStopLED_CTRL_GPIO_Port GPIOB
+#define CURR_MON_24V_Pin GPIO_PIN_12
+#define CURR_MON_24V_GPIO_Port GPIOB
+#define EStop_NO_INT_Pin GPIO_PIN_13
+#define EStop_NO_INT_GPIO_Port GPIOB
+#define EStop_NC_INT_Pin GPIO_PIN_14
+#define EStop_NC_INT_GPIO_Port GPIOB
+#define EStopLED_CTRL_INT_Pin GPIO_PIN_15
+#define EStopLED_CTRL_INT_GPIO_Port GPIOB
 #define FAN_PWM_1_Pin GPIO_PIN_8
 #define FAN_PWM_1_GPIO_Port GPIOA
 #define FAN_PWM_2_Pin GPIO_PIN_9
@@ -114,8 +113,8 @@ void MX_FDCAN1_Init(void);
 #define TACHO_3_GPIO_Port GPIOC
 #define TACHO_5_Pin GPIO_PIN_7
 #define TACHO_5_GPIO_Port GPIOC
-#define VBUCK_EN_Pin GPIO_PIN_8
-#define VBUCK_EN_GPIO_Port GPIOD
+#define VBUCK_CTRL_Pin GPIO_PIN_8
+#define VBUCK_CTRL_GPIO_Port GPIOD
 #define HS_DR_FT_Pin GPIO_PIN_9
 #define HS_DR_FT_GPIO_Port GPIOD
 #define FAN_PWM_3_Pin GPIO_PIN_10
@@ -136,24 +135,24 @@ void MX_FDCAN1_Init(void);
 #define HS_SC_FT_GPIO_Port GPIOC
 #define HS_SC_PG_Pin GPIO_PIN_0
 #define HS_SC_PG_GPIO_Port GPIOD
-#define Endstop_SC_H_NO_Pin GPIO_PIN_1
-#define Endstop_SC_H_NO_GPIO_Port GPIOD
-#define Endstop_SC_H_NC_Pin GPIO_PIN_2
-#define Endstop_SC_H_NC_GPIO_Port GPIOD
-#define Endstop_EP_L_NO_Pin GPIO_PIN_3
-#define Endstop_EP_L_NO_GPIO_Port GPIOD
-#define Endstop_EP_L_NC_Pin GPIO_PIN_4
-#define Endstop_EP_L_NC_GPIO_Port GPIOD
-#define Endstop_EP_H_NO_Pin GPIO_PIN_5
-#define Endstop_EP_H_NO_GPIO_Port GPIOD
-#define Endstop_EP_H_NC_Pin GPIO_PIN_6
-#define Endstop_EP_H_NC_GPIO_Port GPIOD
-#define EndStop_EH_L_NO_Pin GPIO_PIN_3
-#define EndStop_EH_L_NO_GPIO_Port GPIOB
-#define EndStop_EH_H_NO_Pin GPIO_PIN_4
-#define EndStop_EH_H_NO_GPIO_Port GPIOB
-#define EndStop_EH_H_NC_Pin GPIO_PIN_5
-#define EndStop_EH_H_NC_GPIO_Port GPIOB
+#define ENDSTOP_SC_H_NO_INT_Pin GPIO_PIN_1
+#define ENDSTOP_SC_H_NO_INT_GPIO_Port GPIOD
+#define ENDSTOP_SC_H_NC_INT_Pin GPIO_PIN_2
+#define ENDSTOP_SC_H_NC_INT_GPIO_Port GPIOD
+#define ENDSTOP_EP_L_NO_INT_Pin GPIO_PIN_3
+#define ENDSTOP_EP_L_NO_INT_GPIO_Port GPIOD
+#define ENDSTOP_EP_L_NC_INT_Pin GPIO_PIN_4
+#define ENDSTOP_EP_L_NC_INT_GPIO_Port GPIOD
+#define ENDSTOP_EP_H_NO_INT_Pin GPIO_PIN_5
+#define ENDSTOP_EP_H_NO_INT_GPIO_Port GPIOD
+#define ENDSTOP_EP_H_NC_INT_Pin GPIO_PIN_6
+#define ENDSTOP_EP_H_NC_INT_GPIO_Port GPIOD
+#define ENDSTOP_EH_L_NO_INT_Pin GPIO_PIN_3
+#define ENDSTOP_EH_L_NO_INT_GPIO_Port GPIOB
+#define ENDSTOP_EH_H_NO_INT_Pin GPIO_PIN_4
+#define ENDSTOP_EH_H_NO_INT_GPIO_Port GPIOB
+#define ENDSTOP_EH_H_NC_INT_Pin GPIO_PIN_5
+#define ENDSTOP_EH_H_NC_INT_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

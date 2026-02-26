@@ -1,0 +1,4 @@
+../Core/Src/ESTOP.c:11:6:ESTOP_Init	8	static
+../Core/Src/ESTOP.c:17:5:ESTOP_State	8	static
+../Core/Src/ESTOP.c:23:5:ESTOP_Check	24	static
+../Core/Src/ESTOP.c:33:6:ESTOP_State_Machine	24	static

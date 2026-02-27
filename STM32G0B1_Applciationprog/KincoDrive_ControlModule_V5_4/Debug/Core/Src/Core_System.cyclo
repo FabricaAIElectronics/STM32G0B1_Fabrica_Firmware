@@ -1,0 +1,5 @@
+../Core/Src/Core_System.c:7:6:CoreSystem_PeriodicTasks	1
+../Core/Src/Core_System.c:19:6:CoreSystem_Normal	1
+../Core/Src/Core_System.c:24:6:CoreSystem_Recovery	1
+../Core/Src/Core_System.c:31:6:CoreSystem_Error	1
+../Core/Src/Core_System.c:37:6:CoreSystem_TOP	4

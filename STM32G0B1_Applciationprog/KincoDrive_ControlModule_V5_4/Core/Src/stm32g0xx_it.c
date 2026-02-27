@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * Copyright (c) 2025 STMicroelectronics.
+  * Copyright (c) 2026 STMicroelectronics.
   * All rights reserved.
   *
   * This software is licensed under terms that can be found in the LICENSE file
@@ -22,6 +22,7 @@
 #include "stm32g0xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,8 +58,10 @@
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_adc1;
 extern FDCAN_HandleTypeDef hfdcan1;
-extern TIM_HandleTypeDef htim2;
-extern TIM_HandleTypeDef htim3;
+extern DMA_HandleTypeDef hdma_tim2_ch1;
+extern DMA_HandleTypeDef hdma_tim2_ch2;
+extern DMA_HandleTypeDef hdma_tim2_ch3;
+extern DMA_HandleTypeDef hdma_tim2_ch4;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -158,31 +161,33 @@ void DMA1_Channel1_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles TIM2 global interrupt.
+  * @brief This function handles DMA1 channel 2 and channel 3 interrupts.
   */
-void TIM2_IRQHandler(void)
+void DMA1_Channel2_3_IRQHandler(void)
 {
-  /* USER CODE BEGIN TIM2_IRQn 0 */
+  /* USER CODE BEGIN DMA1_Channel2_3_IRQn 0 */
 
-  /* USER CODE END TIM2_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim2);
-  /* USER CODE BEGIN TIM2_IRQn 1 */
+  /* USER CODE END DMA1_Channel2_3_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_tim2_ch1);
+  HAL_DMA_IRQHandler(&hdma_tim2_ch2);
+  /* USER CODE BEGIN DMA1_Channel2_3_IRQn 1 */
 
-  /* USER CODE END TIM2_IRQn 1 */
+  /* USER CODE END DMA1_Channel2_3_IRQn 1 */
 }
 
 /**
-  * @brief This function handles TIM3, TIM4 global Interrupt.
+  * @brief This function handles DMA1 Ch4 to Ch7, DMA2 Ch1 to Ch5 and DMAMUX1 Overrun Interrupts.
   */
-void TIM3_TIM4_IRQHandler(void)
+void DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQHandler(void)
 {
-  /* USER CODE BEGIN TIM3_TIM4_IRQn 0 */
+  /* USER CODE BEGIN DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn 0 */
 
-  /* USER CODE END TIM3_TIM4_IRQn 0 */
-  HAL_TIM_IRQHandler(&htim3);
-  /* USER CODE BEGIN TIM3_TIM4_IRQn 1 */
+  /* USER CODE END DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_tim2_ch3);
+  HAL_DMA_IRQHandler(&hdma_tim2_ch4);
+  /* USER CODE BEGIN DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn 1 */
 
-  /* USER CODE END TIM3_TIM4_IRQn 1 */
+  /* USER CODE END DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn 1 */
 }
 
 /**

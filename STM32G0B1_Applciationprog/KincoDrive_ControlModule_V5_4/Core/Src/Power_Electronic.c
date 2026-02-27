@@ -162,6 +162,11 @@ int Start_ADC1_DMA(void)
     }
 }
 
+#define VOLTAGE_REF 3.3f
+#define ADC_MAX 4095.0f
+#define TPS2493_CURRENT_SENSE_FACTOR 0.144f // 48 * Rsense(0.003) = 0.144
+#define CURRENT_SENSE_VOLTAGE_DIVIDER_RATIO (110.0f / 100.0f) // (R1 + R2) / R2 for current sense voltage divider
+
 /*🔴Preserve*/
 int Read_HighSide_Module_Current_mA(HighSide_Module_t module, uint32_t *current_mA)
 {
@@ -185,10 +190,10 @@ int Read_HighSide_Module_Current_mA(HighSide_Module_t module, uint32_t *current_
     }
 
     // Convert ADC value to voltage (assuming 12-bit ADC and 3.3V reference)
-    voltage = (adc_value / 4095.0f) * 3.3f;
+    voltage = (adc_value / ADC_MAX) * VOLTAGE_REF;
 
     // Convert voltage to current, TPS2493 current sense factor is 48 * 0.003(Rsense) = 0.144
-    current = voltage / 0.144f; 
+    current = (voltage  * CURRENT_SENSE_VOLTAGE_DIVIDER_RATIO)/TPS2493_CURRENT_SENSE_FACTOR; // account for voltage divider
 
     // Convert current to milliamperes
     *current_mA = (uint32_t)(current * 1000.0f);
@@ -202,10 +207,10 @@ void Read_24V_Bus_Current_mA(uint32_t *current_mA)
     uint16_t adc_value = ADC_VAL[CURR_MON_24V];
 
     // Convert ADC value to voltage (assuming 12-bit ADC and 3.3V reference)
-    float voltage = (adc_value / 4095.0f) * 3.3f;
+    float voltage = (adc_value / ADC_MAX) * VOLTAGE_REF;
 
     // Convert voltage to current, TPS2493 current sense factor is 48 * 0.003(Rsense) = 0.144
-    float current = voltage / 0.144f;
+    float current = (voltage  * CURRENT_SENSE_VOLTAGE_DIVIDER_RATIO)/TPS2493_CURRENT_SENSE_FACTOR; // account for voltage divider
 
     // Convert current to milliamperes
     *current_mA = (uint32_t)(current * 1000.0f);
@@ -222,7 +227,7 @@ void Read_24V_Voltage_1DP(uint32_t *voltage_1DP)
     float voltage;
 
     // Convert ADC value to voltage 
-    voltage = (adc_value / 4095.0f) * 3.3f;
+    voltage = (adc_value / ADC_MAX) * VOLTAGE_REF;
 
     // Considering voltage divider for 24V measurement
     voltage = voltage * VOLTAGE_DIVIDER_RATIO * CORRECTION_FACTOR_DP1;
@@ -237,7 +242,7 @@ void Read_12V_Voltage_1DP(uint32_t *voltage_1DP)
     float voltage;
 
     // Convert ADC value to voltage
-    voltage = (adc_value / 4095.0f) * 3.3f;
+    voltage = (adc_value /ADC_MAX) * VOLTAGE_REF;
 
     // Considering voltage divider for 12V measurement
     voltage = voltage * VOLTAGE_DIVIDER_RATIO * CORRECTION_FACTOR_DP1;

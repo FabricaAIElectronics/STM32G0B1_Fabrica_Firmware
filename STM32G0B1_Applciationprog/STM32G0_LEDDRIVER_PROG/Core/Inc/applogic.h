@@ -41,6 +41,9 @@ typedef enum {
 #define TICK_RECOVERY_DELAY_MS      200
 #define TICK_EEPROM_DATA_MS			1000
 
+/* ---- Undervoltage Debounce ---- */
+#define UV_DEBOUNCE_COUNT           3   /* consecutive reads before fault */
+
 /* ---- State Machine Context ---- */
 typedef struct {
     AppState    state;
@@ -58,6 +61,9 @@ typedef struct {
     uint32_t    lastCanStatusTick;
     uint32_t    recoveryEntryTick;
     uint32_t	lastEEPROMTick;
+
+    /* Undervoltage debounce counter */
+    uint8_t     uvDebounceCount;
 
 } AppStateMachine;
 

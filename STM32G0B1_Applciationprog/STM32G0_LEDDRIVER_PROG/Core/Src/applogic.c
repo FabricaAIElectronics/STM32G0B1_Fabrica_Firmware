@@ -147,14 +147,20 @@ static void State_Running(AppStateMachine *sm)
         sm->ledStatus.voltage_17_5 = READADC(V17_5_CHANNEL);
 
         /* Trigger next ADC measurement for the next cycle */
-//        TrigerADCMEasurement();
+        TrigerADCMEasurement();
 
-        /* Check undervoltage */
+        /* Check undervoltage with debounce */
         ErrorCode err = CheckUndervoltage(sm);
         if (err != ERR_NONE) {
-            sm->errorCode = err;
-            sm->state = STATE_ERROR;
-            return;
+            sm->uvDebounceCount++;
+            if (sm->uvDebounceCount >= UV_DEBOUNCE_COUNT) {
+                sm->errorCode = err;
+                sm->uvDebounceCount = 0;
+                sm->state = STATE_ERROR;
+                return;
+            }
+        } else {
+            sm->uvDebounceCount = 0;
         }
     }
 
@@ -196,7 +202,7 @@ static void State_Error(AppStateMachine *sm)
 {
     static uint8_t enteredError = 0;
     uint32_t now = HAL_GetTick();
-    can_rxMessage.newcommandreceived = 0;
+
     /* One-time entry actions */
     if (!enteredError) {
         SET_BUCK(DISABLE_BUCK);
@@ -264,11 +270,19 @@ static void State_Recovery(AppStateMachine *sm)
 
         ErrorCode err = CheckUndervoltage(sm);
         if (err == ERR_NONE) {
-            /* Recovered successfully */
+            /* Recovered successfully -- restore last commanded PWM */
             sm->errorCode = ERR_NONE;
             sm->lastAdcTick       = now;
             sm->lastCanStatusTick = now;
+            sm->uvDebounceCount   = 0;
             buckReenabled = 0;
+
+            /* Re-apply PWM from last CAN values so LEDs turn back on */
+            sm->ledCtrl.pwm[0] = (uint8_t)can_rxMessage.pwm[0];
+            sm->ledCtrl.pwm[1] = (uint8_t)can_rxMessage.pwm[1];
+            sm->ledCtrl.pwm[2] = (uint8_t)can_rxMessage.pwm[2];
+            apply_pwm(&sm->ledCtrl);
+
             sm->state = STATE_RUNNING;
         } else {
             /* Still bad -- back to error */
@@ -284,7 +298,7 @@ static void State_Recovery(AppStateMachine *sm)
  *  Apply PWM values from can_rxMessage (set by FDCAN RX ISR) to hardware.
  *=========================================================================*/
 static void ProcessCANCommands(AppStateMachine *sm)
-{	if(can_rxMessage.newcommandreceived){
+{	if(can_rxMessage.newcommandreceived==1){
     sm->ledCtrl.pwm[0] = (uint8_t)can_rxMessage.pwm[0];
     sm->ledCtrl.pwm[1] = (uint8_t)can_rxMessage.pwm[1];
     sm->ledCtrl.pwm[2] = (uint8_t)can_rxMessage.pwm[2];

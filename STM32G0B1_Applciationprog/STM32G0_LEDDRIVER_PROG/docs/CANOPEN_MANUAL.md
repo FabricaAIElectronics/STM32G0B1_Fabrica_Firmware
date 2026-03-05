@@ -6,23 +6,25 @@ The LED Driver communicates exclusively via **CANopen** protocol on a standard C
 All device parameters are accessed through **SDO** (Service Data Object) reads and writes.
 Device state is monitored via **NMT** (Network Management) and **Heartbeat** messages.
 
-- **Node ID**: `0x01`
-- **Baud rate**: Configured in FDCAN peripheral (default 750 kbps)
+- **Node ID**: `0x10`
+- **Baud rate**: 500 kbps (configured by OpenBLT bootloader via `blt_conf.h` BOOT_COM_CAN_BAUDRATE)
 - **CAN frame type**: Standard 11-bit IDs, classic CAN (8-byte data)
+- **Bootloader RX ID**: `0x010` (matches node ID, used for OpenBLT raw reset frame)
 
 ---
 
 ## 1. Message Overview
 
-| CAN ID  | Direction    | Protocol  | Description                  |
-|---------|--------------|-----------|------------------------------|
-| 0x000   | Master -> Node | NMT     | Network management control   |
-| 0x601   | Master -> Node | SDO Req | SDO request (read/write)     |
-| 0x581   | Node -> Master | SDO Resp| SDO response                 |
-| 0x701   | Node -> Master | Heartbeat| NMT state heartbeat         |
+| CAN ID  | Direction    | Protocol   | Description                  |
+|---------|--------------|------------|------------------------------|
+| 0x000   | Master -> Node | NMT      | Network management control   |
+| 0x610   | Master -> Node | SDO Req  | SDO request (read/write)     |
+| 0x590   | Node -> Master | SDO Resp | SDO response                 |
+| 0x710   | Node -> Master | Heartbeat| NMT state heartbeat          |
+| 0x010   | Master -> Node | Raw      | Bootloader reset trigger     |
 
-> CAN IDs are computed as: `base_COB_ID + node_id`. With node ID = 0x01:
-> SDO Request = 0x600 + 0x01 = **0x601**, SDO Response = 0x580 + 0x01 = **0x581**, Heartbeat = 0x700 + 0x01 = **0x701**
+> CAN IDs are computed as: `base_COB_ID + node_id`. With node ID = 0x10:
+> SDO Request = 0x600 + 0x10 = **0x610**, SDO Response = 0x580 + 0x10 = **0x590**, Heartbeat = 0x700 + 0x10 = **0x710**
 
 ---
 
@@ -35,7 +37,7 @@ Send on **CAN ID 0x000**, 2 bytes:
 | Byte | Description |
 |------|-------------|
 | D0   | NMT command |
-| D1   | Node ID (0x01, or 0x00 for all nodes) |
+| D1   | Node ID (0x10, or 0x00 for all nodes) |
 
 **NMT Commands:**
 
@@ -47,22 +49,22 @@ Send on **CAN ID 0x000**, 2 bytes:
 | Reset Node          | `0x81` | Reset the application |
 | Reset Communication | `0x82` | Reset the communication layer |
 
-**Example: Start node 1 (enter operational)**
+**Example: Start node 0x10 (enter operational)**
 ```
 CAN ID: 0x000
-Data:   [0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+Data:   [0x01, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
          ^cmd  ^node_id
 ```
 
-**Example: Reset node 1**
+**Example: Reset node 0x10**
 ```
 CAN ID: 0x000
-Data:   [0x81, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+Data:   [0x81, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
 ```
 
 ### 2.2 Heartbeat (Node -> Master)
 
-Sent periodically by the device on **CAN ID 0x701**, 1 byte:
+Sent periodically by the device on **CAN ID 0x710**, 1 byte:
 
 | Byte | Description |
 |------|-------------|
@@ -87,7 +89,7 @@ All parameter access uses expedited SDO transfer (data fits in a single 8-byte f
 
 ### 3.1 SDO Read Request (Master -> Node)
 
-Send on **CAN ID 0x601**:
+Send on **CAN ID 0x610**:
 
 | Byte | Description |
 |------|-------------|
@@ -99,7 +101,7 @@ Send on **CAN ID 0x601**:
 
 ### 3.2 SDO Read Response (Node -> Master)
 
-Received on **CAN ID 0x581**:
+Received on **CAN ID 0x590**:
 
 | Byte | Description |
 |------|-------------|
@@ -111,7 +113,7 @@ Received on **CAN ID 0x581**:
 
 ### 3.3 SDO Write Request (Master -> Node)
 
-Send on **CAN ID 0x601**:
+Send on **CAN ID 0x610**:
 
 | Byte | Description |
 |------|-------------|
@@ -123,7 +125,7 @@ Send on **CAN ID 0x601**:
 
 ### 3.4 SDO Write Acknowledge (Node -> Master)
 
-Received on **CAN ID 0x581**:
+Received on **CAN ID 0x590**:
 
 | Byte | Description |
 |------|-------------|
@@ -135,7 +137,7 @@ Received on **CAN ID 0x581**:
 
 ### 3.5 SDO Error Response (Node -> Master)
 
-Received on **CAN ID 0x581**:
+Received on **CAN ID 0x590**:
 
 | Byte | Description |
 |------|-------------|
@@ -239,18 +241,18 @@ Write `0x01` to save, `0x02` to reset defaults, `0x03` to reset defaults and sav
 
 ## 5. Command Examples (Hex)
 
-All examples assume **Node ID = 0x01**.
+All examples assume **Node ID = 0x10**.
 
 ### Set PWM Channel 0 to 75%
 
-**Request (Master -> 0x601):**
+**Request (Master -> 0x610):**
 ```
 [0x2B, 0x00, 0x60, 0x01, 0x4B, 0x00, 0x00, 0x00]
  ^cmd  ^idx_lo ^idx_hi ^sub ^data_lo ^data_hi
   2B = write 2 bytes    6000  sub 1    75 = 0x004B
 ```
 
-**Response (Node -> 0x581):**
+**Response (Node -> 0x590):**
 ```
 [0x60, 0x00, 0x60, 0x01, 0x00, 0x00, 0x00, 0x00]
  ^ack  ^idx         ^sub
@@ -258,13 +260,13 @@ All examples assume **Node ID = 0x01**.
 
 ### Read PWM Channel 0
 
-**Request (Master -> 0x601):**
+**Request (Master -> 0x610):**
 ```
 [0x40, 0x00, 0x60, 0x01, 0x00, 0x00, 0x00, 0x00]
  ^read ^idx_lo ^idx_hi ^sub
 ```
 
-**Response (Node -> 0x581):**
+**Response (Node -> 0x590):**
 ```
 [0x4B, 0x00, 0x60, 0x01, 0x4B, 0x00, 0x00, 0x00]
  ^4B=2byte ^idx    ^sub  ^75(0x004B)
@@ -272,13 +274,13 @@ All examples assume **Node ID = 0x01**.
 
 ### Read 24V ADC Value
 
-**Request (Master -> 0x601):**
+**Request (Master -> 0x610):**
 ```
 [0x40, 0x02, 0x60, 0x01, 0x00, 0x00, 0x00, 0x00]
        ^idx=0x6002 ^sub=1
 ```
 
-**Response (Node -> 0x581):**
+**Response (Node -> 0x590):**
 ```
 [0x4B, 0x02, 0x60, 0x01, 0xA0, 0x0F, 0x00, 0x00]
                          ^ADC value = 0x0FA0 = 4000
@@ -286,13 +288,13 @@ All examples assume **Node ID = 0x01**.
 
 ### Read Device State
 
-**Request (Master -> 0x601):**
+**Request (Master -> 0x610):**
 ```
 [0x40, 0x03, 0x60, 0x01, 0x00, 0x00, 0x00, 0x00]
        ^idx=0x6003 ^sub=1
 ```
 
-**Response (Node -> 0x581):**
+**Response (Node -> 0x590):**
 ```
 [0x4F, 0x03, 0x60, 0x01, 0x02, 0x00, 0x00, 0x00]
  ^4F=1byte               ^state=2 (RUNNING)
@@ -300,7 +302,7 @@ All examples assume **Node ID = 0x01**.
 
 ### Set 24V Undervoltage Threshold to 500
 
-**Request (Master -> 0x601):**
+**Request (Master -> 0x610):**
 ```
 [0x2B, 0x01, 0x60, 0x01, 0xF4, 0x01, 0x00, 0x00]
  ^2B=write2  ^idx=0x6001 ^sub=1 ^500=0x01F4
@@ -308,7 +310,7 @@ All examples assume **Node ID = 0x01**.
 
 ### Save Config to EEPROM
 
-**Request (Master -> 0x601):**
+**Request (Master -> 0x610):**
 ```
 [0x2F, 0x04, 0x60, 0x01, 0x01, 0x00, 0x00, 0x00]
  ^2F=write1  ^idx=0x6004 ^sub=1 ^cmd=0x01(write)
@@ -316,15 +318,15 @@ All examples assume **Node ID = 0x01**.
 
 ### Reset to Factory Defaults
 
-**Request (Master -> 0x601):**
+**Request (Master -> 0x610):**
 ```
 [0x2F, 0x04, 0x60, 0x01, 0x02, 0x00, 0x00, 0x00]
                                 ^cmd=0x02(reset)
 ```
 
-### Trigger Bootloader Reset
+### Trigger Bootloader Reset (SDO method)
 
-**Request (Master -> 0x601):**
+**Request (Master -> 0x610):**
 ```
 [0x2F, 0x05, 0x60, 0x01, 0xFF, 0x00, 0x00, 0x00]
  ^write1byte ^idx=0x6005 ^sub=1 ^0xFF=reset
@@ -332,12 +334,27 @@ All examples assume **Node ID = 0x01**.
 
 Device will perform `NVIC_SystemReset()` immediately. No SDO response is sent.
 
+### Trigger Bootloader Reset (Raw frame — OpenBLT compatible)
+
+Any standard-ID frame with `data[0] = 0xFF` and `DLC = 2` triggers an immediate system
+reset into the bootloader. This is checked before CANopen processing, so no SDO wrapping
+is needed.
+
+**Request (Master -> 0x010):**
+```
+CAN ID: 0x010
+DLC:    2
+Data:   [0xFF, 0x00]
+```
+
+Device resets immediately. No response is sent.
+
 ### Start Node (NMT Operational)
 
 **NMT command (Master -> 0x000):**
 ```
-[0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
- ^start ^node_id=1
+[0x01, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+ ^start ^node_id=0x10
 ```
 
 ---
@@ -348,9 +365,9 @@ Device will perform `NVIC_SystemReset()` immediately. No SDO response is sent.
 2. FDCAN peripheral initialized, filters configured
 3. CANopen bridge initializes object dictionary
 4. NMT transitions to **Pre-Operational** state
-5. Device sends **Heartbeat** with status `0x7F` (pre-operational) on CAN ID `0x701`
+5. Device sends **Heartbeat** with status `0x7F` (pre-operational) on CAN ID `0x710`
 6. Device begins sending heartbeat every 200 ms
-7. Master sends **NMT Start** (`0x01, 0x01`) to enter operational mode
+7. Master sends **NMT Start** (`0x01, 0x10`) to enter operational mode
 8. Device heartbeat changes to `0x05` (operational)
 9. SDO read/write access is available in both pre-operational and operational states
 

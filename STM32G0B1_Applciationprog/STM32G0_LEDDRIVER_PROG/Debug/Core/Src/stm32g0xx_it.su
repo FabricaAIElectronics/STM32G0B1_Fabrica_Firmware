@@ -4,3 +4,4 @@
 ../Core/Src/stm32g0xx_it.c:113:6:PendSV_Handler	8	static
 ../Core/Src/stm32g0xx_it.c:126:6:SysTick_Handler	8	static
 ../Core/Src/stm32g0xx_it.c:147:6:TIM16_FDCAN_IT0_IRQHandler	8	static
+../Core/Src/stm32g0xx_it.c:161:6:TIM17_FDCAN_IT1_IRQHandler	8	static

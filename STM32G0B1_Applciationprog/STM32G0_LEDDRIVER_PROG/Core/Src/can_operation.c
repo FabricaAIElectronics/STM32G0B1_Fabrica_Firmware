@@ -23,14 +23,15 @@ static volatile uint32_t lastFlashMsgTick = 0;
 
 void CAN_Init(void)
 {
+	HAL_FDCAN_Stop(&canHandle);
     /* Filter 0: NMT control (COB-ID 0x000 exact match) → FIFO1 */
     FDCAN_FilterTypeDef nmtFilter;
     nmtFilter.IdType       = FDCAN_STANDARD_ID;
     nmtFilter.FilterIndex  = 0;
-    nmtFilter.FilterType   = FDCAN_FILTER_DUAL;
+    nmtFilter.FilterType   = FDCAN_FILTER_MASK;
     nmtFilter.FilterConfig = FDCAN_FILTER_TO_RXFIFO1;
     nmtFilter.FilterID1    = 0x000;
-    nmtFilter.FilterID2    = 0x000;
+    nmtFilter.FilterID2    = 0x7FF;
     HAL_FDCAN_ConfigFilter(&canHandle, &nmtFilter);
 
     /* Filter 1: All other standard-ID frames → FIFO0 */
@@ -44,8 +45,8 @@ void CAN_Init(void)
     HAL_FDCAN_ConfigFilter(&canHandle, &stdFilter);
 
     /* Enable RX notifications on both FIFOs */
-    HAL_FDCAN_ActivateNotification(&canHandle,
-        FDCAN_IT_RX_FIFO0_NEW_MESSAGE | FDCAN_IT_RX_FIFO1_NEW_MESSAGE, 0);
+    HAL_FDCAN_ActivateNotification(&canHandle,FDCAN_IT_RX_FIFO0_NEW_MESSAGE | FDCAN_IT_RX_FIFO1_NEW_MESSAGE, 0);
+//    HAL_FDCAN_ActivateNotification(&canHandle,FDCAN_IT_RX_FIFO1_NEW_MESSAGE, 1);
     HAL_FDCAN_Start(&canHandle);
 }
 
@@ -69,6 +70,12 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
     memset(rxMsgData, 0, sizeof(rxMsgData));
     if (RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) {
         HAL_FDCAN_GetRxMessage(&canHandle, FDCAN_RX_FIFO0, &rxMsgHeader, rxMsgData);
+
+        /* OpenBLT bootloader trigger: raw frame with data[0]=0xFF, DLC=2 */
+        if (rxMsgData[0] == 0xFF && rxMsgHeader.DataLength == FDCAN_DLC_BYTES_2) {
+            NVIC_SystemReset();
+        }
+
         CanOpenBridge_OnRxIsr(&rxMsgHeader, rxMsgData);
     }
 }

@@ -3,8 +3,8 @@
 ../Core/Src/main.c:159:6:SystemClock_Config	96	static
 ../Core/Src/main.c:208:13:MX_ADC1_Init	24	static
 ../Core/Src/main.c:273:6:MX_FDCAN1_Init	8	static
-../Core/Src/main.c:316:13:MX_I2C1_Init	8	static
-../Core/Src/main.c:364:13:MX_TIM1_Init	120	static
-../Core/Src/main.c:454:13:MX_DMA_Init	16	static
-../Core/Src/main.c:467:13:MX_GPIO_Init	56	static
-../Core/Src/main.c:516:6:Error_Handler	8	static,ignoring_inline_asm
+../Core/Src/main.c:317:13:MX_I2C1_Init	8	static
+../Core/Src/main.c:365:13:MX_TIM1_Init	120	static
+../Core/Src/main.c:455:13:MX_DMA_Init	16	static
+../Core/Src/main.c:468:13:MX_GPIO_Init	56	static
+../Core/Src/main.c:517:6:Error_Handler	8	static,ignoring_inline_asm

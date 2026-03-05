@@ -544,13 +544,13 @@ static void BootComCanInit(void)
   /* does the message to be received have a standard 11-bit CAN identifier? */
   if ((rxMsgId & 0x80000000) == 0)
   {
-    canHandle.Init.StdFiltersNbr = 1;
+    canHandle.Init.StdFiltersNbr = 2;
     canHandle.Init.ExtFiltersNbr = 0;
   }
   else
   {
     canHandle.Init.StdFiltersNbr = 0;
-    canHandle.Init.ExtFiltersNbr = 1;
+    canHandle.Init.ExtFiltersNbr = 2;
   }
   canHandle.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
   /* initialize the CAN controller. this only fails if the CAN controller hardware is
@@ -576,8 +576,8 @@ static void BootComCanInit(void)
   filterConfig.FilterIndex = 0;
   filterConfig.FilterType = FDCAN_FILTER_RANGE;
   filterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-  filterConfig.FilterID1 = 0x00000000;
-  filterConfig.FilterID2 = 0x1FFFFFFF;
+  filterConfig.FilterID1 = 0x000;
+  filterConfig.FilterID2 = 0x7FF;
   (void)HAL_FDCAN_ConfigFilter(&canHandle, &filterConfig);
 
   /* configure global filter to reject all non-matching frames. */

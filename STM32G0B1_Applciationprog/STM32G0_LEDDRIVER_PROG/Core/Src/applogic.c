@@ -160,7 +160,7 @@ static void State_Running(AppStateMachine *sm)
             }
         }
 
-        /* ---- 500ms: CANopen heartbeat ---- */
+        /* ---- 200ms: CANopen heartbeat ---- */
         if (now - sm->lastCanStatusTick >= TICK_CAN_STATUS_INTERVAL_MS) {
             sm->lastCanStatusTick = now;
 

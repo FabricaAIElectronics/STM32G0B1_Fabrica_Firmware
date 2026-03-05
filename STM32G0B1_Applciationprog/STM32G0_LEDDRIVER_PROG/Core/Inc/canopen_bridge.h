@@ -12,7 +12,7 @@
 #include "stm32g0xx_hal.h"
 
 /* CANopen node ID for this device */
-#define CANOPEN_NODE_ID  0x01
+#define CANOPEN_NODE_ID  0x10
 
 /* Forward declaration — avoids circular include with applogic.h */
 typedef struct AppStateMachine_ AppStateMachine;

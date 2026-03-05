@@ -3,8 +3,8 @@
 ../Core/Src/main.c:159:6:SystemClock_Config	3
 ../Core/Src/main.c:208:13:MX_ADC1_Init	4
 ../Core/Src/main.c:273:6:MX_FDCAN1_Init	2
-../Core/Src/main.c:316:13:MX_I2C1_Init	4
-../Core/Src/main.c:364:13:MX_TIM1_Init	9
-../Core/Src/main.c:454:13:MX_DMA_Init	1
-../Core/Src/main.c:467:13:MX_GPIO_Init	1
-../Core/Src/main.c:516:6:Error_Handler	1
+../Core/Src/main.c:317:13:MX_I2C1_Init	4
+../Core/Src/main.c:365:13:MX_TIM1_Init	9
+../Core/Src/main.c:455:13:MX_DMA_Init	1
+../Core/Src/main.c:468:13:MX_GPIO_Init	1
+../Core/Src/main.c:517:6:Error_Handler	1

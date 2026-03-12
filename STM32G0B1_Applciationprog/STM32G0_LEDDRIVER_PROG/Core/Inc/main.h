@@ -31,7 +31,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+extern FDCAN_HandleTypeDef canHandle;
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -62,8 +62,6 @@ void MX_FDCAN1_Init(void);
 /* Private defines -----------------------------------------------------------*/
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
-#define MCO_Pin GPIO_PIN_0
-#define MCO_GPIO_Port GPIOF
 #define BUCK_EN_Pin GPIO_PIN_4
 #define BUCK_EN_GPIO_Port GPIOA
 #define LED_GREEN_Pin GPIO_PIN_5

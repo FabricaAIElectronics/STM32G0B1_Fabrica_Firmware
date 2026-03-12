@@ -2,7 +2,7 @@ C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/flash.c:848
 C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/flash.c:877:17:FlashGetSectorBaseAddr	3
 C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/flash.c:927:19:FlashGetBank	7
 C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/flash.c:702:17:FlashWriteBlock	6
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/flash.c:557:25:FlashSwitchBlock	6
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/flash.c:557:25:FlashSwitchBlock	7
 C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/flash.c:619:17:FlashAddToBlock	7
 C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/flash.c:249:6:FlashInit	1
 C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/flash.c:267:10:FlashWrite	5

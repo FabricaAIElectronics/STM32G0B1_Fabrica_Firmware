@@ -72,6 +72,12 @@ typedef enum {
 #define SSD1306_NORMALDISPLAY       0xA6
 #define SSD1306_INVERTDISPLAY       0xA7
 
+#define SSD1306_DISPLAYON           0xAF   // Turn display ON
+#define SSD1306_DISPLAYOFF          0xAE   // Turn display OFF
+#define SSD1306_CHARGEPUMP          0x8D   // Charge pump setting
+#define SSD1306_CHARGEPUMP_ON       0x14   // Enable charge pump (display ON)
+#define SSD1306_CHARGEPUMP_OFF      0x10   // Disable charge pump (display OFF)
+
 /**
  * @brief  Initializes SSD1306 LCD
  * @param  None
@@ -141,7 +147,7 @@ char SSD1306_Putc(char ch, FontDef_t* Font, SSD1306_COLOR_t color);
  * @param  color: Color used for drawing. This parameter can be a value of @ref SSD1306_COLOR_t enumeration
  * @retval Zero on success or character value when function failed
  */
-char SSD1306_Puts(char* str, FontDef_t* Font, SSD1306_COLOR_t color);
+char SSD1306_Puts(const char* str, FontDef_t* Font, SSD1306_COLOR_t color);
 
 /**
  * @brief  Draws line on LCD
@@ -301,8 +307,19 @@ void Demo_ScrollRight(void);
 
 
 // clear the display
+void SSD1306_Clear(void);
 
-void SSD1306_Clear (void);
+/**
+ * @brief  Turns ON the SSD1306 display (enables charge pump + display)
+ * @retval None
+ */
+void SSD1306_ON(void);
+
+/**
+ * @brief  Turns OFF the SSD1306 display (disables charge pump + display)
+ * @retval None
+ */
+void SSD1306_OFF(void);
 
 
 /* C++ detection */

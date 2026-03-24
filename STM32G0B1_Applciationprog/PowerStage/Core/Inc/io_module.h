@@ -8,8 +8,20 @@
 #ifndef INC_IO_MODULE_H_
 #define INC_IO_MODULE_H_
 
+
+
 #include "main.h"
 #include "stdbool.h"
+
+//typical Current monitor value
+
+/* Combined constant: VRef x (R_SERIES + R_TERM) / (ADC_MAX x GAIN x R_TERM) x 1000
+ * = 3.3 x 110000 / (4096 x 48 x 100000) x 1000
+ * = (363000 / 19660800000) * 1000
+ * = 7.440e-3  (updates automatically if any constant above changes) */
+#define K_SCALE 7.440e-3f
+#define RSENSE 0.003f
+#define RSENSELED 0.020f
 typedef struct {
     GPIO_TypeDef* port;
     uint16_t pin;
@@ -31,7 +43,7 @@ typedef struct {
 } HS_CTRL_;
 
 #define ADC_CHANNELS 10
-volatile uint16_t adc_buffer[ADC_CHANNELS];
+extern volatile uint16_t adc_buffer[ADC_CHANNELS];
 
 // ADC channel indices
 typedef enum {
@@ -67,38 +79,8 @@ typedef struct {
 }SystemMeasurement_t;
 
 extern SystemMeasurement_t measurements;
+extern HS_CTRL_ hotswap[RAIL_COUNT];
 
-HS_CTRL_ hotswap[RAIL_COUNT] = {
-	[RAIL_AUX] = {
-			.enable = {EN_AUX_GPIO_Port,EN_AUX_Pin},
-			.fault = {FLT_AUX_GPIO_Port,FLT_AUX_Pin},
-			.pgood = {PGOOD_AUX_GPIO_Port,PGOOD_AUX_Pin}
-	},
-
-	[RAIL_LED] = {
-			.enable = {EN_LED_GPIO_Port,EN_LED_Pin},
-			.fault = {FLT_LED_GPIO_Port,FLT_LED_Pin},
-			.pgood = {PGOOD_LED_GPIO_Port,PGOOD_LED_Pin}
-	},
-
-	[RAIL_DRIVE] = {
-			.enable = {EN_DRIVE_GPIO_Port,EN_DRIVE_Pin},
-			.fault = {FLT_DRIVE_GPIO_Port,FLT_DRIVE_Pin},
-			.pgood = {PGOOD_DRIVE_GPIO_Port,PGOOD_DRIVE_Pin}
-	},
-
-	[RAIL_CAP] = {
-			.enable = {EN_CAP_GPIO_Port,EN_CAP_Pin},
-			.fault = {FLT_CAP_GPIO_Port,FLT_CAP_Pin},
-			.pgood = {PGOOD_CAP_GPIO_Port,PGOOD_CAP_Pin}
-	},
-
-	[RAIL_SBC] = {
-			.enable = {NULL},
-			.fault = {FLT_SBC_GPIO_Port,FLT_SBC_Pin},
-			.pgood = {PGOOD_SBC_GPIO_Port,PGOOD_SBC_Pin}
-	}
-};
 
 void HS_init(void);
 void HS_Enable(HS_CTRL_ *HS);
@@ -112,6 +94,12 @@ bool HS_PGood(HS_CTRL_ *HS);
 void Bat_curr_measurement(SystemMeasurement_t *ms);
 void Cap_curr_measurement(SystemMeasurement_t *ms);
 void Drive_curr_measurement(SystemMeasurement_t *ms);
+void LED_curr_measurement(SystemMeasurement_t *ms);
+void SBC_curr_measurement(SystemMeasurement_t *ms);
+void AUX_curr_measurement(SystemMeasurement_t *ms);
+void NTC_Temp_measurement(SystemMeasurement_t *ms);
 
 void V24_volt_measurement(SystemMeasurement_t *ms);
+void VCAP_volt_measurement(SystemMeasurement_t *ms);
+void V12_volt_measurement(SystemMeasurement_t *ms);
 #endif /* INC_IO_MODULE_H_ */

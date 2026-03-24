@@ -223,7 +223,7 @@ char SSD1306_Putc(char ch, FontDef_t* Font, SSD1306_COLOR_t color) {
 	return ch;
 }
 
-char SSD1306_Puts(char* str, FontDef_t* Font, SSD1306_COLOR_t color) {
+char SSD1306_Puts(const char* str, FontDef_t* Font, SSD1306_COLOR_t color) {
 	/* Write characters */
 	while (*str) {
 		/* Write character by character */
@@ -669,14 +669,15 @@ void SSD1306_Clear (void)
     SSD1306_UpdateScreen();
 }
 void SSD1306_ON(void) {
-	SSD1306_WRITECOMMAND(0x8D);  
-	SSD1306_WRITECOMMAND(0x14);  
-	SSD1306_WRITECOMMAND(0xAF);  
+	SSD1306_WRITECOMMAND(SSD1306_CHARGEPUMP);       // 0x8D - charge pump setting
+	SSD1306_WRITECOMMAND(SSD1306_CHARGEPUMP_ON);    // 0x14 - enable charge pump
+	SSD1306_WRITECOMMAND(SSD1306_DISPLAYON);        // 0xAF - display on
 }
+
 void SSD1306_OFF(void) {
-	SSD1306_WRITECOMMAND(0x8D);  
-	SSD1306_WRITECOMMAND(0x10);
-	SSD1306_WRITECOMMAND(0xAE);  
+	SSD1306_WRITECOMMAND(SSD1306_CHARGEPUMP);       // 0x8D - charge pump setting
+	SSD1306_WRITECOMMAND(SSD1306_CHARGEPUMP_OFF);   // 0x10 - disable charge pump
+	SSD1306_WRITECOMMAND(SSD1306_DISPLAYOFF);       // 0xAE - display off
 }
 
 void Demo_ScrollRight(void){

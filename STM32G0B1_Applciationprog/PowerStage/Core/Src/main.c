@@ -22,14 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "header.h"
-#include "eeprom_driver.h"
-#include "RunningHorseDisplay.h"
-//#include "fonts.h"
-#include "stdio.h"
-#include <stdio.h>
-#include "display_scheduler.h"
-#include "ssd1306.h"
-#include "can_operation.h"
+#include "powerstage_app.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,10 +50,6 @@ static void VectorBase_Config(void)
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-uint32_t adc_val[10] = {0};
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc){
-//	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-};
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -81,13 +70,6 @@ I2C_HandleTypeDef hi2c1;
 TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN PV */
-static Config g_config;
-static Config test_config;
-static bool g_oled_present = false;
-static bool g_eeprom_present = false;
-
-
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -145,123 +127,18 @@ int main(void)
   MX_I2C1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-//  HAL_I2C_EnableListen_IT(&hi2c1);
-  AppInit();
-  CANInitTxHeader();
-
-    g_eeprom_present = (HAL_I2C_IsDeviceReady(&hi2c1, 0xA0, 3, 500)==HAL_OK);
-    g_oled_present = (HAL_I2C_IsDeviceReady(&hi2c1, 0x78, 3, 500)==HAL_OK);
-    if((g_eeprom_present)&&(g_oled_present)){
-    	HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_SET);
-    }
-    else{
-    	HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
-    }
-  
-//    for (int i =0; i <512; i++){
-//    	EEPROM_pageErase(i);
-//    }
-        if (g_eeprom_present)
-        {
-//        	HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin,GPIO_PIN_SET);
-            /* Try to load config from EEPROM */
-           	EEPROM_Read_Config(1, 0, &g_config);
-        	if(!checkcfg(&g_config)){
-        		HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin, GPIO_PIN_RESET);
-        		LoadDefault(&g_config);
-
-        	}
-        	else{
-        		g_config.count=100;
-        	}
-
-            EEPROM_Write_Config(1, 0, &g_config);
-            EEPROM_Read_Config(1, 0, &test_config);
-//            HAL_Delay(1000);
-        }
-        else
-        {
-            /* EEPROM not present - use defaults */
-
-//            HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin,GPIO_PIN_RESET);
-        }
-
-        /* ════════════════════════════════════════════════════════
-         *  OLED Initialization
-         * ════════════════════════════════════════════════════════ */
-
-        HAL_Delay(100);  /* Let I2C stabilize */
-
-        g_oled_present = (HAL_I2C_IsDeviceReady(&hi2c1, 0x78, 3, 500)==HAL_OK);
-        SSD1306_Init();
-
-        if (g_oled_present)
-        {
-//        	HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin,GPIO_PIN_SET);
-            /* Show startup screen */
-
-        	SSD1306_Clear();
-            /* One-shot EEPROM write/read diagnostic: write magic + FW 0x0120 and read back */
-
-            SSD1306_GotoXY(0, 10);
-            SSD1306_Puts("System Init", &Font_7x10, 1);
-            EEPROM_Read_Config(1, 0, &test_config);
-            SSD1306_GotoXY(0, 25);
-            char buf[64];
-
-                sprintf(buf, "count: v%d",test_config.count);
-
-
-                SSD1306_Puts(buf, &Font_7x10, 1);
-
-            SSD1306_UpdateScreen();
-
-//            SSD1306_UpdateScreen();
-            HAL_Delay(2000);
-
-
-            /* Initialize display scheduler */
-            DisplayScheduler_Init();
-        }
-        else{
-//        	HAL_GPIO_WritePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin,GPIO_PIN_RESET);
-        }
-
+  AppInit();        /* OpenBLT bootloader hook */
+  PS_App_Init();    /* PowerStage: CAN TX header init (full init deferred to first task call) */
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  static int TimerCount = 0;
-	  if(HAL_GetTick()-TimerCount>500){
-	  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_val, 10);
-//	  if(test_config.firmware_ver == 0x0103)
-//		  HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
-	  TimerCount = HAL_GetTick();
-  	  }
-
-
-	  AppTask();
-	  static int EEPROM_format = 0;
-	  if(!HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13)){
-		      HAL_Delay(100);
-	  if(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13))
-		      EEPROM_format = 1;
-	  }
-
-	  if(EEPROM_format){
-		  for (int i =0; i <512; i++){
-		  		      	EEPROM_pageErase(i);
-		  		      }
-		  EEPROM_format = 0;
-	  }
-
-//	  runningHorse();
-
     /* USER CODE END WHILE */
-
     /* USER CODE BEGIN 3 */
+    AppTask();        /* OpenBLT bootloader hook */
+    PS_App_Task();    /* PowerStage state machine: Init → Running ↔ Fault */
   }
   /* USER CODE END 3 */
 }
@@ -344,7 +221,7 @@ static void MX_ADC1_Init(void)
   hadc1.Init.NbrOfConversion = 1;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc1.Init.DMAContinuousRequests = DISABLE;
+  hadc1.Init.DMAContinuousRequests = ENABLE;
   hadc1.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
   hadc1.Init.SamplingTimeCommon1 = ADC_SAMPLETIME_19CYCLES_5;
   hadc1.Init.OversamplingMode = DISABLE;
@@ -601,7 +478,7 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 1 */
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 0;
+  htim1.Init.Prescaler = 300;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim1.Init.Period = 65535;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -671,11 +548,6 @@ static void MX_DMA_Init(void)
   /* DMA controller clock enable */
   __HAL_RCC_DMA1_CLK_ENABLE();
 
-  /* DMA interrupt init */
-  /* DMA1_Channel1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
-
 }
 
 /**
@@ -698,7 +570,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, SW_Pin|GPIO_PIN_7, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(SW_GPIO_Port, SW_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, LED_GREEN_Pin|FAN_CTRL_Pin|EN_AUX_Pin, GPIO_PIN_RESET);
@@ -715,18 +587,18 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PC0 PC6 FLT_LED_Pin */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_6|FLT_LED_Pin;
+  /*Configure GPIO pins : PC0 FLT_LED_Pin */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|FLT_LED_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : SW_Pin PC7 */
-  GPIO_InitStruct.Pin = SW_Pin|GPIO_PIN_7;
+  /*Configure GPIO pin : SW_Pin */
+  GPIO_InitStruct.Pin = SW_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  HAL_GPIO_Init(SW_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LED_GREEN_Pin */
   GPIO_InitStruct.Pin = LED_GREEN_Pin;

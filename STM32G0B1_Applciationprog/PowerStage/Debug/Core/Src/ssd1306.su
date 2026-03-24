@@ -24,8 +24,8 @@
 ../Core/Src/ssd1306.c:638:6:SSD1306_DrawBitmapShifted	64	static
 ../Core/Src/ssd1306.c:666:6:SSD1306_Clear	8	static
 ../Core/Src/ssd1306.c:671:6:SSD1306_ON	8	static
-../Core/Src/ssd1306.c:676:6:SSD1306_OFF	8	static
-../Core/Src/ssd1306.c:682:6:Demo_ScrollRight	8	static
-../Core/Src/ssd1306.c:710:6:ssd1306_I2C_Init	16	static
-../Core/Src/ssd1306.c:722:6:ssd1306_I2C_WriteMulti	296	static
-../Core/Src/ssd1306.c:732:6:ssd1306_I2C_Write	40	static
+../Core/Src/ssd1306.c:677:6:SSD1306_OFF	8	static
+../Core/Src/ssd1306.c:683:6:Demo_ScrollRight	8	static
+../Core/Src/ssd1306.c:711:6:ssd1306_I2C_Init	16	static
+../Core/Src/ssd1306.c:723:6:ssd1306_I2C_WriteMulti	296	static
+../Core/Src/ssd1306.c:733:6:ssd1306_I2C_Write	40	static

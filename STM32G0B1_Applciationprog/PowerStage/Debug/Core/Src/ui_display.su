@@ -1,0 +1,12 @@
+../Core/Src/ui_display.c:77:20:draw_row	48	static
+../Core/Src/ui_display.c:86:20:draw_at	16	static
+../Core/Src/ui_display.c:93:13:fmt_f1	56	static
+../Core/Src/ui_display.c:132:13:Draw_Page_Overview	72	static
+../Core/Src/ui_display.c:179:13:Draw_Page_RailStatus	16	static
+../Core/Src/ui_display.c:211:13:Draw_Page_FaultDetail	16	static
+../Core/Src/ui_display.c:260:6:DisplayContent_Update	32	static
+../Core/Src/ui_display.c:296:6:UI_Display_Init	8	static
+../Core/Src/ui_display.c:311:6:UI_Display_Update	8	static
+../Core/Src/ui_display.c:319:6:UI_Display_SetState	16	static
+../Core/Src/ui_display.c:327:6:UI_Display_SetErrorCode	16	static
+../Core/Src/ui_display.c:338:6:UI_Display_UpdateFromModules	32	static

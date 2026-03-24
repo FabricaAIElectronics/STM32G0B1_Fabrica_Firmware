@@ -1,48 +1,44 @@
-/*
- * eeprom.h
+/**
+ * @file    eeprom_driver.h
+ * @brief   I2C EEPROM driver and configuration storage.
  *
- *  Created on: 1 Dec 2025
- *      Author: jordan
+ * @details Provides page-based read/write for an I2C EEPROM (64-byte pages,
+ *          512 pages), a Config struct with magic validation, EEPROM-backed
+ *          config persistence, and CAN command handlers for reading/writing
+ *          individual settings over the bus.
+ *
+ * @author  jordan
+ * @date    2025-12-01
  */
 
-#ifndef INC_EEPROM_H_
-#define INC_EEPROM_H_
+#ifndef EEPROM_DRIVER_H
+#define EEPROM_DRIVER_H
 
 #include "stm32g0xx_hal.h"
 #include <stdbool.h>
 #include <stdint.h>
 
+/* ════════════════════════════════════════════════════════════════════════════
+ *  Configuration structure (stored in EEPROM page 0)
+ * ════════════════════════════════════════════════════════════════════════════ */
+
 typedef struct __attribute__((packed)) {
-    uint16_t    magic;
-    uint8_t     mode;
-    uint16_t    voltage;
-    uint16_t    count;
-    uint16_t    pwm0;
-    uint16_t    pwm1;
-    uint16_t    hard_over_voltage;
-    uint16_t    soft_over_voltage;
-    uint16_t    under_voltage;
-    uint16_t    over_current;
-    uint16_t    fan_max_rpm;        /* max fan RPM for % calculation (e.g. 5000) */
+    uint16_t magic;              /* 0x3584 = valid config */
+    uint8_t  mode;
+    uint16_t voltage;
+    uint16_t count;
+    uint16_t pwm0;
+    uint16_t pwm1;
+    uint16_t hard_over_voltage;  /* mV */
+    uint16_t soft_over_voltage;  /* mV */
+    uint16_t under_voltage;      /* mV */
+    uint16_t over_current;       /* mA */
+    uint16_t fan_max_rpm;        /* max fan RPM for % calculation */
 } Config;
-typedef enum {
-	EEPROM_IDLE=0,
-	EEPROM_ERASING,
-	EEPROM_ERASING_DONE
-}EEPROM_format_status;
 
-void EEPROM_Write (uint16_t page,uint16_t offset, uint8_t *data,uint16_t size);
-void EEPROM_Read (uint16_t page, uint16_t offset, uint8_t *data,uint16_t size);
-uint32_t float2Bytes(float float_data);
-float bytes2Float(uint8_t buffer[4]);
-void EEPROM_Write_Num(uint16_t page, uint16_t offset, float data);
-float EEPROM_Read_Num(uint16_t page,uint16_t offset);
-void EEPROM_pageErase(uint16_t page);
-void EEPROM_Write_Config(uint16_t page, uint16_t offset, Config *cfg);
-void EEPROM_Read_Config(uint16_t page, uint16_t offset, Config *cfg);
-void LoadDefault(Config *config);
-bool checkcfg(Config *cfg);
-
+/* ════════════════════════════════════════════════════════════════════════════
+ *  EEPROM setting selectors (for CAN write command)
+ * ════════════════════════════════════════════════════════════════════════════ */
 
 #define EEPROM_SETTING_HARD_OV      0x00
 #define EEPROM_SETTING_SOFT_OV      0x01
@@ -50,51 +46,78 @@ bool checkcfg(Config *cfg);
 #define EEPROM_SETTING_OVER_CURR    0x03
 #define EEPROM_SETTING_FAN_MAX_RPM  0x04
 
+/* ════════════════════════════════════════════════════════════════════════════
+ *  EEPROM format status (for async erase operations)
+ * ════════════════════════════════════════════════════════════════════════════ */
+
+typedef enum {
+    EEPROM_IDLE         = 0,
+    EEPROM_ERASING      = 1,
+    EEPROM_ERASING_DONE = 2
+} EEPROM_format_status;
+
+/* ════════════════════════════════════════════════════════════════════════════
+ *  Low-level EEPROM access
+ * ════════════════════════════════════════════════════════════════════════════ */
+
+/** Write raw bytes to EEPROM (handles page boundaries automatically). */
+void EEPROM_Write(uint16_t page, uint16_t offset, uint8_t *data, uint16_t size);
+
+/** Read raw bytes from EEPROM. */
+void EEPROM_Read(uint16_t page, uint16_t offset, uint8_t *data, uint16_t size);
+
+/** Write a float value to EEPROM (4 bytes, little-endian). */
+void EEPROM_Write_Num(uint16_t page, uint16_t offset, float data);
+
+/** Read a float value from EEPROM. */
+float EEPROM_Read_Num(uint16_t page, uint16_t offset);
+
+/** Erase a single EEPROM page (fill with 0xFF). */
+void EEPROM_pageErase(uint16_t page);
+
+/* ════════════════════════════════════════════════════════════════════════════
+ *  Config management
+ * ════════════════════════════════════════════════════════════════════════════ */
+
+/** Populate a Config struct with factory defaults. */
+void LoadDefault(Config *config);
+
+/** Check if a Config has a valid magic number. */
+bool checkcfg(Config *cfg);
+
+/** Write a Config struct to EEPROM and update the RAM cache. */
+void EEPROM_Write_Config(uint16_t page, uint16_t offset, Config *cfg);
+
+/** Read a Config struct from EEPROM. */
+void EEPROM_Read_Config(uint16_t page, uint16_t offset, Config *cfg);
+
+/** Initialize EEPROM: read config, load defaults if invalid, sanitize. */
+void EEPROM_Init(void);
+
+/** Get pointer to cached config (NULL if not yet initialized). */
+const Config *EEPROM_GetCachedConfig(void);
+
+/* ════════════════════════════════════════════════════════════════════════════
+ *  CAN command handlers
+ * ════════════════════════════════════════════════════════════════════════════ */
 
 /**
-  * @brief  CAN handler to write a single EEPROM config setting.
-  *
-  * CAN ID: 0x200
-  * Payload (3 bytes):
-  *   byte 0:   setting selector
-  *               0x00 = hard_over_voltage
-  *               0x01 = soft_over_voltage
-  *               0x02 = under_voltage
-  *               0x03 = over_current
-  *               0x04 = fan_max_rpm
-  *   byte 1–2: new value (uint16_t little-endian)
-  *
-  * Reads existing config first to preserve other fields.
-  * Rejects value of 0 or > 60000 (fan_max_rpm capped at 30000).
-  * Sends ACK on 0x604 with: byte 0 = selector, byte 1–2 = written value.
-  */
+ * @brief  CAN handler: write a single config setting.
+ *         Payload: [setting_selector, value_lo, value_hi]
+ */
 void CAN_Handler_EEPROM_Write_Config(uint32_t id, uint8_t *params, uint8_t len);
 
-
 /**
-  * @brief  CAN handler to read and publish all EEPROM config settings.
-  *
-  * CAN ID: 0x201 (any payload or empty)
-  * Response on 0x604 (8 bytes):
-  *
-  *   ┌──────────┬──────────────────────────────┬────────────┐
-  *   │ Byte     │ Content                      │ Encoding   │
-  *   ├──────────┼──────────────────────────────┼────────────┤
-  *   │ 0–1      │ hard_over_voltage            │ u16 LE mV  │
-  *   │ 2–3      │ soft_over_voltage            │ u16 LE mV  │
-  *   │ 4–5      │ over_current                 │ u16 LE mA  │
-  *   │ 6–7      │ fan_max_rpm                  │ u16 LE RPM │
-  *   └──────────┴──────────────────────────────┴────────────┘
-  *
-  * under_voltage is sent in a second frame on 0x605 (2 bytes):
-  *   byte 0–1: under_voltage (u16 LE mV)
-  *
-  * If no valid config exists, all bytes are 0.
-  */
+ * @brief  CAN handler: read and publish all config settings.
+ *         Responds with two frames on CAN_ID_EEPROM_ACK and CAN_ID_EEPROM_ACK2.
+ */
 void CAN_Handler_EEPROM_Read_Config(uint32_t id, uint8_t *params, uint8_t len);
 
-
-void EEPROM_Init(void);
+/* Legacy alias (unused but kept for compatibility) */
 void CAN_Handler_EEPROM_Write_Overvoltage_Config(uint32_t id, uint8_t *params, uint8_t len);
-const Config* EEPROM_GetCachedConfig(void);
-#endif /* INC_EEPROM_H_ */
+
+/* Utility functions */
+uint32_t float2Bytes(float float_data);
+float bytes2Float(uint8_t buffer[4]);
+
+#endif /* EEPROM_DRIVER_H */

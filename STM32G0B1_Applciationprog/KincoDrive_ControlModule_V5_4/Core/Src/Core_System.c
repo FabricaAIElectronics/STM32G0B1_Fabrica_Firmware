@@ -1,49 +1,68 @@
-#include "Power_Electronic.h"
-#include "eeprom_driver.h"
-#include "ESTOP.h"
+/**
+ * @file    Core_System.c
+ * @brief   Top-level system state machine.
+ *
+ * @author  jordan
+ * @date    2026-03-24
+ */
+
 #include "Core_Systems.h"
+#include "Power_Electronic.h"
+#include "ESTOP.h"
+#include "eeprom_driver.h"
 #include "error_manager.h"
+
+/* ════════════════════════════════════════════════════════════════════════════
+ *  Periodic safety tasks (run in every state)
+ * ════════════════════════════════════════════════════════════════════════════ */
 
 void CoreSystem_PeriodicTasks(void)
 {
-    /* Check for overvoltage/overcurrent conditions and shutdown if needed */
     Shutdown_Protection();
     ESTOP_State_Machine();
-
-    /* Enforce error state: keep locked-out modules disabled */
     Error_Manager_EnforceState();
-
-    
 }
 
-void CoreSystem_Normal(void)
+/* ════════════════════════════════════════════════════════════════════════════
+ *  State-specific handlers
+ * ════════════════════════════════════════════════════════════════════════════ */
+
+static void CoreSystem_Normal(void)
 {
     CoreSystem_PeriodicTasks();
 }
 
-void CoreSystem_Recovery(void)
+static void CoreSystem_Recovery(void)
 {
-
-    /* If in recovery, validate readings before allowing NORMAL */
     Error_Manager_AttemptRecovery();
 }
 
-void CoreSystem_Error(void)
+static void CoreSystem_Error(void)
 {
-    /* In error state, just keep enforcing the lockout and wait for reset */
     CoreSystem_PeriodicTasks();
 }
 
+/* ════════════════════════════════════════════════════════════════════════════
+ *  Top-level dispatch — call once per main-loop iteration
+ * ════════════════════════════════════════════════════════════════════════════ */
+
 void CoreSystem_TOP(void)
 {
-    SystemState_t st = Error_Manager_GetState();
-    if (st == STATE_ERROR) {
+    SystemState_t state = Error_Manager_GetState();
+
+    switch (state) {
+    case STATE_ERROR:
         CoreSystem_Error();
-    } else if (st == STATE_RECOVERY) {
+        break;
+    case STATE_RECOVERY:
         CoreSystem_Recovery();
-    } else if (st == STATE_WARNING) {
-        CoreSystem_Normal(); /* warnings don't block operation */
-    } else {
+        break;
+    case STATE_WARNING:
+        /* Warnings don't block normal operation */
+        /* fall through */
+    case STATE_NORMAL:
+    default:
         CoreSystem_Normal();
+        break;
     }
 }

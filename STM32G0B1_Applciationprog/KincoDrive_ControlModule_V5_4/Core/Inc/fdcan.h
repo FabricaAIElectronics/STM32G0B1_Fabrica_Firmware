@@ -37,7 +37,7 @@ extern "C" {
 
 /* USER CODE END Includes */
 
-extern FDCAN_HandleTypeDef hfdcan1;//change this to static and all other calls use pointers
+extern FDCAN_HandleTypeDef hfdcan1;
 
 /* USER CODE BEGIN Private defines */
 

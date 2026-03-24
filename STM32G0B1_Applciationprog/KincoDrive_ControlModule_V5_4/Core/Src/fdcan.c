@@ -2,8 +2,7 @@
 /**
   ******************************************************************************
   * @file    fdcan.c
-  * @brief   This file provides code for the configuration
-  *          of the FDCAN instances.
+  * @brief   FDCAN peripheral configuration and low-level TX helper.
   ******************************************************************************
   * @attention
   *
@@ -19,46 +18,52 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "fdcan.h"
-#include "stm32g0xx_hal_fdcan.h"
 
 /* USER CODE BEGIN 0 */
-/* map byte count 0..8 to HAL FDCAN DLC constants */
+
+/**
+ * @brief  Convert a byte count (0–8) to the HAL FDCAN DLC constant.
+ */
 static uint32_t dlc_bytes_to_fdcan_dlc(uint8_t bytes)
 {
-    switch (bytes) {
-    case 0: return FDCAN_DLC_BYTES_0;
-    case 1: return FDCAN_DLC_BYTES_1;
-    case 2: return FDCAN_DLC_BYTES_2;
-    case 3: return FDCAN_DLC_BYTES_3;
-    case 4: return FDCAN_DLC_BYTES_4;
-    case 5: return FDCAN_DLC_BYTES_5;
-    case 6: return FDCAN_DLC_BYTES_6;
-    case 7: return FDCAN_DLC_BYTES_7;
-    default: return FDCAN_DLC_BYTES_8;
-    }
+    /* Classic CAN only uses 0–8 bytes */
+    static const uint32_t lut[9] = {
+        FDCAN_DLC_BYTES_0, FDCAN_DLC_BYTES_1, FDCAN_DLC_BYTES_2,
+        FDCAN_DLC_BYTES_3, FDCAN_DLC_BYTES_4, FDCAN_DLC_BYTES_5,
+        FDCAN_DLC_BYTES_6, FDCAN_DLC_BYTES_7, FDCAN_DLC_BYTES_8
+    };
+    return (bytes <= 8U) ? lut[bytes] : FDCAN_DLC_BYTES_8;
 }
 
 /**
-  * @brief  Transmit one Classic CAN frame using a 29-bit extended identifier.
-  */
+ * @brief  Transmit one Classic CAN frame using a 29-bit extended identifier.
+ *
+ * @param  ext_id  Full 29-bit extended CAN ID.
+ * @param  data    Pointer to payload data (may be NULL if len == 0).
+ * @param  len     Payload length in bytes (clamped to 8).
+ * @retval true on success, false on TX queue full or HAL error.
+ */
 bool FDCAN_SendFrame(uint32_t ext_id, const uint8_t *data, uint8_t len)
 {
-    FDCAN_TxHeaderTypeDef txHeader;
-    uint8_t txBuf[8] = {0};
-    uint8_t send_len = (len > 8U) ? 8U : len; //clamp length to 8 bytes
-    memset(&txHeader, 0, sizeof(txHeader)); // zero initialize all fields to default values
+    FDCAN_TxHeaderTypeDef tx_header;
+    uint8_t tx_buf[8] = {0};
+    uint8_t send_len = (len > 8U) ? 8U : len;
 
-    txHeader.Identifier = ext_id & 0x1FFFFFFFU; // mask to 29-bit extended ID
-    txHeader.IdType = FDCAN_EXTENDED_ID;
-    txHeader.TxFrameType = FDCAN_DATA_FRAME;
-    txHeader.DataLength = dlc_bytes_to_fdcan_dlc(send_len);
-    txHeader.BitRateSwitch = FDCAN_BRS_OFF;
-    txHeader.FDFormat = FDCAN_CLASSIC_CAN;
-    txHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
+    memset(&tx_header, 0, sizeof(tx_header));
 
-    if(send_len) memcpy(txBuf, data, send_len);
+    tx_header.Identifier          = ext_id & 0x1FFFFFFFU;
+    tx_header.IdType              = FDCAN_EXTENDED_ID;
+    tx_header.TxFrameType         = FDCAN_DATA_FRAME;
+    tx_header.DataLength          = dlc_bytes_to_fdcan_dlc(send_len);
+    tx_header.BitRateSwitch       = FDCAN_BRS_OFF;
+    tx_header.FDFormat            = FDCAN_CLASSIC_CAN;
+    tx_header.TxEventFifoControl  = FDCAN_NO_TX_EVENTS;
 
-    return (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &txHeader, txBuf) == HAL_OK);
+    if (send_len > 0 && data != NULL) {
+        memcpy(tx_buf, data, send_len);
+    }
+
+    return (HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &tx_header, tx_buf) == HAL_OK);
 }
 
 /* USER CODE END 0 */
@@ -84,9 +89,9 @@ void MX_FDCAN1_Init(void)
   hfdcan1.Init.TransmitPause = DISABLE;
   hfdcan1.Init.ProtocolException = DISABLE;
   hfdcan1.Init.NominalPrescaler = 1;
-  hfdcan1.Init.NominalSyncJumpWidth = 12;
-  hfdcan1.Init.NominalTimeSeg1 = 95;
-  hfdcan1.Init.NominalTimeSeg2 = 24;
+  hfdcan1.Init.NominalSyncJumpWidth = 2;
+  hfdcan1.Init.NominalTimeSeg1 = 2;
+  hfdcan1.Init.NominalTimeSeg2 = 117;
   hfdcan1.Init.DataPrescaler = 6;
   hfdcan1.Init.DataSyncJumpWidth = 3;
   hfdcan1.Init.DataTimeSeg1 = 16;
@@ -100,24 +105,11 @@ void MX_FDCAN1_Init(void)
   }
   /* USER CODE BEGIN FDCAN1_Init 2 */
 
-  /* ── Accept-all filter: route every extended CAN ID to Rx FIFO 0 ── */
-  FDCAN_FilterTypeDef sFilterConfig;
-
-  sFilterConfig.IdType       = FDCAN_EXTENDED_ID;
-  sFilterConfig.FilterIndex  = 0;
-  sFilterConfig.FilterType   = FDCAN_FILTER_MASK;
-  sFilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-  sFilterConfig.FilterID1    = 0x00000000;   /* ID:   match anything */
-  sFilterConfig.FilterID2    = 0x00000000;   /* Mask: don't care about any bit */
-
-  if (HAL_FDCAN_ConfigFilter(&hfdcan1, &sFilterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /* Reject non-matching frames and all remote frames */
-  HAL_FDCAN_ConfigGlobalFilter(&hfdcan1, FDCAN_REJECT, FDCAN_REJECT,
-                               FDCAN_REJECT_REMOTE, FDCAN_REJECT_REMOTE);
+  /*
+   * NOTE: RX filter configuration and notification activation are handled
+   *       in CAN_Handler_Init() after HAL_FDCAN_Start().
+   *       This keeps all protocol-level CAN setup in one place.
+   */
 
   /* USER CODE END FDCAN1_Init 2 */
 

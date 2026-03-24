@@ -1,3 +1,11 @@
+/**
+ * @file    Endstop.c
+ * @brief   Endstop switch reading and CAN data packing.
+ *
+ * @author  jordan
+ * @date    2026-03-24
+ */
+
 #include "Endstop.h"
 #include "ESTOP.h"
 #include "main.h"
@@ -5,56 +13,77 @@
 #include <stdint.h>
 #include <string.h>
 
+/* ════════════════════════════════════════════════════════════════════════════
+ *  Internal state
+ * ════════════════════════════════════════════════════════════════════════════ */
+
 static uint8_t endstop_flag[NUM_ENDSTOPS];
+
+/* ════════════════════════════════════════════════════════════════════════════
+ *  Initialization
+ * ════════════════════════════════════════════════════════════════════════════ */
 
 void Endstop_Init(void)
 {
-    for (int i = 0; i < NUM_ENDSTOPS; i++) {
-        endstop_flag[i] = 0;
-    }
+    memset(endstop_flag, 0, sizeof(endstop_flag));
 }
 
-/*🔴Preserve*/
+/* ════════════════════════════════════════════════════════════════════════════
+ *  Endstop state reading
+ *
+ *  NC+NO switches: NC=HIGH and NO=LOW → OK
+ *                  NC=LOW  and NO=HIGH → TRIGGERED
+ *                  Anything else       → FAULT (wiring problem)
+ *
+ *  NO-only switch: HIGH → TRIGGERED, LOW → OK
+ * ════════════════════════════════════════════════════════════════════════════ */
+
 int Endstop_Check(Endstop_Module_t endstop)
 {
-    GPIO_PinState NC;
-    GPIO_PinState NO;
-    GPIO_PinState state;
-    switch (endstop)
-    {
-        case ENDSTOP_EXTRUDER_HEIGHT_TOP:
-            NC = HAL_GPIO_ReadPin(ENDSTOP_EH_H_NC_INT_GPIO_Port, ENDSTOP_EH_H_NC_INT_Pin);
-            NO = HAL_GPIO_ReadPin(ENDSTOP_EH_H_NO_INT_GPIO_Port, ENDSTOP_EH_H_NO_INT_Pin);
-            if (NC == GPIO_PIN_SET && NO == GPIO_PIN_RESET) return ENDSTOP_OK;
-            if (NC == GPIO_PIN_RESET && NO == GPIO_PIN_SET) return ENDSTOP_TRIGGERED;
-            return ENDSTOP_FAULT;
-        case ENDSTOP_EXTRUDER_HEIGHT_BOTTOM:
-            state = HAL_GPIO_ReadPin(ENDSTOP_EH_L_NO_INT_GPIO_Port, ENDSTOP_EH_L_NO_INT_Pin);
-            if (state == GPIO_PIN_SET) return ENDSTOP_TRIGGERED;
-            return ENDSTOP_OK;
-        case ENDSTOP_EXTRUDER_MOBILE_TOP:
-            NC = HAL_GPIO_ReadPin(ENDSTOP_EP_H_NC_INT_GPIO_Port, ENDSTOP_EP_H_NC_INT_Pin);
-            NO = HAL_GPIO_ReadPin(ENDSTOP_EP_H_NO_INT_GPIO_Port, ENDSTOP_EP_H_NO_INT_Pin);
-            if (NC == GPIO_PIN_SET && NO == GPIO_PIN_RESET) return ENDSTOP_OK;
-            if (NC == GPIO_PIN_RESET && NO == GPIO_PIN_SET) return ENDSTOP_TRIGGERED;
-            return ENDSTOP_FAULT;
-        case ENDSTOP_EXTRUDER_MOBILE_BOTTOM:
-            NC = HAL_GPIO_ReadPin(ENDSTOP_EP_L_NC_INT_GPIO_Port, ENDSTOP_EP_L_NC_INT_Pin);
-            NO = HAL_GPIO_ReadPin(ENDSTOP_EP_L_NO_INT_GPIO_Port, ENDSTOP_EP_L_NO_INT_Pin);
-            if (NC == GPIO_PIN_SET && NO == GPIO_PIN_RESET) return ENDSTOP_OK;
-            if (NC == GPIO_PIN_RESET && NO == GPIO_PIN_SET) return ENDSTOP_TRIGGERED;
-            return ENDSTOP_FAULT;
-        case ENDSTOP_SCRUBBING_FRONT_TOP:
-            NC = HAL_GPIO_ReadPin(ENDSTOP_SC_H_NC_INT_GPIO_Port, ENDSTOP_SC_H_NC_INT_Pin);
-            NO = HAL_GPIO_ReadPin(ENDSTOP_SC_H_NO_INT_GPIO_Port, ENDSTOP_SC_H_NO_INT_Pin);
-            if (NC == GPIO_PIN_SET && NO == GPIO_PIN_RESET) return ENDSTOP_OK;
-            if (NC == GPIO_PIN_RESET && NO == GPIO_PIN_SET) return ENDSTOP_TRIGGERED;
-            return ENDSTOP_FAULT;
-        default:
-            return PARAM_ERROR; // Invalid endstop
-    }
+    GPIO_PinState NC, NO, state;
 
+    switch (endstop) {
+    case ENDSTOP_EXTRUDER_HEIGHT_TOP:
+        NC = HAL_GPIO_ReadPin(ENDSTOP_EH_H_NC_INT_GPIO_Port, ENDSTOP_EH_H_NC_INT_Pin);
+        NO = HAL_GPIO_ReadPin(ENDSTOP_EH_H_NO_INT_GPIO_Port, ENDSTOP_EH_H_NO_INT_Pin);
+        if (NC == GPIO_PIN_SET   && NO == GPIO_PIN_RESET) return ENDSTOP_OK;
+        if (NC == GPIO_PIN_RESET && NO == GPIO_PIN_SET)   return ENDSTOP_TRIGGERED;
+        return ENDSTOP_FAULT;
+
+    case ENDSTOP_EXTRUDER_HEIGHT_BOTTOM:
+        /* NO-only switch */
+        state = HAL_GPIO_ReadPin(ENDSTOP_EH_L_NO_INT_GPIO_Port, ENDSTOP_EH_L_NO_INT_Pin);
+        return (state == GPIO_PIN_SET) ? ENDSTOP_TRIGGERED : ENDSTOP_OK;
+
+    case ENDSTOP_EXTRUDER_MOBILE_TOP:
+        NC = HAL_GPIO_ReadPin(ENDSTOP_EP_H_NC_INT_GPIO_Port, ENDSTOP_EP_H_NC_INT_Pin);
+        NO = HAL_GPIO_ReadPin(ENDSTOP_EP_H_NO_INT_GPIO_Port, ENDSTOP_EP_H_NO_INT_Pin);
+        if (NC == GPIO_PIN_SET   && NO == GPIO_PIN_RESET) return ENDSTOP_OK;
+        if (NC == GPIO_PIN_RESET && NO == GPIO_PIN_SET)   return ENDSTOP_TRIGGERED;
+        return ENDSTOP_FAULT;
+
+    case ENDSTOP_EXTRUDER_MOBILE_BOTTOM:
+        NC = HAL_GPIO_ReadPin(ENDSTOP_EP_L_NC_INT_GPIO_Port, ENDSTOP_EP_L_NC_INT_Pin);
+        NO = HAL_GPIO_ReadPin(ENDSTOP_EP_L_NO_INT_GPIO_Port, ENDSTOP_EP_L_NO_INT_Pin);
+        if (NC == GPIO_PIN_SET   && NO == GPIO_PIN_RESET) return ENDSTOP_OK;
+        if (NC == GPIO_PIN_RESET && NO == GPIO_PIN_SET)   return ENDSTOP_TRIGGERED;
+        return ENDSTOP_FAULT;
+
+    case ENDSTOP_SCRUBBING_FRONT_TOP:
+        NC = HAL_GPIO_ReadPin(ENDSTOP_SC_H_NC_INT_GPIO_Port, ENDSTOP_SC_H_NC_INT_Pin);
+        NO = HAL_GPIO_ReadPin(ENDSTOP_SC_H_NO_INT_GPIO_Port, ENDSTOP_SC_H_NO_INT_Pin);
+        if (NC == GPIO_PIN_SET   && NO == GPIO_PIN_RESET) return ENDSTOP_OK;
+        if (NC == GPIO_PIN_RESET && NO == GPIO_PIN_SET)   return ENDSTOP_TRIGGERED;
+        return ENDSTOP_FAULT;
+
+    default:
+        return PARAM_ERROR;
+    }
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+ *  CAN telemetry packer
+ * ════════════════════════════════════════════════════════════════════════════ */
 
 size_t CAN_Packer_Endstop_and_ESTOP_2Byte(uint8_t *out1, uint8_t *out2, size_t out_size)
 {
@@ -71,9 +100,7 @@ size_t CAN_Packer_Endstop_and_ESTOP_2Byte(uint8_t *out1, uint8_t *out2, size_t o
             triggered |= (1U << i);
         } else if (state == ENDSTOP_FAULT) {
             fault |= (1U << i);
-            /* fault is treated as NOT triggered, so triggered bit stays 0 */
         }
-        /* ENDSTOP_OK: both bits stay 0 */
     }
 
     /* ESTOP: bit 5 */

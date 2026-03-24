@@ -36,7 +36,6 @@ Core/Src/Power_Electronic.o: ../Core/Src/Power_Electronic.c \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr_ex.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h \
- ../Drivers/CMSIS/Device/ST/STM32G0xx/Include/stm32g0b1xx.h \
  ../Core/Inc/CAN_Handler.h ../Core/Inc/main.h ../Core/Inc/adc.h \
  ../Core/Inc/fdcan.h ../Core/Inc/eeprom_driver.h \
  ../Core/Inc/error_manager.h
@@ -78,7 +77,6 @@ Core/Src/Power_Electronic.o: ../Core/Src/Power_Electronic.c \
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr_ex.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h:
-../Drivers/CMSIS/Device/ST/STM32G0xx/Include/stm32g0b1xx.h:
 ../Core/Inc/CAN_Handler.h:
 ../Core/Inc/main.h:
 ../Core/Inc/adc.h:

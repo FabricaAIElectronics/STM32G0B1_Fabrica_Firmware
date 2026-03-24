@@ -1,14 +1,29 @@
+/**
+ * @file    CAN_Handler.c
+ * @brief   CAN bus receive dispatcher, broadcast engine, and TX/RX helpers.
+ *
+ * @details Implements:
+ *          - ISR-safe ring buffer for incoming CAN frames
+ *          - Linear-search dispatch table for registered command handlers
+ *          - Periodic telemetry broadcast
+ *          - ACK / NACK response helpers
+ *
+ *          All extended CAN IDs embed the device address in bits [15:0]
+ *          and the message type in bits [28:16].  See CAN_Handler.h for
+ *          the full ID layout and macro definitions.
+ *
+ * @author  jordan
+ * @date    2026-03-24
+ */
+
 #include "CAN_Handler.h"
 #include "main.h"
+#include "fdcan.h"
 #include "stm32g0xx.h"
 #include <string.h>
 #include <stdbool.h>
 
-
-#include "fdcan.h"
-
-
-/*Include all other file headers and place their CAN registration in CAN_handler_Init*/
+/* Module headers — each registers its CAN command handler in CAN_Handler_Init() */
 #include "Fan_PWM.h"
 #include "Power_Electronic.h"
 #include "Endstop.h"
@@ -16,145 +31,171 @@
 #include "error_manager.h"
 #include "stm32g0xx_hal_fdcan.h"
 
-
-#define CAN_SUCCESS 0
-#define CAN_ERROR -1
-
-//static FDCAN_HandleTypeDef hfdcan1; // FDCAN handle, initialized in MX_FDCAN1_Init()
+/* ════════════════════════════════════════════════════════════════════════════
+ *  Handler function type and dispatch table
+ * ════════════════════════════════════════════════════════════════════════════ */
 
 typedef void (*can_handler_t)(uint32_t id, uint8_t *params, uint8_t len);
 
-typedef struct { uint32_t id; uint8_t dlc; uint8_t data[8]; } can_frame_t;
-
-/* ── Linear-search dispatch table (supports 29-bit extended CAN IDs) ── */
 typedef struct {
-    uint32_t      id;
-    can_handler_t handler;
+    uint32_t      id;       /* full 29-bit extended CAN ID to match */
+    can_handler_t handler;  /* callback invoked when ID matches */
 } can_dispatch_entry_t;
 
-#define MAX_CAN_HANDLERS  16
-static can_dispatch_entry_t dispatch_entries[MAX_CAN_HANDLERS];
-static uint8_t dispatch_count = 0;
+#define MAX_CAN_HANDLERS    16
+static can_dispatch_entry_t dispatch_table[MAX_CAN_HANDLERS];
+static uint8_t              dispatch_count = 0;
 
-bool can_register_handler(uint32_t cmd, can_handler_t h)
+/**
+ * @brief  Register a handler for a specific 29-bit CAN ID.
+ * @param  ext_id  Full extended CAN ID (use CAN_EXT_ID(msg_type) macro).
+ * @param  handler Callback function pointer.
+ * @retval true on success, false if table is full or handler is NULL.
+ */
+static bool can_register_handler(uint32_t ext_id, can_handler_t handler)
 {
-    if (dispatch_count >= MAX_CAN_HANDLERS || h == NULL) return false;
-    dispatch_entries[dispatch_count].id      = cmd & 0x1FFFFFFFU;
-    dispatch_entries[dispatch_count].handler = h;
+    if (dispatch_count >= MAX_CAN_HANDLERS || handler == NULL) {
+        return false;
+    }
+
+    dispatch_table[dispatch_count].id      = ext_id & 0x1FFFFFFFU;
+    dispatch_table[dispatch_count].handler  = handler;
     dispatch_count++;
     return true;
 }
 
+/* Forward declaration of local test handler */
 static void handle_set_test_LED(uint32_t id, uint8_t *params, uint8_t len);
 
+/* ════════════════════════════════════════════════════════════════════════════
+ *  Internal CAN frame type
+ * ════════════════════════════════════════════════════════════════════════════ */
+
+typedef struct {
+    uint32_t id;        /* 29-bit extended CAN ID */
+    uint8_t  dlc;       /* payload length in bytes (0–8) */
+    uint8_t  data[8];   /* payload */
+} can_frame_t;
+
+/* ════════════════════════════════════════════════════════════════════════════
+ *  DLC conversion (HAL FDCAN DLC field → byte count)
+ * ════════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * @brief  Convert HAL FDCAN DataLength field to byte count.
+ *
+ *         Classic CAN: values 0–8 map 1:1.
+ *         CAN FD: 9→12, 10→16, 11→20, 12→24, 13→32, 14→48, 15→64.
+ *         We cap at 8 for Classic CAN operation.
+ */
 static uint8_t dlc_to_bytes(uint32_t dlc)
 {
-    switch (dlc) {
-        case 0U:  return 0U;
-        case 1U:  return 1U;
-        case 2U:  return 2U;
-        case 3U:  return 3U;
-        case 4U:  return 4U;
-        case 5U:  return 5U;
-        case 6U:  return 6U;
-        case 7U:  return 7U;
-        case 8U:  return 8U;
-        case 9U:  return 12U;
-        case 10U: return 16U;
-        case 11U: return 20U;
-        case 12U: return 24U;
-        case 13U: return 32U;
-        case 14U: return 48U;
-        case 15U: return 64U;
-        default:  return 0U;
-    }
+    static const uint8_t lut[16] = {
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64
+    };
+    return (dlc < 16U) ? lut[dlc] : 0U;
 }
 
-/* ring buffer parameters */
-#define RBUF_SIZE  16U
-#define RBUF_MASK  (RBUF_SIZE - 1U)
-static volatile uint32_t rbuf_head = 0;
-static volatile uint32_t rbuf_tail = 0;
-static can_frame_t rbuf[RBUF_SIZE];
-static volatile uint32_t rbuf_drop_count = 0;
+/* ════════════════════════════════════════════════════════════════════════════
+ *  ISR → main-loop ring buffer
+ * ════════════════════════════════════════════════════════════════════════════ */
 
-/* Producer: called from ISR context */
-bool EnqueueCanFrame(const can_frame_t *frame)
-{   
-    
+#define RBUF_SIZE       16U
+#define RBUF_MASK       (RBUF_SIZE - 1U)
+
+static volatile uint32_t rbuf_head       = 0;
+static volatile uint32_t rbuf_tail       = 0;
+static can_frame_t       rbuf[RBUF_SIZE];
+static volatile uint32_t rbuf_drop_count = 0;  /* frames lost due to full buffer */
+
+/**
+ * @brief  Enqueue a frame (called from ISR context).
+ * @retval true on success, false if buffer is full (frame dropped).
+ */
+static bool EnqueueCanFrame(const can_frame_t *frame)
+{
     uint32_t head = rbuf_head;
     uint32_t next = (head + 1U) & RBUF_MASK;
 
     if (next == rbuf_tail) {
         rbuf_drop_count++;
-        return false; /* full */
+        return false;
     }
 
-    /* copy frame into slot owned by producer */
     memcpy(&rbuf[head], frame, sizeof(can_frame_t));
 
-    /* ensure data written before publishing head */
-    __DMB();                    /* data memory barrier (ARM CMSIS) */
-    rbuf_head = next;           /* publish (release) */
-
-    /* optional: set a volatile flag or notify main loop */
+    __DMB();                /* ensure data written before publishing head */
+    rbuf_head = next;
     return true;
 }
 
-/* Consumer: called from main loop (non-ISR) */
-bool DequeueCanFrame(can_frame_t *out)
+/**
+ * @brief  Dequeue a frame (called from main loop, non-ISR).
+ * @retval true if a frame was available, false if buffer is empty.
+ */
+static bool DequeueCanFrame(can_frame_t *out)
 {
     uint32_t tail = rbuf_tail;
-    uint32_t head_snapshot = rbuf_head; /* snapshot of published head */
 
-    if (tail == head_snapshot) {
-        return false; /* empty */
+    if (tail == rbuf_head) {
+        return false;
     }
 
-    /* copy out the frame */
     memcpy(out, &rbuf[tail], sizeof(can_frame_t));
 
-    /* ensure copy done before updating tail */
-    __DMB();
-    rbuf_tail = (tail + 1U) & RBUF_MASK; /* publish new tail */
-
+    __DMB();                /* ensure copy completes before advancing tail */
+    rbuf_tail = (tail + 1U) & RBUF_MASK;
     return true;
 }
 
+/* ════════════════════════════════════════════════════════════════════════════
+ *  FDCAN RX FIFO0 callback (ISR context)
+ * ════════════════════════════════════════════════════════════════════════════ */
 
-void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan1, uint32_t RxFifo0ITs)
+void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 {
-  FDCAN_RxHeaderTypeDef RxHeader;
-  uint8_t RxData[8];
+    if ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) == 0) {
+        return;
+    }
 
-  if((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != 0)
-  {
-    HAL_FDCAN_GetRxMessage(hfdcan1, FDCAN_RX_FIFO0, &RxHeader, RxData);
+    FDCAN_RxHeaderTypeDef rx_header;
+    uint8_t rx_data[8];
 
-    if ((RxHeader.Identifier == 0x667)&&(RxData[0] == 0xFF)) {
-        /*NECESSARY for handover to bootloader*/
+    if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &rx_header, rx_data) != HAL_OK) {
+        return;
+    }
+
+    /* Bootloader entry: device ID with payload[0] == 0xFF triggers system reset */
+    if ((rx_header.Identifier == CAN_ID_BOOTLOADER) && (rx_data[0] == 0xFF)) {
         HAL_NVIC_SystemReset();
     }
 
-    can_frame_t rx_frame;
-    rx_frame.id = RxHeader.Identifier;
-    rx_frame.dlc = dlc_to_bytes(RxHeader.DataLength);
-    if (rx_frame.dlc > 8) rx_frame.dlc = 8;
-    memcpy(rx_frame.data, RxData, rx_frame.dlc);
-    EnqueueCanFrame(&rx_frame);
-  }
+    /* Build internal frame and enqueue for main-loop processing */
+    can_frame_t frame;
+    frame.id  = rx_header.Identifier;
+    frame.dlc = dlc_to_bytes(rx_header.DataLength);
+
+    if (frame.dlc > 8U) {
+        frame.dlc = 8U;     /* cap to Classic CAN max */
+    }
+
+    memcpy(frame.data, rx_data, frame.dlc);
+    EnqueueCanFrame(&frame);
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+ *  Vector table remap (for bootloader compatibility)
+ * ════════════════════════════════════════════════════════════════════════════ */
 
 static void VectorBase_Config(void)
 {
-  /* The constant array with vectors of the vector table is declared externally in the
-   * c-startup code.
-   */
-  extern const unsigned long g_pfnVectors[];
-
-  /* Remap the vector table to where the vector table is located for this program. */
-  SCB->VTOR = (unsigned long)&g_pfnVectors[0];
+    extern const unsigned long g_pfnVectors[];
+    SCB->VTOR = (unsigned long)&g_pfnVectors[0];
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+ *  Initialization
+ * ════════════════════════════════════════════════════════════════════════════ */
 
 void Pre_CAN_Handler_Init(void)
 {
@@ -163,47 +204,82 @@ void Pre_CAN_Handler_Init(void)
 
 void CAN_Handler_Init(void)
 {
-    can_register_handler(CMD_SET_LED,handle_set_test_LED);
-    can_register_handler(CMD_SET_FAN_PWM, CAN_Handle_set_Fan_PWM);
-    can_register_handler(CMD_SET_HS_DRIVE_POWER, CAN_Handler_Set_HS_Drive_Power);
-    can_register_handler(CMD_SET_HS_EXTRUDER_POWER, CAN_Handler_Set_HS_Extruder_Power);
-    can_register_handler(CMD_SET_HS_SCRUBBING_POWER, CAN_Handler_Set_HS_Scrubbing_Power);
-    can_register_handler(CMD_SET_EEPROM_CONFIG,  CAN_Handler_EEPROM_Write_Config);
-    can_register_handler(CMD_READ_EEPROM_CONFIG, CAN_Handler_EEPROM_Read_Config);
-    can_register_handler(CMD_DUMP_ERRORS, CAN_Handler_Dump_Errors);
-    can_register_handler(CMD_RESET_ERROR, CAN_Handler_Reset_Error);
+    /* ── Configure RX filter for extended IDs addressed to this device ───
+     *
+     *    Filter type  : FDCAN_FILTER_MASK
+     *    FilterID1    : value  — match our device ID in bits [15:0]
+     *    FilterID2    : mask   — only check bits [15:0], ignore msg type
+     *
+     *    This accepts any message where the lower 16 bits == CAN_DEVICE_ID.
+     */
+    FDCAN_FilterTypeDef filter_cfg = {0};
+    filter_cfg.IdType       = FDCAN_EXTENDED_ID;
+    filter_cfg.FilterIndex  = 0;
+    filter_cfg.FilterType   = FDCAN_FILTER_MASK;
+    filter_cfg.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+    filter_cfg.FilterID1    = CAN_DEVICE_ID;       /* value: device ID in lower bits */
+    filter_cfg.FilterID2    = 0x0000FFFFU;          /* mask: check lower 16 bits only */
 
-    HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
-    
+    if (HAL_FDCAN_ConfigFilter(&hfdcan1, &filter_cfg) != HAL_OK) {
+        Error_Handler();
+    }
+
+    /* Reject frames that don't match any filter */
+    HAL_FDCAN_ConfigGlobalFilter(&hfdcan1,
+                                 FDCAN_REJECT,          /* non-matching std */
+                                 FDCAN_REJECT,          /* non-matching ext */
+                                 FDCAN_REJECT_REMOTE,   /* remote std */
+                                 FDCAN_REJECT_REMOTE);  /* remote ext */
+
+    /* ── Register command handlers ─── */
+    can_register_handler(CAN_ID_SET_LED,                 handle_set_test_LED);
+    can_register_handler(CAN_ID_SET_FAN_PWM,             CAN_Handle_set_Fan_PWM);
+    can_register_handler(CAN_ID_SET_HS_DRIVE_POWER,      CAN_Handler_Set_HS_Drive_Power);
+    can_register_handler(CAN_ID_SET_HS_EXTRUDER_POWER,   CAN_Handler_Set_HS_Extruder_Power);
+    can_register_handler(CAN_ID_SET_HS_SCRUBBING_POWER,  CAN_Handler_Set_HS_Scrubbing_Power);
+    can_register_handler(CAN_ID_SET_EEPROM_CONFIG,       CAN_Handler_EEPROM_Write_Config);
+    can_register_handler(CAN_ID_READ_EEPROM_CONFIG,      CAN_Handler_EEPROM_Read_Config);
+    can_register_handler(CAN_ID_DUMP_ERRORS,             CAN_Handler_Dump_Errors);
+    can_register_handler(CAN_ID_RESET_ERROR,             CAN_Handler_Reset_Error);
+
+    /* ── Enable RX interrupt for FIFO 0 ─── */
+    if (HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK) {
+        Error_Handler();
+    }
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+ *  Main-loop dispatch
+ * ════════════════════════════════════════════════════════════════════════════ */
 
 void CAN_Handler_Dispatch_Process_One(void)
 {
-    can_frame_t f;
+    can_frame_t frame;
 
-    /* nothing to do */
-    if (DequeueCanFrame(&f) == false) {
-        //early return if there is nothing to process
-        return;
-    }
-    /* simple routing: first data byte is the command id */
-    if (f.dlc == 0U) {
-        /* no command byte -> ignore or optionally send nack */
-        return;
+    if (!DequeueCanFrame(&frame)) {
+        return;     /* nothing to process */
     }
 
-    /* Exact match on full 29-bit extended CAN ID */
-    uint32_t cmd = f.id & 0x1FFFFFFFU;
+    if (frame.dlc == 0U) {
+        return;     /* no payload — ignore */
+    }
 
-    /* Linear search through registered handlers */
+    /* Match the full 29-bit ID against registered handlers */
+    uint32_t masked_id = frame.id & 0x1FFFFFFFU;
+
     for (uint8_t i = 0; i < dispatch_count; ++i) {
-        if (dispatch_entries[i].id == cmd) {
-            dispatch_entries[i].handler(f.id, f.data, f.dlc);
+        if (dispatch_table[i].id == masked_id) {
+            dispatch_table[i].handler(frame.id, frame.data, frame.dlc);
             return;
         }
     }
-    /* no handler found — optionally send_nack(f.id, cmd); */
+
+    /* No handler found — frame is silently dropped */
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+ *  Periodic telemetry broadcast
+ * ════════════════════════════════════════════════════════════════════════════ */
 
 int CAN_Handler_Broadcast(uint32_t period_ms)
 {
@@ -211,106 +287,109 @@ int CAN_Handler_Broadcast(uint32_t period_ms)
     uint32_t now = HAL_GetTick();
 
     if ((now - last_tick) < period_ms) {
-        return CAN_SUCCESS; /* not time yet */
+        return CAN_SUCCESS;
     }
     last_tick = now;
 
-    /* ── 0x600: Endstops, Voltages, Protection (8 bytes) ── */
+    /* ── Frame 0x600: System Status (8 bytes) ── */
     {
         uint8_t payload[8] = {0};
 
         /* Byte 0–1: endstop triggered + fault */
-        (void)CAN_Packer_Endstop_and_ESTOP_2Byte(&payload[0], &payload[1], 2);
+        CAN_Packer_Endstop_and_ESTOP_2Byte(&payload[0], &payload[1], 2);
 
-        /* Byte 2–3: 24V bus voltage (2 bytes LE, 0.1V) */
-        (void)CAN_Packer_24V_Bus_2Byte(&payload[2], 2);
+        /* Byte 2–3: 24V bus voltage (u16 LE, 0.1V units) */
+        CAN_Packer_24V_Bus_2Byte(&payload[2], 2);
 
-        /* Byte 4: 12V bus voltage (1 byte, 0.1V) */
-        (void)CAN_Packer_12V_Bus_1Byte(&payload[4], 1);
+        /* Byte 4: 12V bus voltage (u8, 0.1V units) */
+        CAN_Packer_12V_Bus_1Byte(&payload[4], 1);
 
         /* Byte 5: protection state (OC + OV packed) */
-        (void)CAN_Packer_Protection_State_1Byte(&payload[5], 1);
+        CAN_Packer_Protection_State_1Byte(&payload[5], 1);
 
-        /* Byte 6–7: reserved (0) */
+        /* Byte 6–7: reserved (0x00) */
 
-        FDCAN_SendFrame(0x600, payload, sizeof(payload));
+        FDCAN_SendFrame(CAN_ID_BROADCAST_STATUS, payload, sizeof(payload));
     }
 
-    /* ── 0x601: Currents (5 bytes) ── */
+    /* ── Frame 0x601: Currents (5 bytes) ── */
     {
         uint8_t payload[5] = {0};
 
-        /* Byte 0–1: 24V bus current (2 bytes LE, 0.1A) */
-        (void)CAN_Packer_24V_Bus_Current_1DP_2Byte(&payload[0], 2);
+        /* Byte 0–1: 24V bus current (u16 LE, 0.1A units) */
+        CAN_Packer_24V_Bus_Current_1DP_2Byte(&payload[0], 2);
 
-        /* Byte 2: drive module current (1 byte, 0.1A) */
-        (void)CAN_Packer_HighSide_Module_Current_1DP_1Byte(HS_MODULE_DRIVE, &payload[2], 1);
+        /* Byte 2: drive module current (u8, 0.1A) */
+        CAN_Packer_HighSide_Module_Current_1DP_1Byte(HS_MODULE_DRIVE, &payload[2], 1);
 
-        /* Byte 3: extruder module current (1 byte, 0.1A) */
-        (void)CAN_Packer_HighSide_Module_Current_1DP_1Byte(HS_MODULE_EXTRUDER, &payload[3], 1);
+        /* Byte 3: extruder module current (u8, 0.1A) */
+        CAN_Packer_HighSide_Module_Current_1DP_1Byte(HS_MODULE_EXTRUDER, &payload[3], 1);
 
-        /* Byte 4: scrubbing module current (1 byte, 0.1A) */
-        (void)CAN_Packer_HighSide_Module_Current_1DP_1Byte(HS_MODULE_SCRUBBING, &payload[4], 1);
+        /* Byte 4: scrubbing module current (u8, 0.1A) */
+        CAN_Packer_HighSide_Module_Current_1DP_1Byte(HS_MODULE_SCRUBBING, &payload[4], 1);
 
-        FDCAN_SendFrame(0x601, payload, sizeof(payload));
+        FDCAN_SendFrame(CAN_ID_BROADCAST_CURRENTS, payload, sizeof(payload));
     }
 
-    /* ── 0x602: Temperatures (8 bytes) ── */
+    /* ── Frame 0x602: Temperatures (8 bytes) ── */
     {
         uint8_t payload[8] = {0};
 
-        /* Byte 0–5: thermistor temperatures (offset-encoded: wire = °C + 40) */
-        (void)CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_1, &payload[0], 1);
-        (void)CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_2, &payload[1], 1);
-        (void)CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_3, &payload[2], 1);
-        (void)CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_4, &payload[3], 1);
-        (void)CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_5, &payload[4], 1);
-        (void)CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_6, &payload[5], 1);
+        /* Byte 0–5: thermistors (offset-encoded: wire = degC + 40) */
+        CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_1, &payload[0], 1);
+        CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_2, &payload[1], 1);
+        CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_3, &payload[2], 1);
+        CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_4, &payload[3], 1);
+        CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_5, &payload[4], 1);
+        CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_6, &payload[5], 1);
 
-        /* Byte 6–7: reserved (0) */
+        /* Byte 6–7: reserved (0x00) */
 
-        FDCAN_SendFrame(0x602, payload, sizeof(payload));
+        FDCAN_SendFrame(CAN_ID_BROADCAST_TEMPS, payload, sizeof(payload));
     }
 
-    /* ── 0x603: Fan Speeds (5 bytes) ── */
+    /* ── Frame 0x603: Fan Speeds (5 bytes) ── */
     {
         uint8_t payload[5] = {0};
 
-        /* Byte 0–4: fan speed (one byte per fan, 0–100%) */
-        (void)CAN_Packer_Fan_Speed_1Byte(FAN_DR, &payload[0], 1);
-        (void)CAN_Packer_Fan_Speed_1Byte(FAN_EP, &payload[1], 1);
-        (void)CAN_Packer_Fan_Speed_1Byte(FAN_EH, &payload[2], 1);
-        (void)CAN_Packer_Fan_Speed_1Byte(FAN_ST, &payload[3], 1);
-        (void)CAN_Packer_Fan_Speed_1Byte(FAN_SF, &payload[4], 1);
+        CAN_Packer_Fan_Speed_1Byte(FAN_DR, &payload[0], 1);
+        CAN_Packer_Fan_Speed_1Byte(FAN_EP, &payload[1], 1);
+        CAN_Packer_Fan_Speed_1Byte(FAN_EH, &payload[2], 1);
+        CAN_Packer_Fan_Speed_1Byte(FAN_ST, &payload[3], 1);
+        CAN_Packer_Fan_Speed_1Byte(FAN_SF, &payload[4], 1);
 
-        FDCAN_SendFrame(0x603, payload, sizeof(payload));
+        FDCAN_SendFrame(CAN_ID_BROADCAST_FANS, payload, sizeof(payload));
     }
 
     return CAN_SUCCESS;
 }
 
-
+/* ════════════════════════════════════════════════════════════════════════════
+ *  Test LED handler
+ * ════════════════════════════════════════════════════════════════════════════ */
 
 static void handle_set_test_LED(uint32_t id, uint8_t *params, uint8_t len)
 {
     if (len < 1U) {
-        return; /* invalid length */
+        return;
     }
 
     HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+    send_ack(CAN_ID_ACK_GENERAL, 0x60);
+}
 
-    send_ack(0x700, 0x60);
-}  
- 
+/* ════════════════════════════════════════════════════════════════════════════
+ *  ACK / NACK helpers
+ * ════════════════════════════════════════════════════════════════════════════ */
 
 void send_ack(uint32_t dst_id, uint8_t cmd)
 {
     uint8_t tx[2] = { cmd, 0x00U };
-    (void)FDCAN_SendFrame(dst_id, tx, 2);
+    FDCAN_SendFrame(dst_id, tx, 2);
 }
- 
+
 void send_nack(uint32_t dst_id, uint8_t cmd)
 {
     uint8_t tx[2] = { cmd, 0xFFU };
-    (void)FDCAN_SendFrame(dst_id, tx, 2);
+    FDCAN_SendFrame(dst_id, tx, 2);
 }

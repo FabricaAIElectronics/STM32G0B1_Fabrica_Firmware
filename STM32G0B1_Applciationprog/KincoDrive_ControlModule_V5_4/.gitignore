@@ -1,3 +1,21 @@
-build
+# Build outputs
+build/
+Debug/
+Release/
+
+# STM32CubeIDE / Eclipse metadata
+.metadata/
+.settings/
 mx.scratch
-!.settings
+
+# Keep .settings if needed (uncomment below)
+# !.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files (optional — uncomment to track)
+# .cproject
+# .mxproject
+# .project

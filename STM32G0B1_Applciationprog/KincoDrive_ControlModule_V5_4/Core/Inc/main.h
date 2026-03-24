@@ -36,7 +36,7 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-extern FDCAN_HandleTypeDef canHandle;
+
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/

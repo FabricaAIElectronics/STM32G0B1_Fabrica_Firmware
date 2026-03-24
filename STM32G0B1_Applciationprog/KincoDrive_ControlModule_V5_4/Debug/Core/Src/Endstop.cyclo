@@ -1,3 +1,3 @@
-../Core/Src/Endstop.c:10:6:Endstop_Init	2
-../Core/Src/Endstop.c:18:5:Endstop_Check	23
-../Core/Src/Endstop.c:59:8:CAN_Packer_Endstop_and_ESTOP_2Byte	9
+../Core/Src/Endstop.c:26:6:Endstop_Init	1
+../Core/Src/Endstop.c:41:5:Endstop_Check	22
+../Core/Src/Endstop.c:88:8:CAN_Packer_Endstop_and_ESTOP_2Byte	9

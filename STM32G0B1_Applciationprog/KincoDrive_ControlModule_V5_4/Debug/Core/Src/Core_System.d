@@ -1,6 +1,6 @@
 Core/Src/Core_System.o: ../Core/Src/Core_System.c \
- ../Core/Inc/Power_Electronic.h ../Core/Inc/main.h \
- ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal.h \
+ ../Core/Inc/Core_Systems.h ../Core/Inc/Power_Electronic.h \
+ ../Core/Inc/main.h ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal.h \
  ../Core/Inc/stm32g0xx_hal_conf.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_rcc.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_def.h \
@@ -36,9 +36,9 @@ Core/Src/Core_System.o: ../Core/Src/Core_System.c \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr_ex.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h \
- ../Drivers/CMSIS/Device/ST/STM32G0xx/Include/stm32g0b1xx.h \
- ../Core/Inc/eeprom_driver.h ../Core/Inc/ESTOP.h \
- ../Core/Inc/Core_Systems.h ../Core/Inc/error_manager.h
+ ../Core/Inc/ESTOP.h ../Core/Inc/eeprom_driver.h \
+ ../Core/Inc/error_manager.h
+../Core/Inc/Core_Systems.h:
 ../Core/Inc/Power_Electronic.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal.h:
@@ -77,8 +77,6 @@ Core/Src/Core_System.o: ../Core/Src/Core_System.c \
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr_ex.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h:
-../Drivers/CMSIS/Device/ST/STM32G0xx/Include/stm32g0b1xx.h:
-../Core/Inc/eeprom_driver.h:
 ../Core/Inc/ESTOP.h:
-../Core/Inc/Core_Systems.h:
+../Core/Inc/eeprom_driver.h:
 ../Core/Inc/error_manager.h:

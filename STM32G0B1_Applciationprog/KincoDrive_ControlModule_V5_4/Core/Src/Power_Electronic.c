@@ -22,7 +22,7 @@
  *  ADC DMA buffer (written continuously by hardware)
  * ════════════════════════════════════════════════════════════════════════════ */
 
-static volatile uint16_t ADC_VAL[ADC_BUF_LEN];
+volatile uint16_t ADC_VAL[ADC_BUF_LEN];
 
 /* ════════════════════════════════════════════════════════════════════════════
  *  ADC conversion constants

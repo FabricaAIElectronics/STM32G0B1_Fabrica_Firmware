@@ -42,8 +42,8 @@ BO_ 2248148583 Broadcast_Status: 8 KincoDrive
  SG_ Bus24V_Voltage : 16|16@1+ (0.1,0) [0|6553.5] "V" Host
  SG_ Bus12V_Voltage : 32|8@1+ (0.1,0) [0|25.5] "V" Host
  SG_ Protection_State : 40|8@1+ (1,0) [0|255] "" Host
- SG_ Reserved_6 : 48|8@1+ (1,0) [0|0] "" Host
- SG_ Reserved_7 : 56|8@1+ (1,0) [0|0] "" Host
+ SG_ System_State : 48|8@1+ (1,0) [0|3] "" Host
+ SG_ Error_Count : 56|8@1+ (1,0) [0|16] "" Host
 
 BO_ 2248214119 Broadcast_Currents: 5 KincoDrive
  SG_ Bus24V_Current : 0|16@1+ (0.1,0) [0|6553.5] "A" Host
@@ -68,83 +68,49 @@ BO_ 2248345191 Broadcast_Fans: 5 KincoDrive
  SG_ Fan_ST_Speed : 24|8@1+ (1,0) [0|100] "%" Host
  SG_ Fan_SF_Speed : 32|8@1+ (1,0) [0|100] "%" Host
 
-BO_ 2248410727 EEPROM_Config_Response: 8 KincoDrive
- SG_ Cfg_Hard_OV : 0|16@1+ (1,0) [10000|60000] "mV" Host
- SG_ Cfg_Soft_OV : 16|16@1+ (1,0) [10000|60000] "mV" Host
- SG_ Cfg_Over_Current : 32|16@1+ (1,0) [500|60000] "mA" Host
- SG_ Cfg_Fan_Max_RPM : 48|16@1+ (1,0) [100|30000] "RPM" Host
+BO_ 2248410727 GPIO_Status: 8 KincoDrive
+ SG_ HS_Enable_Pins : 0|8@1+ (1,0) [0|15] "" Host
+ SG_ HS_PowerGood_Pins : 8|8@1+ (1,0) [0|7] "" Host
+ SG_ HS_Fault_Pins : 16|8@1+ (1,0) [0|7] "" Host
+ SG_ ESTOP_Raw : 24|8@1+ (1,0) [0|7] "" Host
+ SG_ Endstop_Raw_1 : 32|8@1+ (1,0) [0|255] "" Host
+ SG_ Endstop_Raw_2 : 40|8@1+ (1,0) [0|1] "" Host
+ SG_ LED_State : 48|8@1+ (1,0) [0|1] "" Host
+ SG_ Blue_Button : 56|8@1+ (1,0) [0|1] "" Host
 
-BO_ 2248476263 EEPROM_Config_Response2: 2 KincoDrive
- SG_ Cfg_Under_Voltage : 0|16@1+ (1,0) [5000|30000] "mV" Host
-
-BO_ 2264925799 ACK_General: 2 KincoDrive
- SG_ Ack_Command : 0|8@1+ (1,0) [0|255] "" Host
- SG_ Ack_Status : 8|8@1+ (1,0) [0|255] "" Host
-
-BO_ 2264991335 Error_Dump: 8 KincoDrive
- SG_ Error_Index : 0|8@1+ (1,0) [0|255] "" Host
- SG_ Error_Source : 8|8@1+ (1,0) [0|255] "" Host
- SG_ Error_Severity : 16|8@1+ (1,0) [0|1] "" Host
- SG_ Error_Detail : 24|16@1+ (1,0) [0|65535] "" Host
- SG_ Error_Timestamp_Lo : 40|8@1+ (1,0) [0|255] "" Host
- SG_ Error_Timestamp_Mid : 48|8@1+ (1,0) [0|255] "" Host
- SG_ Error_Timestamp_Hi : 56|8@1+ (1,0) [0|255] "" Host
-
-BO_ 2265056871 Error_Reset_ACK: 2 KincoDrive
- SG_ Reset_Command : 0|8@1+ (1,0) [0|255] "" Host
- SG_ Reset_Status : 8|8@1+ (1,0) [0|255] "" Host
-
-BO_ 2153776743 Cmd_Set_LED: 1 Host
- SG_ LED_Toggle : 0|8@1+ (1,0) [0|255] "" KincoDrive
-
-BO_ 2165311079 Cmd_Set_HS_Drive_Power: 1 Host
- SG_ Drive_Enable : 0|8@1+ (1,0) [0|1] "" KincoDrive
-
-BO_ 2165376615 Cmd_Set_HS_Extruder_Power: 1 Host
- SG_ Extruder_Enable : 0|8@1+ (1,0) [0|1] "" KincoDrive
-
-BO_ 2165442151 Cmd_Set_HS_Scrubbing_Power: 1 Host
- SG_ Scrubbing_Enable : 0|8@1+ (1,0) [0|1] "" KincoDrive
-
-BO_ 2168456807 Cmd_Set_Fan_PWM: 2 Host
- SG_ Fan_Select : 0|8@1+ (1,0) [1|5] "" KincoDrive
- SG_ Fan_Speed_Setpoint : 8|8@1+ (1,0) [0|100] "%" KincoDrive
-
-BO_ 2181039719 Cmd_Set_EEPROM_Config: 3 Host
- SG_ Setting_Selector : 0|8@1+ (1,0) [0|4] "" KincoDrive
- SG_ Setting_Value : 8|16@1+ (1,0) [0|65535] "" KincoDrive
-
-BO_ 2181105255 Cmd_Read_EEPROM_Config: 0 Host
-
-BO_ 2265122407 Cmd_Dump_Errors: 0 Host
-
-BO_ 2265187943 Cmd_Reset_Error: 1 Host
- SG_ Reset_Safety_Key : 0|8@1+ (1,0) [0|255] "" KincoDrive
+BO_ 2248476263 Raw_ADC: 6 KincoDrive
+ SG_ ADC_PTC1_PTC2 : 0|8@1+ (1,0) [0|255] "" Host
+ SG_ ADC_PTC3_PTC4 : 8|8@1+ (1,0) [0|255] "" Host
+ SG_ ADC_PTC5_PTC6 : 16|8@1+ (1,0) [0|255] "" Host
+ SG_ ADC_CURR1_CURR2 : 24|8@1+ (1,0) [0|255] "" Host
+ SG_ ADC_CURR3_V24 : 32|8@1+ (1,0) [0|255] "" Host
+ SG_ ADC_V12_CURR24V : 40|8@1+ (1,0) [0|255] "" Host
 
 
-CM_ BU_ KincoDrive "KincoDrive Control Module V5.4 - Device ID 0x0667";
-CM_ BU_ Host "Host controller";
-CM_ BO_ 2248148583 "System status: endstops, bus voltages, protection state. Period: 500ms.";
+CM_ BU_ KincoDrive "KincoDrive Control Module V5.4 - Device ID 0x0667 - TEST MODE (broadcast only)";
+CM_ BU_ Host "Host controller / CAN analyzer";
+CM_ BO_ 2248148583 "System status: endstops, bus voltages, protection state, system state, error count. Period: 500ms.";
 CM_ BO_ 2248214119 "Current measurements: 24V bus and per-module high-side currents. Period: 500ms.";
 CM_ BO_ 2248279655 "Temperatures: 6 PTC thermistors. Wire encoding: value = degC + 40. Period: 500ms.";
 CM_ BO_ 2248345191 "Fan speeds: tachometer percentage of max RPM. Period: 500ms.";
-CM_ BO_ 2248410727 "EEPROM config readback frame 1: hard OV, soft OV, overcurrent, fan max RPM.";
-CM_ BO_ 2248476263 "EEPROM config readback frame 2: under-voltage threshold.";
-CM_ BO_ 2264925799 "General ACK/NACK. Byte 0 = command echo, Byte 1 = 0x00=ACK / 0xFF=NACK.";
-CM_ BO_ 2264991335 "Error log dump. One frame per error. Terminator = all 0xFF.";
-CM_ BO_ 2265056871 "Error reset response. 0xBB=recovery, 0xAA=normal, 0xEE/0xCC=failed.";
-CM_ BO_ 2153776743 "Toggle test LED. Any payload triggers toggle.";
-CM_ BO_ 2165311079 "Enable/disable Drive high-side. Byte 0: 0=off, non-zero=on.";
-CM_ BO_ 2165376615 "Enable/disable Extruder high-side. Byte 0: 0=off, non-zero=on.";
-CM_ BO_ 2165442151 "Enable/disable Scrubbing high-side. Byte 0: 0=off, non-zero=on.";
-CM_ BO_ 2168456807 "Set fan PWM. Byte 0: fan 1-5, Byte 1: speed 0-100%.";
-CM_ BO_ 2181039719 "Write EEPROM setting. Byte 0: selector, Byte 1-2: value u16 LE.";
-CM_ BO_ 2181105255 "Request EEPROM config dump. No payload. Response on 0x604/0x605.";
-CM_ BO_ 2265122407 "Request error log dump. No payload. Response on 0x701.";
-CM_ BO_ 2265187943 "Reset from ERROR to RECOVERY. Byte 0 must be 0xAA.";
+CM_ BO_ 2248410727 "Raw GPIO status: HS enable/PG/fault pins, ESTOP, endstop raw states, LED, button. Period: 500ms.";
+CM_ BO_ 2248476263 "Raw ADC: 12 channels packed as 4-bit nibbles (12-bit >> 8). Period: 500ms.";
 CM_ SG_ 2248148583 Endstop_Triggered "Bit0=EH_Top, Bit1=EH_Bot, Bit2=EP_Top, Bit3=EP_Bot, Bit4=SC_Top, Bit5=ESTOP";
 CM_ SG_ 2248148583 Endstop_Fault "Same bit layout. 1=wiring fault detected.";
 CM_ SG_ 2248148583 Protection_State "Bits[1:0]=Drive_OC, [3:2]=Ext_OC, [5:4]=Scrub_OC, [7:6]=OV_state";
+CM_ SG_ 2248148583 System_State "0=NORMAL, 1=WARNING, 2=ERROR, 3=RECOVERY";
+CM_ SG_ 2248410727 HS_Enable_Pins "Bit0=DR_EN, Bit1=E_EN, Bit2=SC_EN, Bit3=VBUCK_CTRL";
+CM_ SG_ 2248410727 HS_PowerGood_Pins "Bit0=DR_PG, Bit1=E_PG, Bit2=SC_PG (1=power good)";
+CM_ SG_ 2248410727 HS_Fault_Pins "Bit0=DR_FT, Bit1=E_FT, Bit2=SC_FT (1=fault active)";
+CM_ SG_ 2248410727 ESTOP_Raw "Bit0=NO_pin, Bit1=NC_pin, Bit2=debounced_state";
+CM_ SG_ 2248410727 Endstop_Raw_1 "Bit0=EH_H_NO, Bit1=EH_H_NC, Bit2=EH_L_NO, Bit3=EP_H_NO, Bit4=EP_H_NC, Bit5=EP_L_NO, Bit6=EP_L_NC, Bit7=SC_H_NO";
+CM_ SG_ 2248410727 Endstop_Raw_2 "Bit0=SC_H_NC";
+CM_ SG_ 2248476263 ADC_PTC1_PTC2 "Hi nibble=PTC1, Lo nibble=PTC2 (raw ADC >> 8)";
+CM_ SG_ 2248476263 ADC_PTC3_PTC4 "Hi nibble=PTC3, Lo nibble=PTC4 (raw ADC >> 8)";
+CM_ SG_ 2248476263 ADC_PTC5_PTC6 "Hi nibble=PTC5, Lo nibble=PTC6 (raw ADC >> 8)";
+CM_ SG_ 2248476263 ADC_CURR1_CURR2 "Hi nibble=CURR_MON_1, Lo nibble=CURR_MON_2 (raw ADC >> 8)";
+CM_ SG_ 2248476263 ADC_CURR3_V24 "Hi nibble=CURR_MON_3, Lo nibble=VADC_24 (raw ADC >> 8)";
+CM_ SG_ 2248476263 ADC_V12_CURR24V "Hi nibble=VADC_12, Lo nibble=CURR_MON_24V (raw ADC >> 8)";
 
 BA_DEF_  "MultiplexExtEnabled" ENUM  "No","Yes";
 BA_DEF_  "BusType" STRING ;
@@ -157,10 +123,8 @@ BA_ "GenMsgCycleTime" BO_ 2248148583 500;
 BA_ "GenMsgCycleTime" BO_ 2248214119 500;
 BA_ "GenMsgCycleTime" BO_ 2248279655 500;
 BA_ "GenMsgCycleTime" BO_ 2248345191 500;
+BA_ "GenMsgCycleTime" BO_ 2248410727 500;
+BA_ "GenMsgCycleTime" BO_ 2248476263 500;
 
-VAL_ 2264925799 Ack_Status 0 "ACK" 255 "NACK" ;
-VAL_ 2265056871 Reset_Status 187 "Entered_Recovery" 170 "Recovery_Complete" 238 "Recovery_Failed" 204 "OV_Still_Present" ;
-VAL_ 2181039719 Setting_Selector 0 "Hard_OV_mV" 1 "Soft_OV_mV" 2 "Under_V_mV" 3 "Over_Curr_mA" 4 "Fan_Max_RPM" ;
-VAL_ 2168456807 Fan_Select 1 "FAN_DR" 2 "FAN_EP" 3 "FAN_EH" 4 "FAN_ST" 5 "FAN_SF" ;
-VAL_ 2264991335 Error_Source 0 "None" 1 "OC_Drive" 2 "OC_Extruder" 3 "OC_Scrubbing" 4 "OC_Bus24V" 16 "OV_Soft" 17 "OV_Hard" 18 "Undervoltage" 32 "Endstop_Fault" 33 "ESTOP_Fault" 34 "ESTOP_Triggered" 48 "Thermal_Fault" 64 "EEPROM_Fault" 80 "CAN_Bus_Fault" ;
+VAL_ 2248148583 System_State 0 "NORMAL" 1 "WARNING" 2 "ERROR" 3 "RECOVERY" ;
 

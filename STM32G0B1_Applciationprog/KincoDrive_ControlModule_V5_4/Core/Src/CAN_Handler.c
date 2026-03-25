@@ -1,19 +1,22 @@
 /**
  * @file    CAN_Handler.c
- * @brief   CAN bus receive dispatcher, broadcast engine, and TX/RX helpers.
+ * @brief   CAN bus broadcast-only test mode.
  *
- * @details Implements:
- *          - ISR-safe ring buffer for incoming CAN frames
- *          - Linear-search dispatch table for registered command handlers
- *          - Periodic telemetry broadcast
- *          - ACK / NACK response helpers
+ * @details TEST MODE — no master/host commands accepted.
+ *          On power-up, the device automatically broadcasts all system
+ *          telemetry on a fixed period:
  *
- *          All extended CAN IDs embed the device address in bits [15:0]
- *          and the message type in bits [28:16].  See CAN_Handler.h for
- *          the full ID layout and macro definitions.
+ *          0x600  System status  (endstops, voltages, protection state)
+ *          0x601  Currents       (24V bus + per-module)
+ *          0x602  Temperatures   (6x PTC thermistors)
+ *          0x603  Fan speeds     (5x tachometer %)
+ *          0x604  GPIO status    (HS enable/PG/fault, VBUCK, ESTOP, endstop raw)
+ *          0x605  Raw ADC        (12 channels, 4-bit scaled)
+ *
+ *          Bootloader entry is still supported (device ID + 0xFF).
  *
  * @author  jordan
- * @date    2026-03-24
+ * @date    2026-03-25
  */
 
 #include "CAN_Handler.h"
@@ -23,133 +26,16 @@
 #include <string.h>
 #include <stdbool.h>
 
-/* Module headers — each registers its CAN command handler in CAN_Handler_Init() */
+/* Module headers for telemetry packing */
 #include "Fan_PWM.h"
 #include "Power_Electronic.h"
 #include "Endstop.h"
-#include "eeprom_driver.h"
+#include "ESTOP.h"
 #include "error_manager.h"
 #include "stm32g0xx_hal_fdcan.h"
 
 /* ════════════════════════════════════════════════════════════════════════════
- *  Handler function type and dispatch table
- * ════════════════════════════════════════════════════════════════════════════ */
-
-typedef void (*can_handler_t)(uint32_t id, uint8_t *params, uint8_t len);
-
-typedef struct {
-    uint32_t      id;       /* full 29-bit extended CAN ID to match */
-    can_handler_t handler;  /* callback invoked when ID matches */
-} can_dispatch_entry_t;
-
-#define MAX_CAN_HANDLERS    16
-static can_dispatch_entry_t dispatch_table[MAX_CAN_HANDLERS];
-static uint8_t              dispatch_count = 0;
-
-/**
- * @brief  Register a handler for a specific 29-bit CAN ID.
- * @param  ext_id  Full extended CAN ID (use CAN_EXT_ID(msg_type) macro).
- * @param  handler Callback function pointer.
- * @retval true on success, false if table is full or handler is NULL.
- */
-static bool can_register_handler(uint32_t ext_id, can_handler_t handler)
-{
-    if (dispatch_count >= MAX_CAN_HANDLERS || handler == NULL) {
-        return false;
-    }
-
-    dispatch_table[dispatch_count].id      = ext_id & 0x1FFFFFFFU;
-    dispatch_table[dispatch_count].handler  = handler;
-    dispatch_count++;
-    return true;
-}
-
-/* Forward declaration of local test handler */
-static void handle_set_test_LED(uint32_t id, uint8_t *params, uint8_t len);
-
-/* ════════════════════════════════════════════════════════════════════════════
- *  Internal CAN frame type
- * ════════════════════════════════════════════════════════════════════════════ */
-
-typedef struct {
-    uint32_t id;        /* 29-bit extended CAN ID */
-    uint8_t  dlc;       /* payload length in bytes (0–8) */
-    uint8_t  data[8];   /* payload */
-} can_frame_t;
-
-/* ════════════════════════════════════════════════════════════════════════════
- *  DLC conversion (HAL FDCAN DLC field → byte count)
- * ════════════════════════════════════════════════════════════════════════════ */
-
-/**
- * @brief  Convert HAL FDCAN DataLength field to byte count.
- *
- *         Classic CAN: values 0–8 map 1:1.
- *         CAN FD: 9→12, 10→16, 11→20, 12→24, 13→32, 14→48, 15→64.
- *         We cap at 8 for Classic CAN operation.
- */
-static uint8_t dlc_to_bytes(uint32_t dlc)
-{
-    static const uint8_t lut[16] = {
-        0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64
-    };
-    return (dlc < 16U) ? lut[dlc] : 0U;
-}
-
-/* ════════════════════════════════════════════════════════════════════════════
- *  ISR → main-loop ring buffer
- * ════════════════════════════════════════════════════════════════════════════ */
-
-#define RBUF_SIZE       16U
-#define RBUF_MASK       (RBUF_SIZE - 1U)
-
-static volatile uint32_t rbuf_head       = 0;
-static volatile uint32_t rbuf_tail       = 0;
-static can_frame_t       rbuf[RBUF_SIZE];
-static volatile uint32_t rbuf_drop_count = 0;  /* frames lost due to full buffer */
-
-/**
- * @brief  Enqueue a frame (called from ISR context).
- * @retval true on success, false if buffer is full (frame dropped).
- */
-static bool EnqueueCanFrame(const can_frame_t *frame)
-{
-    uint32_t head = rbuf_head;
-    uint32_t next = (head + 1U) & RBUF_MASK;
-
-    if (next == rbuf_tail) {
-        rbuf_drop_count++;
-        return false;
-    }
-
-    memcpy(&rbuf[head], frame, sizeof(can_frame_t));
-
-    __DMB();                /* ensure data written before publishing head */
-    rbuf_head = next;
-    return true;
-}
-
-/**
- * @brief  Dequeue a frame (called from main loop, non-ISR).
- * @retval true if a frame was available, false if buffer is empty.
- */
-static bool DequeueCanFrame(can_frame_t *out)
-{
-    uint32_t tail = rbuf_tail;
-
-    if (tail == rbuf_head) {
-        return false;
-    }
-
-    memcpy(out, &rbuf[tail], sizeof(can_frame_t));
-
-    __DMB();                /* ensure copy completes before advancing tail */
-    rbuf_tail = (tail + 1U) & RBUF_MASK;
-    return true;
-}
-
-/* ════════════════════════════════════════════════════════════════════════════
- *  FDCAN RX FIFO0 callback (ISR context)
+ *  FDCAN RX FIFO0 callback (ISR context) — bootloader entry only
  * ════════════════════════════════════════════════════════════════════════════ */
 
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
@@ -170,17 +56,7 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
         HAL_NVIC_SystemReset();
     }
 
-    /* Build internal frame and enqueue for main-loop processing */
-    can_frame_t frame;
-    frame.id  = rx_header.Identifier;
-    frame.dlc = dlc_to_bytes(rx_header.DataLength);
-
-    if (frame.dlc > 8U) {
-        frame.dlc = 8U;     /* cap to Classic CAN max */
-    }
-
-    memcpy(frame.data, rx_data, frame.dlc);
-    EnqueueCanFrame(&frame);
+    /* All other frames are ignored in test mode */
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -206,11 +82,8 @@ void CAN_Handler_Init(void)
 {
     /* ── Configure RX filter for extended IDs addressed to this device ───
      *
-     *    Filter type  : FDCAN_FILTER_MASK
-     *    FilterID1    : value  — match our device ID in bits [15:0]
-     *    FilterID2    : mask   — only check bits [15:0], ignore msg type
-     *
-     *    This accepts any message where the lower 16 bits == CAN_DEVICE_ID.
+     *    Accepts any extended frame where bits [15:0] == CAN_DEVICE_ID.
+     *    In test mode this is only used for bootloader entry detection.
      */
     FDCAN_FilterTypeDef filter_cfg = {0};
     filter_cfg.IdType       = FDCAN_EXTENDED_ID;
@@ -231,54 +104,25 @@ void CAN_Handler_Init(void)
                                  FDCAN_REJECT_REMOTE,   /* remote std */
                                  FDCAN_REJECT_REMOTE);  /* remote ext */
 
-    /* ── Register command handlers ─── */
-    can_register_handler(CAN_ID_SET_LED,                 handle_set_test_LED);
-    can_register_handler(CAN_ID_SET_FAN_PWM,             CAN_Handle_set_Fan_PWM);
-    can_register_handler(CAN_ID_SET_HS_DRIVE_POWER,      CAN_Handler_Set_HS_Drive_Power);
-    can_register_handler(CAN_ID_SET_HS_EXTRUDER_POWER,   CAN_Handler_Set_HS_Extruder_Power);
-    can_register_handler(CAN_ID_SET_HS_SCRUBBING_POWER,  CAN_Handler_Set_HS_Scrubbing_Power);
-    can_register_handler(CAN_ID_SET_EEPROM_CONFIG,       CAN_Handler_EEPROM_Write_Config);
-    can_register_handler(CAN_ID_READ_EEPROM_CONFIG,      CAN_Handler_EEPROM_Read_Config);
-    can_register_handler(CAN_ID_DUMP_ERRORS,             CAN_Handler_Dump_Errors);
-    can_register_handler(CAN_ID_RESET_ERROR,             CAN_Handler_Reset_Error);
+    /* No command handlers registered — test mode is broadcast-only */
 
-    /* ── Enable RX interrupt for FIFO 0 ─── */
+    /* ── Enable RX interrupt for FIFO 0 (bootloader entry) ─── */
     if (HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK) {
         Error_Handler();
     }
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
- *  Main-loop dispatch
+ *  Main-loop dispatch — no-op in test mode
  * ════════════════════════════════════════════════════════════════════════════ */
 
 void CAN_Handler_Dispatch_Process_One(void)
 {
-    can_frame_t frame;
-
-    if (!DequeueCanFrame(&frame)) {
-        return;     /* nothing to process */
-    }
-
-    if (frame.dlc == 0U) {
-        return;     /* no payload — ignore */
-    }
-
-    /* Match the full 29-bit ID against registered handlers */
-    uint32_t masked_id = frame.id & 0x1FFFFFFFU;
-
-    for (uint8_t i = 0; i < dispatch_count; ++i) {
-        if (dispatch_table[i].id == masked_id) {
-            dispatch_table[i].handler(frame.id, frame.data, frame.dlc);
-            return;
-        }
-    }
-
-    /* No handler found — frame is silently dropped */
+    /* No command handlers in test mode — nothing to dispatch */
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
- *  Periodic telemetry broadcast
+ *  Periodic telemetry broadcast (test mode)
  * ════════════════════════════════════════════════════════════════════════════ */
 
 int CAN_Handler_Broadcast(uint32_t period_ms)
@@ -307,7 +151,11 @@ int CAN_Handler_Broadcast(uint32_t period_ms)
         /* Byte 5: protection state (OC + OV packed) */
         CAN_Packer_Protection_State_1Byte(&payload[5], 1);
 
-        /* Byte 6–7: reserved (0x00) */
+        /* Byte 6: system state (0=NORMAL,1=WARNING,2=ERROR,3=RECOVERY) */
+        payload[6] = (uint8_t)Error_Manager_GetState();
+
+        /* Byte 7: error count */
+        payload[7] = Error_Manager_GetCount();
 
         FDCAN_SendFrame(CAN_ID_BROADCAST_STATUS, payload, sizeof(payload));
     }
@@ -316,16 +164,9 @@ int CAN_Handler_Broadcast(uint32_t period_ms)
     {
         uint8_t payload[5] = {0};
 
-        /* Byte 0–1: 24V bus current (u16 LE, 0.1A units) */
         CAN_Packer_24V_Bus_Current_1DP_2Byte(&payload[0], 2);
-
-        /* Byte 2: drive module current (u8, 0.1A) */
         CAN_Packer_HighSide_Module_Current_1DP_1Byte(HS_MODULE_DRIVE, &payload[2], 1);
-
-        /* Byte 3: extruder module current (u8, 0.1A) */
         CAN_Packer_HighSide_Module_Current_1DP_1Byte(HS_MODULE_EXTRUDER, &payload[3], 1);
-
-        /* Byte 4: scrubbing module current (u8, 0.1A) */
         CAN_Packer_HighSide_Module_Current_1DP_1Byte(HS_MODULE_SCRUBBING, &payload[4], 1);
 
         FDCAN_SendFrame(CAN_ID_BROADCAST_CURRENTS, payload, sizeof(payload));
@@ -335,15 +176,12 @@ int CAN_Handler_Broadcast(uint32_t period_ms)
     {
         uint8_t payload[8] = {0};
 
-        /* Byte 0–5: thermistors (offset-encoded: wire = degC + 40) */
         CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_1, &payload[0], 1);
         CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_2, &payload[1], 1);
         CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_3, &payload[2], 1);
         CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_4, &payload[3], 1);
         CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_5, &payload[4], 1);
         CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_6, &payload[5], 1);
-
-        /* Byte 6–7: reserved (0x00) */
 
         FDCAN_SendFrame(CAN_ID_BROADCAST_TEMPS, payload, sizeof(payload));
     }
@@ -361,25 +199,117 @@ int CAN_Handler_Broadcast(uint32_t period_ms)
         FDCAN_SendFrame(CAN_ID_BROADCAST_FANS, payload, sizeof(payload));
     }
 
+    /* ── Frame 0x604: GPIO Status (8 bytes) ── */
+    {
+        uint8_t payload[8] = {0};
+
+        /*
+         * Byte 0: High-side Enable pins (active = module is commanded ON)
+         *   Bit 0 = HS_DR_EN (Drive)
+         *   Bit 1 = HS_E_EN  (Extruder)
+         *   Bit 2 = HS_SC_EN (Scrubbing)
+         *   Bit 3 = VBUCK_CTRL (12V buck)
+         */
+        if (HAL_GPIO_ReadPin(HS_DR_EN_GPIO_Port, HS_DR_EN_Pin))  payload[0] |= 0x01;
+        if (HAL_GPIO_ReadPin(HS_E_EN_GPIO_Port,  HS_E_EN_Pin))   payload[0] |= 0x02;
+        if (HAL_GPIO_ReadPin(HS_SC_EN_GPIO_Port, HS_SC_EN_Pin))  payload[0] |= 0x04;
+        if (HAL_GPIO_ReadPin(VBUCK_CTRL_GPIO_Port, VBUCK_CTRL_Pin)) payload[0] |= 0x08;
+
+        /*
+         * Byte 1: High-side Power-Good pins (active LOW = power good)
+         *   Bit 0 = HS_DR_PG
+         *   Bit 1 = HS_E_PG
+         *   Bit 2 = HS_SC_PG
+         */
+        if (HAL_GPIO_ReadPin(HS_DR_PG_GPIO_Port, HS_DR_PG_Pin) == GPIO_PIN_RESET)  payload[1] |= 0x01;
+        if (HAL_GPIO_ReadPin(HS_E_PG_GPIO_Port,  HS_E_PG_Pin)  == GPIO_PIN_RESET)  payload[1] |= 0x02;
+        if (HAL_GPIO_ReadPin(HS_SC_PG_GPIO_Port, HS_SC_PG_Pin) == GPIO_PIN_RESET)  payload[1] |= 0x04;
+
+        /*
+         * Byte 2: High-side Fault pins (active LOW = fault present)
+         *   Bit 0 = HS_DR_FT
+         *   Bit 1 = HS_E_FT
+         *   Bit 2 = HS_SC_FT
+         */
+        if (HAL_GPIO_ReadPin(HS_DR_FT_GPIO_Port, HS_DR_FT_Pin) == GPIO_PIN_RESET)  payload[2] |= 0x01;
+        if (HAL_GPIO_ReadPin(HS_E_FT_GPIO_Port,  HS_E_FT_Pin)  == GPIO_PIN_RESET)  payload[2] |= 0x02;
+        if (HAL_GPIO_ReadPin(HS_SC_FT_GPIO_Port, HS_SC_FT_Pin) == GPIO_PIN_RESET)  payload[2] |= 0x04;
+
+        /*
+         * Byte 3: ESTOP and endstop raw GPIO states
+         *   Bit 0 = ESTOP_NO  (normally open)
+         *   Bit 1 = ESTOP_NC  (normally closed)
+         *   Bit 2 = ESTOP debounced state (0=OK, 1=triggered)
+         */
+        if (HAL_GPIO_ReadPin(EStop_NO_INT_GPIO_Port, EStop_NO_INT_Pin))  payload[3] |= 0x01;
+        if (HAL_GPIO_ReadPin(EStop_NC_INT_GPIO_Port, EStop_NC_INT_Pin))  payload[3] |= 0x02;
+        if (ESTOP_State())  payload[3] |= 0x04;
+
+        /*
+         * Byte 4: Endstop raw states (each bit = GPIO pin state)
+         *   Bit 0 = EH_H_NO  (Extruder Height Top NO)
+         *   Bit 1 = EH_H_NC  (Extruder Height Top NC)
+         *   Bit 2 = EH_L_NO  (Extruder Height Bottom NO)
+         *   Bit 3 = EP_H_NO  (Extruder Platform Top NO)
+         *   Bit 4 = EP_H_NC  (Extruder Platform Top NC)
+         *   Bit 5 = EP_L_NO  (Extruder Platform Bottom NO)
+         *   Bit 6 = EP_L_NC  (Extruder Platform Bottom NC)
+         *   Bit 7 = SC_H_NO  (Scrubbing Front Top NO)
+         */
+        if (HAL_GPIO_ReadPin(ENDSTOP_EH_H_NO_INT_GPIO_Port,  ENDSTOP_EH_H_NO_INT_Pin))   payload[4] |= 0x01;
+        if (HAL_GPIO_ReadPin(ENDSTOP_EH_H_NC_INT_GPIO_Port,  ENDSTOP_EH_H_NC_INT_Pin))   payload[4] |= 0x02;
+        if (HAL_GPIO_ReadPin(ENDSTOP_EH_L_NO_INT_GPIO_Port,  ENDSTOP_EH_L_NO_INT_Pin))   payload[4] |= 0x04;
+        if (HAL_GPIO_ReadPin(ENDSTOP_EP_H_NO_INT_GPIO_Port,  ENDSTOP_EP_H_NO_INT_Pin))   payload[4] |= 0x08;
+        if (HAL_GPIO_ReadPin(ENDSTOP_EP_H_NC_INT_GPIO_Port,  ENDSTOP_EP_H_NC_INT_Pin))   payload[4] |= 0x10;
+        if (HAL_GPIO_ReadPin(ENDSTOP_EP_L_NO_INT_GPIO_Port,  ENDSTOP_EP_L_NO_INT_Pin))   payload[4] |= 0x20;
+        if (HAL_GPIO_ReadPin(ENDSTOP_EP_L_NC_INT_GPIO_Port,  ENDSTOP_EP_L_NC_INT_Pin))   payload[4] |= 0x40;
+        if (HAL_GPIO_ReadPin(ENDSTOP_SC_H_NO_INT_GPIO_Port,  ENDSTOP_SC_H_NO_INT_Pin))   payload[4] |= 0x80;
+
+        /*
+         * Byte 5: Endstop raw states continued
+         *   Bit 0 = SC_H_NC  (Scrubbing Front Top NC)
+         */
+        if (HAL_GPIO_ReadPin(ENDSTOP_SC_H_NC_INT_GPIO_Port,  ENDSTOP_SC_H_NC_INT_Pin))   payload[5] |= 0x01;
+
+        /* Byte 6: LED state */
+        if (HAL_GPIO_ReadPin(LED_OUT_GPIO_Port, LED_OUT_Pin))  payload[6] = 0x01;
+
+        /* Byte 7: Blue button */
+        if (HAL_GPIO_ReadPin(BlueButton_GPIO_Port, BlueButton_Pin))  payload[7] = 0x01;
+
+        FDCAN_SendFrame(CAN_ID_EEPROM_ACK, payload, sizeof(payload));
+    }
+
+    /* ── Frame 0x605: Raw ADC values (6 bytes, 12 channels × 4 bits) ── */
+    {
+        extern volatile uint16_t ADC_VAL[];
+        uint8_t payload[6] = {0};
+
+        /*
+         * Pack 12 ADC channels into 6 bytes (4 bits each, scaled from 12-bit → 4-bit).
+         * Each nibble = adc_raw >> 8 (0–15).
+         *
+         * Byte 0: [PTC1_hi | PTC2_lo]   Byte 1: [PTC3_hi | PTC4_lo]
+         * Byte 2: [PTC5_hi | PTC6_lo]   Byte 3: [CURR1_hi | CURR2_lo]
+         * Byte 4: [CURR3_hi | V24_lo]   Byte 5: [V12_hi | CURR24V_lo]
+         */
+        for (int i = 0; i < 12; i++) {
+            uint8_t nibble = (uint8_t)(ADC_VAL[i] >> 8);  /* 12-bit → 4-bit */
+            if (i % 2 == 0) {
+                payload[i / 2] |= (nibble << 4);   /* high nibble */
+            } else {
+                payload[i / 2] |= (nibble & 0x0F); /* low nibble */
+            }
+        }
+
+        FDCAN_SendFrame(CAN_ID_EEPROM_ACK2, payload, sizeof(payload));
+    }
+
     return CAN_SUCCESS;
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
- *  Test LED handler
- * ════════════════════════════════════════════════════════════════════════════ */
-
-static void handle_set_test_LED(uint32_t id, uint8_t *params, uint8_t len)
-{
-    if (len < 1U) {
-        return;
-    }
-
-    HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-    send_ack(CAN_ID_ACK_GENERAL, 0x60);
-}
-
-/* ════════════════════════════════════════════════════════════════════════════
- *  ACK / NACK helpers
+ *  ACK / NACK helpers — kept for API compatibility but unused in test mode
  * ════════════════════════════════════════════════════════════════════════════ */
 
 void send_ack(uint32_t dst_id, uint8_t cmd)

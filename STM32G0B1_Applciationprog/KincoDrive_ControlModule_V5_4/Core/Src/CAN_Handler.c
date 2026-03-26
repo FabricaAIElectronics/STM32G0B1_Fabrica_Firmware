@@ -211,14 +211,22 @@ void Pre_CAN_Handler_Init(void)
 
 void CAN_Handler_Init(void)
 {
-    /* Accept any extended frame where bits [15:0] == our device ID */
+    /* Accept any extended frame whose bits[15:0] == our device ID (0x0667).
+     * NOTE: Bosch FDCAN mask polarity is INVERTED vs bxCAN:
+     *   mask bit = 0 → the corresponding ID bit MUST match FilterID1
+     *   mask bit = 1 → don't care (any value accepted)
+     * So FilterID2 = 0x1FFF0000 makes bits[28:16] don't-care and
+     * enforces bits[15:0] == 0x0667. */
     FDCAN_FilterTypeDef filt = {0};
     filt.IdType       = FDCAN_EXTENDED_ID;
     filt.FilterIndex  = 0;
     filt.FilterType   = FDCAN_FILTER_MASK;
     filt.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
     filt.FilterID1    = CAN_DEVICE_ID;      /* match value: 0x0667           */
-    filt.FilterID2    = 0x0000FFFFU;        /* mask: check ONLY bits [15:0]  */
+    filt.FilterID2    = 0x1FFF0000U;        /* FDCAN mask: 0=must match, 1=don't care.
+                                             * 0x1FFF0000 → bits[28:16] are don't-care
+                                             * (accepts any msg type), bits[15:0] must
+                                             * equal FilterID1 (== device ID 0x0667). */
 
     if (HAL_FDCAN_ConfigFilter(&hfdcan1, &filt) != HAL_OK)
         Error_Handler();

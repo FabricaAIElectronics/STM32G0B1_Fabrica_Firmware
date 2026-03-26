@@ -85,6 +85,8 @@ void MX_GPIO_Init(void)
 
   /*Configure GPIO pins : EStop_NO_INT_Pin EStop_NC_INT_Pin ENDSTOP_EH_L_NO_INT_Pin ENDSTOP_EH_H_NO_INT_Pin
                            ENDSTOP_EH_H_NC_INT_Pin */
+  /* ResistorDividerCircuit: R170(27k)+R171(10k) divides 12V → 3.24V at MCU pin.
+   * D22 (1N5819HW Schottky) clamps to VCC. No pull-up required. */
   GPIO_InitStruct.Pin = EStop_NO_INT_Pin|EStop_NC_INT_Pin|ENDSTOP_EH_L_NO_INT_Pin|ENDSTOP_EH_H_NO_INT_Pin
                           |ENDSTOP_EH_H_NC_INT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
@@ -125,6 +127,8 @@ void MX_GPIO_Init(void)
 
   /*Configure GPIO pins : ENDSTOP_SC_H_NO_INT_Pin ENDSTOP_SC_H_NC_INT_Pin ENDSTOP_EP_L_NO_INT_Pin ENDSTOP_EP_L_NC_INT_Pin
                            ENDSTOP_EP_H_NO_INT_Pin ENDSTOP_EP_H_NC_INT_Pin */
+  /* ResistorDividerCircuit: R170(27k)+R171(10k) divides 12V → 3.24V at MCU pin.
+   * D22 (1N5819HW Schottky) clamps to VCC. No pull-up required. */
   GPIO_InitStruct.Pin = ENDSTOP_SC_H_NO_INT_Pin|ENDSTOP_SC_H_NC_INT_Pin|ENDSTOP_EP_L_NO_INT_Pin|ENDSTOP_EP_L_NC_INT_Pin
                           |ENDSTOP_EP_H_NO_INT_Pin|ENDSTOP_EP_H_NC_INT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;

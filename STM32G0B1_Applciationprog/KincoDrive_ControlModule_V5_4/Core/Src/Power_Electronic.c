@@ -30,8 +30,10 @@ volatile uint16_t ADC_VAL[ADC_BUF_LEN];
 /* TPS2493 current sense: gain = 48, Rsense = 3 mOhm → factor = 0.144 */
 #define TPS2493_CURRENT_SENSE_FACTOR    0.144f
 
-/* Voltage divider ratio on the current sense output: (R1+R2)/R2 */
-#define CURRENT_SENSE_VD_RATIO          (110.0f / 100.0f)
+/* No resistive divider at the MCU ADC pin — the 22 nF filter cap and
+ * ADC_SAMPLETIME_160CYCLES_5 ensure V_ADC = V_IMON_node with no DC offset.
+ * Ratio is 1.0 (no correction required). */
+#define CURRENT_SENSE_VD_RATIO          1.0f
 
 /* Voltage divider ratio for 24V/12V bus measurement: (R1+R2)/R2 */
 #define BUS_VOLTAGE_VD_RATIO            (222.0f / 22.0f)

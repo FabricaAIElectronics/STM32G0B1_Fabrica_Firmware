@@ -4,5 +4,5 @@
 ../Core/Src/CAN_Handler.c:197:13:VectorBase_Config	8	static
 ../Core/Src/CAN_Handler.c:207:6:Pre_CAN_Handler_Init	8	static
 ../Core/Src/CAN_Handler.c:212:6:CAN_Handler_Init	40	static
-../Core/Src/CAN_Handler.c:243:6:CAN_Process	32	static
-../Core/Src/CAN_Handler.c:322:5:CAN_Broadcast	80	static
+../Core/Src/CAN_Handler.c:251:6:CAN_Process	32	static
+../Core/Src/CAN_Handler.c:330:5:CAN_Broadcast	80	static

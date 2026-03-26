@@ -153,44 +153,85 @@ void Read_12V_Voltage_1DP(uint32_t *voltage_1DP)
 
 /* ═══════════════════════════════════════════════════════════════════════
  *  Thermistor temperature  (Steinhart-Hart B-parameter)
+ *
+ *  Actual circuit topology:
+ *
+ *    12V ─── NTC(R_ntc) ─── Node_A (RPTC)
+ *                               │── R80 (100 kΩ) ── GND
+ *                               └── R79 (180 kΩ) ── Node_B
+ *                                                       │── R82 (62 kΩ) ── GND
+ *                                                       └── R81 (2.2 kΩ) ── VPTC → ADC
+ *                                                       │── D10 (clamp to VCC 3.3V)
+ *
+ *  Step 1 — ADC → V_VPTC:
+ *    V_VPTC = ADC * VREF / 4096
+ *
+ *  Step 2 — undo the attenuator to recover V_Node_A:
+ *    V_Node_A = V_VPTC * (R79 + R82) / R82
+ *
+ *  Step 3 — recover R_ntc from the voltage divider at Node_A:
+ *    V_Node_A = 12V * R_load / (R_ntc + R_load)
+ *    where R_load = R80 || (R79 + R82)
+ *    → R_ntc = R_load * (12V / V_Node_A − 1)
+ *
+ *  Step 4 — Beta equation: R_ntc → °C
+ *    1/T = 1/T0 + ln(R_ntc/R0) / B
  * ═══════════════════════════════════════════════════════════════════════ */
 
-int Read_Thermistor_Temperature_C(ADC_Peripheral_t thermistor, uint32_t *temperature_C)
+int Read_Thermistor_Temperature_C(ADC_Peripheral_t thermistor, int32_t *temperature_C)
 {
-	if (thermistor < TEMP_PTC_1 || thermistor > TEMP_PTC_6)
-	    return PE_ERR_INVALID_PARAM;
+    if (thermistor < TEMP_PTC_1 || thermistor > TEMP_PTC_6)
+        return PE_ERR_INVALID_PARAM;
 
-	uint16_t adc_value = ADC_VAL[thermistor];
-	if (adc_value == 0)
-	    return PE_ERR_GEN;
+    uint16_t adc_value = ADC_VAL[thermistor];
+    if (adc_value == 0U)
+        return PE_ERR_GEN;
 
-	/* Convert ADC counts to voltage */
-	float voltage = (adc_value / 4095.0f) * 3.3f;   // ADC reference is 3.3V
+    /* ── Circuit constants ─────────────────────────────────────────────── */
+    const float V_SUPPLY = 12.0f;
+    const float R80      = 100000.0f;
+    const float R79      = 180000.0f;
+    const float R82      =  62000.0f;
+    /* R_load = R80 || (R79 + R82) */
+    const float R_chain  = R79 + R82;                             /* 242 kΩ */
+    const float R_load   = (R80 * R_chain) / (R80 + R_chain);    /* 70 760 Ω */
 
-	/* Divider: 12V --- R_PULL --- ADC --- R_NTC --- GND */
-	const float VCC   = 12.0f;        // supply voltage
-	const float R_PULL = 100000.0f;   // fixed resistor value
+    /* ── Step 1: ADC → V_VPTC ─────────────────────────────────────────── */
+    float v_vptc = ((float)adc_value / 4095.0f) * VOLTAGE_REF;
 
-	/* Compute thermistor resistance */
-	float resistance = R_PULL * voltage / (VCC - voltage);
+    /* Guard: below noise floor → sensor open or disconnected */
+    if (v_vptc < 0.010f)
+        return PE_ERR_GEN;
 
-	/* Beta equation constants */
-	const float R0 = 100000.0f;       // resistance at 25°C
-	const float T0 = 298.15f;         // reference temp in Kelvin (25°C)
-	const float B  = 3950.0f;         // beta constant
+    /* ── Step 2: undo attenuator → V_Node_A ──────────────────────────── */
+    float v_node_a = v_vptc * R_chain / R82;
 
-	/* Temperature calculation */
-	float ln_ratio = logf(resistance / R0);
-	float inv_T    = (1.0f / T0) + (1.0f / B) * ln_ratio;
+    /* Guard: must stay below supply (would indicate ADC saturation) */
+    if (v_node_a >= V_SUPPLY)
+        return PE_ERR_GEN;
 
-	if (inv_T <= 0.0f)
-	    return PE_ERR_GEN;
+    /* ── Step 3: recover NTC resistance ──────────────────────────────── */
+    float resistance = R_load * ((V_SUPPLY / v_node_a) - 1.0f);
 
-	float temp_C = (1.0f / inv_T) - 273.15f;
-	if (temp_C < -40.0f || temp_C > 200.0f)
-	    return PE_ERR_GEN;
+    if (resistance <= 0.0f)
+        return PE_ERR_GEN;
 
-	*temperature_C = (uint32_t)temp_C;
+    /* ── Step 4: Beta equation → °C ──────────────────────────────────── */
+    const float R0 = 100000.0f;   /* resistance at 25°C */
+    const float T0 = 298.15f;     /* 25°C in Kelvin */
+    const float B  = 3950.0f;     /* NTC beta value */
+
+    float inv_T = (1.0f / T0) + (logf(resistance / R0) / B);
+
+    if (inv_T <= 0.0f)
+        return PE_ERR_GEN;
+
+    float temp_C = (1.0f / inv_T) - 273.15f;
+
+    if (temp_C < -40.0f || temp_C > 200.0f)
+        return PE_ERR_GEN;
+
+    *temperature_C = (int32_t)temp_C;
     return PE_SUCCESS;
 }
 
@@ -278,12 +319,12 @@ size_t CAN_Packer_Thermistor_Temp_1Byte(ADC_Peripheral_t thermistor,
 {
     if (out == NULL || out_size < 1) return 0;
 
-    uint32_t temperature_C = 0;
+    int32_t temperature_C = 0;
     if (Read_Thermistor_Temperature_C(thermistor, &temperature_C) != PE_SUCCESS)
         return 0;
 
-    /* Offset encoding: wire = degC + 40  (so -40 degC → 0x00) */
-    int32_t encoded = (int32_t)temperature_C + 40;
+    /* Offset encoding: wire = degC + 40  (so -40 degC → 0x00, 25 degC → 65) */
+    int32_t encoded = temperature_C + 40;
     if (encoded < 0)   encoded = 0;
     if (encoded > 255)  encoded = 255;
 

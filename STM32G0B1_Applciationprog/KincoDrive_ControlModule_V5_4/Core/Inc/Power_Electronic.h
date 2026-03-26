@@ -77,7 +77,7 @@ int  Read_HighSide_Module_Current_mA(HighSide_Module_t module, uint32_t *current
 void Read_24V_Bus_Current_mA(uint32_t *current_mA);
 void Read_24V_Voltage_1DP(uint32_t *voltage_1DP);
 void Read_12V_Voltage_1DP(uint32_t *voltage_1DP);
-int  Read_Thermistor_Temperature_C(ADC_Peripheral_t thermistor, uint32_t *temperature_C);
+int  Read_Thermistor_Temperature_C(ADC_Peripheral_t thermistor, int32_t *temperature_C);
 
 /* ═══════════════════════════════════════════════════════════════════════
  *  12 V buck converter

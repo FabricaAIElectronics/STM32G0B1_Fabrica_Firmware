@@ -1,9 +1,0 @@
-../Core/Src/error_manager.c:40:6:Error_Manager_Init	8	static
-../Core/Src/error_manager.c:57:6:Error_Manager_Log	32	static
-../Core/Src/error_manager.c:96:15:Error_Manager_GetState	8	static
-../Core/Src/error_manager.c:101:6:Error_Manager_IsPowerAllowed	8	static
-../Core/Src/error_manager.c:106:9:Error_Manager_GetCount	8	static
-../Core/Src/error_manager.c:115:6:Error_Manager_EnforceState	16	static
-../Core/Src/error_manager.c:139:6:CAN_Handler_Dump_Errors	64	static
-../Core/Src/error_manager.c:181:6:CAN_Handler_Reset_Error	24	static
-../Core/Src/error_manager.c:213:6:Error_Manager_AttemptRecovery	64	static

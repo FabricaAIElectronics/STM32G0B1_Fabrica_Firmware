@@ -1,8 +1,8 @@
-../Core/Src/CAN_Handler.c:41:6:HAL_FDCAN_RxFifo0Callback	72	static
-../Core/Src/CAN_Handler.c:66:13:VectorBase_Config	8	static
-../Core/Src/CAN_Handler.c:76:6:Pre_CAN_Handler_Init	8	static
-../Core/Src/CAN_Handler.c:81:6:CAN_Handler_Init	40	static
-../Core/Src/CAN_Handler.c:119:6:CAN_Handler_Dispatch_Process_One	8	static
-../Core/Src/CAN_Handler.c:128:5:CAN_Handler_Broadcast	88	static
-../Core/Src/CAN_Handler.c:315:6:send_ack	24	static
-../Core/Src/CAN_Handler.c:321:6:send_nack	24	static
+../Core/Src/CAN_Handler.c:59:6:HAL_FDCAN_RxFifo0Callback	80	static,ignoring_inline_asm
+../Core/Src/CAN_Handler.c:91:13:Send_GPIO_Status_Frame	16	static
+../Core/Src/CAN_Handler.c:178:13:Send_Config_Broadcast	24	static
+../Core/Src/CAN_Handler.c:197:13:VectorBase_Config	8	static
+../Core/Src/CAN_Handler.c:207:6:Pre_CAN_Handler_Init	8	static
+../Core/Src/CAN_Handler.c:212:6:CAN_Handler_Init	40	static
+../Core/Src/CAN_Handler.c:243:6:CAN_Process	32	static
+../Core/Src/CAN_Handler.c:322:5:CAN_Broadcast	80	static

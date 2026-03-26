@@ -38,7 +38,7 @@ Core/Src/CAN_Handler.o: ../Core/Src/CAN_Handler.c \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h \
  ../Core/Inc/fdcan.h ../Core/Inc/main.h ../Core/Inc/Fan_PWM.h \
  ../Core/Inc/Power_Electronic.h ../Core/Inc/Endstop.h ../Core/Inc/ESTOP.h \
- ../Core/Inc/error_manager.h
+ ../Core/Inc/eeprom_driver.h
 ../Core/Inc/CAN_Handler.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal.h:
@@ -83,4 +83,4 @@ Core/Src/CAN_Handler.o: ../Core/Src/CAN_Handler.c \
 ../Core/Inc/Power_Electronic.h:
 ../Core/Inc/Endstop.h:
 ../Core/Inc/ESTOP.h:
-../Core/Inc/error_manager.h:
+../Core/Inc/eeprom_driver.h:

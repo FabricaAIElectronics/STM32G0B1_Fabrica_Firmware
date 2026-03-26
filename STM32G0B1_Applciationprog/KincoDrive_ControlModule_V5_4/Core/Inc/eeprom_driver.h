@@ -1,14 +1,23 @@
 /**
  * @file    eeprom_driver.h
- * @brief   I2C EEPROM driver and configuration storage.
+ * @brief   I2C EEPROM driver and startup configuration storage.
  *
  * @details Provides page-based read/write for an I2C EEPROM (64-byte pages,
- *          512 pages), a Config struct with magic validation, EEPROM-backed
- *          config persistence, and CAN command handlers for reading/writing
- *          individual settings over the bus.
+ *          512 pages), an 8-byte startup config struct with magic + XOR
+ *          checksum, and functions to save/load/apply the config over I2C.
+ *
+ *          Config layout (page 0, offset 0):
+ *            Byte 0  magic    (0xA5 = valid)
+ *            Byte 1  hs_state (bit0=DR, bit1=E, bit2=SC, bit3=VBUCK)
+ *            Byte 2  fan_dr   (0–100 %)
+ *            Byte 3  fan_ep   (0–100 %)
+ *            Byte 4  fan_eh   (0–100 %)
+ *            Byte 5  fan_st   (0–100 %)
+ *            Byte 6  fan_sf   (0–100 %)
+ *            Byte 7  checksum (XOR of bytes 0–6)
  *
  * @author  jordan
- * @date    2025-12-01
+ * @date    2026-03-26
  */
 
 #ifndef EEPROM_DRIVER_H
@@ -19,42 +28,27 @@
 #include <stdint.h>
 
 /* ════════════════════════════════════════════════════════════════════════════
- *  Configuration structure (stored in EEPROM page 0)
+ *  Startup configuration structure (stored in EEPROM page 0, offset 0)
  * ════════════════════════════════════════════════════════════════════════════ */
+
+#define EEPROM_MAGIC    0xA5U
 
 typedef struct __attribute__((packed)) {
-    uint16_t magic;              /* 0x3584 = valid config */
-    uint8_t  mode;
-    uint16_t voltage;
-    uint16_t count;
-    uint16_t pwm0;
-    uint16_t pwm1;
-    uint16_t hard_over_voltage;  /* mV */
-    uint16_t soft_over_voltage;  /* mV */
-    uint16_t under_voltage;      /* mV */
-    uint16_t over_current;       /* mA */
-    uint16_t fan_max_rpm;        /* max fan RPM for % calculation */
-} Config;
+    uint8_t magic;      /* 0xA5 = valid config                        */
+    uint8_t hs_state;   /* bit0=DR, bit1=E, bit2=SC, bit3=VBUCK (1=ON) */
+    uint8_t fan_dr;     /* Drive fan default speed (0–100 %)          */
+    uint8_t fan_ep;     /* Extruder Platform fan  (0–100 %)           */
+    uint8_t fan_eh;     /* Extruder Head fan      (0–100 %)           */
+    uint8_t fan_st;     /* Stepper fan            (0–100 %)           */
+    uint8_t fan_sf;     /* Scrubbing Front fan    (0–100 %)           */
+    uint8_t checksum;   /* XOR of bytes 0–6                           */
+} EEPROM_StartupConfig_t;
 
-/* ════════════════════════════════════════════════════════════════════════════
- *  EEPROM setting selectors (for CAN write command)
- * ════════════════════════════════════════════════════════════════════════════ */
-
-#define EEPROM_SETTING_HARD_OV      0x00
-#define EEPROM_SETTING_SOFT_OV      0x01
-#define EEPROM_SETTING_UNDER_V      0x02
-#define EEPROM_SETTING_OVER_CURR    0x03
-#define EEPROM_SETTING_FAN_MAX_RPM  0x04
-
-/* ════════════════════════════════════════════════════════════════════════════
- *  EEPROM format status (for async erase operations)
- * ════════════════════════════════════════════════════════════════════════════ */
-
-typedef enum {
-    EEPROM_IDLE         = 0,
-    EEPROM_ERASING      = 1,
-    EEPROM_ERASING_DONE = 2
-} EEPROM_format_status;
+/* hs_state bitmask helpers */
+#define EEPROM_HS_DR    (1U << 0)
+#define EEPROM_HS_E     (1U << 1)
+#define EEPROM_HS_SC    (1U << 2)
+#define EEPROM_HS_VBUCK (1U << 3)
 
 /* ════════════════════════════════════════════════════════════════════════════
  *  Low-level EEPROM access
@@ -66,58 +60,46 @@ void EEPROM_Write(uint16_t page, uint16_t offset, uint8_t *data, uint16_t size);
 /** Read raw bytes from EEPROM. */
 void EEPROM_Read(uint16_t page, uint16_t offset, uint8_t *data, uint16_t size);
 
-/** Write a float value to EEPROM (4 bytes, little-endian). */
-void EEPROM_Write_Num(uint16_t page, uint16_t offset, float data);
-
-/** Read a float value from EEPROM. */
-float EEPROM_Read_Num(uint16_t page, uint16_t offset);
-
 /** Erase a single EEPROM page (fill with 0xFF). */
 void EEPROM_pageErase(uint16_t page);
 
 /* ════════════════════════════════════════════════════════════════════════════
- *  Config management
+ *  Startup config management
  * ════════════════════════════════════════════════════════════════════════════ */
 
-/** Populate a Config struct with factory defaults. */
-void LoadDefault(Config *config);
-
-/** Check if a Config has a valid magic number. */
-bool checkcfg(Config *cfg);
-
-/** Write a Config struct to EEPROM and update the RAM cache. */
-void EEPROM_Write_Config(uint16_t page, uint16_t offset, Config *cfg);
-
-/** Read a Config struct from EEPROM. */
-void EEPROM_Read_Config(uint16_t page, uint16_t offset, Config *cfg);
-
-/** Initialize EEPROM: read config, load defaults if invalid, sanitize. */
+/**
+ * @brief  Initialize EEPROM: read config into RAM cache.
+ *         If magic or checksum is invalid, loads hardcoded safe defaults
+ *         (all HS OFF, all fans 0 %) into the cache but does NOT write to
+ *         EEPROM — call EEPROM_SaveStartupConfig() explicitly if desired.
+ */
 void EEPROM_Init(void);
 
-/** Get pointer to cached config (NULL if not yet initialized). */
-const Config *EEPROM_GetCachedConfig(void);
+/**
+ * @brief  Apply the cached startup config to hardware.
+ *         Calls Enable/Disable for each HS channel and set_Fan_PWM() for
+ *         each fan.  Safe to call before peripheral clocks are ready only
+ *         if hardware is already init'd.
+ */
+void EEPROM_ApplyStartupConfig(void);
+
+/**
+ * @brief  Snapshot current HS GPIO states and fan PWM setpoints, write to
+ *         EEPROM, and update the RAM cache.
+ */
+void EEPROM_SaveStartupConfig(void);
+
+/**
+ * @brief  Return pointer to the cached startup config (never NULL — returns
+ *         hardcoded defaults if EEPROM was invalid at init).
+ */
+const EEPROM_StartupConfig_t *EEPROM_GetCachedConfig(void);
 
 /* ════════════════════════════════════════════════════════════════════════════
- *  CAN command handlers
+ *  Utility
  * ════════════════════════════════════════════════════════════════════════════ */
 
-/**
- * @brief  CAN handler: write a single config setting.
- *         Payload: [setting_selector, value_lo, value_hi]
- */
-void CAN_Handler_EEPROM_Write_Config(uint32_t id, uint8_t *params, uint8_t len);
-
-/**
- * @brief  CAN handler: read and publish all config settings.
- *         Responds with two frames on CAN_ID_EEPROM_ACK and CAN_ID_EEPROM_ACK2.
- */
-void CAN_Handler_EEPROM_Read_Config(uint32_t id, uint8_t *params, uint8_t len);
-
-/* Legacy alias (unused but kept for compatibility) */
-void CAN_Handler_EEPROM_Write_Overvoltage_Config(uint32_t id, uint8_t *params, uint8_t len);
-
-/* Utility functions */
 uint32_t float2Bytes(float float_data);
-float bytes2Float(uint8_t buffer[4]);
+float    bytes2Float(uint8_t buffer[4]);
 
 #endif /* EEPROM_DRIVER_H */

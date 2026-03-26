@@ -31,8 +31,8 @@
 #include "Fan_PWM.h"
 #include "Power_Electronic.h"
 #include "eeprom_driver.h"
-#include "Core_Systems.h"
-#include "error_manager.h"
+#include "ESTOP.h"
+#include "Endstop.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -110,6 +110,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
   
   start_all_Fan_PWM();
+  start_Fan_Tacho_DMA();
+
   HAL_FDCAN_Start(&hfdcan1);
   CAN_Handler_Init();
 
@@ -117,9 +119,13 @@ int main(void)
   Start_ADC1_DMA();
 
   EEPROM_Init();
-  Error_Manager_Init();
+  EEPROM_ApplyStartupConfig();   /* apply saved HS + fan defaults to hardware */
+  Endstop_Init();
+  ESTOP_Init();
+//  HAL_GPIO_WritePin(HS_DR_EN_GPIO_Port, HS_DR_EN_Pin, GPIO_PIN_SET);
+//  HAL_GPIO_WritePin(HS_E_EN_GPIO_Port, HS_E_EN_Pin, GPIO_PIN_SET);
+//  HAL_GPIO_WritePin(HS_SC_EN_GPIO_Port,HS_SC_EN_Pin, GPIO_PIN_SET);
 
-  
 
   
 
@@ -135,9 +141,9 @@ int main(void)
     /* USER CODE BEGIN 3 */
 
 
-    CAN_Handler_Dispatch_Process_One();
-    CAN_Handler_Broadcast(500);
-    CoreSystem_TOP();
+    CAN_Process();
+    CAN_Broadcast(500);
+    ESTOP_State_Machine();
 
     /* ── Heartbeat LED on PA5: toggle every 1 second ── */
     {
@@ -149,7 +155,16 @@ int main(void)
         }
     }
     
-
+//    if(HAL_GPIO_ReadPin(LED_OUT_GPIO_Port, LED_OUT_Pin)){
+//    	  Enable_HighSide_Power_Module(HS_MODULE_DRIVE, 500);
+//    	  Enable_HighSide_Power_Module(HS_MODULE_EXTRUDER, 500);
+//    	  Enable_HighSide_Power_Module(HS_MODULE_SCRUBBING, 500);
+//    }
+//    else{
+//    	  Disable_HighSide_Power_Module(HS_MODULE_DRIVE, 500);
+//    	  Disable_HighSide_Power_Module(HS_MODULE_EXTRUDER, 500);
+//    	  Disable_HighSide_Power_Module(HS_MODULE_SCRUBBING, 500);
+//    }
   }
 
   

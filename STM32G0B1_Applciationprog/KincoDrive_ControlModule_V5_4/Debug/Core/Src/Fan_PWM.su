@@ -1,7 +1,7 @@
-../Core/Src/Fan_PWM.c:57:6:CAN_Handle_set_Fan_PWM	32	static
-../Core/Src/Fan_PWM.c:79:12:fan_index	24	static
-../Core/Src/Fan_PWM.c:85:6:set_Fan_PWM	32	static
-../Core/Src/Fan_PWM.c:103:6:start_all_Fan_PWM	16	static
-../Core/Src/Fan_PWM.c:116:6:start_Fan_Tacho_DMA	16	static
-../Core/Src/Fan_PWM.c:124:6:Fan_Tacho_Speed_Calculate	48	static
-../Core/Src/Fan_PWM.c:165:8:CAN_Packer_Fan_Speed_1Byte	40	static
+../Core/Src/Fan_PWM.c:63:12:fan_index	24	static
+../Core/Src/Fan_PWM.c:69:6:set_Fan_PWM	32	static
+../Core/Src/Fan_PWM.c:90:9:get_Fan_PWM_Pct	24	static
+../Core/Src/Fan_PWM.c:97:6:start_all_Fan_PWM	16	static
+../Core/Src/Fan_PWM.c:110:6:start_Fan_Tacho_DMA	16	static
+../Core/Src/Fan_PWM.c:118:6:Fan_Tacho_Speed_Calculate	48	static
+../Core/Src/Fan_PWM.c:155:8:CAN_Packer_Fan_Speed_1Byte	40	static

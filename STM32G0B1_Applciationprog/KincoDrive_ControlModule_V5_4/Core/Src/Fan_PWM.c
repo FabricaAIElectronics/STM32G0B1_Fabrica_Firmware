@@ -9,7 +9,6 @@
 #include "Fan_PWM.h"
 #include "main.h"
 #include "tim.h"
-#include "eeprom_driver.h"
 #include <stdint.h>
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -20,6 +19,9 @@ typedef struct {
     TIM_HandleTypeDef *timer;
     uint32_t           channel;
 } FanPwmPin_t;
+
+/* Shadow array: last PWM setpoint written to each fan (0–100 %) */
+static uint8_t fan_speed_pct[5] = {0, 0, 0, 0, 0};
 
 static FanPwmPin_t fan_pwm[5] = {
     { .timer = &htim1,  .channel = TIM_CHANNEL_1 },  /* FAN_DR */
@@ -51,24 +53,6 @@ static FanTachoPin_t fan_tacho[5] = {
 static uint16_t tacho_buf[5][TACHO_DMA_DEPTH];
 
 /* ════════════════════════════════════════════════════════════════════════════
- *  CAN command handler
- * ════════════════════════════════════════════════════════════════════════════ */
-
-void CAN_Handle_set_Fan_PWM(uint32_t id, uint8_t *params, uint8_t len)
-{
-    (void)id;
-
-    if (len < 2U) {
-        return;
-    }
-
-    FanNumber_t fan_number  = (FanNumber_t)params[0];
-    uint8_t     speed_pct   = params[1];
-
-    set_Fan_PWM(fan_number, speed_pct);
-}
-
-/* ════════════════════════════════════════════════════════════════════════════
  *  PWM speed control
  * ════════════════════════════════════════════════════════════════════════════ */
 
@@ -90,14 +74,24 @@ void set_Fan_PWM(FanNumber_t fan_number, uint8_t speed_percent)
     FanPwmPin_t *fan = &fan_pwm[idx];
     if (fan->timer == NULL) return;
 
-    if (speed_percent > 100) {
-        speed_percent = 100;
+    if (speed_percent > 100U) {
+        speed_percent = 100U;
     }
 
     uint32_t arr   = fan->timer->Instance->ARR;
     uint32_t pulse = (arr * (uint32_t)speed_percent) / 100U;
 
     __HAL_TIM_SET_COMPARE(fan->timer, fan->channel, pulse);
+
+    /* Update shadow array so get_Fan_PWM_Pct() can read it back */
+    fan_speed_pct[idx] = speed_percent;
+}
+
+uint8_t get_Fan_PWM_Pct(FanNumber_t fan_number)
+{
+    int idx = fan_index(fan_number);
+    if (idx < 0) return 0U;
+    return fan_speed_pct[idx];
 }
 
 void start_all_Fan_PWM(void)
@@ -137,12 +131,8 @@ void Fan_Tacho_Speed_Calculate(FanNumber_t fan_number, uint16_t *speed_pct)
         return;
     }
 
-    /* Get configurable max RPM from EEPROM (fallback: 5000) */
-    const Config *cfgp = EEPROM_GetCachedConfig();
-    uint16_t fan_max_rpm = 5000;
-    if (cfgp != NULL && cfgp->fan_max_rpm > 0) {
-        fan_max_rpm = cfgp->fan_max_rpm;
-    }
+    /* Fixed max RPM for % calculation */
+    const uint16_t fan_max_rpm = 5000U;
 
     /*
      * Timer clock = 800 kHz (e.g. 8 MHz / PSC=9).

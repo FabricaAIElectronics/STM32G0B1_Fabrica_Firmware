@@ -32,9 +32,6 @@ typedef enum {
  *  Public API
  * ════════════════════════════════════════════════════════════════════════════ */
 
-/** CAN command handler: set fan PWM from CAN payload. */
-void CAN_Handle_set_Fan_PWM(uint32_t id, uint8_t *params, uint8_t len);
-
 /** Set fan speed as percentage (0–100). */
 void set_Fan_PWM(FanNumber_t fan_number, uint8_t speed_percent);
 
@@ -50,6 +47,13 @@ void start_Fan_Tacho_DMA(void);
  * @param  speed_pct   Output: 0–100 (%).  Set to 0 on error.
  */
 void Fan_Tacho_Speed_Calculate(FanNumber_t fan_number, uint16_t *speed_pct);
+
+/**
+ * @brief  Get the last PWM setpoint written to a fan (0–100 %).
+ * @param  fan_number  Which fan to query (FAN_DR … FAN_SF).
+ * @retval 0–100 (%), or 0 if invalid.
+ */
+uint8_t get_Fan_PWM_Pct(FanNumber_t fan_number);
 
 /**
  * @brief  Pack fan speed (%) into one CAN byte.

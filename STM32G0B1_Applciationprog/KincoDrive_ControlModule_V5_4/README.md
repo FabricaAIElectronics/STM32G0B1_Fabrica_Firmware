@@ -1,12 +1,8 @@
-# KincoDrive Control Module V5.4 — TEST MODE
+# KincoDrive Control Module V5.4
 
-**Actuation & IO Distribution Board — Embedded Firmware (Broadcast-Only Prototype)**
+**Actuation & IO Distribution Board — Embedded Firmware (Prototype)**
 
 MCU: STM32G0B1RET6 | CAN: Extended (29-bit) | Device ID: `0x0667`
-
-> **TEST MODE**: No host commands accepted. The device broadcasts all sensor,
-> GPIO, and ADC data automatically on power-up. Connect a CAN analyzer to
-> observe system status without sending any commands.
 
 ---
 
@@ -16,7 +12,7 @@ MCU: STM32G0B1RET6 | CAN: Extended (29-bit) | Device ID: `0x0667`
 - **Toolchain**: arm-none-eabi-gcc
 - **Config**: `Actuation_IO_Distribution_Board_Embedded.ioc`
 
-Open the `.ioc` in STM32CubeIDE, generate code, then build the project.
+Open the `.ioc` in STM32CubeIDE, generate code, then build.
 
 ---
 
@@ -34,139 +30,148 @@ Open the `.ioc` in STM32CubeIDE, generate code, then build the project.
 
 **Formula**: `CAN_ID = (message_type << 16) | 0x0667`
 
-**Example**: Broadcast Status `0x600` → Extended CAN ID = `0x06000667`
-
-### CAN Database File
-
-The file `KincoDrive_ControlModule.dbc` contains the full CAN database. Open with **Vector CANdb++ Editor** to browse messages, signals, and value tables interactively.
+**DBC file**: `KincoDrive_ControlModule.dbc` — open with **Vector CANdb++ Editor**.
 
 ---
 
-### Broadcast Messages (6 frames every 500 ms)
+### Commands (Host → Device)
 
-All messages are sent automatically on power-up. No host commands required.
+| Msg Type | Name | DLC | Payload | Description |
+|----------|------|-----|---------|-------------|
+| 0x110 | Cmd_HS_Power | 1 | Byte 0 bitmask: bit0=Drive, bit1=Extruder, bit2=Scrubbing, bit3=12V Buck (0=OFF, 1=ON) | Set all 4 HS channels in one frame |
+| 0x140 | Cmd_Fan_PWM | 5 | Bytes 0–4 = DR/EP/EH/ST/SF speed (0–100 %) | Set all 5 fans in one frame |
+| 0x200 | Cmd_EEPROM | 1 | Byte 0 bitmask: bit0=Load defaults from EEPROM, bit1=Save current state to EEPROM | EEPROM startup config control |
 
-#### 0x600 — System Status (8 bytes)
+**Fan order** (bytes 0–4): Drive, Ext Platform, Ext Head, Stepper, Scrub Front
 
-| Byte | Signal | Encoding | Unit |
-|------|--------|----------|------|
-| 0 | Endstop triggered | 1 bit per channel (see below) | bitfield |
-| 1 | Endstop fault | 1 bit per channel | bitfield |
-| 2–3 | 24V bus voltage | uint16 LE | 0.1V |
-| 4 | 12V bus voltage | uint8 | 0.1V |
-| 5 | Protection state | bitfield (see below) | — |
-| 6 | System state | uint8 | enum |
-| 7 | Error count | uint8 | count |
+---
 
-**Endstop bits** (same layout for triggered and fault bytes):
+### Broadcasts (Device → Host, every 500 ms)
 
-| Bit | Channel |
-|-----|---------|
-| 0 | Extruder Height Top (NC+NO) |
-| 1 | Extruder Height Bottom (NO only) |
-| 2 | Extruder Platform Top (NC+NO) |
-| 3 | Extruder Platform Bottom (NC+NO) |
-| 4 | Scrubbing Front Top (NC+NO) |
-| 5 | ESTOP (NC+NO) |
-| 6–7 | Reserved |
-
-**Protection state byte**:
-
-| Bits | Field | Values |
-|------|-------|--------|
-| [1:0] | Drive overcurrent | 0=OK, 1=OC |
-| [3:2] | Extruder overcurrent | 0=OK, 1=OC |
-| [5:4] | Scrubbing overcurrent | 0=OK, 1=OC |
-| [7:6] | Overvoltage | 0=OK, 1=Soft, 2=Hard |
-
-**System state**: 0=NORMAL, 1=WARNING, 2=ERROR, 3=RECOVERY
-
-#### 0x601 — Currents (5 bytes)
-
-| Byte | Signal | Encoding | Unit |
-|------|--------|----------|------|
-| 0–1 | 24V bus current | uint16 LE | 0.1A |
-| 2 | Drive module current | uint8 | 0.1A |
-| 3 | Extruder module current | uint8 | 0.1A |
-| 4 | Scrubbing module current | uint8 | 0.1A |
-
-#### 0x602 — Temperatures (8 bytes)
-
-| Byte | Signal | Encoding | Unit |
-|------|--------|----------|------|
-| 0 | PTC 1 temperature | uint8, offset +40 | degC |
-| 1 | PTC 2 temperature | uint8, offset +40 | degC |
-| 2 | PTC 3 temperature | uint8, offset +40 | degC |
-| 3 | PTC 4 temperature | uint8, offset +40 | degC |
-| 4 | PTC 5 temperature | uint8, offset +40 | degC |
-| 5 | PTC 6 temperature | uint8, offset +40 | degC |
-| 6–7 | Reserved | 0x00 | — |
-
-Decode: `temp_degC = wire_value - 40` (range: -40 to 215 degC)
-
-#### 0x603 — Fan Speeds (5 bytes)
-
-| Byte | Signal | Encoding | Unit |
-|------|--------|----------|------|
-| 0 | Fan DR (Drive) | uint8 | % of max RPM |
-| 1 | Fan EP (Extruder Platform) | uint8 | % of max RPM |
-| 2 | Fan EH (Extruder Head) | uint8 | % of max RPM |
-| 3 | Fan ST (Stepper) | uint8 | % of max RPM |
-| 4 | Fan SF (Scrubbing Front) | uint8 | % of max RPM |
-
-#### 0x604 — GPIO Status (8 bytes)
+#### 0x600 — Bcast_Status (8 bytes)
 
 | Byte | Signal | Encoding |
 |------|--------|----------|
-| 0 | HS Enable pins | Bit0=DR_EN, Bit1=E_EN, Bit2=SC_EN, Bit3=VBUCK |
-| 1 | HS Power-Good pins | Bit0=DR_PG, Bit1=E_PG, Bit2=SC_PG (1=good) |
-| 2 | HS Fault pins | Bit0=DR_FT, Bit1=E_FT, Bit2=SC_FT (1=fault) |
-| 3 | ESTOP raw | Bit0=NO_pin, Bit1=NC_pin, Bit2=debounced |
-| 4 | Endstop raw byte 1 | See bit layout below |
-| 5 | Endstop raw byte 2 | Bit0=SC_H_NC |
-| 6 | LED state | 0=off, 1=on |
-| 7 | Blue button | 0=released, 1=pressed |
+| 0 | Endstop triggered | bitfield (bit0=EH_Top, bit1=EH_Bot, bit2=EP_Top, bit3=EP_Bot, bit4=SC_Top, bit5=ESTOP) |
+| 1 | Endstop fault | same layout, 1=wiring fault |
+| 2–3 | Bus24V_Voltage | uint16 LE, 0.1V/bit |
+| 4 | Bus12V_Voltage | uint8, 0.1V/bit |
+| 5 | Dbg_Cmd_Count | wrapping counter, +1 per dispatched command |
+| 6–7 | Dbg_Last_MsgType | uint16 LE, last message type processed |
 
-**Endstop raw byte 1 (byte 4)**:
+#### 0x601 — Bcast_Currents (5 bytes)
 
-| Bit | Pin |
-|-----|-----|
-| 0 | EH_H_NO (Extruder Height Top NO) |
-| 1 | EH_H_NC (Extruder Height Top NC) |
-| 2 | EH_L_NO (Extruder Height Bottom NO) |
-| 3 | EP_H_NO (Extruder Platform Top NO) |
-| 4 | EP_H_NC (Extruder Platform Top NC) |
-| 5 | EP_L_NO (Extruder Platform Bottom NO) |
-| 6 | EP_L_NC (Extruder Platform Bottom NC) |
-| 7 | SC_H_NO (Scrubbing Front Top NO) |
+| Byte | Signal | Encoding |
+|------|--------|----------|
+| 0–1 | Bus24V_Current | uint16 LE, 0.1A/bit |
+| 2 | Drive_Current | uint8, 0.1A/bit |
+| 3 | Extruder_Current | uint8, 0.1A/bit |
+| 4 | Scrubbing_Current | uint8, 0.1A/bit |
 
-#### 0x605 — Raw ADC (6 bytes)
+#### 0x602 — Bcast_Temps (6 bytes)
 
-12 ADC channels packed as 4-bit nibbles (12-bit raw value >> 8). Each byte contains two channels: high nibble first, low nibble second.
+| Byte | Signal | Encoding |
+|------|--------|----------|
+| 0–5 | Temp_PTC1–PTC6 | uint8, offset +40 (degC = value − 40) |
 
-| Byte | High nibble | Low nibble |
-|------|-------------|------------|
-| 0 | PTC 1 | PTC 2 |
-| 1 | PTC 3 | PTC 4 |
-| 2 | PTC 5 | PTC 6 |
-| 3 | CURR_MON_1 (Drive) | CURR_MON_2 (Extruder) |
-| 4 | CURR_MON_3 (Scrubbing) | VADC_24 (24V bus) |
-| 5 | VADC_12 (12V bus) | CURR_MON_24V (24V bus current) |
+#### 0x603 — Bcast_Fans (5 bytes)
 
-Scale: `raw_12bit ≈ nibble × 256` (coarse indication for quick verification)
+| Byte | Signal | Encoding |
+|------|--------|----------|
+| 0–4 | Fan DR/EP/EH/ST/SF speed | uint8, % of 5000 RPM max |
+
+#### 0x604 — Bcast_GPIO (8 bytes)
+
+Individual 1-bit signals per pin — no bit-masking needed in the CAN analyzer.
+
+| Byte | Bit | Signal | Note |
+|------|-----|--------|------|
+| 0 | 0 | HS_DR_Enable | 1=EN pin HIGH |
+| 0 | 1 | HS_E_Enable | 1=EN pin HIGH |
+| 0 | 2 | HS_SC_Enable | 1=EN pin HIGH |
+| 0 | 3 | VBUCK_Enable | 1=CTRL pin HIGH |
+| 1 | 0 | HS_DR_PwrGood | Active LOW inverted: 1=good |
+| 1 | 1 | HS_E_PwrGood | Active LOW inverted: 1=good |
+| 1 | 2 | HS_SC_PwrGood | Active LOW inverted: 1=good |
+| 2 | 0 | HS_DR_Fault | Active LOW inverted: 1=fault |
+| 2 | 1 | HS_E_Fault | Active LOW inverted: 1=fault |
+| 2 | 2 | HS_SC_Fault | Active LOW inverted: 1=fault |
+| 3 | 0 | ESTOP_NO_Pin | Raw NO pin: 1=HIGH |
+| 3 | 1 | ESTOP_NC_Pin | Raw NC pin: 1=HIGH |
+| 3 | 2 | ESTOP_Triggered | Debounced: 1=triggered |
+| 3 | 3 | ESTOP_WiringFault | 1=NO/NC inconsistent |
+| 4 | 0 | EH_Top_NO | Extruder Head top, NO: 1=HIGH |
+| 4 | 1 | EH_Bot_NO | Extruder Head bot, NO: 1=HIGH (NO-only) |
+| 4 | 2 | EP_Top_NO | Extruder Platform top, NO: 1=HIGH |
+| 4 | 3 | EP_Bot_NO | Extruder Platform bot, NO: 1=HIGH |
+| 4 | 4 | SC_Top_NO | Scrubbing top, NO: 1=HIGH |
+| 5 | 0 | EH_Top_NC | Extruder Head top, NC: 1=HIGH |
+| 5 | 2 | EP_Top_NC | Extruder Platform top, NC: 1=HIGH |
+| 5 | 3 | EP_Bot_NC | Extruder Platform bot, NC: 1=HIGH |
+| 5 | 4 | SC_Top_NC | Scrubbing top, NC: 1=HIGH |
+| 6 | 0 | LED_Out | 1=HIGH |
+| 6 | 1 | BlueButton | 1=HIGH |
+| 7 | 0–7 | Dbg_ISR_Count | Wrapping counter, +1 per received CAN frame |
+
+NC+NO health: NC=1 & NO=0 → OK, NC=0 & NO=1 → triggered, else → wiring fault.
+EH_Bot is NO-only (no NC contact).
+
+#### 0x605 — Bcast_Raw_ADC (6 bytes)
+
+12 ADC channels as 4-bit nibbles (12-bit → top 4 bits). High nibble first.
+
+| Byte | Hi nibble | Lo nibble |
+|------|-----------|-----------|
+| 0 | PTC1 | PTC2 |
+| 1 | PTC3 | PTC4 |
+| 2 | PTC5 | PTC6 |
+| 3 | CURR_DR | CURR_EXT |
+| 4 | CURR_SC | V_24V |
+| 5 | V_12V | CURR_24V |
+
+#### 0x606 — Bcast_Config (6 bytes)
+
+EEPROM startup defaults — sent every 500 ms and immediately after any `Cmd_EEPROM`.
+
+| Byte | Bit(s) | Signal | Encoding |
+|------|--------|--------|----------|
+| 0 | 0 | Def_HS_DR | 1=Drive ON at boot |
+| 0 | 1 | Def_HS_E | 1=Extruder ON at boot |
+| 0 | 2 | Def_HS_SC | 1=Scrubbing ON at boot |
+| 0 | 3 | Def_VBUCK | 1=12V Buck ON at boot |
+| 1 | 0–7 | Def_Fan_DR | Drive fan default % |
+| 2 | 0–7 | Def_Fan_EP | Extruder Platform fan default % |
+| 3 | 0–7 | Def_Fan_EH | Extruder Head fan default % |
+| 4 | 0–7 | Def_Fan_ST | Stepper fan default % |
+| 5 | 0–7 | Def_Fan_SF | Scrubbing Front fan default % |
+
+---
+
+### EEPROM Startup Config
+
+The device stores an 8-byte config in EEPROM (page 0): magic byte (0xA5), HS default state bitmask, 5 fan default speeds, and an XOR checksum.
+
+On power-up, `EEPROM_Init()` reads the config. If the magic or checksum is invalid, safe defaults are used (all HS OFF, all fans 0%) without writing to EEPROM. `EEPROM_ApplyStartupConfig()` is then called to apply the config to hardware.
+
+| Command byte | Effect |
+|---|---|
+| `0x01` (bit0) | Load: re-apply cached config to hardware immediately |
+| `0x02` (bit1) | Save: snapshot current GPIO/fan state to EEPROM |
+| `0x03` (both) | Save then respond with current config |
+
+After any EEPROM command, `Bcast_Config` (0x606) is sent immediately.
 
 ---
 
 ### Bootloader Entry
 
-Send to raw CAN ID `0x0667` (the device ID itself) with `payload[0] = 0xFF`.
-The device immediately performs a system reset for bootloader handover.
+Send to raw CAN ID `0x0667` (no message type prefix) with `payload[0] = 0xFF` → immediate system reset into bootloader.
 
 ---
 
 ## Heartbeat LED
 
-PA5 toggles every 1 second as a heartbeat indicator. If the LED is not blinking, the MCU is stuck (likely in `Error_Handler()`).
+PA5 toggles every 1 second. If not blinking, the MCU is stuck in `Error_Handler()`.
 
 ---
 
@@ -174,20 +179,10 @@ PA5 toggles every 1 second as a heartbeat indicator. If the LED is not blinking,
 
 | Module | Files | Purpose |
 |--------|-------|---------|
-| CAN Handler | `CAN_Handler.c/h` | Broadcast engine (test mode, no command handlers) |
-| Power Electronic | `Power_Electronic.c/h` | High-side switch control, ADC sensing, protection |
+| CAN Handler | `CAN_Handler.c/h` | Command processing + telemetry broadcast |
+| Power Electronic | `Power_Electronic.c/h` | High-side switch control, ADC sensing |
 | Fan PWM | `Fan_PWM.c/h` | 5-channel PWM output + tachometer DMA |
 | Endstop | `Endstop.c/h` | 5 endstop switches (NC+NO / NO-only) |
 | ESTOP | `ESTOP.c/h` | Emergency stop with debounce state machine |
-| EEPROM Driver | `eeprom_driver.c/h` | I2C EEPROM config storage with cache |
-| Error Manager | `error_manager.c/h` | Error logging, state machine, recovery |
-| Core System | `Core_System.c`, `Core_Systems.h` | Top-level main-loop state router |
+| EEPROM Driver | `eeprom_driver.c/h` | I2C EEPROM startup config (8-byte struct) |
 | FDCAN | `fdcan.c/h` | Low-level FDCAN peripheral + TX helper |
-
----
-
-## Pin Assignments
-
-See `main.h` for the full GPIO pin mapping generated by STM32CubeMX.
-
-Key pin groups: **High-side switches** (`HS_DR_EN`, `HS_E_EN`, `HS_SC_EN` enable; `_PG` power good; `_FT` fault), **Fan PWM** (TIM1 CH1–4 + TIM14 CH1), **Fan Tacho** (TIM2 CH1–4 + TIM3 CH2), **ADC** (PA0–PA7, PB0–PB2, PB10, PB12), **FDCAN** (PB8 RX, PB9 TX), **ESTOP** (PB13 NO, PB14 NC, PB15 LED), **12V Buck** (PD8).

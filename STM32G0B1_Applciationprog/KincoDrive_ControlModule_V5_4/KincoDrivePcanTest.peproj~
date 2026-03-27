@@ -5,10 +5,7 @@
     </Connections>
     <MessageFilters/>
     <TransmitList>
-        <TransmitListItem Bus="1" CanId="17827431" Type="2" DLC="2" Data="0101" Creator="User"/>
-        <TransmitListItem Bus="1" CanId="17827431" Type="2" DLC="2" Data="0201" Creator="User"/>
-        <TransmitListItem Bus="1" CanId="17827431" Type="2" DLC="2" Data="0301" Creator="User"/>
-        <TransmitListItem Bus="1" CanId="17827431" Type="2" DLC="2" Data="0401" Creator="User"/>
+        <TransmitListItem Bus="1" CanId="17827431" Type="2" DLC="1" Data="0F" Creator="User"/>
     </TransmitList>
     <Files>
         <File RelativePath="KincoDrive_ControlModule.dbc"/>

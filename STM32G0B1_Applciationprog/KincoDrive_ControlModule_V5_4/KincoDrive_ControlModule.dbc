@@ -50,8 +50,7 @@ BO_ 2168456807 Cmd_Fan_PWM: 5 Host
  SG_ Fan_SF_Speed : 32|8@1+ (1,0) [0|100] "%" KincoDrive
 
 BO_ 2181039719 Cmd_EEPROM: 1 Host
- SG_ EEPROM_Load : 0|1@1+ (1,0) [0|1] "" KincoDrive
- SG_ EEPROM_Save : 1|1@1+ (1,0) [0|1] "" KincoDrive
+ SG_ EEPROM_Action : 0|8@1+ (1,0) [0|1] "" KincoDrive
 
 
 BO_ 2248148583 Bcast_Status: 8 KincoDrive
@@ -136,7 +135,7 @@ CM_ BU_ Host "Host controller / CAN analyzer";
 
 CM_ BO_ 2165311079 "CMD 0x110: High-side power control. DLC=1. One bit per channel: 0=OFF 1=ON. All channels set in one frame.";
 CM_ BO_ 2168456807 "CMD 0x140: Fan PWM speed. DLC=5. One byte per fan (0-100%). Bytes 0-4 = DR/EP/EH/ST/SF.";
-CM_ BO_ 2181039719 "CMD 0x200: EEPROM startup config. DLC=1. Bit0=Load saved config, Bit1=Save current state. Device responds with Bcast_Config (0x606).";
+CM_ BO_ 2181039719 "CMD 0x200: EEPROM config. DLC=1. Byte0: 0=Load hard-coded safe defaults (all OFF), 1=Save current HS/fan state to EEPROM. Device responds with Bcast_Config (0x606).";
 
 CM_ BO_ 2248148583 "BCAST 0x600: Voltages and endstop/ESTOP summary. Period: 500 ms.";
 CM_ BO_ 2248214119 "BCAST 0x601: 24V bus and per-module high-side currents. Period: 500 ms.";

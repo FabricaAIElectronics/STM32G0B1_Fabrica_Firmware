@@ -187,6 +187,12 @@ void EEPROM_Init(void)
     }
 }
 
+void EEPROM_LoadAndApplyDefaults(void)
+{
+    load_safe_defaults(&cached_cfg);
+    EEPROM_ApplyStartupConfig();
+}
+
 void EEPROM_ApplyStartupConfig(void)
 {
     const EEPROM_StartupConfig_t *cfg = &cached_cfg;

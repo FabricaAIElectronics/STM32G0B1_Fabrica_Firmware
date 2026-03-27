@@ -8,6 +8,7 @@
 ../Core/Src/eeprom_driver.c:151:10:float2Bytes	24	static
 ../Core/Src/eeprom_driver.c:158:7:bytes2Float	24	static
 ../Core/Src/eeprom_driver.c:171:6:EEPROM_Init	16	static
-../Core/Src/eeprom_driver.c:190:6:EEPROM_ApplyStartupConfig	16	static
-../Core/Src/eeprom_driver.c:227:6:EEPROM_SaveStartupConfig	16	static
-../Core/Src/eeprom_driver.c:258:31:EEPROM_GetCachedConfig	8	static
+../Core/Src/eeprom_driver.c:190:6:EEPROM_LoadAndApplyDefaults	8	static
+../Core/Src/eeprom_driver.c:196:6:EEPROM_ApplyStartupConfig	16	static
+../Core/Src/eeprom_driver.c:233:6:EEPROM_SaveStartupConfig	16	static
+../Core/Src/eeprom_driver.c:264:31:EEPROM_GetCachedConfig	8	static

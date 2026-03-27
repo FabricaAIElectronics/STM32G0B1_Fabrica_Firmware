@@ -56,7 +56,8 @@
 
 /*
  * MSG_CMD_EEPROM  0x200  DLC=1
- *   Byte 0 bitmask: bit0=Load defaults from EEPROM  bit1=Save current state to EEPROM
+ *   Byte 0:  0 = Load hard-coded safe defaults (all OFF) and apply
+ *            1 = Save current HS/fan state to EEPROM
  */
 #define MSG_CMD_EEPROM              0x200
 

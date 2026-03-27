@@ -76,6 +76,12 @@ void EEPROM_pageErase(uint16_t page);
 void EEPROM_Init(void);
 
 /**
+ * @brief  Reset the RAM cache to hardcoded safe defaults (all HS OFF, all
+ *         fans 0 %) and apply to hardware.  Does NOT write to EEPROM.
+ */
+void EEPROM_LoadAndApplyDefaults(void);
+
+/**
  * @brief  Apply the cached startup config to hardware.
  *         Calls Enable/Disable for each HS channel and set_Fan_PWM() for
  *         each fan.  Safe to call before peripheral clocks are ready only

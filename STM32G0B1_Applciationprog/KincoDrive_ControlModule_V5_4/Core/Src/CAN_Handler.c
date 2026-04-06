@@ -344,29 +344,28 @@ int CAN_Broadcast(uint32_t period_ms)
     switch (phase) {
 
     case 0:
-        /* ── 0x600  Status: voltages + endstop/ESTOP summary ───── */
+        /* ── 0x600  Status: endstop/ESTOP + voltages in mV + debug ── */
         {
             uint8_t p[8] = {0};
 
             CAN_Packer_Endstop_and_ESTOP_2Byte(&p[0], &p[1], 2);
-            CAN_Packer_24V_Bus_2Byte(&p[2], 2);
-            CAN_Packer_12V_Bus_1Byte(&p[4], 1);
-            p[5] = dbg_cmd_count;
-            p[6] = (uint8_t)(dbg_last_msg & 0xFF);
-            p[7] = (uint8_t)(dbg_last_msg >> 8);
+            CAN_Packer_24V_Bus_mV_2Byte(&p[2], 2);   /* u16 LE, mV */
+            CAN_Packer_12V_Bus_mV_2Byte(&p[4], 2);   /* u16 LE, mV */
+            p[6] = dbg_cmd_count;
+            p[7] = (uint8_t)(dbg_last_msg & 0xFF);
 
             FDCAN_SendFrame(CAN_ID_BCAST_STATUS, p, 8);
         }
-        /* ── 0x601  Currents ───────────────────────────────────── */
+        /* ── 0x601  Currents in mA ─────────────────────────────── */
         {
-            uint8_t p[5] = {0};
+            uint8_t p[8] = {0};
 
-            CAN_Packer_24V_Bus_Current_1DP_2Byte(&p[0], 2);
-            CAN_Packer_HighSide_Module_Current_1DP_1Byte(HS_MODULE_DRIVE,     &p[2], 1);
-            CAN_Packer_HighSide_Module_Current_1DP_1Byte(HS_MODULE_EXTRUDER,  &p[3], 1);
-            CAN_Packer_HighSide_Module_Current_1DP_1Byte(HS_MODULE_SCRUBBING, &p[4], 1);
+            CAN_Packer_24V_Bus_Current_mA_2Byte(&p[0], 2);
+            CAN_Packer_HighSide_Module_Current_mA_2Byte(HS_MODULE_DRIVE,     &p[2], 2);
+            CAN_Packer_HighSide_Module_Current_mA_2Byte(HS_MODULE_EXTRUDER,  &p[4], 2);
+            CAN_Packer_HighSide_Module_Current_mA_2Byte(HS_MODULE_SCRUBBING, &p[6], 2);
 
-            FDCAN_SendFrame(CAN_ID_BCAST_CURRENTS, p, 5);
+            FDCAN_SendFrame(CAN_ID_BCAST_CURRENTS, p, 8);
         }
         /* ── 0x602  Temperatures ───────────────────────────────── */
         {

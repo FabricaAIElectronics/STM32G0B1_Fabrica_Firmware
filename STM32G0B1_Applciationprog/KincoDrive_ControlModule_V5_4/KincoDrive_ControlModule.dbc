@@ -56,16 +56,16 @@ BO_ 2181039719 Cmd_EEPROM: 1 Host
 BO_ 2248148583 Bcast_Status: 8 KincoDrive
  SG_ Endstop_Triggered : 0|8@1+ (1,0) [0|63] "" Host
  SG_ Endstop_Fault : 8|8@1+ (1,0) [0|63] "" Host
- SG_ Bus24V_Voltage : 16|16@1+ (0.1,0) [0|6553.5] "V" Host
- SG_ Bus12V_Voltage : 32|8@1+ (0.1,0) [0|25.5] "V" Host
- SG_ Dbg_Cmd_Count : 40|8@1+ (1,0) [0|255] "" Host
- SG_ Dbg_Last_MsgType : 48|16@1+ (1,0) [0|8191] "" Host
+ SG_ Bus24V_Voltage : 16|16@1+ (1,0) [0|65535] "mV" Host
+ SG_ Bus12V_Voltage : 32|16@1+ (1,0) [0|65535] "mV" Host
+ SG_ Dbg_Cmd_Count : 48|8@1+ (1,0) [0|255] "" Host
+ SG_ Dbg_Last_MsgType : 56|8@1+ (1,0) [0|255] "" Host
 
-BO_ 2248214119 Bcast_Currents: 5 KincoDrive
- SG_ Bus24V_Current : 0|16@1+ (0.1,0) [0|6553.5] "A" Host
- SG_ Drive_Current : 16|8@1+ (0.1,0) [0|25.5] "A" Host
- SG_ Extruder_Current : 24|8@1+ (0.1,0) [0|25.5] "A" Host
- SG_ Scrubbing_Current : 32|8@1+ (0.1,0) [0|25.5] "A" Host
+BO_ 2248214119 Bcast_Currents: 8 KincoDrive
+ SG_ Bus24V_Current : 0|16@1+ (1,0) [0|65535] "mA" Host
+ SG_ Drive_Current : 16|16@1+ (1,0) [0|65535] "mA" Host
+ SG_ Extruder_Current : 32|16@1+ (1,0) [0|65535] "mA" Host
+ SG_ Scrubbing_Current : 48|16@1+ (1,0) [0|65535] "mA" Host
 
 BO_ 2248279655 Bcast_Temps: 6 KincoDrive
  SG_ Temp_PTC1 : 0|8@1+ (1,-40) [-40|215] "degC" Host
@@ -137,8 +137,8 @@ CM_ BO_ 2165311079 "CMD 0x110: High-side power control. DLC=1. One bit per chann
 CM_ BO_ 2168456807 "CMD 0x140: Fan PWM speed. DLC=5. One byte per fan (0-100%). Bytes 0-4 = DR/EP/EH/ST/SF.";
 CM_ BO_ 2181039719 "CMD 0x200: EEPROM config. DLC=1. Byte0: 0=Load hard-coded safe defaults (all OFF), 1=Save current HS/fan state to EEPROM. Device responds with Bcast_Config (0x606).";
 
-CM_ BO_ 2248148583 "BCAST 0x600: Voltages and endstop/ESTOP summary. Period: 500 ms.";
-CM_ BO_ 2248214119 "BCAST 0x601: 24V bus and per-module high-side currents. Period: 500 ms.";
+CM_ BO_ 2248148583 "BCAST 0x600: Voltages (mV) and endstop/ESTOP summary. Integer-only, no FPU. Period: 500 ms.";
+CM_ BO_ 2248214119 "BCAST 0x601: 24V bus and per-module high-side currents in mA. Integer-only, no FPU. DLC=8. Period: 500 ms.";
 CM_ BO_ 2248279655 "BCAST 0x602: 6 PTC thermistor temperatures. Wire: value = degC + 40. Period: 500 ms.";
 CM_ BO_ 2248345191 "BCAST 0x603: Fan tachometer speed as % of 5000 RPM max. Period: 500 ms.";
 CM_ BO_ 2248410727 "BCAST 0x604: GPIO pin states. All signals are direct pin reads. Period: 500 ms.";

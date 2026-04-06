@@ -24,22 +24,19 @@ volatile uint16_t ADC_VAL[ADC_BUF_LEN];
  *  ADC conversion constants
  * ═══════════════════════════════════════════════════════════════════════ */
 
-#define VOLTAGE_REF             3.3f
-#define ADC_MAX                 4095.0f
-
-/* TPS2493 current sense: gain = 48, Rsense = 3 mOhm → factor = 0.144 */
-#define TPS2493_CURRENT_SENSE_FACTOR    0.144f
-
-/* No resistive divider at the MCU ADC pin — the 22 nF filter cap and
- * ADC_SAMPLETIME_160CYCLES_5 ensure V_ADC = V_IMON_node with no DC offset.
- * Ratio is 1.0 (no correction required). */
-#define CURRENT_SENSE_VD_RATIO          1.0f
-
-/* Voltage divider ratio for 24V/12V bus measurement: (R1+R2)/R2 */
-#define BUS_VOLTAGE_VD_RATIO            (222.0f / 22.0f)
-
-/* Multiplier to convert volts → 0.1V units (one decimal place) */
-#define CORRECTION_FACTOR_1DP           10.0f
+/* Current and voltage conversions are integer-only (no FPU).
+ * See adc_to_mV() and mV_to_current_mA() helpers below.
+ *
+ * Key hardware constants:
+ *   VREF              = 3300 mV
+ *   ADC full-scale    = 4095 counts
+ *   TPS2493 factor    = 144 mV/A  (gain 48 × Rsense 3 mΩ)
+ *   IMON divider      = 10 kΩ / 100 kΩ → ×110/100 compensation
+ *   Bus voltage div   = (200 kΩ + 22 kΩ) / 22 kΩ = 222/22
+ *
+ * NOTE: VOLTAGE_REF (float) kept for Steinhart-Hart thermistor math only.
+ */
+#define VOLTAGE_REF  3.3f   /* used only by thermistor Steinhart-Hart calc */
 
 /* ═══════════════════════════════════════════════════════════════════════
  *  High-side power module enable / disable
@@ -107,8 +104,34 @@ int Start_ADC1_DMA(void)
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
- *  Current and voltage readings
+ *  Current and voltage readings  (integer-only, no FPU)
+ *
+ *  Current:  IMON → 10 kΩ → ADC_pin → 100 kΩ → GND
+ *            V_adc = V_imon × 100/110,  so V_imon = V_adc × 110/100
+ *            I_mA  = V_imon_mV × 1000 / 144
+ *                  = V_adc_mV × 1100 / 144   (110/100 × 1000/144 combined)
+ *            Split to avoid uint32 overflow:
+ *              v_mV  = (adc × 3300 + 2048) / 4095
+ *              I_mA  = (v_mV × 1100 + 72) / 144   (max 3300×1100 = 3.63 M)
+ *
+ *  Voltage:  V_bus_mV = V_adc_mV × (R1+R2)/R2 = V_adc_mV × 222/22
+ *              v_mV  = (adc × 3300 + 2048) / 4095
+ *              bus_mV = v_mV × 222 / 22
  * ═══════════════════════════════════════════════════════════════════════ */
+
+/** Convert raw ADC count → millivolts at the ADC pin. */
+static inline uint32_t adc_to_mV(uint16_t adc)
+{
+    return ((uint32_t)adc * 3300U + 2048U) / 4095U;
+}
+
+/** Convert ADC-pin millivolts → current in mA (TPS2493 sense path).
+ *  Includes 10k/100k divider compensation: V_imon = V_adc × 110/100. */
+static inline uint32_t mV_to_current_mA(uint32_t v_adc_mV)
+{
+    /* 1100 = 110/100 × 1000 (divider comp × mA conversion combined) */
+    return (v_adc_mV * 1100U + 72U) / 144U;
+}
 
 int Read_HighSide_Module_Current_mA(HighSide_Module_t module, uint32_t *current_mA)
 {
@@ -122,35 +145,25 @@ int Read_HighSide_Module_Current_mA(HighSide_Module_t module, uint32_t *current_
         return PE_ERR_INVALID_PARAM;
     }
 
-    float voltage = (adc_value / ADC_MAX) * VOLTAGE_REF;
-    float current = (voltage * CURRENT_SENSE_VD_RATIO) / TPS2493_CURRENT_SENSE_FACTOR;
-    *current_mA   = (uint32_t)(current * 1000.0f);
-
+    *current_mA = mV_to_current_mA(adc_to_mV(adc_value));
     return PE_SUCCESS;
 }
 
 void Read_24V_Bus_Current_mA(uint32_t *current_mA)
 {
-    uint16_t adc_value = ADC_VAL[CURR_MON_24V];
-    float voltage = (adc_value / ADC_MAX) * VOLTAGE_REF;
-    float current = (voltage * CURRENT_SENSE_VD_RATIO) / TPS2493_CURRENT_SENSE_FACTOR;
-    *current_mA   = (uint32_t)(current * 1000.0f);
+    *current_mA = mV_to_current_mA(adc_to_mV(ADC_VAL[CURR_MON_24V]));
 }
 
-void Read_24V_Voltage_1DP(uint32_t *voltage_1DP)
+void Read_24V_Voltage_mV(uint32_t *voltage_mV)
 {
-    uint16_t adc_value = ADC_VAL[VADC_24];
-    float voltage = (adc_value / ADC_MAX) * VOLTAGE_REF;
-    voltage = voltage * BUS_VOLTAGE_VD_RATIO * CORRECTION_FACTOR_1DP;
-    *voltage_1DP = (uint32_t)voltage;
+    uint32_t v_mV = adc_to_mV(ADC_VAL[VADC_24]);
+    *voltage_mV = v_mV * 222U / 22U;
 }
 
-void Read_12V_Voltage_1DP(uint32_t *voltage_1DP)
+void Read_12V_Voltage_mV(uint32_t *voltage_mV)
 {
-    uint16_t adc_value = ADC_VAL[VADC_12];
-    float voltage = (adc_value / ADC_MAX) * VOLTAGE_REF;
-    voltage = voltage * BUS_VOLTAGE_VD_RATIO * CORRECTION_FACTOR_1DP;
-    *voltage_1DP = (uint32_t)voltage;
+    uint32_t v_mV = adc_to_mV(ADC_VAL[VADC_12]);
+    *voltage_mV = v_mV * 222U / 22U;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -243,11 +256,11 @@ int Read_Thermistor_Temperature_C(ADC_Peripheral_t thermistor, int32_t *temperat
 
 int Enable_12V_Buck_Converter(void)
 {
-    uint32_t bus_24V_1DP = 0;
-    Read_24V_Voltage_1DP(&bus_24V_1DP);
+    uint32_t bus_mV = 0;
+    Read_24V_Voltage_mV(&bus_mV);
 
-    const uint32_t MIN_24V_FOR_12V = 200;   /* 20.0 V minimum */
-    if (bus_24V_1DP < MIN_24V_FOR_12V)
+    const uint32_t MIN_24V_FOR_12V_MV = 20000U;   /* 20.0 V minimum */
+    if (bus_mV < MIN_24V_FOR_12V_MV)
         return PE_ERR_GEN;
 
     HAL_GPIO_WritePin(VBUCK_CTRL_GPIO_Port, VBUCK_CTRL_Pin, GPIO_PIN_SET);
@@ -263,56 +276,56 @@ void Disable_12V_Buck_Converter(void)
  *  CAN telemetry data packers
  * ═══════════════════════════════════════════════════════════════════════ */
 
-size_t CAN_Packer_24V_Bus_2Byte(uint8_t *out, size_t out_size)
+/** Pack uint16 little-endian into 2 bytes. */
+static inline void pack_u16_le(uint8_t *out, uint16_t val)
+{
+    out[0] = (uint8_t)(val & 0xFFU);
+    out[1] = (uint8_t)(val >> 8);
+}
+
+size_t CAN_Packer_24V_Bus_mV_2Byte(uint8_t *out, size_t out_size)
 {
     if (out == NULL || out_size < 2) return 0;
 
-    uint32_t v_1DP = 0;
-    Read_24V_Voltage_1DP(&v_1DP);
+    uint32_t mV = 0;
+    Read_24V_Voltage_mV(&mV);
 
-    uint16_t val = (v_1DP > 65535U) ? 65535U : (uint16_t)v_1DP;
-    out[0] = (uint8_t)(val & 0xFF);
-    out[1] = (uint8_t)((val >> 8) & 0xFF);
+    pack_u16_le(out, (mV > 65535U) ? 65535U : (uint16_t)mV);
     return 2;
 }
 
-size_t CAN_Packer_12V_Bus_1Byte(uint8_t *out, size_t out_size)
-{
-    if (out == NULL || out_size < 1) return 0;
-
-    uint32_t v_1DP = 0;
-    Read_12V_Voltage_1DP(&v_1DP);
-
-    out[0] = (v_1DP > 255U) ? 255U : (uint8_t)v_1DP;
-    return 1;
-}
-
-size_t CAN_Packer_HighSide_Module_Current_1DP_1Byte(HighSide_Module_t module,
-                                                     uint8_t *out, size_t out_size)
-{
-    if (out == NULL || out_size < 1) return 0;
-
-    uint32_t current_mA = 0;
-    if (Read_HighSide_Module_Current_mA(module, &current_mA) != PE_SUCCESS)
-        return 0;
-
-    uint32_t current_1dp = (current_mA + 50U) / 100U;
-    if (current_1dp > 300U) current_1dp = 300U;
-
-    out[0] = (current_1dp > 255U) ? 255U : (uint8_t)current_1dp;
-    return 1;
-}
-
-size_t CAN_Packer_24V_Bus_Current_1DP_2Byte(uint8_t *out, size_t out_size)
+size_t CAN_Packer_12V_Bus_mV_2Byte(uint8_t *out, size_t out_size)
 {
     if (out == NULL || out_size < 2) return 0;
 
-    uint32_t current_mA = 0;
-    Read_24V_Bus_Current_mA(&current_mA);
+    uint32_t mV = 0;
+    Read_12V_Voltage_mV(&mV);
 
-    uint16_t current_1dp = (uint16_t)((current_mA + 50U) / 100U);
-    out[0] = (uint8_t)(current_1dp & 0xFF);
-    out[1] = (uint8_t)((current_1dp >> 8) & 0xFF);
+    pack_u16_le(out, (mV > 65535U) ? 65535U : (uint16_t)mV);
+    return 2;
+}
+
+size_t CAN_Packer_HighSide_Module_Current_mA_2Byte(HighSide_Module_t module,
+                                                    uint8_t *out, size_t out_size)
+{
+    if (out == NULL || out_size < 2) return 0;
+
+    uint32_t mA = 0;
+    if (Read_HighSide_Module_Current_mA(module, &mA) != PE_SUCCESS)
+        return 0;
+
+    pack_u16_le(out, (mA > 65535U) ? 65535U : (uint16_t)mA);
+    return 2;
+}
+
+size_t CAN_Packer_24V_Bus_Current_mA_2Byte(uint8_t *out, size_t out_size)
+{
+    if (out == NULL || out_size < 2) return 0;
+
+    uint32_t mA = 0;
+    Read_24V_Bus_Current_mA(&mA);
+
+    pack_u16_le(out, (mA > 65535U) ? 65535U : (uint16_t)mA);
     return 2;
 }
 

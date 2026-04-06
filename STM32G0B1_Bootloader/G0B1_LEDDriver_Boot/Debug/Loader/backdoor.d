@@ -5,6 +5,7 @@ Loader/backdoor.o: \
  C:/Users/jorda/Documents/GitHub/openblt/Target/Source/asserts.h \
  ../App/blt_conf.h \
  C:/Users/jorda/Documents/GitHub/openblt/Target/Source/plausibility.h \
+ C:/Users/jorda/Documents/GitHub/openblt/Target/Source/events.h \
  C:/Users/jorda/Documents/GitHub/openblt/Target/Source/cpu.h \
  C:/Users/jorda/Documents/GitHub/openblt/Target/Source/cop.h \
  C:/Users/jorda/Documents/GitHub/openblt/Target/Source/nvm.h \
@@ -19,6 +20,7 @@ C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/types.h:
 C:/Users/jorda/Documents/GitHub/openblt/Target/Source/asserts.h:
 ../App/blt_conf.h:
 C:/Users/jorda/Documents/GitHub/openblt/Target/Source/plausibility.h:
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/events.h:
 C:/Users/jorda/Documents/GitHub/openblt/Target/Source/cpu.h:
 C:/Users/jorda/Documents/GitHub/openblt/Target/Source/cop.h:
 C:/Users/jorda/Documents/GitHub/openblt/Target/Source/nvm.h:

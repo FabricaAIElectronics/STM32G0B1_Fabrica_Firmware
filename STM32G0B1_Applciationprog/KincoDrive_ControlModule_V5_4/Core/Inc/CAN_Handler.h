@@ -65,8 +65,8 @@
  *  Broadcasts  (Device → Host, every 500 ms)
  * ═══════════════════════════════════════════════════════════════════════ */
 
-#define MSG_BCAST_STATUS            0x600   /* voltages + endstop/ESTOP summary  */
-#define MSG_BCAST_CURRENTS          0x601   /* 24V bus + per-module currents     */
+#define MSG_BCAST_STATUS            0x600   /* voltages (mV) + endstop/ESTOP     */
+#define MSG_BCAST_CURRENTS          0x601   /* currents (mA), DLC=8              */
 #define MSG_BCAST_TEMPS             0x602   /* 6x PTC thermistors                */
 #define MSG_BCAST_FANS              0x603   /* 5x fan tachometer %               */
 #define MSG_BCAST_GPIO              0x604   /* HS/ESTOP/endstop pin states       */

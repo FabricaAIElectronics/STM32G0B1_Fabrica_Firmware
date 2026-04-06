@@ -76,7 +76,7 @@
  * message identifier for sending data from the target to the host is configured with
  * BOOT_COM_CAN_TXMSG_ID. The one for receiving data from the host is configured with
  * BOOT_COM_CAN_RXMSG_ID. Note that an extended 29-bit CAN identifier is configured by
- * OR-ing with mask 0x80000000. To use CAN classic either remove or set macro
+ * OR-ing with mask 0x80000000. To use CAN classic eithe r remove or set macro
  * BOOT_COM_CAN_FD_ENABLE to 0. To use CAN FD set this macro to 1. To make use of the
  * CAN FD bitrate switch to communicate the actual data bytes at a higher speed, add
  * macro BOOT_COM_CAN_FD_BRS_BAUDRATE and configure it to the desired baudrate for the
@@ -89,9 +89,9 @@
 /** \brief Configure the desired CAN baudrate. */
 #define BOOT_COM_CAN_BAUDRATE           (500000)
 /** \brief Configure CAN message ID target->host. */
-#define BOOT_COM_CAN_TX_MSG_ID          (0x000007E1 | 0x80000000)
+#define BOOT_COM_CAN_TX_MSG_ID          (0x7E1 /*| 0x80000000*/)
 /** \brief Configure CAN message ID host->target. */
-#define BOOT_COM_CAN_RX_MSG_ID          (0x00000667 | 0x80000000)
+#define BOOT_COM_CAN_RX_MSG_ID          (0x667 /*| 0x80000000*/)
 /** \brief Configure CAN classic (0) or CAN FD (1). */
 #define BOOT_COM_CAN_FD_ENABLE          (0)
 /** \brief Configure the CAN FD data baudrate for the bitrate switch.  */

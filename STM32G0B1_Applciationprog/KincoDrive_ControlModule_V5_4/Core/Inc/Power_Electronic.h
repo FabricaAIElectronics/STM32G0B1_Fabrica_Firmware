@@ -75,8 +75,8 @@ int Start_ADC1_DMA(void);
 
 int  Read_HighSide_Module_Current_mA(HighSide_Module_t module, uint32_t *current_mA);
 void Read_24V_Bus_Current_mA(uint32_t *current_mA);
-void Read_24V_Voltage_1DP(uint32_t *voltage_1DP);
-void Read_12V_Voltage_1DP(uint32_t *voltage_1DP);
+void Read_24V_Voltage_mV(uint32_t *voltage_mV);
+void Read_12V_Voltage_mV(uint32_t *voltage_mV);
 int  Read_Thermistor_Temperature_C(ADC_Peripheral_t thermistor, int32_t *temperature_C);
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -90,10 +90,10 @@ void Disable_12V_Buck_Converter(void);
  *  CAN telemetry data packers
  * ═══════════════════════════════════════════════════════════════════════ */
 
-size_t CAN_Packer_24V_Bus_2Byte(uint8_t *out, size_t out_size);
-size_t CAN_Packer_12V_Bus_1Byte(uint8_t *out, size_t out_size);
-size_t CAN_Packer_HighSide_Module_Current_1DP_1Byte(HighSide_Module_t module, uint8_t *out, size_t out_size);
-size_t CAN_Packer_24V_Bus_Current_1DP_2Byte(uint8_t *out, size_t out_size);
+size_t CAN_Packer_24V_Bus_mV_2Byte(uint8_t *out, size_t out_size);
+size_t CAN_Packer_12V_Bus_mV_2Byte(uint8_t *out, size_t out_size);
+size_t CAN_Packer_HighSide_Module_Current_mA_2Byte(HighSide_Module_t module, uint8_t *out, size_t out_size);
+size_t CAN_Packer_24V_Bus_Current_mA_2Byte(uint8_t *out, size_t out_size);
 size_t CAN_Packer_Thermistor_Temp_1Byte(ADC_Peripheral_t thermistor, uint8_t *out, size_t out_size);
 
 #endif /* POWER_ELECTRONIC_H */

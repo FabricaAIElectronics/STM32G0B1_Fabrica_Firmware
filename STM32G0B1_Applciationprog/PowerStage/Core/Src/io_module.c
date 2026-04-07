@@ -10,7 +10,7 @@
 #include "string.h"
 #include "math.h"
 SystemMeasurement_t measurements;
-volatile uint16_t adc_buffer[ADC_CHANNELS];
+volatile uint32_t adc_buffer[ADC_CHANNELS];
 
 
 HS_CTRL_ hotswap[RAIL_COUNT] = {
@@ -57,7 +57,7 @@ void HS_init(void){
 			//print error
 		}
 	}
-	HS_EnableWithoutCap();
+//	HS_EnableWithoutCap();
 }
 
 void HS_Enable(HS_CTRL_ *HS){
@@ -97,7 +97,8 @@ bool HS_Fault(HS_CTRL_ *HS){
 }
 
 bool HS_PGood(HS_CTRL_ *HS){
-	return HAL_GPIO_ReadPin(HS->pgood.port, HS->pgood.pin)==GPIO_PIN_SET;
+	/* TPS2493 PGOOD is active-low open-drain: LOW = power good */
+	return HAL_GPIO_ReadPin(HS->pgood.port, HS->pgood.pin)==GPIO_PIN_RESET;
 }
 
 void Bat_curr_measurement(SystemMeasurement_t *ms){

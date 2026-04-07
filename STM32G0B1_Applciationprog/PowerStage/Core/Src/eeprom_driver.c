@@ -25,7 +25,7 @@ void LoadDefault(Config *config){
     config->fan_auto_off_temp   = 45;       // turn OFF below 45 °C (hysteresis)
 
     /* HS switch boot state: all 5 rails enabled (bitmask 0b00011111) */
-    config->hs_default_state    = 0x1F;
+    config->hs_default_state    = 0x00;
 
     /* OC thresholds per rail [AUX, LED, DRIVE, CAP, SBC] */
     config->oc_threshold_mA[0]  = 5000;    // RAIL_AUX   5 A

@@ -20,13 +20,15 @@ FanCTRL_t fan = {
 void fan_init(void){
 	HAL_TIM_PWM_Start(fan.htim, fan.channel);
 	__HAL_TIM_SET_COMPARE(fan.htim,fan.channel,0);
+
+
 }
 
-void fan_ctrl_on(void){
+void fan_ctrl_on(){
 	HAL_GPIO_WritePin(FAN_CTRL_GPIO_Port, FAN_CTRL_Pin, GPIO_PIN_SET);
 }
 
-void fan_ctrl_off(void){
+void fan_ctrl_off(){
 	HAL_GPIO_WritePin(FAN_CTRL_GPIO_Port, FAN_CTRL_Pin, GPIO_PIN_RESET);
 }
 

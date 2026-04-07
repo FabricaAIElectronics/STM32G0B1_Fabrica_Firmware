@@ -31,8 +31,8 @@ typedef struct {
 extern FanCTRL_t fan;
 
 void fan_init(void);
-void fan_ctrl_on(void);
-void fan_ctrl_off(void);
+void fan_ctrl_on();
+void fan_ctrl_off();
 void fan_ctrl_speed(FanCTRL_t *f, uint8_t dutycycle);
 void FAN_AutoControl(FanCTRL_t *f, float temp_C);
 

@@ -30,6 +30,7 @@
 #define INC_POWERSTAGE_APP_H_
 
 #include "main.h"
+#include "eeprom_driver.h"
 #include <stdbool.h>
 
 /* ============================================================
@@ -47,6 +48,7 @@ typedef enum {
 extern AppState_t g_app_state;
 extern bool       g_oled_present;
 extern bool       g_eeprom_present;
+extern Config     g_config;           /* EEPROM config — for CAN broadcast echo */
 
 /* ============================================================
  * API

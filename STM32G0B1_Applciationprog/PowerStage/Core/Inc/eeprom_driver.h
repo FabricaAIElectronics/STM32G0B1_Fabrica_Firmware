@@ -15,7 +15,7 @@
  * Magic number — identifies a valid PowerStage config in EEPROM
  * Change this if Config struct layout changes (forces re-init)
  * ============================================================ */
-#define CONFIG_MAGIC            0xAB12
+#define CONFIG_MAGIC            0xAB13
 
 /* ============================================================
  * Rail count — must match PowerRailIndex_t in io_module.h

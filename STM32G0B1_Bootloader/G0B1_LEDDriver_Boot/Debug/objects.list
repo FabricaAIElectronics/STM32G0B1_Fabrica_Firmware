@@ -39,6 +39,7 @@
 "./Loader/boot.o"
 "./Loader/com.o"
 "./Loader/cop.o"
+"./Loader/events.o"
 "./Loader/file.o"
 "./Loader/infotable.o"
 "./Loader/mb.o"

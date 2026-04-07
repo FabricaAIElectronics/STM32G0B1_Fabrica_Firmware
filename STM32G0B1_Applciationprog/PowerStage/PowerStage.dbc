@@ -100,15 +100,24 @@ BO_ 1647 BCAST_OC_CFG_A : 8 PowerStage
 BO_ 1648 BCAST_OC_CFG_B : 2 PowerStage
  SG_ OC_Thr_SBC_mA    : 7|16@0+  (0.001,0)  [0|50]   "A"     Master
 
-CM_ BU_ PowerStage "STM32G0B1 PowerStage controller. Manages 5 TPS2493 hot-swap rails, fan, ADC and EEPROM config.";
-CM_ BU_ Master "Supervisory host or gateway node that issues commands to PowerStage.";
+BO_ 1649 CMD_CTRL : 2 Master
+ SG_ V_LED_PWR_Cmd     : 0|8@1+  (1,0)       [0|1]    ""      PowerStage
+ SG_ CAN_Relay_Enable  : 8|8@1+  (1,0)       [0|1]    ""      PowerStage
 
-CM_ BO_ 1634 "Periodic HS rail status. Bitmask bit order: bit0=AUX bit1=LED bit2=DRIVE bit3=CAP bit4=SBC.";
+BO_ 1650 BCAST_IO_STATUS : 3 PowerStage
+ SG_ SW_Pin_State      : 0|8@1+  (1,0)       [0|1]    ""      Master
+ SG_ V_LED_PWR_State   : 8|8@1+  (1,0)       [0|1]    ""      Master
+ SG_ CAN_Relay_State   : 16|8@1+ (1,0)       [0|1]    ""      Master
+
+CM_ BU_ PowerStage "STM32G0B1 PowerStage controller. Manages 5 TPS2493 hot-swap rails, fan, ADC and EEPROM config. Dual CAN bus: FDCAN1 (PB8/PB9) = internal, FDCAN2 (PC2/PC3) = host relay. All messages mirrored on both buses.";
+CM_ BU_ Master "Supervisory host or gateway node that issues commands to PowerStage. Can connect to either CAN1 or CAN2 bus.";
+
+CM_ BO_ 1634 "Periodic HS rail status. Bitmask bit order: bit0=AUX bit1=LED bit2=DRIVE bit3=CAP bit4=SBC. Sent on both CAN1+CAN2.";
 CM_ BO_ 1635 "Periodic broadcast of BAT, CAP, SBC, DRIVE rail currents. uint16 mA big-endian, scale 0.001 for A.";
 CM_ BO_ 1636 "Periodic broadcast of V24, VCAP, V12 voltages in mV and UV fault bitmask. Scale 0.001 for V.";
-CM_ BO_ 1637 "Command: set fan mode and manual duty cycle.";
-CM_ BO_ 1638 "Command: individually enable or disable each of the 5 HS rails.";
-CM_ BO_ 1639 "Command: system-level control. 0xFF triggers reset and re-enters OpenBLT bootloader.";
+CM_ BO_ 1637 "Command: set fan mode and manual duty cycle. Accepted from both CAN buses.";
+CM_ BO_ 1638 "Command: individually enable or disable each of the 5 HS rails. Accepted from both CAN buses.";
+CM_ BO_ 1639 "Command: system-level control. 0xFF triggers reset and re-enters OpenBLT bootloader. Accepted from both CAN buses.";
 CM_ BO_ 1640 "Command: configure per-rail software OC threshold or clear latched OC faults. OC_Rail_Mask 0xFF = all rails.";
 CM_ BO_ 1641 "Command: EEPROM operations. 0x01 saves live config; 0x02 restores factory defaults.";
 CM_ BO_ 1642 "Periodic broadcast of fan mode, duty cycle and NTC temperature. Temp is int16 degCx10, scale 0.1 for degC.";
@@ -118,6 +127,8 @@ CM_ BO_ 1645 "Command: update UV trip thresholds for V24, VCAP, V12 in mV big-en
 CM_ BO_ 1646 "Periodic broadcast of currently active UV thresholds.";
 CM_ BO_ 1647 "Periodic broadcast of OC thresholds for AUX, LED, DRIVE, CAP rails (frame A of 2).";
 CM_ BO_ 1648 "Periodic broadcast of OC threshold for SBC rail (frame B of 2).";
+CM_ BO_ 1649 "Command: control V_LED_PWR output and CAN relay enable/disable. Accepted from both CAN buses.";
+CM_ BO_ 1650 "Periodic broadcast of SW pin state, V_LED_PWR output state, and CAN relay enabled status.";
 
 CM_ SG_ 1634 HS_Enable_Mask   "1=rail EN GPIO asserted. bit0=AUX bit1=LED bit2=DRIVE bit3=CAP bit4=SBC.";
 CM_ SG_ 1634 HS_Fault_Mask    "1=TPS2493 hardware FLT pin asserted (latched fault).";
@@ -166,6 +177,11 @@ CM_ SG_ 1647 OC_Thr_LED_mA    "Software OC threshold for LED rail in mA.";
 CM_ SG_ 1647 OC_Thr_DRIVE_mA  "Software OC threshold for DRIVE rail in mA.";
 CM_ SG_ 1647 OC_Thr_CAP_mA    "Software OC threshold for CAP rail in mA.";
 CM_ SG_ 1648 OC_Thr_SBC_mA    "Software OC threshold for SBC rail in mA.";
+CM_ SG_ 1649 V_LED_PWR_Cmd    "0=OFF 1=ON. Controls V_LED_PWR output (PC0).";
+CM_ SG_ 1649 CAN_Relay_Enable "0=disable relay 1=enable relay. Controls CAN1<->CAN2 frame forwarding.";
+CM_ SG_ 1650 SW_Pin_State     "Current state of SW pin (PC1). 0=LOW 1=HIGH.";
+CM_ SG_ 1650 V_LED_PWR_State  "Current output state of V_LED_PWR (PC0). 0=OFF 1=ON.";
+CM_ SG_ 1650 CAN_Relay_State  "Current state of CAN relay. 0=disabled 1=enabled.";
 
 BA_DEF_ BO_ "GenMsgCycleTime" INT 0 10000;
 BA_DEF_ BO_ "GenMsgSendType"  STRING;
@@ -184,6 +200,7 @@ BA_ "GenMsgCycleTime" BO_ 1644 500;
 BA_ "GenMsgCycleTime" BO_ 1646 500;
 BA_ "GenMsgCycleTime" BO_ 1647 500;
 BA_ "GenMsgCycleTime" BO_ 1648 500;
+BA_ "GenMsgCycleTime" BO_ 1650 500;
 BA_ "GenMsgSendType"  BO_ 1634 "Cyclic";
 BA_ "GenMsgSendType"  BO_ 1635 "Cyclic";
 BA_ "GenMsgSendType"  BO_ 1636 "Cyclic";
@@ -199,6 +216,8 @@ BA_ "GenMsgSendType"  BO_ 1645 "Event";
 BA_ "GenMsgSendType"  BO_ 1646 "Cyclic";
 BA_ "GenMsgSendType"  BO_ 1647 "Cyclic";
 BA_ "GenMsgSendType"  BO_ 1648 "Cyclic";
+BA_ "GenMsgSendType"  BO_ 1649 "Event";
+BA_ "GenMsgSendType"  BO_ 1650 "Cyclic";
 
 VAL_ 1637 Fan_Mode        0 "OFF" 1 "ON_MANUAL" 2 "AUTO" ;
 VAL_ 1638 HS_Cmd_AUX      0 "DISABLE" 1 "ENABLE" ;
@@ -211,4 +230,6 @@ VAL_ 1640 OC_Cmd          1 "SET_THRESHOLD" 2 "RESET_FAULT" ;
 VAL_ 1641 EEPROM_Cmd      1 "SAVE_CONFIG" 2 "LOAD_DEFAULT" ;
 VAL_ 1642 Fan_Mode_State  0 "OFF" 1 "ON_MANUAL" 2 "AUTO" ;
 VAL_ 1643 Cfg_Fan_Def_Mode 0 "OFF" 1 "ON_MANUAL" 2 "AUTO" ;
+VAL_ 1649 V_LED_PWR_Cmd    0 "OFF" 1 "ON" ;
+VAL_ 1649 CAN_Relay_Enable 0 "DISABLE" 1 "ENABLE" ;
 

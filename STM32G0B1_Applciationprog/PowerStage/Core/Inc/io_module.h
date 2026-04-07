@@ -43,7 +43,10 @@ typedef struct {
 } HS_CTRL_;
 
 #define ADC_CHANNELS 10
-extern volatile uint16_t adc_buffer[ADC_CHANNELS];
+/* DMA is configured for WORD (32-bit) transfers in CubeMX —
+ * buffer MUST be uint32_t to match DMA_MDATAALIGN_WORD.
+ * ADC value sits in the lower 12 bits of each 32-bit word. */
+extern volatile uint32_t adc_buffer[ADC_CHANNELS];
 
 // ADC channel indices
 typedef enum {

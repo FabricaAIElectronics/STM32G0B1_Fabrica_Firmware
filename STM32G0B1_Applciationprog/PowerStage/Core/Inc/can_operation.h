@@ -53,6 +53,7 @@
 #define CMD_OC              0x668
 #define CMD_EEPROM          0x669
 #define CMD_UV              0x66D
+#define CMD_CTRL            0x671
 
 /* ============================================================
  * CAN IDs — Broadcast (TX — this device transmits)
@@ -119,6 +120,7 @@
 #define BCAST_UV            0x66E
 #define BCAST_OC_CFG_A      0x66F
 #define BCAST_OC_CFG_B      0x670
+#define BCAST_IO_STATUS     0x672
 
 /* ============================================================
  * Sub-command codes
@@ -164,6 +166,11 @@ typedef struct {
     uint16_t    uv_V12_mV;             // new V12  UV threshold
     uint8_t     uv_cmd_received;
 
+    /* --- GPIO / relay control --- */
+    uint8_t     led_pwr_state;         // 0=OFF, 1=ON
+    uint8_t     relay_state;           // 0=disable, 1=enable
+    uint8_t     ctrl_cmd_received;
+
     /* --- EEPROM --- */
     uint8_t     flash_detected;
 } CAN_RXMessage_t;
@@ -193,7 +200,22 @@ typedef struct {
 typedef struct {
     bool system_update_detected;
     bool system_transmit_stat;          // false = suppress TX (avoid bus conflicts)
+    bool relay_enabled;                 // true = relay CAN1 <-> CAN2
 } CAN_STATUS;
+
+/* ============================================================
+ * CAN2 Host Bus — relay / gateway interface
+ * ============================================================
+ *
+ * Architecture:
+ *   canHandle (FDCAN1, PB8/PB9) = Internal bus (bootloader + app primary)
+ *   hfdcan2   (FDCAN2, PC2/PC3) = Host / external bus (relay gateway)
+ *
+ * Relay behaviour (no filter):
+ *   - CAN2 RX → process commands + relay raw frame to CAN1
+ *   - CAN1 RX → process commands + relay raw frame to CAN2
+ *   - All periodic broadcasts → sent on BOTH CAN1 and CAN2
+ * ============================================================ */
 
 /* ============================================================
  * Extern declarations
@@ -204,26 +226,37 @@ extern OC_Status_t          oc_status;
 extern UV_Status_t          uv_status;
 extern CAN_STATUS           canstat;
 
-extern FDCAN_HandleTypeDef   canHandle;
+/* canHandle is a #define alias for hfdcan1 (see main.h) */
+extern FDCAN_HandleTypeDef   hfdcan1;            /* FDCAN1 — internal bus  */
+extern FDCAN_HandleTypeDef   hfdcan2;            /* FDCAN2 — host bus      */
 extern FDCAN_TxHeaderTypeDef TxHeader;
 
 /* ============================================================
  * Function prototypes
  * ============================================================ */
 
-/* Init */
+/* Init — call in PS_App_Init() */
 void CANInitTxHeader(void);
 
-/* Send */
+/* Init CAN2 host bus — call in State_Init() after CAN1 is ready */
+void CAN2_Host_Init(void);
+
+/* Send on internal bus only (CAN1 / canHandle) */
 HAL_StatusTypeDef CAN_Send(uint16_t canid, uint8_t dlc, uint8_t *data);
 
-/* RX callback — overrides HAL weak symbol */
+/* Send on host bus only (CAN2 / hfdcan2) */
+HAL_StatusTypeDef CAN2_Send(uint16_t canid, uint8_t dlc, uint8_t *data);
+
+/* Send on BOTH internal + host bus (used by all broadcasts) */
+HAL_StatusTypeDef CAN_SendAll(uint16_t canid, uint8_t dlc, uint8_t *data);
+
+/* RX callback — overrides HAL weak symbol (handles both FDCAN1 + FDCAN2) */
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs);
 
 /* Flash-over-CAN watchdog (call periodically in main loop) */
 void FOCdetection(void);
 
-/* ---- Broadcast functions ---- */
+/* ---- Broadcast functions (all dual-send on CAN1 + CAN2) ---- */
 
 /* [0x662] enable / fault / pgood / OC-warn / OC-fault bitmasks */
 void CAN_Broadcast_HS_State(void);
@@ -248,5 +281,8 @@ void CAN_Broadcast_UV(void);
 
 /* [0x66F + 0x670] OC thresholds per rail from oc_status */
 void CAN_Broadcast_OC_Config(void);
+
+/* [0x672] SW pin state, V_LED_PWR state, relay status */
+void CAN_Broadcast_IO_Status(void);
 
 #endif /* INC_CAN_OPERATION_H_ */

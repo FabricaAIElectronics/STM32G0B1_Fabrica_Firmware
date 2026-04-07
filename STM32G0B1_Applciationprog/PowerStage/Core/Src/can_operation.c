@@ -3,6 +3,15 @@
  *
  *  Created on: Oct 31, 2025
  *      Author: jordan
+ *
+ *  CAN bus architecture:
+ *    canHandle (FDCAN1, PB8/PB9) — Internal bus (OpenBLT bootloader + app primary)
+ *    hfdcan2   (FDCAN2, PC2/PC3) — Host / external bus (relay gateway)
+ *
+ *  Relay behaviour (no filter):
+ *    - Any frame received on CAN2 → parsed for commands + relayed raw to CAN1
+ *    - Any frame received on CAN1 (not from self) → relayed raw to CAN2
+ *    - All periodic broadcasts → sent on BOTH buses via CAN_SendAll()
  */
 
 #include "can_operation.h"
@@ -16,9 +25,10 @@
 /* ============================================================
  * Private variables
  * ============================================================ */
-static FDCAN_RxHeaderTypeDef rxHeader;
-static uint8_t               rxData[8];
 static volatile uint32_t     lastFlashMsgTick = 0;
+
+/* CAN2 host bus TX header (separate from CAN1's TxHeader) */
+static FDCAN_TxHeaderTypeDef TxHeader2;
 
 /* ============================================================
  * Exported variables
@@ -27,7 +37,8 @@ FDCAN_TxHeaderTypeDef TxHeader;
 
 CAN_STATUS canstat = {
     .system_update_detected = false,
-    .system_transmit_stat   = true          // TX allowed on startup
+    .system_transmit_stat   = true,         // TX allowed on startup
+    .relay_enabled          = true          // CAN1<>CAN2 relay on by default
 };
 
 CAN_RXMessage_t  can_rxMessage = {0};
@@ -47,7 +58,7 @@ UV_Status_t uv_status = {
 };
 
 /* ============================================================
- * CANInitTxHeader
+ * CANInitTxHeader — CAN1 (internal bus) TX header
  * ============================================================ */
 void CANInitTxHeader(void)
 {
@@ -60,48 +71,93 @@ void CANInitTxHeader(void)
     TxHeader.TxEventFifoControl  = FDCAN_NO_TX_EVENTS;
     TxHeader.MessageMarker       = 0;
 
-    HAL_FDCAN_ActivateNotification(&canHandle, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
+    HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
+    HAL_FDCAN_Start(&hfdcan1);
 }
 
 /* ============================================================
- * CAN_Send
+ * CAN2_Host_Init — start FDCAN2 host bus with RX notification
+ * Call after MX_FDCAN2_Init() and after CAN1 is ready.
+ * ============================================================ */
+void CAN2_Host_Init(void)
+{
+    /* Initialise CAN2 TX header (mirrors CAN1 defaults) */
+    TxHeader2.IdType              = FDCAN_STANDARD_ID;
+    TxHeader2.Identifier          = 0x100;
+    TxHeader2.DataLength          = FDCAN_DLC_BYTES_8;
+    TxHeader2.ErrorStateIndicator = FDCAN_ESI_PASSIVE;
+    TxHeader2.BitRateSwitch       = FDCAN_BRS_OFF;
+    TxHeader2.FDFormat            = FDCAN_CLASSIC_CAN;
+    TxHeader2.TxEventFifoControl  = FDCAN_NO_TX_EVENTS;
+    TxHeader2.MessageMarker       = 0;
+
+    /* Accept all frames — no filter (reject nothing) */
+    HAL_FDCAN_ConfigGlobalFilter(&hfdcan2,
+                                 FDCAN_ACCEPT_IN_RX_FIFO0,   /* non-matching std */
+                                 FDCAN_ACCEPT_IN_RX_FIFO0,   /* non-matching ext */
+                                 FDCAN_FILTER_REMOTE,         /* reject remote std */
+                                 FDCAN_FILTER_REMOTE);        /* reject remote ext */
+
+    /* Enable RX FIFO0 new-message interrupt for CAN2 */
+    HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
+
+    /* Start CAN2 peripheral */
+    HAL_FDCAN_Start(&hfdcan2);
+}
+
+/* ============================================================
+ * CAN_Send — transmit on CAN1 (internal bus) only
  * ============================================================ */
 HAL_StatusTypeDef CAN_Send(uint16_t canid, uint8_t dlc, uint8_t *data)
 {
     uint32_t timeout = HAL_GetTick() + 10;
 
-    while (HAL_FDCAN_GetTxFifoFreeLevel(&canHandle) == 0) {
+    while (HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan1) == 0) {
         if (HAL_GetTick() > timeout) return HAL_ERROR;
     }
 
     TxHeader.Identifier = canid;
     TxHeader.DataLength = dlc;
 
-    return HAL_FDCAN_AddMessageToTxFifoQ(&canHandle, &TxHeader, data);
+    return HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &TxHeader, data);
 }
 
 /* ============================================================
- * HAL_FDCAN_RxFifo0Callback
- * Overrides HAL weak symbol — called automatically on new RX.
- *
- * Handles:
- *   CMD_FAN     [0x665] — fan mode + duty
- *   CMD_HS      [0x666] — per-rail HS enable/disable
- *   DEVICE_ADDR [0x667] — system reset / bootloader
- *   CMD_OC      [0x668] — OC threshold or fault reset
- *   CMD_EEPROM  [0x669] — EEPROM save / load default
- *   CMD_UV      [0x66D] — undervoltage thresholds
+ * CAN2_Send — transmit on CAN2 (host bus) only
  * ============================================================ */
-void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
+HAL_StatusTypeDef CAN2_Send(uint16_t canid, uint8_t dlc, uint8_t *data)
 {
-    if (!(RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE)) return;
+    uint32_t timeout = HAL_GetTick() + 10;
 
-    memset(rxData, 0, sizeof(rxData));
-    HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &rxHeader, rxData);
+    while (HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan2) == 0) {
+        if (HAL_GetTick() > timeout) return HAL_ERROR;
+    }
 
+    TxHeader2.Identifier = canid;
+    TxHeader2.DataLength = dlc;
+
+    return HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &TxHeader2, data);
+}
+
+/* ============================================================
+ * CAN_SendAll — transmit on BOTH CAN1 + CAN2
+ * Used by all broadcast functions for dual-bus operation.
+ * ============================================================ */
+HAL_StatusTypeDef CAN_SendAll(uint16_t canid, uint8_t dlc, uint8_t *data)
+{
+    HAL_StatusTypeDef r1 = CAN_Send(canid, dlc, data);
+    HAL_StatusTypeDef r2 = CAN2_Send(canid, dlc, data);
+    return (r1 == HAL_OK && r2 == HAL_OK) ? HAL_OK : HAL_ERROR;
+}
+
+/* ============================================================
+ * Parse_RX_Commands — process command payload (shared by both buses)
+ * ============================================================ */
+static void Parse_RX_Commands(uint32_t id, uint8_t *data, uint32_t dlc)
+{
     /* ---- System reset / bootloader ---- */
-    if (rxHeader.Identifier == DEVICE_ADDR) {
-        if ((rxData[0] == 0xFF) && (rxHeader.DataLength == FDCAN_DLC_BYTES_2)) {
+    if (id == DEVICE_ADDR) {
+        if ((data[0] == 0xFF) && (dlc == FDCAN_DLC_BYTES_2)) {
             canstat.system_update_detected = true;
             canstat.system_transmit_stat   = false;
             NVIC_SystemReset();
@@ -109,9 +165,9 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
     }
 
     /* ---- Fan control ---- */
-    if (rxHeader.Identifier == CMD_FAN) {
-        uint8_t mode = rxData[0];
-        uint8_t duty = rxData[1];
+    if (id == CMD_FAN) {
+        uint8_t mode = data[0];
+        uint8_t duty = data[1];
         if (mode > FAN_ON_AUTO) mode = FAN_ON_AUTO;
         if (duty > 100)         duty = 100;
 
@@ -121,39 +177,100 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
     }
 
     /* ---- HS switch control ---- */
-    if (rxHeader.Identifier == CMD_HS) {
+    if (id == CMD_HS) {
         for (uint8_t i = 0; i < RAIL_COUNT; i++) {
-            can_rxMessage.hs_state[i] = (rxData[i] != 0) ? 1 : 0;
+            can_rxMessage.hs_state[i] = (data[i] != 0) ? 1 : 0;
         }
         can_rxMessage.hs_cmd_received = 1;
     }
 
     /* ---- Overcurrent threshold / fault reset ---- */
-    if (rxHeader.Identifier == CMD_OC) {
-        can_rxMessage.oc_rail_mask     = rxData[0];
-        can_rxMessage.oc_cmd          = rxData[1];
-        can_rxMessage.oc_threshold_mA = ((uint16_t)rxData[2] << 8) | rxData[3];
+    if (id == CMD_OC) {
+        can_rxMessage.oc_rail_mask     = data[0];
+        can_rxMessage.oc_cmd          = data[1];
+        can_rxMessage.oc_threshold_mA = ((uint16_t)data[2] << 8) | data[3];
         can_rxMessage.oc_cmd_received = 1;
     }
 
     /* ---- EEPROM save / load default ---- */
-    if (rxHeader.Identifier == CMD_EEPROM) {
-        if (rxData[0] & EEPROM_CMD_SAVE)         eeprom_cmd.write_eeprom_flag  = 1;
-        if (rxData[0] & EEPROM_CMD_LOAD_DEFAULT)  eeprom_cmd.reset_default_flag = 1;
+    if (id == CMD_EEPROM) {
+        if (data[0] & EEPROM_CMD_SAVE)         eeprom_cmd.write_eeprom_flag  = 1;
+        if (data[0] & EEPROM_CMD_LOAD_DEFAULT)  eeprom_cmd.reset_default_flag = 1;
     }
 
     /* ---- Undervoltage thresholds ---- */
-    if (rxHeader.Identifier == CMD_UV) {
-        can_rxMessage.uv_V24_mV       = ((uint16_t)rxData[0] << 8) | rxData[1];
-        can_rxMessage.uv_VCAP_mV      = ((uint16_t)rxData[2] << 8) | rxData[3];
-        can_rxMessage.uv_V12_mV       = ((uint16_t)rxData[4] << 8) | rxData[5];
+    if (id == CMD_UV) {
+        can_rxMessage.uv_V24_mV       = ((uint16_t)data[0] << 8) | data[1];
+        can_rxMessage.uv_VCAP_mV      = ((uint16_t)data[2] << 8) | data[3];
+        can_rxMessage.uv_V12_mV       = ((uint16_t)data[4] << 8) | data[5];
         can_rxMessage.uv_cmd_received = 1;
     }
 
+    /* ---- GPIO / relay control ---- */
+    if (id == CMD_CTRL) {
+        can_rxMessage.led_pwr_state     = data[0];
+        can_rxMessage.relay_state       = data[1];
+        can_rxMessage.ctrl_cmd_received = 1;
+    }
+
     /* ---- Flash-over-CAN watchdog ---- */
-    if ((rxData[0] == 0xFF) && (rxHeader.DataLength == FDCAN_DLC_BYTES_1)) {
+    if ((data[0] == 0xFF) && (dlc == FDCAN_DLC_BYTES_1)) {
         can_rxMessage.flash_detected = 1;
         lastFlashMsgTick = HAL_GetTick();
+    }
+}
+
+/* ============================================================
+ * HAL_FDCAN_RxFifo0Callback
+ * Overrides HAL weak symbol — called for BOTH FDCAN1 and FDCAN2.
+ *
+ * Behaviour:
+ *   CAN1 (canHandle) RX → parse commands + relay raw to CAN2
+ *   CAN2 (hfdcan2)   RX → parse commands + relay raw to CAN1
+ * ============================================================ */
+void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
+{
+    if (!(RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE)) return;
+
+    /* Use stack-local variables to avoid shared-state races between buses */
+    FDCAN_RxHeaderTypeDef rxHdr;
+    uint8_t rxBuf[8] = {0};
+
+    if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &rxHdr, rxBuf) != HAL_OK)
+        return;
+
+    /* Parse commands from whichever bus the frame arrived on */
+    Parse_RX_Commands(rxHdr.Identifier, rxBuf, rxHdr.DataLength);
+
+    /* ---- Relay: non-blocking forward to the OTHER bus ----
+     * Previous implementation called CAN_Send()/CAN2_Send() which use a
+     * busy-wait loop with HAL_GetTick() timeout.  Inside this ISR, SysTick
+     * cannot increment, so the timeout never fires → infinite loop → freeze.
+     *
+     * Fix: check TX FIFO once; if full, drop the relay frame silently.
+     * A stack-local TX header avoids races with the main-loop TxHeader. */
+    if (!canstat.relay_enabled) return;
+
+    FDCAN_TxHeaderTypeDef relayHdr = {
+        .IdType              = FDCAN_STANDARD_ID,
+        .Identifier          = rxHdr.Identifier,
+        .DataLength          = rxHdr.DataLength,
+        .ErrorStateIndicator = FDCAN_ESI_PASSIVE,
+        .BitRateSwitch       = FDCAN_BRS_OFF,
+        .FDFormat            = FDCAN_CLASSIC_CAN,
+        .TxEventFifoControl  = FDCAN_NO_TX_EVENTS,
+        .MessageMarker       = 0
+    };
+
+    if (hfdcan->Instance == FDCAN1) {
+        /* CAN1 RX → relay to CAN2 (host bus) */
+        if (HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan2) > 0)
+            HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &relayHdr, rxBuf);
+    }
+    else if (hfdcan->Instance == FDCAN2) {
+        /* CAN2 RX → relay to CAN1 (internal bus) */
+        if (HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan1) > 0)
+            HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &relayHdr, rxBuf);
     }
 }
 
@@ -200,7 +317,7 @@ void CAN_Broadcast_HS_State(void)
     data[3] = oc_status.oc_warn_mask;
     data[4] = oc_status.oc_fault_mask;
 
-    CAN_Send(BCAST_HS_STATE, FDCAN_DLC_BYTES_5, data);
+    CAN_SendAll(BCAST_HS_STATE, FDCAN_DLC_BYTES_5, data);
 }
 
 /* ============================================================
@@ -223,7 +340,7 @@ void CAN_Broadcast_HS_Current_A(SystemMeasurement_t *ms)
     data[4] = (sbc   >> 8) & 0xFF;  data[5] = sbc   & 0xFF;
     data[6] = (drive >> 8) & 0xFF;  data[7] = drive & 0xFF;
 
-    CAN_Send(BCAST_HS_CURR_A, FDCAN_DLC_BYTES_8, data);
+    CAN_SendAll(BCAST_HS_CURR_A, FDCAN_DLC_BYTES_8, data);
 }
 
 /* ============================================================
@@ -242,7 +359,7 @@ void CAN_Broadcast_HS_Current_B(SystemMeasurement_t *ms)
     data[0] = (aux >> 8) & 0xFF;  data[1] = aux & 0xFF;
     data[2] = (led >> 8) & 0xFF;  data[3] = led & 0xFF;
 
-    CAN_Send(BCAST_HS_CURR_B, FDCAN_DLC_BYTES_4, data);
+    CAN_SendAll(BCAST_HS_CURR_B, FDCAN_DLC_BYTES_4, data);
 }
 
 /* ============================================================
@@ -278,7 +395,7 @@ void CAN_Broadcast_Voltage(SystemMeasurement_t *ms)
     data[6] = uv_status.uv_fault_mask;
     data[7] = 0x00;
 
-    CAN_Send(BCAST_VOLTAGE, FDCAN_DLC_BYTES_8, data);
+    CAN_SendAll(BCAST_VOLTAGE, FDCAN_DLC_BYTES_8, data);
 }
 
 /* ============================================================
@@ -301,7 +418,7 @@ void CAN_Broadcast_Fan(FanCTRL_t *fan, float temp_C)
     data[2] = (uint8_t)((temp_raw >> 8) & 0xFF);
     data[3] = (uint8_t)( temp_raw       & 0xFF);
 
-    CAN_Send(BCAST_FAN, FDCAN_DLC_BYTES_4, data);
+    CAN_SendAll(BCAST_FAN, FDCAN_DLC_BYTES_4, data);
 }
 
 /* ============================================================
@@ -330,7 +447,7 @@ void CAN_Broadcast_EEPROM(Config *cfg)
     data[6] = 0x00;
     data[7] = 0x00;
 
-    CAN_Send(BCAST_EEPROM, FDCAN_DLC_BYTES_8, data);
+    CAN_SendAll(BCAST_EEPROM, FDCAN_DLC_BYTES_8, data);
 }
 
 /* ============================================================
@@ -353,7 +470,7 @@ void CAN_Broadcast_UV(void)
     data[4] = (uv_status.uv_V12_mV  >> 8) & 0xFF;
     data[5] =  uv_status.uv_V12_mV        & 0xFF;
 
-    CAN_Send(BCAST_UV, FDCAN_DLC_BYTES_6, data);
+    CAN_SendAll(BCAST_UV, FDCAN_DLC_BYTES_6, data);
 }
 
 /* ============================================================
@@ -383,12 +500,32 @@ void CAN_Broadcast_OC_Config(void)
     dataA[6] = (oc_status.oc_threshold_mA[RAIL_CAP]   >> 8) & 0xFF;
     dataA[7] =  oc_status.oc_threshold_mA[RAIL_CAP]         & 0xFF;
 
-    CAN_Send(BCAST_OC_CFG_A, FDCAN_DLC_BYTES_8, dataA);
+    CAN_SendAll(BCAST_OC_CFG_A, FDCAN_DLC_BYTES_8, dataA);
 
     /* Frame B: RAIL_SBC */
     uint8_t dataB[2];
     dataB[0] = (oc_status.oc_threshold_mA[RAIL_SBC] >> 8) & 0xFF;
     dataB[1] =  oc_status.oc_threshold_mA[RAIL_SBC]       & 0xFF;
 
-    CAN_Send(BCAST_OC_CFG_B, FDCAN_DLC_BYTES_2, dataB);
+    CAN_SendAll(BCAST_OC_CFG_B, FDCAN_DLC_BYTES_2, dataB);
+}
+
+/* ============================================================
+ * CAN_Broadcast_IO_Status
+ *
+ * [0x672] DLC=3
+ *   Byte[0]: SW pin state       (0/1)
+ *   Byte[1]: V_LED_PWR state    (0/1)
+ *   Byte[2]: CAN relay enabled  (0/1)
+ * ============================================================ */
+void CAN_Broadcast_IO_Status(void)
+{
+    if (!canstat.system_transmit_stat) return;
+
+    uint8_t data[3];
+    data[0] = (uint8_t)HAL_GPIO_ReadPin(SW_GPIO_Port, SW_Pin);
+    data[1] = (uint8_t)HAL_GPIO_ReadPin(V_LED_PWR_GPIO_Port, V_LED_PWR_Pin);
+    data[2] = (uint8_t)canstat.relay_enabled;
+
+    CAN_SendAll(BCAST_IO_STATUS, FDCAN_DLC_BYTES_3, data);
 }

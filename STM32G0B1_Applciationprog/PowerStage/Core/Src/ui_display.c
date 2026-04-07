@@ -142,33 +142,39 @@ static void Draw_Page_Overview(void)
              (unsigned int)display_data.error_code);
     draw_row(0, buf);
 
-    /* Row 1: V24 + VCAP */
+    /* Row 1: V24 + VCAP (with V unit) */
     fmt_f1(tmp, sizeof(tmp), display_data.v24_V);
-    snprintf(buf, sizeof(buf), "V24:%-5s", tmp);
+    snprintf(buf, sizeof(buf), "V24:%-4sV", tmp);
     fmt_f1(tmp, sizeof(tmp), display_data.vcap_V);
-    snprintf(buf + 9, sizeof(buf) - 9, "VC:%-5s", tmp);
+    snprintf(buf + 9, sizeof(buf) - 9, "VC:%-4sV", tmp);
     draw_row(1, buf);
 
-    /* Row 2: V12 + Temperature */
+    /* Row 2: V12 + Temperature (with V and C units) */
     fmt_f1(tmp, sizeof(tmp), display_data.v12_V);
-    snprintf(buf, sizeof(buf), "V12:%-5s", tmp);
+    snprintf(buf, sizeof(buf), "V12:%-4sV", tmp);
     fmt_f1(tmp, sizeof(tmp), display_data.temp_C);
-    snprintf(buf + 9, sizeof(buf) - 9, " T:%-5s", tmp);
+    snprintf(buf + 9, sizeof(buf) - 9, " T:%-4sC", tmp);
     draw_row(2, buf);
 
-    /* Row 3: BAT + CAP current (mA, integer) */
-    snprintf(buf, sizeof(buf), "BAT:%4d CAP:%4d",
-             (int)display_data.i_bat_mA, (int)display_data.i_cap_mA);
+    /* Row 3: BAT + CAP current (A, 1 decimal) */
+    fmt_f1(tmp, sizeof(tmp), display_data.i_bat_mA / 1000.0f);
+    snprintf(buf, sizeof(buf), "BT:%4sA", tmp);
+    fmt_f1(tmp, sizeof(tmp), display_data.i_cap_mA / 1000.0f);
+    snprintf(buf + 8, sizeof(buf) - 8, " CP:%4sA", tmp);
     draw_row(3, buf);
 
-    /* Row 4: DRIVE + SBC current */
-    snprintf(buf, sizeof(buf), "DRV:%4d SBC:%4d",
-             (int)display_data.i_drive_mA, (int)display_data.i_sbc_mA);
+    /* Row 4: DRIVE + SBC current (A) */
+    fmt_f1(tmp, sizeof(tmp), display_data.i_drive_mA / 1000.0f);
+    snprintf(buf, sizeof(buf), "DR:%4sA", tmp);
+    fmt_f1(tmp, sizeof(tmp), display_data.i_sbc_mA / 1000.0f);
+    snprintf(buf + 8, sizeof(buf) - 8, " SB:%4sA", tmp);
     draw_row(4, buf);
 
-    /* Row 5: AUX + LED current */
-    snprintf(buf, sizeof(buf), "AUX:%4d LED:%4d",
-             (int)display_data.i_aux_mA, (int)display_data.i_led_mA);
+    /* Row 5: AUX + LED current (A) */
+    fmt_f1(tmp, sizeof(tmp), display_data.i_aux_mA / 1000.0f);
+    snprintf(buf, sizeof(buf), "AX:%4sA", tmp);
+    fmt_f1(tmp, sizeof(tmp), display_data.i_led_mA / 1000.0f);
+    snprintf(buf + 8, sizeof(buf) - 8, " LD:%4sA", tmp);
     draw_row(5, buf);
 }
 

@@ -47,8 +47,9 @@ extern I2C_HandleTypeDef  hi2c1;
 
 /* ============================================================
  * Module config — loaded from EEPROM at startup
+ * (public so CAN broadcasts can echo it)
  * ============================================================ */
-static Config g_config;
+Config g_config;
 
 /* ============================================================
  * Public state flags
@@ -218,6 +219,14 @@ static void Handle_CAN_Commands(void)
             EEPROM_Write_Config(1, 0, &g_config);
         Apply_Config();
     }
+
+    /* ── GPIO / relay control ───────────────────────────── */
+    if (can_rxMessage.ctrl_cmd_received) {
+        can_rxMessage.ctrl_cmd_received = 0;
+        HAL_GPIO_WritePin(V_LED_PWR_GPIO_Port, V_LED_PWR_Pin,
+                          can_rxMessage.led_pwr_state ? GPIO_PIN_SET : GPIO_PIN_RESET);
+        canstat.relay_enabled = (can_rxMessage.relay_state != 0);
+    }
 }
 
 /* ── Factory-reset button (PC13 / B1) ─────────────────────────────────────
@@ -269,6 +278,10 @@ static void Common_Task(void)
         CAN_Broadcast_HS_Current_B(&measurements);
         CAN_Broadcast_Voltage(&measurements);
         CAN_Broadcast_Fan(&fan, measurements.NTCTemperature_C);
+        CAN_Broadcast_EEPROM(&g_config);
+        CAN_Broadcast_UV();
+        CAN_Broadcast_OC_Config();
+        CAN_Broadcast_IO_Status();
     }
 
     /* ── Display scheduler ─────────────────────────────────────────── */
@@ -300,8 +313,10 @@ static void State_Init(void)
     fan_init();         /* start TIM1 PWM, output = 0                     */
     Apply_Config();     /* push EEPROM values → oc_status / uv_status / fan */
 
+    fan_ctrl_on();
     /* ── CAN ─────────────────────────────────────────────────────── */
     canstat.system_transmit_stat = true;
+    CAN2_Host_Init();    /* Start FDCAN2 host bus with RX + relay      */
 
     /* ── ADC DMA — start once; continuous mode keeps it running ───── */
     HAL_ADC_Start_DMA(&hadc1, (uint32_t *)adc_buffer, ADC_CHANNELS);

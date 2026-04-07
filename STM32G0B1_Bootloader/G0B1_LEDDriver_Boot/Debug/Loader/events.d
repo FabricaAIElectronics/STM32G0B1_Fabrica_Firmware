@@ -1,4 +1,5 @@
-Loader/xcp.o: C:/Users/jorda/Documents/GitHub/openblt/Target/Source/xcp.c \
+Loader/events.o: \
+ C:/Users/jorda/Documents/GitHub/openblt/Target/Source/events.c \
  C:/Users/jorda/Documents/GitHub/openblt/Target/Source/boot.h \
  C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/types.h \
  C:/Users/jorda/Documents/GitHub/openblt/Target/Source/asserts.h \

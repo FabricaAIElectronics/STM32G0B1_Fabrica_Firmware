@@ -36,13 +36,13 @@ Core/Src/powerstage_app.o: ../Core/Src/powerstage_app.c \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr_ex.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h \
- ../Core/Inc/io_module.h ../Core/Inc/fan_ctrl.h \
- ../Core/Inc/can_operation.h \
+ ../Core/Inc/eeprom_driver.h ../Core/Inc/io_module.h \
+ ../Core/Inc/fan_ctrl.h ../Core/Inc/can_operation.h \
  ../Drivers/CMSIS/Device/ST/STM32G0xx/Include/stm32g0b1xx.h \
  ../Core/Inc/io_module.h ../Core/Inc/fan_ctrl.h \
- ../Core/Inc/eeprom_driver.h ../Core/Inc/eeprom_driver.h \
- ../Core/Inc/ui_display.h ../Core/Inc/display_scheduler.h \
- ../Core/Inc/ssd1306.h ../Core/Inc/fonts.h ../Core/Inc/fonts.h
+ ../Core/Inc/eeprom_driver.h ../Core/Inc/ui_display.h \
+ ../Core/Inc/display_scheduler.h ../Core/Inc/ssd1306.h \
+ ../Core/Inc/fonts.h ../Core/Inc/fonts.h
 ../Core/Inc/powerstage_app.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal.h:
@@ -81,13 +81,13 @@ Core/Src/powerstage_app.o: ../Core/Src/powerstage_app.c \
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr_ex.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h:
+../Core/Inc/eeprom_driver.h:
 ../Core/Inc/io_module.h:
 ../Core/Inc/fan_ctrl.h:
 ../Core/Inc/can_operation.h:
 ../Drivers/CMSIS/Device/ST/STM32G0xx/Include/stm32g0b1xx.h:
 ../Core/Inc/io_module.h:
 ../Core/Inc/fan_ctrl.h:
-../Core/Inc/eeprom_driver.h:
 ../Core/Inc/eeprom_driver.h:
 ../Core/Inc/ui_display.h:
 ../Core/Inc/display_scheduler.h:

@@ -509,7 +509,7 @@ static void MX_TIM1_Init(void)
   }
   sConfigOC.OCMode = TIM_OCMODE_PWM1;
   sConfigOC.Pulse = 100;
-  sConfigOC.OCPolarity = TIM_OCPOLARITY_LOW;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
@@ -573,7 +573,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, V_LED_PWR_Pin|SW_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(V_LED_PWR_GPIO_Port, V_LED_PWR_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, LED_GREEN_Pin|FAN_CTRL_Pin|EN_AUX_Pin, GPIO_PIN_RESET);
@@ -590,11 +590,17 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : V_LED_PWR_Pin SW_Pin */
-  GPIO_InitStruct.Pin = V_LED_PWR_Pin|SW_Pin;
+  /*Configure GPIO pin : V_LED_PWR_Pin */
+  GPIO_InitStruct.Pin = V_LED_PWR_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(V_LED_PWR_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : SW_Pin FLT_LED_Pin */
+  GPIO_InitStruct.Pin = SW_Pin|FLT_LED_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LED_GREEN_Pin */
@@ -618,12 +624,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : FLT_LED_Pin */
-  GPIO_InitStruct.Pin = FLT_LED_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(FLT_LED_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : EN_LED_Pin EN_DRIVE_Pin */
   GPIO_InitStruct.Pin = EN_LED_Pin|EN_DRIVE_Pin;

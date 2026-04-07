@@ -40,6 +40,9 @@ void fan_ctrl_speed(FanCTRL_t *f, uint8_t dutycycle){
 		f->dutycycle_pct = dutycycle;
 	}
 	uint32_t period  = __HAL_TIM_GET_AUTORELOAD(f->htim);
+	/* TIM1 output polarity is LOW (inverted), so invert the compare
+	 * value so that a higher duty % = higher fan speed. */
+//	uint32_t compare = period - (period * f->dutycycle_pct) / 100;
 	uint32_t compare = (period * f->dutycycle_pct) / 100;
 
 	__HAL_TIM_SET_COMPARE(f->htim, f->channel, compare);

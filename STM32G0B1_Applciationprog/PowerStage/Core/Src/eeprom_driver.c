@@ -19,8 +19,8 @@ void LoadDefault(Config *config){
 
     /* Fan defaults */
     config->fan_default_mode    = 0;        // FAN_OFF
-    config->fan_default_duty    = 50;       // 50 %
-    config->fan_min_duty        = 20;       // 20 % (below this fan may stall)
+    config->fan_default_duty    = 20;       // 50 %
+    config->fan_min_duty        = 5;       // 20 % (below this fan may stall)
     config->fan_auto_on_temp    = 50;       // turn ON  above 50 °C
     config->fan_auto_off_temp   = 45;       // turn OFF below 45 °C (hysteresis)
 

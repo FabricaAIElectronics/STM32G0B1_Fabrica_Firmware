@@ -86,10 +86,22 @@ static void Apply_Config(void)
 
     /* Fan defaults — update the fan_ctrl module instance */
     fan.Mode          = (fanMode_t)g_config.fan_default_mode;
-    fan.dutycycle_pct = g_config.fan_default_duty;
     fan.min_dutycycle = g_config.fan_min_duty;
     fan.auto_on_temp  = g_config.fan_auto_on_temp;
     fan.auto_off_temp = g_config.fan_auto_off_temp;
+
+    /* Actually drive the fan hardware to match the saved config */
+    if (fan.Mode == FAN_ON) {
+        fan_ctrl_on();
+        fan_ctrl_speed(&fan, g_config.fan_default_duty);
+    } else if (fan.Mode == FAN_ON_AUTO) {
+        /* AUTO will be handled by FAN_AutoControl() each cycle;
+         * just load the duty, don't force the fan on yet. */
+        fan.dutycycle_pct = g_config.fan_default_duty;
+    } else {
+        fan_ctrl_off();
+        fan.dutycycle_pct = g_config.fan_default_duty;
+    }
 }
 
 /* Run all ADC-based measurements into the global `measurements` struct */
@@ -107,10 +119,12 @@ static void Run_Measurements(void)
     NTC_Temp_measurement(&measurements);
 }
 
-/* Update OC fault / warning masks from live currents and HW FLT pins */
+/* Update OC fault / warning masks from live currents and HW FLT pins.
+ * When a software OC threshold is exceeded the offending rail is
+ * disabled immediately (latched until an OC_CMD_RESET_FAULT clears it). */
 static void Check_OC(void)
 {
-    const float currents[RAIL_COUNT] = {
+    const uint16_t currents[RAIL_COUNT] = {
         measurements.current_mA._curraux,
         measurements.current_mA._currled,
         measurements.current_mA._currdrive,
@@ -118,14 +132,20 @@ static void Check_OC(void)
         measurements.current_mA._currsbc
     };
 
+    /* Hardware FLT pins — rebuild every cycle (active while FLT asserted) */
     oc_status.oc_fault_mask = 0;
-    oc_status.oc_warn_mask  = 0;
-
     for (uint8_t i = 0; i < RAIL_COUNT; i++) {
         if (HS_Fault(&hotswap[i]))
             oc_status.oc_fault_mask |= (1u << i);
-        if (currents[i] > (float)oc_status.oc_threshold_mA[i])
+    }
+
+    /* Software OC — latched: once set, stays until OC_CMD_RESET_FAULT */
+    for (uint8_t i = 0; i < RAIL_COUNT; i++) {
+        if ((oc_status.oc_threshold_mA[i] > 0) &&
+            (currents[i] > oc_status.oc_threshold_mA[i])) {
             oc_status.oc_warn_mask |= (1u << i);
+            HS_Disable(&hotswap[i]);            /* shut down the rail */
+        }
     }
 }
 
@@ -134,11 +154,11 @@ static void Check_UV(void)
 {
     uv_status.uv_fault_mask = 0;
 
-    if ((measurements.voltage_V.V24  * 1000.0f) < (float)uv_status.uv_V24_mV)
+    if (measurements.voltage_mV.V24  < uv_status.uv_V24_mV)
         uv_status.uv_fault_mask |= UV_FAULT_V24;
-    if ((measurements.voltage_V.VCAP * 1000.0f) < (float)uv_status.uv_VCAP_mV)
+    if (measurements.voltage_mV.VCAP < uv_status.uv_VCAP_mV)
         uv_status.uv_fault_mask |= UV_FAULT_VCAP;
-    if ((measurements.voltage_V.V12  * 1000.0f) < (float)uv_status.uv_V12_mV)
+    if (measurements.voltage_mV.V12  < uv_status.uv_V12_mV)
         uv_status.uv_fault_mask |= UV_FAULT_V12;
 }
 
@@ -180,6 +200,11 @@ static void Handle_CAN_Commands(void)
                 }
             }
         } else if (can_rxMessage.oc_cmd == OC_CMD_RESET_FAULT) {
+            /* Re-enable rails that were shut down by software OC */
+            for (uint8_t i = 0; i < RAIL_COUNT; i++) {
+                if (oc_status.oc_warn_mask & (1u << i))
+                    HS_Enable(&hotswap[i]);
+            }
             oc_status.oc_fault_mask = 0;
             oc_status.oc_warn_mask  = 0;
         }
@@ -197,11 +222,19 @@ static void Handle_CAN_Commands(void)
     if (eeprom_cmd.write_eeprom_flag) {
         eeprom_cmd.write_eeprom_flag = 0;
         /* Snapshot live values into config before writing */
-        g_config.fan_default_mode = (uint8_t)fan.Mode;
-        g_config.fan_default_duty = fan.dutycycle_pct;
-        g_config.fan_min_duty     = fan.min_dutycycle;
+        g_config.fan_default_mode  = (uint8_t)fan.Mode;
+        g_config.fan_default_duty  = fan.dutycycle_pct;
+        g_config.fan_min_duty      = fan.min_dutycycle;
         g_config.fan_auto_on_temp  = fan.auto_on_temp;
         g_config.fan_auto_off_temp = fan.auto_off_temp;
+
+        /* Snapshot current HS rail enable states */
+        g_config.hs_default_state = 0;
+        for (uint8_t i = 0; i < RAIL_COUNT; i++) {
+            if (HAL_GPIO_ReadPin(hotswap[i].enable.port, hotswap[i].enable.pin) == GPIO_PIN_SET)
+                g_config.hs_default_state |= (1u << i);
+        }
+
         for (uint8_t i = 0; i < CONFIG_RAIL_COUNT; i++)
             g_config.oc_threshold_mA[i] = oc_status.oc_threshold_mA[i];
         g_config.uv_V24_mV  = uv_status.uv_V24_mV;
@@ -313,7 +346,7 @@ static void State_Init(void)
     fan_init();         /* start TIM1 PWM, output = 0                     */
     Apply_Config();     /* push EEPROM values → oc_status / uv_status / fan */
 
-    fan_ctrl_on();
+
     /* ── CAN ─────────────────────────────────────────────────────── */
     canstat.system_transmit_stat = true;
     CAN2_Host_Init();    /* Start FDCAN2 host bus with RX + relay      */

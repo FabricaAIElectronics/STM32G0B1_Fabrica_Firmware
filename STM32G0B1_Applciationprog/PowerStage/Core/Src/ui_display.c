@@ -143,14 +143,14 @@ static void Draw_Page_Overview(void)
     draw_row(0, buf);
 
     /* Row 1: V24 + VCAP (with V unit) */
-    fmt_f1(tmp, sizeof(tmp), display_data.v24_V);
+    fmt_f1(tmp, sizeof(tmp), display_data.v24_mV / 1000.0f);
     snprintf(buf, sizeof(buf), "V24:%-4sV", tmp);
-    fmt_f1(tmp, sizeof(tmp), display_data.vcap_V);
+    fmt_f1(tmp, sizeof(tmp), display_data.vcap_mV / 1000.0f);
     snprintf(buf + 9, sizeof(buf) - 9, "VC:%-4sV", tmp);
     draw_row(1, buf);
 
     /* Row 2: V12 + Temperature (with V and C units) */
-    fmt_f1(tmp, sizeof(tmp), display_data.v12_V);
+    fmt_f1(tmp, sizeof(tmp), display_data.v12_mV / 1000.0f);
     snprintf(buf, sizeof(buf), "V12:%-4sV", tmp);
     fmt_f1(tmp, sizeof(tmp), display_data.temp_C);
     snprintf(buf + 9, sizeof(buf) - 9, " T:%-4sC", tmp);
@@ -344,9 +344,9 @@ void UI_Display_SetErrorCode(uint16_t error_code)
 void UI_Display_UpdateFromModules(SystemMeasurement_t *ms, FanCTRL_t *fan)
 {
     /* Voltages */
-    display_data.v24_V  = ms->voltage_V.V24;
-    display_data.vcap_V = ms->voltage_V.VCAP;
-    display_data.v12_V  = ms->voltage_V.V12;
+    display_data.v24_mV  = ms->voltage_mV.V24;
+    display_data.vcap_mV = ms->voltage_mV.VCAP;
+    display_data.v12_mV  = ms->voltage_mV.V12;
     display_data.temp_C = ms->NTCTemperature_C;
 
     /* Currents */

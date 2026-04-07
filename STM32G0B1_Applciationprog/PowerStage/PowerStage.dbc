@@ -29,15 +29,15 @@ BO_ 1634 BCAST_HS_STATE : 5 PowerStage
  SG_ HS_OC_Fault_Mask  : 32|8@1+ (1,0)       [0|31]   ""      Master
 
 BO_ 1635 BCAST_HS_CURR_A : 8 PowerStage
- SG_ I_BAT_mA          : 7|16@0+  (0.001,0)  [0|50]   "A"     Master
- SG_ I_CAP_mA          : 23|16@0+ (0.001,0)  [0|50]   "A"     Master
- SG_ I_SBC_mA          : 39|16@0+ (0.001,0)  [0|50]   "A"     Master
- SG_ I_DRIVE_mA        : 55|16@0+ (0.001,0)  [0|50]   "A"     Master
+ SG_ I_BAT_mA          : 7|16@0+  (1,0)  [0|50000]   "mA"     Master
+ SG_ I_CAP_mA          : 23|16@0+ (1,0)  [0|50000]   "mA"     Master
+ SG_ I_SBC_mA          : 39|16@0+ (1,0)  [0|50000]   "mA"     Master
+ SG_ I_DRIVE_mA        : 55|16@0+ (1,0)  [0|50000]   "mA"     Master
 
 BO_ 1636 BCAST_VOLTAGE : 8 PowerStage
- SG_ V24_mV            : 7|16@0+  (0.001,0)  [0|30]   "V"     Master
- SG_ VCAP_mV           : 23|16@0+ (0.001,0)  [0|30]   "V"     Master
- SG_ V12_mV            : 39|16@0+ (0.001,0)  [0|15]   "V"     Master
+ SG_ V24_mV            : 7|16@0+  (1,0)  [0|30000]   "mV"     Master
+ SG_ VCAP_mV           : 23|16@0+ (1,0)  [0|30000]   "mV"     Master
+ SG_ V12_mV            : 39|16@0+ (1,0)  [0|15000]   "mV"     Master
  SG_ UV_Fault_Mask     : 48|8@1+  (1,0)      [0|7]    ""      Master
  SG_ Reserved_B7       : 56|8@1+  (1,0)      [0|255]  ""      Master
 
@@ -58,7 +58,7 @@ BO_ 1639 DEVICE_ADDR : 2 Master
 BO_ 1640 CMD_OC : 4 Master
  SG_ OC_Rail_Mask      : 0|8@1+  (1,0)       [0|255]  ""      PowerStage
  SG_ OC_Cmd            : 8|8@1+  (1,0)       [0|255]  ""      PowerStage
- SG_ OC_Threshold_mA   : 23|16@0+(0.001,0)   [0|50]   "A"     PowerStage
+ SG_ OC_Threshold_mA   : 23|16@0+(1,0)       [0|50000] "mA"   PowerStage
 
 BO_ 1641 CMD_EEPROM : 1 Master
  SG_ EEPROM_Cmd        : 0|8@1+  (1,0)       [0|255]  ""      PowerStage
@@ -78,27 +78,27 @@ BO_ 1643 BCAST_EEPROM : 8 PowerStage
  SG_ Cfg_Reserved      : 48|16@1+(1,0)       [0|65535] ""     Master
 
 BO_ 1644 BCAST_HS_CURR_B : 4 PowerStage
- SG_ I_AUX_mA          : 7|16@0+  (0.001,0)  [0|50]   "A"     Master
- SG_ I_LED_mA          : 23|16@0+ (0.001,0)  [0|50]   "A"     Master
+ SG_ I_AUX_mA          : 7|16@0+  (1,0)  [0|50000]   "mA"     Master
+ SG_ I_LED_mA          : 23|16@0+ (1,0)  [0|50000]   "mA"     Master
 
 BO_ 1645 CMD_UV : 6 Master
- SG_ UV_V24_mV         : 7|16@0+  (0.001,0)  [0|30]   "V"     PowerStage
- SG_ UV_VCAP_mV        : 23|16@0+ (0.001,0)  [0|30]   "V"     PowerStage
- SG_ UV_V12_mV         : 39|16@0+ (0.001,0)  [0|15]   "V"     PowerStage
+ SG_ UV_V24_mV         : 7|16@0+  (1,0)  [0|30000]   "mV"     PowerStage
+ SG_ UV_VCAP_mV        : 23|16@0+ (1,0)  [0|30000]   "mV"     PowerStage
+ SG_ UV_V12_mV         : 39|16@0+ (1,0)  [0|15000]   "mV"     PowerStage
 
 BO_ 1646 BCAST_UV : 6 PowerStage
- SG_ UV_Active_V24_mV  : 7|16@0+  (0.001,0)  [0|30]   "V"     Master
- SG_ UV_Active_VCAP_mV : 23|16@0+ (0.001,0)  [0|30]   "V"     Master
- SG_ UV_Active_V12_mV  : 39|16@0+ (0.001,0)  [0|15]   "V"     Master
+ SG_ UV_Active_V24_mV  : 7|16@0+  (1,0)  [0|30000]   "mV"     Master
+ SG_ UV_Active_VCAP_mV : 23|16@0+ (1,0)  [0|30000]   "mV"     Master
+ SG_ UV_Active_V12_mV  : 39|16@0+ (1,0)  [0|15000]   "mV"     Master
 
 BO_ 1647 BCAST_OC_CFG_A : 8 PowerStage
- SG_ OC_Thr_AUX_mA    : 7|16@0+  (0.001,0)  [0|50]   "A"     Master
- SG_ OC_Thr_LED_mA    : 23|16@0+ (0.001,0)  [0|50]   "A"     Master
- SG_ OC_Thr_DRIVE_mA  : 39|16@0+ (0.001,0)  [0|50]   "A"     Master
- SG_ OC_Thr_CAP_mA    : 55|16@0+ (0.001,0)  [0|50]   "A"     Master
+ SG_ OC_Thr_AUX_mA    : 7|16@0+  (1,0)  [0|50000]   "mA"     Master
+ SG_ OC_Thr_LED_mA    : 23|16@0+ (1,0)  [0|50000]   "mA"     Master
+ SG_ OC_Thr_DRIVE_mA  : 39|16@0+ (1,0)  [0|50000]   "mA"     Master
+ SG_ OC_Thr_CAP_mA    : 55|16@0+ (1,0)  [0|50000]   "mA"     Master
 
 BO_ 1648 BCAST_OC_CFG_B : 2 PowerStage
- SG_ OC_Thr_SBC_mA    : 7|16@0+  (0.001,0)  [0|50]   "A"     Master
+ SG_ OC_Thr_SBC_mA    : 7|16@0+  (1,0)  [0|50000]   "mA"     Master
 
 BO_ 1649 CMD_CTRL : 2 Master
  SG_ V_LED_PWR_Cmd     : 0|8@1+  (1,0)       [0|1]    ""      PowerStage

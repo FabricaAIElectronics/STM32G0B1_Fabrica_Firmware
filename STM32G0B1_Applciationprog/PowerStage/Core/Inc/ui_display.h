@@ -95,19 +95,19 @@ typedef struct {
     SystemState_t   state;
     uint16_t        error_code;         // ERR_xxx bitmask
 
-    /* Voltages (V) */
-    float           v24_V;
-    float           vcap_V;
-    float           v12_V;
+    /* Voltages (mV) */
+    uint16_t        v24_mV;
+    uint16_t        vcap_mV;
+    uint16_t        v12_mV;
     float           temp_C;
 
     /* Currents (mA) */
-    float           i_bat_mA;
-    float           i_cap_mA;
-    float           i_sbc_mA;
-    float           i_drive_mA;
-    float           i_aux_mA;
-    float           i_led_mA;
+    uint16_t        i_bat_mA;
+    uint16_t        i_cap_mA;
+    uint16_t        i_sbc_mA;
+    uint16_t        i_drive_mA;
+    uint16_t        i_aux_mA;
+    uint16_t        i_led_mA;
 
     /* Fan */
     uint8_t         fan_mode;           // 0=OFF, 1=ON, 2=AUTO

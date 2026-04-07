@@ -4,6 +4,18 @@
         <Connection Bus="1" Enabled="1" Protocol="0" SymbolsFileName="PowerStage.dbc" BitRate="28" Connection="pcan500@pcan_usb" Name="Connection1"/>
     </Connections>
     <MessageFilters/>
+    <TransmitList>
+        <TransmitListItem Bus="1" CanId="1637" Type="0" DLC="2" Data="010A" Creator="User"/>
+        <TransmitListItem Bus="1" CanId="1649" Type="0" DLC="2" Data="0001" Creator="User"/>
+        <TransmitListItem Bus="1" CanId="1638" Type="0" DLC="5" Data="010101" Creator="User"/>
+        <TransmitListItem Bus="1" CanId="1638" Type="0" DLC="5" Data="" Creator="User"/>
+        <TransmitListItem Bus="1" CanId="273" Type="0" DLC="8" Data="FFFF" Creator="User"/>
+        <TransmitListItem Bus="1" CanId="1637" Type="0" DLC="2" Data="0032" Creator="User"/>
+        <TransmitListItem Bus="1" CanId="1641" Type="0" DLC="1" Data="01" Creator="User"/>
+        <TransmitListItem Bus="1" CanId="1645" Type="0" DLC="6" Data="465046502EE0" Creator="User"/>
+        <TransmitListItem Bus="1" CanId="1640" Type="0" DLC="4" Data="04010320" Creator="User"/>
+        <TransmitListItem Bus="1" CanId="1649" Type="0" DLC="2" Data="01" Creator="User"/>
+    </TransmitList>
     <Files>
         <File RelativePath="PowerStage.dbc"/>
     </Files>

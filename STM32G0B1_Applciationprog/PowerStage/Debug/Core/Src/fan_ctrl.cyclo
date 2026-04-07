@@ -2,4 +2,4 @@
 ../Core/Src/fan_ctrl.c:27:6:fan_ctrl_on	1
 ../Core/Src/fan_ctrl.c:31:6:fan_ctrl_off	1
 ../Core/Src/fan_ctrl.c:35:6:fan_ctrl_speed	7
-../Core/Src/fan_ctrl.c:54:6:FAN_AutoControl	6
+../Core/Src/fan_ctrl.c:57:6:FAN_AutoControl	6

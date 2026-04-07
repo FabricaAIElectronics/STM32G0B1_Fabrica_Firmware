@@ -102,28 +102,27 @@ bool HS_PGood(HS_CTRL_ *HS){
 }
 
 void Bat_curr_measurement(SystemMeasurement_t *ms){
-	ms->current_mA._currbat = (adc_buffer[ADC_CURR_BAT]*K_SCALE)/RSENSE;
-	 //ILOAD = adc*3.3/(4095*48 * Rsense)
+	ms->current_mA._currbat = (uint16_t)((adc_buffer[ADC_CURR_BAT]*K_SCALE)/RSENSE);
 }
 
 void Cap_curr_measurement(SystemMeasurement_t *ms){
-	ms->current_mA._currcap = (adc_buffer[ADC_CURR_CAP]*K_SCALE)/RSENSE;
+	ms->current_mA._currcap = (uint16_t)((adc_buffer[ADC_CURR_CAP]*K_SCALE)/RSENSE);
 }
 
 void SBC_curr_measurement(SystemMeasurement_t *ms){
-	ms->current_mA._currsbc= (adc_buffer[ADC_CURR_SBC]*K_SCALE)/RSENSE;
+	ms->current_mA._currsbc = (uint16_t)((adc_buffer[ADC_CURR_SBC]*K_SCALE)/RSENSE);
 }
 
 void Drive_curr_measurement(SystemMeasurement_t *ms){
-	ms->current_mA._currdrive = (adc_buffer[ADC_CURR_DRIVE]*K_SCALE)/RSENSE;
+	ms->current_mA._currdrive = (uint16_t)((adc_buffer[ADC_CURR_DRIVE]*K_SCALE)/RSENSE);
 }
 
 void LED_curr_measurement(SystemMeasurement_t *ms){
-	ms->current_mA._currled = (adc_buffer[ADC_CURR_LED]*K_SCALE)/RSENSE;
+	ms->current_mA._currled = (uint16_t)((adc_buffer[ADC_CURR_LED]*K_SCALE)/RSENSELED);
 }
 
 void AUX_curr_measurement(SystemMeasurement_t *ms){
-	ms->current_mA._curraux = (adc_buffer[ADC_CURR_AUX]*K_SCALE)/RSENSE;
+	ms->current_mA._curraux = (uint16_t)((adc_buffer[ADC_CURR_AUX]*K_SCALE)/RSENSE);
 }
 void NTC_Temp_measurement(SystemMeasurement_t *ms){
 	float r_ntc = 10000.0f *((float)adc_buffer[ADC_V_NTC]/(4096 - (float)adc_buffer[ADC_V_NTC]));
@@ -134,13 +133,13 @@ void NTC_Temp_measurement(SystemMeasurement_t *ms){
 }
 
 void V24_volt_measurement(SystemMeasurement_t *ms){
-	ms->voltage_V.V24 = adc_buffer[ADC_V_24]*0.006286f;
+	ms->voltage_mV.V24 = (uint16_t)(adc_buffer[ADC_V_24]*6.286f);
 }
 
 void VCAP_volt_measurement(SystemMeasurement_t *ms){
-	ms->voltage_V.VCAP = adc_buffer[ADC_V_CAP]*0.006286f;
+	ms->voltage_mV.VCAP = (uint16_t)(adc_buffer[ADC_V_CAP]*6.286f);
 }
 
 void V12_volt_measurement(SystemMeasurement_t *ms){
-	ms->voltage_V.V12 = adc_buffer[ADC_V_12]*0.006286f;
+	ms->voltage_mV.V12 = (uint16_t)(adc_buffer[ADC_V_12]*6.286f);
 }

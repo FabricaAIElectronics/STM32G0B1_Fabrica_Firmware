@@ -13,15 +13,18 @@
 #include "main.h"
 #include "stdbool.h"
 
-//typical Current monitor value
-
-/* Combined constant: VRef x (R_SERIES + R_TERM) / (ADC_MAX x GAIN x R_TERM) x 1000
- * = 3.3 x 110000 / (4096 x 48 x 100000) x 1000
- * = (363000 / 19660800000) * 1000
- * = 7.440e-3  (updates automatically if any constant above changes) */
-#define K_SCALE 7.440e-3f
-#define RSENSE 0.003f
-#define RSENSELED 0.020f
+/* TPS2493 current monitor — ADC to mV-at-sense conversion.
+ *
+ * Theoretical: VRef / (ADC_MAX x AMON_typ) x 1000
+ *   = 3.3 / (4096 x 48) x 1000 = 1.678e-2
+ *
+ * TPS2493 AMON tolerance: 32–64 V/V (typ 48).
+ * Calibrated against load-cell: 745 mA actual read as 1100 mA
+ *   correction = 745/1100 = 0.6773
+ *   K_SCALE = 1.846e-2 x 0.6773 ≈ 1.250e-2                    */
+#define K_SCALE     1.250e-2f
+#define RSENSE      0.003f      /* 3 mΩ  — all rails except LED  */
+#define RSENSELED   0.020f      /* 20 mΩ — LED rail              */
 typedef struct {
     GPIO_TypeDef* port;
     uint16_t pin;
@@ -64,19 +67,19 @@ typedef enum {
 
 typedef struct {
 	struct {
-		float _currbat;
-		float _currcap;
-		float _currsbc;
-		float _currdrive;
-		float _curraux;
-		float _currled;
+		uint16_t _currbat;
+		uint16_t _currcap;
+		uint16_t _currsbc;
+		uint16_t _currdrive;
+		uint16_t _curraux;
+		uint16_t _currled;
 	}current_mA;
 
 	struct {
-		float V24;
-		float VCAP;
-		float V12;
-	}voltage_V;
+		uint16_t V24;
+		uint16_t VCAP;
+		uint16_t V12;
+	}voltage_mV;
 
 	float NTCTemperature_C;
 }SystemMeasurement_t;

@@ -71,6 +71,13 @@ void CANInitTxHeader(void)
     TxHeader.TxEventFifoControl  = FDCAN_NO_TX_EVENTS;
     TxHeader.MessageMarker       = 0;
 
+    /* Accept all standard frames — matches CAN2 filter config */
+    HAL_FDCAN_ConfigGlobalFilter(&hfdcan1,
+                                 FDCAN_ACCEPT_IN_RX_FIFO0,   /* non-matching std */
+                                 FDCAN_ACCEPT_IN_RX_FIFO0,   /* non-matching ext */
+                                 FDCAN_FILTER_REMOTE,         /* reject remote std */
+                                 FDCAN_FILTER_REMOTE);        /* reject remote ext */
+
     HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
     HAL_FDCAN_Start(&hfdcan1);
 }
@@ -329,10 +336,10 @@ void CAN_Broadcast_HS_Current_A(SystemMeasurement_t *ms)
 {
     if (!canstat.system_transmit_stat) return;
 
-    uint16_t bat   = (uint16_t)ms->current_mA._currbat;
-    uint16_t cap   = (uint16_t)ms->current_mA._currcap;
-    uint16_t sbc   = (uint16_t)ms->current_mA._currsbc;
-    uint16_t drive = (uint16_t)ms->current_mA._currdrive;
+    uint16_t bat   = ms->current_mA._currbat;
+    uint16_t cap   = ms->current_mA._currcap;
+    uint16_t sbc   = ms->current_mA._currsbc;
+    uint16_t drive = ms->current_mA._currdrive;
 
     uint8_t data[8];
     data[0] = (bat   >> 8) & 0xFF;  data[1] = bat   & 0xFF;
@@ -352,8 +359,8 @@ void CAN_Broadcast_HS_Current_B(SystemMeasurement_t *ms)
 {
     if (!canstat.system_transmit_stat) return;
 
-    uint16_t aux = (uint16_t)ms->current_mA._curraux;
-    uint16_t led = (uint16_t)ms->current_mA._currled;
+    uint16_t aux = ms->current_mA._curraux;
+    uint16_t led = ms->current_mA._currled;
 
     uint8_t data[4];
     data[0] = (aux >> 8) & 0xFF;  data[1] = aux & 0xFF;
@@ -378,9 +385,9 @@ void CAN_Broadcast_Voltage(SystemMeasurement_t *ms)
 {
     if (!canstat.system_transmit_stat) return;
 
-    uint16_t v24  = (uint16_t)(ms->voltage_V.V24  * 1000.0f);
-    uint16_t vcap = (uint16_t)(ms->voltage_V.VCAP * 1000.0f);
-    uint16_t v12  = (uint16_t)(ms->voltage_V.V12  * 1000.0f);
+    uint16_t v24  = ms->voltage_mV.V24;
+    uint16_t vcap = ms->voltage_mV.VCAP;
+    uint16_t v12  = ms->voltage_mV.V12;
 
     /* Update UV fault flags from live measurements vs thresholds */
     uv_status.uv_fault_mask = 0;

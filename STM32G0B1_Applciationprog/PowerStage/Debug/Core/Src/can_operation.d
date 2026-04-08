@@ -1,4 +1,5 @@
-Core/Src/can_operation.o: ../Core/Src/can_operation.c ../Core/Inc/main.h \
+Core/Src/can_operation.o: ../Core/Src/can_operation.c \
+ ../Core/Inc/can_operation.h ../Core/Inc/main.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal.h \
  ../Core/Inc/stm32g0xx_hal_conf.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_rcc.h \
@@ -35,14 +36,11 @@ Core/Src/can_operation.o: ../Core/Src/can_operation.c ../Core/Inc/main.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr_ex.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h \
- ../Core/Inc/can_operation.h ../Core/Inc/main.h \
  ../Drivers/CMSIS/Device/ST/STM32G0xx/Include/stm32g0b1xx.h \
- C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/header.h \
- C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/blt_conf.h \
- C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/app.h \
- C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/boot.h \
- C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/led.h \
- C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/timer.h
+ ../Core/Inc/io_module.h ../Core/Inc/fan_ctrl.h \
+ ../Core/Inc/eeprom_driver.h ../Core/Inc/main.h ../Core/Inc/io_module.h \
+ ../Core/Inc/fan_ctrl.h ../Core/Inc/eeprom_driver.h
+../Core/Inc/can_operation.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal.h:
 ../Core/Inc/stm32g0xx_hal_conf.h:
@@ -80,12 +78,11 @@ Core/Src/can_operation.o: ../Core/Src/can_operation.c ../Core/Inc/main.h \
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr_ex.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h:
-../Core/Inc/can_operation.h:
-../Core/Inc/main.h:
 ../Drivers/CMSIS/Device/ST/STM32G0xx/Include/stm32g0b1xx.h:
-C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/header.h:
-C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/blt_conf.h:
-C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/app.h:
-C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/boot.h:
-C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/led.h:
-C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/timer.h:
+../Core/Inc/io_module.h:
+../Core/Inc/fan_ctrl.h:
+../Core/Inc/eeprom_driver.h:
+../Core/Inc/main.h:
+../Core/Inc/io_module.h:
+../Core/Inc/fan_ctrl.h:
+../Core/Inc/eeprom_driver.h:

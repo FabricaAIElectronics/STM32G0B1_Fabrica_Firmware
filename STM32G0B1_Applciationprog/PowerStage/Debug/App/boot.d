@@ -35,7 +35,7 @@ App/boot.o: ../App/boot.c ../App/header.h ../App/blt_conf.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr_ex.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h ../App/app.h \
- ../App/boot.h ../App/led.h ../App/timer.h
+ ../App/boot.h ../App/led.h ../App/timer.h ../Core/Inc/main.h
 ../App/header.h:
 ../App/blt_conf.h:
 ../Drivers/CMSIS/Device/ST/STM32G0xx/Include/stm32g0xx.h:
@@ -78,3 +78,4 @@ App/boot.o: ../App/boot.c ../App/header.h ../App/blt_conf.h \
 ../App/boot.h:
 ../App/led.h:
 ../App/timer.h:
+../Core/Inc/main.h:

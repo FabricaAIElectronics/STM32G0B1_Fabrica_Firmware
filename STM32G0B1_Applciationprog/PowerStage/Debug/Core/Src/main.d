@@ -41,10 +41,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/boot.h \
  C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/led.h \
  C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/timer.h \
- ../Core/Inc/eeprom_driver.h ../Core/Inc/RunningHorseDisplay.h \
- ../Core/Inc/display_scheduler.h ../Core/Inc/ssd1306.h ../Core/Inc/main.h \
- ../Core/Inc/fonts.h ../Core/Inc/can_operation.h \
- ../Drivers/CMSIS/Device/ST/STM32G0xx/Include/stm32g0b1xx.h
+ ../Core/Inc/powerstage_app.h ../Core/Inc/main.h \
+ ../Core/Inc/eeprom_driver.h ../Core/Inc/io_module.h
 ../Core/Inc/main.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal.h:
 ../Core/Inc/stm32g0xx_hal_conf.h:
@@ -88,11 +86,7 @@ C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciation
 C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/boot.h:
 C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/led.h:
 C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/timer.h:
-../Core/Inc/eeprom_driver.h:
-../Core/Inc/RunningHorseDisplay.h:
-../Core/Inc/display_scheduler.h:
-../Core/Inc/ssd1306.h:
+../Core/Inc/powerstage_app.h:
 ../Core/Inc/main.h:
-../Core/Inc/fonts.h:
-../Core/Inc/can_operation.h:
-../Drivers/CMSIS/Device/ST/STM32G0xx/Include/stm32g0b1xx.h:
+../Core/Inc/eeprom_driver.h:
+../Core/Inc/io_module.h:

@@ -30,6 +30,7 @@
 * Include files
 ****************************************************************************************/
 #include "header.h"                                    /* generic header               */
+#include "main.h"                                      /* canHandle → hfdcan1 alias    */
 
 
 /****************************************************************************************
@@ -303,8 +304,10 @@ typedef struct
 /****************************************************************************************
 * Local data declarations
 ****************************************************************************************/
-/** \brief CAN handle to be used in API calls. */
-FDCAN_HandleTypeDef canHandle;
+/** \brief CAN handle to be used in API calls.
+ *  canHandle is now a macro alias for hfdcan1 (defined in main.h).
+ *  The actual variable lives in main.c (CubeMX-generated).          */
+extern FDCAN_HandleTypeDef hfdcan1;
 
 #if (BOOT_COM_CAN_FD_ENABLE > 0)
 /** \brief Boolean flag to determine if the bitrate switch feature is used for CAN FD. */

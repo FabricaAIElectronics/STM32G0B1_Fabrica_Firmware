@@ -15,20 +15,33 @@
 #define PAGE_NUM 512 //number in page
 
 void LoadDefault(Config *config){
-	config->magic = 0x3584;
-	config->count = 200;
-	config->mode = 0x01;
-	config->pwm0 = 50;
-	config->pwm1 = 30;
-	config->voltage = 25500;
+    config->magic               = CONFIG_MAGIC;
 
+    /* Fan defaults */
+    config->fan_default_mode    = 0;        // FAN_OFF
+    config->fan_default_duty    = 20;       // 50 %
+    config->fan_min_duty        = 5;       // 20 % (below this fan may stall)
+    config->fan_auto_on_temp    = 50;       // turn ON  above 50 °C
+    config->fan_auto_off_temp   = 45;       // turn OFF below 45 °C (hysteresis)
+
+    /* HS switch boot state: all 5 rails enabled (bitmask 0b00011111) */
+    config->hs_default_state    = 0x00;
+
+    /* OC thresholds per rail [AUX, LED, DRIVE, CAP, SBC] */
+    config->oc_threshold_mA[0]  = 5000;    // RAIL_AUX   5 A
+    config->oc_threshold_mA[1]  = 2000;    // RAIL_LED   2 A
+    config->oc_threshold_mA[2]  = 5000;    // RAIL_DRIVE 5 A
+    config->oc_threshold_mA[3]  = 5000;    // RAIL_CAP   5 A
+    config->oc_threshold_mA[4]  = 5000;    // RAIL_SBC   5 A
+
+    /* UV thresholds */
+    config->uv_V24_mV           = 20000;   // 20.0 V
+    config->uv_VCAP_mV          = 20000;   // 20.0 V
+    config->uv_V12_mV           = 10000;   // 10.0 V
 }
 
 bool checkcfg(Config *cfg){
-	if(cfg->magic==0x3584)
-		return true;
-	else
-		return false;
+    return (cfg->magic == CONFIG_MAGIC);
 }
 extern I2C_HandleTypeDef hi2c1;
 //function to determine the remaining bytes

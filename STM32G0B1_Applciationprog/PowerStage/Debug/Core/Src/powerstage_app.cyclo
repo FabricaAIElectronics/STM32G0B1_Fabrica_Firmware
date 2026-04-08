@@ -1,0 +1,12 @@
+../Core/Src/powerstage_app.c:75:13:Apply_Config	4
+../Core/Src/powerstage_app.c:108:13:Run_Measurements	1
+../Core/Src/powerstage_app.c:125:13:Check_OC	6
+../Core/Src/powerstage_app.c:153:13:Check_UV	4
+../Core/Src/powerstage_app.c:166:13:Handle_CAN_Commands	24
+../Core/Src/powerstage_app.c:269:13:Check_FactoryReset_Button	5
+../Core/Src/powerstage_app.c:285:13:Common_Task	4
+../Core/Src/powerstage_app.c:329:13:State_Init	6
+../Core/Src/powerstage_app.c:384:13:State_Running	2
+../Core/Src/powerstage_app.c:398:13:State_Fault	2
+../Core/Src/powerstage_app.c:414:6:PS_App_Init	1
+../Core/Src/powerstage_app.c:421:6:PS_App_Task	5

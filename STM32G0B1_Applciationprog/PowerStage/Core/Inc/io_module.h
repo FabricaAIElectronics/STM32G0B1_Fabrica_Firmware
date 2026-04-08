@@ -8,8 +8,23 @@
 #ifndef INC_IO_MODULE_H_
 #define INC_IO_MODULE_H_
 
+
+
 #include "main.h"
 #include "stdbool.h"
+
+/* TPS2493 current monitor — ADC to mV-at-sense conversion.
+ *
+ * Theoretical: VRef / (ADC_MAX x AMON_typ) x 1000
+ *   = 3.3 / (4096 x 48) x 1000 = 1.678e-2
+ *
+ * TPS2493 AMON tolerance: 32–64 V/V (typ 48).
+ * Calibrated against load-cell: 745 mA actual read as 1100 mA
+ *   correction = 745/1100 = 0.6773
+ *   K_SCALE = 1.846e-2 x 0.6773 ≈ 1.250e-2                    */
+#define K_SCALE     1.250e-2f
+#define RSENSE      0.003f      /* 3 mΩ  — all rails except LED  */
+#define RSENSELED   0.020f      /* 20 mΩ — LED rail              */
 typedef struct {
     GPIO_TypeDef* port;
     uint16_t pin;
@@ -31,7 +46,10 @@ typedef struct {
 } HS_CTRL_;
 
 #define ADC_CHANNELS 10
-volatile uint16_t adc_buffer[ADC_CHANNELS];
+/* DMA is configured for WORD (32-bit) transfers in CubeMX —
+ * buffer MUST be uint32_t to match DMA_MDATAALIGN_WORD.
+ * ADC value sits in the lower 12 bits of each 32-bit word. */
+extern volatile uint32_t adc_buffer[ADC_CHANNELS];
 
 // ADC channel indices
 typedef enum {
@@ -49,56 +67,26 @@ typedef enum {
 
 typedef struct {
 	struct {
-		float _currbat;
-		float _currcap;
-		float _currsbc;
-		float _currdrive;
-		float _curraux;
-		float _currled;
+		uint16_t _currbat;
+		uint16_t _currcap;
+		uint16_t _currsbc;
+		uint16_t _currdrive;
+		uint16_t _curraux;
+		uint16_t _currled;
 	}current_mA;
 
 	struct {
-		float V24;
-		float VCAP;
-		float V12;
-	}voltage_V;
+		uint16_t V24;
+		uint16_t VCAP;
+		uint16_t V12;
+	}voltage_mV;
 
 	float NTCTemperature_C;
 }SystemMeasurement_t;
 
 extern SystemMeasurement_t measurements;
+extern HS_CTRL_ hotswap[RAIL_COUNT];
 
-HS_CTRL_ hotswap[RAIL_COUNT] = {
-	[RAIL_AUX] = {
-			.enable = {EN_AUX_GPIO_Port,EN_AUX_Pin},
-			.fault = {FLT_AUX_GPIO_Port,FLT_AUX_Pin},
-			.pgood = {PGOOD_AUX_GPIO_Port,PGOOD_AUX_Pin}
-	},
-
-	[RAIL_LED] = {
-			.enable = {EN_LED_GPIO_Port,EN_LED_Pin},
-			.fault = {FLT_LED_GPIO_Port,FLT_LED_Pin},
-			.pgood = {PGOOD_LED_GPIO_Port,PGOOD_LED_Pin}
-	},
-
-	[RAIL_DRIVE] = {
-			.enable = {EN_DRIVE_GPIO_Port,EN_DRIVE_Pin},
-			.fault = {FLT_DRIVE_GPIO_Port,FLT_DRIVE_Pin},
-			.pgood = {PGOOD_DRIVE_GPIO_Port,PGOOD_DRIVE_Pin}
-	},
-
-	[RAIL_CAP] = {
-			.enable = {EN_CAP_GPIO_Port,EN_CAP_Pin},
-			.fault = {FLT_CAP_GPIO_Port,FLT_CAP_Pin},
-			.pgood = {PGOOD_CAP_GPIO_Port,PGOOD_CAP_Pin}
-	},
-
-	[RAIL_SBC] = {
-			.enable = {NULL},
-			.fault = {FLT_SBC_GPIO_Port,FLT_SBC_Pin},
-			.pgood = {PGOOD_SBC_GPIO_Port,PGOOD_SBC_Pin}
-	}
-};
 
 void HS_init(void);
 void HS_Enable(HS_CTRL_ *HS);
@@ -112,6 +100,12 @@ bool HS_PGood(HS_CTRL_ *HS);
 void Bat_curr_measurement(SystemMeasurement_t *ms);
 void Cap_curr_measurement(SystemMeasurement_t *ms);
 void Drive_curr_measurement(SystemMeasurement_t *ms);
+void LED_curr_measurement(SystemMeasurement_t *ms);
+void SBC_curr_measurement(SystemMeasurement_t *ms);
+void AUX_curr_measurement(SystemMeasurement_t *ms);
+void NTC_Temp_measurement(SystemMeasurement_t *ms);
 
 void V24_volt_measurement(SystemMeasurement_t *ms);
+void VCAP_volt_measurement(SystemMeasurement_t *ms);
+void V12_volt_measurement(SystemMeasurement_t *ms);
 #endif /* INC_IO_MODULE_H_ */

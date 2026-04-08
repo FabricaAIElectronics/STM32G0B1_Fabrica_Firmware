@@ -61,6 +61,8 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
+#define V_LED_PWR_Pin GPIO_PIN_0
+#define V_LED_PWR_GPIO_Port GPIOC
 #define SW_Pin GPIO_PIN_1
 #define SW_GPIO_Port GPIOC
 #define CURR_BAT_Pin GPIO_PIN_0
@@ -123,7 +125,10 @@ void Error_Handler(void);
 #define PGOOD_SBC_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
-
+/* Alias: bootloader (OpenBLT) uses 'canHandle' for FDCAN1.
+ * CubeMX generates 'hfdcan1'.  This macro keeps both in sync so
+ * CubeMX can regenerate main.c without breaking app / bootloader code. */
+#define canHandle hfdcan1
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

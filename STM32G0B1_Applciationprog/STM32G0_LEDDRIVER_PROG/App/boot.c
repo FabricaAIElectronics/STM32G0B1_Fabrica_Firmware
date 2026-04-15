@@ -304,7 +304,8 @@ typedef struct
 * Local data declarations
 ****************************************************************************************/
 /** \brief CAN handle to be used in API calls. */
-static FDCAN_HandleTypeDef canHandle;
+FDCAN_HandleTypeDef canHandle;
+
 
 #if (BOOT_COM_CAN_FD_ENABLE > 0)
 /** \brief Boolean flag to determine if the bitrate switch feature is used for CAN FD. */
@@ -573,10 +574,10 @@ static void BootComCanInit(void)
     rxMsgId &= ~0x80000000;
   }
   filterConfig.FilterIndex = 0;
-  filterConfig.FilterType = FDCAN_FILTER_DUAL;
+  filterConfig.FilterType = FDCAN_FILTER_RANGE;
   filterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-  filterConfig.FilterID1 = rxMsgId;
-  filterConfig.FilterID2 = rxMsgId;
+  filterConfig.FilterID1 = 0x00000000;
+  filterConfig.FilterID2 = 0x1FFFFFFF;
   (void)HAL_FDCAN_ConfigFilter(&canHandle, &filterConfig);
 
   /* configure global filter to reject all non-matching frames. */

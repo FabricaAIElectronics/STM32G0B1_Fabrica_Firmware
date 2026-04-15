@@ -39,7 +39,7 @@ void EEPROM_Write (uint16_t page,uint16_t offset, uint8_t *data,uint16_t size){
 
 	//write data
 	for(int i=0; i<NumOfPages; i++){
-		// find address of eory location
+		// find address of memory location
 		//add page address with byte address
 		uint16_t MemAddress = StartPage<<paddrposition|offset;
 		uint16_t bytesremaining = bytes_to_write(size, offset);

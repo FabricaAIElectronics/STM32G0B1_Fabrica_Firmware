@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PCANExplorerProject Version="5.0" Name="PowerStageTest">
+    <Connections AutoReset="0" IgnoreRTRLength="0" ProcessRTR="1">
+        <Connection Bus="1" Enabled="1" Protocol="0" SymbolsFileName="PowerStage.dbc" BitRate="28" Connection="pcan500@pcan_usb" Name="Connection1"/>
+    </Connections>
+    <MessageFilters/>
+    <Files>
+        <File RelativePath="PowerStage.dbc"/>
+    </Files>
+</PCANExplorerProject>

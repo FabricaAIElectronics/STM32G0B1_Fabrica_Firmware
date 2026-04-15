@@ -55,7 +55,7 @@
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
-extern DMA_HandleTypeDef hdma_adc1;
+extern FDCAN_HandleTypeDef hfdcan1;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -71,6 +71,7 @@ void NMI_Handler(void)
   /* USER CODE BEGIN NonMaskableInt_IRQn 0 */
 
   /* USER CODE END NonMaskableInt_IRQn 0 */
+  HAL_RCC_NMI_IRQHandler();
   /* USER CODE BEGIN NonMaskableInt_IRQn 1 */
    while (1)
   {
@@ -141,17 +142,17 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief This function handles DMA1 channel 1 interrupt.
+  * @brief This function handles TIM16, FDCAN1_IT0 and FDCAN2_IT0 Interrupt.
   */
-void DMA1_Channel1_IRQHandler(void)
+void TIM16_FDCAN_IT0_IRQHandler(void)
 {
-  /* USER CODE BEGIN DMA1_Channel1_IRQn 0 */
+  /* USER CODE BEGIN TIM16_FDCAN_IT0_IRQn 0 */
+	HAL_FDCAN_IRQHandler(&canHandle);
+  /* USER CODE END TIM16_FDCAN_IT0_IRQn 0 */
+//  HAL_FDCAN_IRQHandler(&hfdcan1);
+  /* USER CODE BEGIN TIM16_FDCAN_IT0_IRQn 1 */
 
-  /* USER CODE END DMA1_Channel1_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_adc1);
-  /* USER CODE BEGIN DMA1_Channel1_IRQn 1 */
-
-  /* USER CODE END DMA1_Channel1_IRQn 1 */
+  /* USER CODE END TIM16_FDCAN_IT0_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

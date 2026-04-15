@@ -196,11 +196,24 @@ typedef struct {
     uint16_t    uv_V12_mV;             // active UV threshold for V12
 } UV_Status_t;
 
+/* Bus-Off recovery limits */
+#define CAN_BUSOFF_MAX_RECOVERIES   5       // max recoveries within window
+#define CAN_BUSOFF_WINDOW_MS        10000   // rolling window (ms)
+
 /* CAN bus transmission gating */
 typedef struct {
     bool system_update_detected;
     bool system_transmit_stat;          // false = suppress TX (avoid bus conflicts)
     bool relay_enabled;                 // true = relay CAN1 <-> CAN2
+
+    /* Bus-Off health tracking (per bus) */
+    uint8_t  can1_busoff_count;         // recovery attempts within window
+    uint32_t can1_busoff_first_tick;    // tick of first recovery in current window
+    bool     can1_bus_ok;               // false = Bus_Off recovery limit hit
+
+    uint8_t  can2_busoff_count;
+    uint32_t can2_busoff_first_tick;
+    bool     can2_bus_ok;
 } CAN_STATUS;
 
 /* ============================================================
@@ -252,6 +265,9 @@ HAL_StatusTypeDef CAN_SendAll(uint16_t canid, uint8_t dlc, uint8_t *data);
 
 /* RX callback — overrides HAL weak symbol (handles both FDCAN1 + FDCAN2) */
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs);
+
+/* Error callback — Bus_Off auto-recovery (overrides HAL weak symbol) */
+void HAL_FDCAN_ErrorStatusCallback(FDCAN_HandleTypeDef *hfdcan, uint32_t ErrorStatusITs);
 
 /* Flash-over-CAN watchdog (call periodically in main loop) */
 void FOCdetection(void);

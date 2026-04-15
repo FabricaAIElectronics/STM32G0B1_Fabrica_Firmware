@@ -38,7 +38,13 @@ FDCAN_TxHeaderTypeDef TxHeader;
 CAN_STATUS canstat = {
     .system_update_detected = false,
     .system_transmit_stat   = true,         // TX allowed on startup
-    .relay_enabled          = true          // CAN1<>CAN2 relay on by default
+    .relay_enabled          = true,         // CAN1<>CAN2 relay on by default
+    .can1_busoff_count      = 0,
+    .can1_busoff_first_tick = 0,
+    .can1_bus_ok            = true,
+    .can2_busoff_count      = 0,
+    .can2_busoff_first_tick = 0,
+    .can2_bus_ok            = true
 };
 
 CAN_RXMessage_t  can_rxMessage = {0};
@@ -79,7 +85,15 @@ void CANInitTxHeader(void)
                                  FDCAN_FILTER_REMOTE);        /* reject remote ext */
 
     HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
+
+    /* Enable error interrupts for Bus_Off recovery */
+    HAL_FDCAN_ActivateNotification(&hfdcan1,
+        FDCAN_IT_BUS_OFF | FDCAN_IT_ERROR_PASSIVE | FDCAN_IT_ERROR_WARNING, 0);
+
     HAL_FDCAN_Start(&hfdcan1);
+
+    canstat.can1_bus_ok = true;
+    canstat.can1_busoff_count = 0;
 }
 
 /* ============================================================
@@ -108,8 +122,15 @@ void CAN2_Host_Init(void)
     /* Enable RX FIFO0 new-message interrupt for CAN2 */
     HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
 
+    /* Enable error interrupts for Bus_Off recovery */
+    HAL_FDCAN_ActivateNotification(&hfdcan2,
+        FDCAN_IT_BUS_OFF | FDCAN_IT_ERROR_PASSIVE | FDCAN_IT_ERROR_WARNING, 0);
+
     /* Start CAN2 peripheral */
     HAL_FDCAN_Start(&hfdcan2);
+
+    canstat.can2_bus_ok = true;
+    canstat.can2_busoff_count = 0;
 }
 
 /* ============================================================
@@ -117,6 +138,8 @@ void CAN2_Host_Init(void)
  * ============================================================ */
 HAL_StatusTypeDef CAN_Send(uint16_t canid, uint8_t dlc, uint8_t *data)
 {
+    if (!canstat.can1_bus_ok) return HAL_ERROR;     // Bus_Off — skip TX
+
     uint32_t timeout = HAL_GetTick() + 10;
 
     while (HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan1) == 0) {
@@ -134,6 +157,8 @@ HAL_StatusTypeDef CAN_Send(uint16_t canid, uint8_t dlc, uint8_t *data)
  * ============================================================ */
 HAL_StatusTypeDef CAN2_Send(uint16_t canid, uint8_t dlc, uint8_t *data)
 {
+    if (!canstat.can2_bus_ok) return HAL_ERROR;     // Bus_Off — skip TX
+
     uint32_t timeout = HAL_GetTick() + 10;
 
     while (HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan2) == 0) {
@@ -279,6 +304,65 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
         if (HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan1) > 0)
             HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &relayHdr, rxBuf);
     }
+}
+
+/* ============================================================
+ * HAL_FDCAN_ErrorStatusCallback
+ * Overrides HAL weak symbol — called on Bus_Off, Error_Passive,
+ * and Error_Warning status changes for BOTH FDCAN1 and FDCAN2.
+ *
+ * On Bus_Off: stop → restart the peripheral and re-enable
+ * notifications.  A rolling window limits recovery attempts
+ * (CAN_BUSOFF_MAX_RECOVERIES within CAN_BUSOFF_WINDOW_MS).
+ * If the limit is hit the bus is marked permanently faulted
+ * until the next power cycle / NRST.
+ * ============================================================ */
+void HAL_FDCAN_ErrorStatusCallback(FDCAN_HandleTypeDef *hfdcan,
+                                   uint32_t ErrorStatusITs)
+{
+    if (!(ErrorStatusITs & FDCAN_IT_BUS_OFF))
+        return;
+
+    uint32_t now = HAL_GetTick();
+
+    /* Identify which bus entered Bus_Off */
+    uint8_t  *count;
+    uint32_t *first_tick;
+    bool     *bus_ok;
+
+    if (hfdcan->Instance == FDCAN1) {
+        count      = &canstat.can1_busoff_count;
+        first_tick = &canstat.can1_busoff_first_tick;
+        bus_ok     = &canstat.can1_bus_ok;
+    } else {
+        count      = &canstat.can2_busoff_count;
+        first_tick = &canstat.can2_busoff_first_tick;
+        bus_ok     = &canstat.can2_bus_ok;
+    }
+
+    /* Reset rolling window if expired */
+    if ((now - *first_tick) > CAN_BUSOFF_WINDOW_MS) {
+        *count      = 0;
+        *first_tick = now;
+    }
+
+    (*count)++;
+
+    if (*count > CAN_BUSOFF_MAX_RECOVERIES) {
+        /* Too many Bus_Off events — mark bus permanently faulted */
+        *bus_ok = false;
+        HAL_FDCAN_Stop(hfdcan);
+        return;
+    }
+
+    /* Attempt recovery: stop → start → re-enable notifications */
+    HAL_FDCAN_Stop(hfdcan);
+    HAL_FDCAN_Start(hfdcan);
+
+    HAL_FDCAN_ActivateNotification(hfdcan,
+        FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
+    HAL_FDCAN_ActivateNotification(hfdcan,
+        FDCAN_IT_BUS_OFF | FDCAN_IT_ERROR_PASSIVE | FDCAN_IT_ERROR_WARNING, 0);
 }
 
 /* ============================================================

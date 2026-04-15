@@ -1,160 +1,209 @@
+/**
+ * @file    CAN_Handler.c
+ * @brief   CAN bus command handling and telemetry broadcast.
+ *
+ * @details Architecture (kept intentionally simple for prototype/test):
+ *
+ *          ISR  →  saves last received frame into a global variable
+ *          Main →  CAN_Process() reads the global, runs a switch-case
+ *                  CAN_Broadcast() sends 6 telemetry frames every 500 ms
+ *
+ *          To add a new command:
+ *            1. Define MSG_CMD_xxx in CAN_Handler.h
+ *            2. Add a case in CAN_Process()
+ *            — that's it.
+ *
+ * @author  jordan
+ * @date    2026-03-25
+ */
+
 #include "CAN_Handler.h"
 #include "main.h"
+#include "fdcan.h"
 #include "stm32g0xx.h"
 #include <string.h>
 #include <stdbool.h>
 
-
-#include "fdcan.h"
-
-
-/*Include all other file headers and place their CAN registration in CAN_handler_Init*/
+/* Module headers */
 #include "Fan_PWM.h"
 #include "Power_Electronic.h"
 #include "Endstop.h"
+#include "ESTOP.h"
 #include "eeprom_driver.h"
-#include "error_manager.h"
-#include "stm32g0xx_hal_fdcan.h"
 
+/* ═══════════════════════════════════════════════════════════════════════
+ *  ISR → main-loop message passing  (single-slot, no queue)
+ *
+ *  If a second CAN frame arrives before the main loop processes the
+ *  first one, the older frame is overwritten.  For prototype testing
+ *  at human command rates this is perfectly fine.
+ * ═══════════════════════════════════════════════════════════════════════ */
 
-#define CAN_SUCCESS 0
-#define CAN_ERROR -1
+static volatile bool rx_pending = false;
+static volatile uint32_t rx_id;
+static volatile uint8_t  rx_data[8];
+static volatile uint8_t  rx_len;
 
-//static FDCAN_HandleTypeDef hfdcan1; // FDCAN handle, initialized in MX_FDCAN1_Init()
+/* ── Debug counters (visible in broadcast) ────────────────────────────── */
+static volatile uint8_t  dbg_isr_count  = 0;   /* increments each ISR RX */
+static          uint8_t  dbg_cmd_count  = 0;   /* increments each dispatched cmd */
+static          uint16_t dbg_last_msg   = 0;   /* last msg_type dispatched */
 
-typedef void (*can_handler_t)(uint32_t id, uint8_t *params, uint8_t len);
+/* ── Forward declaration ──────────────────────────────────────────────── */
+static void Send_Config_Broadcast(void);
 
-typedef struct { uint32_t id; uint8_t dlc; uint8_t data[8]; } can_frame_t;
+/* ═══════════════════════════════════════════════════════════════════════
+ *  FDCAN RX FIFO0 callback  (ISR context)
+ * ═══════════════════════════════════════════════════════════════════════ */
 
-/* ── Linear-search dispatch table (supports 29-bit extended CAN IDs) ── */
-typedef struct {
-    uint32_t      id;
-    can_handler_t handler;
-} can_dispatch_entry_t;
-
-#define MAX_CAN_HANDLERS  16
-static can_dispatch_entry_t dispatch_entries[MAX_CAN_HANDLERS];
-static uint8_t dispatch_count = 0;
-
-bool can_register_handler(uint32_t cmd, can_handler_t h)
+void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 {
-    if (dispatch_count >= MAX_CAN_HANDLERS || h == NULL) return false;
-    dispatch_entries[dispatch_count].id      = cmd & 0x1FFFFFFFU;
-    dispatch_entries[dispatch_count].handler = h;
-    dispatch_count++;
-    return true;
-}
+    if (!(RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE))
+        return;
 
-static void handle_set_test_LED(uint32_t id, uint8_t *params, uint8_t len);
+    FDCAN_RxHeaderTypeDef hdr;
+    uint8_t data[8];
 
-static uint8_t dlc_to_bytes(uint32_t dlc)
-{
-    switch (dlc) {
-        case 0U:  return 0U;
-        case 1U:  return 1U;
-        case 2U:  return 2U;
-        case 3U:  return 3U;
-        case 4U:  return 4U;
-        case 5U:  return 5U;
-        case 6U:  return 6U;
-        case 7U:  return 7U;
-        case 8U:  return 8U;
-        case 9U:  return 12U;
-        case 10U: return 16U;
-        case 11U: return 20U;
-        case 12U: return 24U;
-        case 13U: return 32U;
-        case 14U: return 48U;
-        case 15U: return 64U;
-        default:  return 0U;
-    }
-}
+    if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &hdr, data) != HAL_OK)
+        return;
 
-/* ring buffer parameters */
-#define RBUF_SIZE  16U
-#define RBUF_MASK  (RBUF_SIZE - 1U)
-static volatile uint32_t rbuf_head = 0;
-static volatile uint32_t rbuf_tail = 0;
-static can_frame_t rbuf[RBUF_SIZE];
-static volatile uint32_t rbuf_drop_count = 0;
-
-/* Producer: called from ISR context */
-bool EnqueueCanFrame(const can_frame_t *frame)
-{   
-    
-    uint32_t head = rbuf_head;
-    uint32_t next = (head + 1U) & RBUF_MASK;
-
-    if (next == rbuf_tail) {
-        rbuf_drop_count++;
-        return false; /* full */
-    }
-
-    /* copy frame into slot owned by producer */
-    memcpy(&rbuf[head], frame, sizeof(can_frame_t));
-
-    /* ensure data written before publishing head */
-    __DMB();                    /* data memory barrier (ARM CMSIS) */
-    rbuf_head = next;           /* publish (release) */
-
-    /* optional: set a volatile flag or notify main loop */
-    return true;
-}
-
-/* Consumer: called from main loop (non-ISR) */
-bool DequeueCanFrame(can_frame_t *out)
-{
-    uint32_t tail = rbuf_tail;
-    uint32_t head_snapshot = rbuf_head; /* snapshot of published head */
-
-    if (tail == head_snapshot) {
-        return false; /* empty */
-    }
-
-    /* copy out the frame */
-    memcpy(out, &rbuf[tail], sizeof(can_frame_t));
-
-    /* ensure copy done before updating tail */
-    __DMB();
-    rbuf_tail = (tail + 1U) & RBUF_MASK; /* publish new tail */
-
-    return true;
-}
-
-
-void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan1, uint32_t RxFifo0ITs)
-{
-  FDCAN_RxHeaderTypeDef RxHeader;
-  uint8_t RxData[8];
-
-  if((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != 0)
-  {
-    HAL_FDCAN_GetRxMessage(hfdcan1, FDCAN_RX_FIFO0, &RxHeader, RxData);
-
-    if ((RxHeader.Identifier == 0x667)&&(RxData[0] == 0xFF)) {
-        /*NECESSARY for handover to bootloader*/
+    /* Bootloader entry: immediate reset (highest priority) */
+    if ((hdr.Identifier == CAN_ID_BOOTLOADER) && (data[0] == 0xFF)) {
         HAL_NVIC_SystemReset();
     }
 
-    can_frame_t rx_frame;
-    rx_frame.id = RxHeader.Identifier;
-    rx_frame.dlc = dlc_to_bytes(RxHeader.DataLength);
-    if (rx_frame.dlc > 8) rx_frame.dlc = 8;
-    memcpy(rx_frame.data, RxData, rx_frame.dlc);
-    EnqueueCanFrame(&rx_frame);
-  }
+    /* Save frame for main-loop processing */
+    uint8_t dlc = (uint8_t)(hdr.DataLength);  /* HAL already extracts DLC code (0–15) */
+    if (dlc > 8U) dlc = 8U;
+    memset((void *)rx_data, 0, 8);          /* zero whole buffer before copy */
+    memcpy((void *)rx_data, data, dlc);
+    rx_len = dlc;
+    rx_id  = hdr.Identifier;
+    dbg_isr_count++;                                  /* debug: count ISR hits */
+    __DMB();
+    rx_pending = true;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+ *  Helper: build and send the GPIO status frame (periodic broadcast)
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+static void Send_GPIO_Status_Frame(void)
+{
+    uint8_t p[8] = {0};
+
+    /* --- Byte 0: High-side ENABLE pins (1 = enabled) ---
+     *   bit 0 = HS_DR_EN  (Drive)
+     *   bit 1 = HS_E_EN   (Extruder)
+     *   bit 2 = HS_SC_EN  (Scrubbing)
+     *   bit 3 = VBUCK_CTRL (12 V buck)
+     */
+    if (HAL_GPIO_ReadPin(HS_DR_EN_GPIO_Port,   HS_DR_EN_Pin))   p[0] |= 0x01;
+    if (HAL_GPIO_ReadPin(HS_E_EN_GPIO_Port,    HS_E_EN_Pin))    p[0] |= 0x02;
+    if (HAL_GPIO_ReadPin(HS_SC_EN_GPIO_Port,   HS_SC_EN_Pin))   p[0] |= 0x04;
+    if (HAL_GPIO_ReadPin(VBUCK_CTRL_GPIO_Port, VBUCK_CTRL_Pin)) p[0] |= 0x08;
+
+    /* --- Byte 1: High-side POWER-GOOD pins  (active LOW → inverted: 1 = good) ---
+     *   bit 0 = HS_DR_PG
+     *   bit 1 = HS_E_PG
+     *   bit 2 = HS_SC_PG
+     */
+    if (HAL_GPIO_ReadPin(HS_DR_PG_GPIO_Port, HS_DR_PG_Pin) == GPIO_PIN_RESET) p[1] |= 0x01;
+    if (HAL_GPIO_ReadPin(HS_E_PG_GPIO_Port,  HS_E_PG_Pin)  == GPIO_PIN_RESET) p[1] |= 0x02;
+    if (HAL_GPIO_ReadPin(HS_SC_PG_GPIO_Port, HS_SC_PG_Pin) == GPIO_PIN_RESET) p[1] |= 0x04;
+
+    /* --- Byte 2: High-side FAULT pins  (active LOW → inverted: 1 = fault) ---
+     *   bit 0 = HS_DR_FT
+     *   bit 1 = HS_E_FT
+     *   bit 2 = HS_SC_FT
+     */
+    if (HAL_GPIO_ReadPin(HS_DR_FT_GPIO_Port, HS_DR_FT_Pin) == GPIO_PIN_RESET) p[2] |= 0x01;
+    if (HAL_GPIO_ReadPin(HS_E_FT_GPIO_Port,  HS_E_FT_Pin)  == GPIO_PIN_RESET) p[2] |= 0x02;
+    if (HAL_GPIO_ReadPin(HS_SC_FT_GPIO_Port, HS_SC_FT_Pin) == GPIO_PIN_RESET) p[2] |= 0x04;
+
+    /* --- Byte 3: ESTOP ---
+     *   bit 0 = NO raw pin  (1 = pin HIGH)
+     *   bit 1 = NC raw pin  (1 = pin HIGH)
+     *   bit 2 = debounced state (1 = triggered)
+     *   bit 3 = wiring fault    (1 = fault)
+     */
+    if (HAL_GPIO_ReadPin(EStop_NO_INT_GPIO_Port, EStop_NO_INT_Pin)) p[3] |= 0x01;
+    if (HAL_GPIO_ReadPin(EStop_NC_INT_GPIO_Port, EStop_NC_INT_Pin)) p[3] |= 0x02;
+    if (ESTOP_State())                                               p[3] |= 0x04;
+    if (ESTOP_Check() == ESTOP_FAULT)                                p[3] |= 0x08;
+
+    /* --- Byte 4: Endstop NO pins raw  (1 = pin HIGH) ---
+     *   bit 0 = EH_Top  NO
+     *   bit 1 = EH_Bot  NO  (NO-only switch)
+     *   bit 2 = EP_Top  NO
+     *   bit 3 = EP_Bot  NO
+     *   bit 4 = SC_Top  NO
+     */
+    if (HAL_GPIO_ReadPin(ENDSTOP_EH_H_NO_INT_GPIO_Port, ENDSTOP_EH_H_NO_INT_Pin)) p[4] |= 0x01;
+    if (HAL_GPIO_ReadPin(ENDSTOP_EH_L_NO_INT_GPIO_Port, ENDSTOP_EH_L_NO_INT_Pin)) p[4] |= 0x02;
+    if (HAL_GPIO_ReadPin(ENDSTOP_EP_H_NO_INT_GPIO_Port, ENDSTOP_EP_H_NO_INT_Pin)) p[4] |= 0x04;
+    if (HAL_GPIO_ReadPin(ENDSTOP_EP_L_NO_INT_GPIO_Port, ENDSTOP_EP_L_NO_INT_Pin)) p[4] |= 0x08;
+    if (HAL_GPIO_ReadPin(ENDSTOP_SC_H_NO_INT_GPIO_Port, ENDSTOP_SC_H_NO_INT_Pin)) p[4] |= 0x10;
+
+    /* --- Byte 5: Endstop NC pins raw  (1 = pin HIGH) ---
+     *   bit 0 = EH_Top  NC
+     *   bit 1 = reserved (EH_Bot has no NC)
+     *   bit 2 = EP_Top  NC
+     *   bit 3 = EP_Bot  NC
+     *   bit 4 = SC_Top  NC
+     */
+    if (HAL_GPIO_ReadPin(ENDSTOP_EH_H_NC_INT_GPIO_Port, ENDSTOP_EH_H_NC_INT_Pin)) p[5] |= 0x01;
+    /* bit 1: n/a (EH_Bot is NO-only) */
+    if (HAL_GPIO_ReadPin(ENDSTOP_EP_H_NC_INT_GPIO_Port, ENDSTOP_EP_H_NC_INT_Pin)) p[5] |= 0x04;
+    if (HAL_GPIO_ReadPin(ENDSTOP_EP_L_NC_INT_GPIO_Port, ENDSTOP_EP_L_NC_INT_Pin)) p[5] |= 0x08;
+    if (HAL_GPIO_ReadPin(ENDSTOP_SC_H_NC_INT_GPIO_Port, ENDSTOP_SC_H_NC_INT_Pin)) p[5] |= 0x10;
+
+    /* --- Byte 6: Misc GPIO  (1 = pin HIGH) ---
+     *   bit 0 = LED_OUT
+     *   bit 1 = BlueButton
+     */
+    if (HAL_GPIO_ReadPin(LED_OUT_GPIO_Port,    LED_OUT_Pin))     p[6] |= 0x01;
+    if (HAL_GPIO_ReadPin(BlueButton_GPIO_Port, BlueButton_Pin))  p[6] |= 0x02;
+
+    /* --- Byte 7: Debug — ISR RX frame counter (wraps at 255) --- */
+    p[7] = dbg_isr_count;
+
+    FDCAN_SendFrame(CAN_ID_BCAST_GPIO, p, 8);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ *  Helper: send Bcast_Config (0x606) with cached EEPROM startup defaults.
+ *  Sent every periodic cycle alongside the other broadcast frames.
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+static void Send_Config_Broadcast(void)
+{
+    const EEPROM_StartupConfig_t *cfg = EEPROM_GetCachedConfig();
+
+    uint8_t p[6] = {0};
+    p[0] = cfg->hs_state & 0x0FU;  /* bits 0-3: DR/E/SC/VBUCK defaults */
+    p[1] = cfg->fan_dr;
+    p[2] = cfg->fan_ep;
+    p[3] = cfg->fan_eh;
+    p[4] = cfg->fan_st;
+    p[5] = cfg->fan_sf;
+
+    FDCAN_SendFrame(CAN_ID_BCAST_CONFIG, p, 6);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ *  Vector table remap  (bootloader compatibility)
+ * ═══════════════════════════════════════════════════════════════════════ */
 
 static void VectorBase_Config(void)
 {
-  /* The constant array with vectors of the vector table is declared externally in the
-   * c-startup code.
-   */
-  extern const unsigned long g_pfnVectors[];
-
-  /* Remap the vector table to where the vector table is located for this program. */
-  SCB->VTOR = (unsigned long)&g_pfnVectors[0];
+    extern const unsigned long g_pfnVectors[];
+    SCB->VTOR = (unsigned long)&g_pfnVectors[0];
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+ *  Initialization
+ * ═══════════════════════════════════════════════════════════════════════ */
 
 void Pre_CAN_Handler_Init(void)
 {
@@ -163,154 +212,221 @@ void Pre_CAN_Handler_Init(void)
 
 void CAN_Handler_Init(void)
 {
-    can_register_handler(CMD_SET_LED,handle_set_test_LED);
-    can_register_handler(CMD_SET_FAN_PWM, CAN_Handle_set_Fan_PWM);
-    can_register_handler(CMD_SET_HS_DRIVE_POWER, CAN_Handler_Set_HS_Drive_Power);
-    can_register_handler(CMD_SET_HS_EXTRUDER_POWER, CAN_Handler_Set_HS_Extruder_Power);
-    can_register_handler(CMD_SET_HS_SCRUBBING_POWER, CAN_Handler_Set_HS_Scrubbing_Power);
-    can_register_handler(CMD_SET_EEPROM_CONFIG,  CAN_Handler_EEPROM_Write_Config);
-    can_register_handler(CMD_READ_EEPROM_CONFIG, CAN_Handler_EEPROM_Read_Config);
-    can_register_handler(CMD_DUMP_ERRORS, CAN_Handler_Dump_Errors);
-    can_register_handler(CMD_RESET_ERROR, CAN_Handler_Reset_Error);
+    /* Accept any extended frame whose bits[15:0] == our device ID (0x0667).
+     * M_CAN mask: (RxID XOR FilterID1) AND FilterID2 == 0 → accept.
+     *   mask bit 1 = must match FilterID1,  mask bit 0 = don't care.
+     * 0x0000FFFF → bits[28:16] don't-care (any msg type), bits[15:0] must
+     * match 0x0667. */
+    FDCAN_FilterTypeDef filt = {0};
+    filt.IdType       = FDCAN_EXTENDED_ID;
+    filt.FilterIndex  = 0;
+    filt.FilterType   = FDCAN_FILTER_MASK;
+    filt.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+    filt.FilterID1    = CAN_DEVICE_ID;      /* match value: 0x0667           */
+    filt.FilterID2    = 0x0000FFFFU;        /* mask: bits[15:0] must match   */
 
-    HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
-    
+    if (HAL_FDCAN_ConfigFilter(&hfdcan1, &filt) != HAL_OK)
+        Error_Handler();
+
+    HAL_FDCAN_ConfigGlobalFilter(&hfdcan1,
+                                 FDCAN_REJECT, FDCAN_REJECT,
+                                 FDCAN_REJECT_REMOTE, FDCAN_REJECT_REMOTE);
+
+    if (HAL_FDCAN_ActivateNotification(&hfdcan1,
+            FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK)
+        Error_Handler();
 }
 
-void CAN_Handler_Dispatch_Process_One(void)
+/* ═══════════════════════════════════════════════════════════════════════
+ *  CAN_Process  —  main-loop command handler
+ *
+ *  To add a new command:
+ *    1. #define MSG_CMD_xxx in CAN_Handler.h
+ *    2. Add a case below
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+void CAN_Process(void)
 {
-    can_frame_t f;
-
-    /* nothing to do */
-    if (DequeueCanFrame(&f) == false) {
-        //early return if there is nothing to process
+    if (!rx_pending)
         return;
-    }
-    /* simple routing: first data byte is the command id */
-    if (f.dlc == 0U) {
-        /* no command byte -> ignore or optionally send nack */
-        return;
-    }
 
-    /* Exact match on full 29-bit extended CAN ID */
-    uint32_t cmd = f.id & 0x1FFFFFFFU;
+    /* Copy volatile data into local variables */
+    uint32_t id   = rx_id;
+    uint8_t  len  = rx_len;
+    uint8_t  data[8];
+    memcpy(data, (void *)rx_data, 8);
+    rx_pending = false;
 
-    /* Linear search through registered handlers */
-    for (uint8_t i = 0; i < dispatch_count; ++i) {
-        if (dispatch_entries[i].id == cmd) {
-            dispatch_entries[i].handler(f.id, f.data, f.dlc);
-            return;
+    /* Route by message type */
+    uint16_t msg = CAN_MSG_TYPE(id);
+    dbg_last_msg = msg;
+    dbg_cmd_count++;
+
+    switch (msg) {
+
+    /* ── High-side power control  [0]=bitmask ─────────────────────────────
+     *   bit0=Drive  bit1=Extruder  bit2=Scrubbing  bit3=12V Buck
+     *   0=OFF  1=ON  (all four channels set in one frame)
+     * ──────────────────────────────────────────────────────────────────── */
+    case MSG_CMD_HS_POWER:
+        if (len >= 1U) {
+            uint8_t state = data[0];
+
+            if (state & 0x01U) Enable_HighSide_Power_Module(HS_MODULE_DRIVE, 0U);
+            else               Disable_HighSide_Power_Module(HS_MODULE_DRIVE, 0U);
+
+            if (state & 0x02U) Enable_HighSide_Power_Module(HS_MODULE_EXTRUDER, 0U);
+            else               Disable_HighSide_Power_Module(HS_MODULE_EXTRUDER, 0U);
+
+            if (state & 0x04U) Enable_HighSide_Power_Module(HS_MODULE_SCRUBBING, 0U);
+            else               Disable_HighSide_Power_Module(HS_MODULE_SCRUBBING, 0U);
+
+            if (state & 0x08U) Enable_12V_Buck_Converter();
+            else               Disable_12V_Buck_Converter();
         }
+        break;
+
+    /* ── Fan speed control  [0..4]=DR/EP/EH/ST/SF speed (0–100 %) ─────────
+     *   All 5 fans are set in one frame.  Bytes beyond DLC keep last value.
+     * ──────────────────────────────────────────────────────────────────── */
+    case MSG_CMD_FAN_PWM:
+        if (len >= 1U) set_Fan_PWM(FAN_DR, data[0]);
+        if (len >= 2U) set_Fan_PWM(FAN_EP, data[1]);
+        if (len >= 3U) set_Fan_PWM(FAN_EH, data[2]);
+        if (len >= 4U) set_Fan_PWM(FAN_ST, data[3]);
+        if (len >= 5U) set_Fan_PWM(FAN_SF, data[4]);
+        break;
+
+    /* ── EEPROM startup config ────────────────────────────────────────────
+     *   Byte 0:  0 = load hard-coded safe defaults (all OFF) and apply
+     *            1 = save current HS/fan state to EEPROM
+     *   Config broadcast (0x606) fires on next periodic cycle.
+     * ──────────────────────────────────────────────────────────────────── */
+    case MSG_CMD_EEPROM:
+        if (len >= 1U) {
+            if (data[0] == 0x00U) {
+                EEPROM_LoadAndApplyDefaults();  /* 0 = reset to hard-coded defaults */
+            } else {
+                EEPROM_SaveStartupConfig();     /* 1 = save current state → EEPROM  */
+            }
+        }
+        break;
+
+    default:
+        /* Unknown command — ignore */
+        break;
     }
-    /* no handler found — optionally send_nack(f.id, cmd); */
 }
 
-int CAN_Handler_Broadcast(uint32_t period_ms)
+/* ═══════════════════════════════════════════════════════════════════════
+ *  CAN_Broadcast  —  periodic telemetry  (call from main loop)
+ *
+ *  The TX FIFO is only 3 elements deep, so we split the 7 broadcast
+ *  frames into 3 phases (max 3 frames each), staggered by period_ms/3.
+ *
+ *    Phase 0: 0x600 Status  + 0x601 Currents + 0x602 Temps
+ *    Phase 1: 0x603 Fans    + 0x604 GPIO     + 0x605 Raw ADC
+ *    Phase 2: 0x606 Config
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+int CAN_Broadcast(uint32_t period_ms)
 {
     static uint32_t last_tick = 0;
-    uint32_t now = HAL_GetTick();
+    static uint8_t  phase     = 0;
 
-    if ((now - last_tick) < period_ms) {
-        return CAN_SUCCESS; /* not time yet */
-    }
+    uint32_t now = HAL_GetTick();
+    uint32_t interval = period_ms / 3U;   /* ≈167 ms per phase at 500 ms */
+
+    if ((now - last_tick) < interval)
+        return CAN_SUCCESS;
     last_tick = now;
 
-    /* ── 0x600: Endstops, Voltages, Protection (8 bytes) ── */
-    {
-        uint8_t payload[8] = {0};
+    switch (phase) {
 
-        /* Byte 0–1: endstop triggered + fault */
-        (void)CAN_Packer_Endstop_and_ESTOP_2Byte(&payload[0], &payload[1], 2);
+    case 0:
+        /* ── 0x600  Status: endstop/ESTOP + voltages in mV + debug ── */
+        {
+            uint8_t p[8] = {0};
 
-        /* Byte 2–3: 24V bus voltage (2 bytes LE, 0.1V) */
-        (void)CAN_Packer_24V_Bus_2Byte(&payload[2], 2);
+            CAN_Packer_Endstop_and_ESTOP_2Byte(&p[0], &p[1], 2);
+            CAN_Packer_24V_Bus_mV_2Byte(&p[2], 2);   /* u16 LE, mV */
+            CAN_Packer_12V_Bus_mV_2Byte(&p[4], 2);   /* u16 LE, mV */
+            p[6] = dbg_cmd_count;
+            p[7] = (uint8_t)(dbg_last_msg & 0xFF);
 
-        /* Byte 4: 12V bus voltage (1 byte, 0.1V) */
-        (void)CAN_Packer_12V_Bus_1Byte(&payload[4], 1);
+            FDCAN_SendFrame(CAN_ID_BCAST_STATUS, p, 8);
+        }
+        /* ── 0x601  Currents in mA ─────────────────────────────── */
+        {
+            uint8_t p[8] = {0};
 
-        /* Byte 5: protection state (OC + OV packed) */
-        (void)CAN_Packer_Protection_State_1Byte(&payload[5], 1);
+            CAN_Packer_24V_Bus_Current_mA_2Byte(&p[0], 2);
+            CAN_Packer_HighSide_Module_Current_mA_2Byte(HS_MODULE_DRIVE,     &p[2], 2);
+            CAN_Packer_HighSide_Module_Current_mA_2Byte(HS_MODULE_EXTRUDER,  &p[4], 2);
+            CAN_Packer_HighSide_Module_Current_mA_2Byte(HS_MODULE_SCRUBBING, &p[6], 2);
 
-        /* Byte 6–7: reserved (0) */
+            FDCAN_SendFrame(CAN_ID_BCAST_CURRENTS, p, 8);
+        }
+        /* ── 0x602  Temperatures ───────────────────────────────── */
+        {
+            uint8_t p[6] = {0};
 
-        FDCAN_SendFrame(0x600, payload, sizeof(payload));
+            CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_1, &p[0], 1);
+            CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_2, &p[1], 1);
+            CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_3, &p[2], 1);
+            CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_4, &p[3], 1);
+            CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_5, &p[4], 1);
+            CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_6, &p[5], 1);
+
+            FDCAN_SendFrame(CAN_ID_BCAST_TEMPS, p, 6);
+        }
+        break;
+
+    case 1:
+        /* ── 0x603  Fan Speeds ─────────────────────────────────── */
+        {
+            uint8_t p[5] = {0};
+
+            CAN_Packer_Fan_Speed_1Byte(FAN_DR, &p[0], 1);
+            CAN_Packer_Fan_Speed_1Byte(FAN_EP, &p[1], 1);
+            CAN_Packer_Fan_Speed_1Byte(FAN_EH, &p[2], 1);
+            CAN_Packer_Fan_Speed_1Byte(FAN_ST, &p[3], 1);
+            CAN_Packer_Fan_Speed_1Byte(FAN_SF, &p[4], 1);
+
+            FDCAN_SendFrame(CAN_ID_BCAST_FANS, p, 5);
+        }
+        /* ── 0x604  GPIO Status ────────────────────────────────── */
+        Send_GPIO_Status_Frame();
+
+        /* ── 0x605  Raw ADC  (12 channels × 4 bits = 6 bytes) ─── */
+        {
+            extern volatile uint16_t ADC_VAL[];
+            uint8_t p[6] = {0};
+
+            for (int i = 0; i < 12; i++) {
+                uint8_t nibble = (uint8_t)(ADC_VAL[i] >> 8);
+                if (i % 2 == 0)
+                    p[i / 2] |= (nibble << 4);
+                else
+                    p[i / 2] |= (nibble & 0x0F);
+            }
+
+            FDCAN_SendFrame(CAN_ID_BCAST_RAW_ADC, p, 6);
+        }
+        break;
+
+    case 2:
+        /* ── 0x606  Startup Config (EEPROM defaults) ───────────── */
+        Send_Config_Broadcast();
+        break;
+
+    default:
+        break;
     }
 
-    /* ── 0x601: Currents (5 bytes) ── */
-    {
-        uint8_t payload[5] = {0};
-
-        /* Byte 0–1: 24V bus current (2 bytes LE, 0.1A) */
-        (void)CAN_Packer_24V_Bus_Current_1DP_2Byte(&payload[0], 2);
-
-        /* Byte 2: drive module current (1 byte, 0.1A) */
-        (void)CAN_Packer_HighSide_Module_Current_1DP_1Byte(HS_MODULE_DRIVE, &payload[2], 1);
-
-        /* Byte 3: extruder module current (1 byte, 0.1A) */
-        (void)CAN_Packer_HighSide_Module_Current_1DP_1Byte(HS_MODULE_EXTRUDER, &payload[3], 1);
-
-        /* Byte 4: scrubbing module current (1 byte, 0.1A) */
-        (void)CAN_Packer_HighSide_Module_Current_1DP_1Byte(HS_MODULE_SCRUBBING, &payload[4], 1);
-
-        FDCAN_SendFrame(0x601, payload, sizeof(payload));
-    }
-
-    /* ── 0x602: Temperatures (8 bytes) ── */
-    {
-        uint8_t payload[8] = {0};
-
-        /* Byte 0–5: thermistor temperatures (offset-encoded: wire = °C + 40) */
-        (void)CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_1, &payload[0], 1);
-        (void)CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_2, &payload[1], 1);
-        (void)CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_3, &payload[2], 1);
-        (void)CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_4, &payload[3], 1);
-        (void)CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_5, &payload[4], 1);
-        (void)CAN_Packer_Thermistor_Temp_1Byte(TEMP_PTC_6, &payload[5], 1);
-
-        /* Byte 6–7: reserved (0) */
-
-        FDCAN_SendFrame(0x602, payload, sizeof(payload));
-    }
-
-    /* ── 0x603: Fan Speeds (5 bytes) ── */
-    {
-        uint8_t payload[5] = {0};
-
-        /* Byte 0–4: fan speed (one byte per fan, 0–100%) */
-        (void)CAN_Packer_Fan_Speed_1Byte(FAN_DR, &payload[0], 1);
-        (void)CAN_Packer_Fan_Speed_1Byte(FAN_EP, &payload[1], 1);
-        (void)CAN_Packer_Fan_Speed_1Byte(FAN_EH, &payload[2], 1);
-        (void)CAN_Packer_Fan_Speed_1Byte(FAN_ST, &payload[3], 1);
-        (void)CAN_Packer_Fan_Speed_1Byte(FAN_SF, &payload[4], 1);
-
-        FDCAN_SendFrame(0x603, payload, sizeof(payload));
-    }
+    phase++;
+    if (phase > 2U)
+        phase = 0U;
 
     return CAN_SUCCESS;
-}
-
-
-
-static void handle_set_test_LED(uint32_t id, uint8_t *params, uint8_t len)
-{
-    if (len < 1U) {
-        return; /* invalid length */
-    }
-
-    HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-
-    send_ack(0x700, 0x60);
-}  
- 
-
-void send_ack(uint32_t dst_id, uint8_t cmd)
-{
-    uint8_t tx[2] = { cmd, 0x00U };
-    (void)FDCAN_SendFrame(dst_id, tx, 2);
-}
- 
-void send_nack(uint32_t dst_id, uint8_t cmd)
-{
-    uint8_t tx[2] = { cmd, 0xFFU };
-    (void)FDCAN_SendFrame(dst_id, tx, 2);
 }

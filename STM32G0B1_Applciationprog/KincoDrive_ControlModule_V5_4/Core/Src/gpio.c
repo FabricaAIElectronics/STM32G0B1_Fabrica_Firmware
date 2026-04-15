@@ -63,11 +63,11 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(VBUCK_CTRL_GPIO_Port, VBUCK_CTRL_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : BlueButton_Pin HS_E_PG_Pin HS_SC_FT_Pin */
-  GPIO_InitStruct.Pin = BlueButton_Pin|HS_E_PG_Pin|HS_SC_FT_Pin;
+  /*Configure GPIO pin : BlueButton_Pin */
+  GPIO_InitStruct.Pin = BlueButton_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  HAL_GPIO_Init(BlueButton_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : HS_DR_EN_Pin HS_E_EN_Pin HS_SC_EN_Pin */
   GPIO_InitStruct.Pin = HS_DR_EN_Pin|HS_E_EN_Pin|HS_SC_EN_Pin;
@@ -105,19 +105,31 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(VBUCK_CTRL_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : HS_DR_FT_Pin HS_SC_PG_Pin ENDSTOP_SC_H_NO_INT_Pin ENDSTOP_SC_H_NC_INT_Pin
-                           ENDSTOP_EP_L_NO_INT_Pin ENDSTOP_EP_L_NC_INT_Pin ENDSTOP_EP_H_NO_INT_Pin ENDSTOP_EP_H_NC_INT_Pin */
-  GPIO_InitStruct.Pin = HS_DR_FT_Pin|HS_SC_PG_Pin|ENDSTOP_SC_H_NO_INT_Pin|ENDSTOP_SC_H_NC_INT_Pin
-                          |ENDSTOP_EP_L_NO_INT_Pin|ENDSTOP_EP_L_NC_INT_Pin|ENDSTOP_EP_H_NO_INT_Pin|ENDSTOP_EP_H_NC_INT_Pin;
+  /*Configure GPIO pins : HS_DR_FT_Pin HS_SC_PG_Pin */
+  GPIO_InitStruct.Pin = HS_DR_FT_Pin|HS_SC_PG_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /*Configure GPIO pins : HS_DR_PG_Pin HS_E_FT_Pin */
   GPIO_InitStruct.Pin = HS_DR_PG_Pin|HS_E_FT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : HS_E_PG_Pin HS_SC_FT_Pin */
+  GPIO_InitStruct.Pin = HS_E_PG_Pin|HS_SC_FT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : ENDSTOP_SC_H_NO_INT_Pin ENDSTOP_SC_H_NC_INT_Pin ENDSTOP_EP_L_NO_INT_Pin ENDSTOP_EP_L_NC_INT_Pin
+                           ENDSTOP_EP_H_NO_INT_Pin ENDSTOP_EP_H_NC_INT_Pin */
+  GPIO_InitStruct.Pin = ENDSTOP_SC_H_NO_INT_Pin|ENDSTOP_SC_H_NC_INT_Pin|ENDSTOP_EP_L_NO_INT_Pin|ENDSTOP_EP_L_NC_INT_Pin
+                          |ENDSTOP_EP_H_NO_INT_Pin|ENDSTOP_EP_H_NC_INT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
 }
 

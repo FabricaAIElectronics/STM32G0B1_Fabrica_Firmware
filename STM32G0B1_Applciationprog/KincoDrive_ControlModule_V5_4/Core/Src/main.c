@@ -21,7 +21,16 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+<<<<<<< HEAD
+#include "CAN_Handler.h"
+#include "Fan_PWM.h"
+#include "Power_Electronic.h"
+#include "eeprom_driver.h"
+#include "ESTOP.h"
+#include "Endstop.h"
+=======
 
+>>>>>>> main
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -205,6 +214,30 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM14_Init();
   /* USER CODE BEGIN 2 */
+<<<<<<< HEAD
+  
+  start_all_Fan_PWM();
+  start_Fan_Tacho_DMA();
+
+  HAL_FDCAN_Start(&hfdcan1);
+  CAN_Handler_Init();
+
+  Calibrate_ADC1();
+  Start_ADC1_DMA();
+
+  EEPROM_Init();
+  EEPROM_ApplyStartupConfig();   /* apply saved HS + fan defaults to hardware */
+  Endstop_Init();
+  ESTOP_Init();
+//  HAL_GPIO_WritePin(HS_DR_EN_GPIO_Port, HS_DR_EN_Pin, GPIO_PIN_SET);
+//  HAL_GPIO_WritePin(HS_E_EN_GPIO_Port, HS_E_EN_Pin, GPIO_PIN_SET);
+//  HAL_GPIO_WritePin(HS_SC_EN_GPIO_Port,HS_SC_EN_Pin, GPIO_PIN_SET);
+
+
+  
+
+  
+=======
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
@@ -217,6 +250,7 @@ int main(void)
   HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_2);
   HAL_ADC_Start_DMA(&hadc1,(uint32_t*)ADCvalue,11);
 //  HAL_ADC_Start(&hadc1);
+>>>>>>> main
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -267,6 +301,35 @@ if (timeoutCounter_CH > 0)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+<<<<<<< HEAD
+
+
+    CAN_Process();
+    CAN_Broadcast(500);
+    ESTOP_State_Machine();
+
+    /* ── Heartbeat LED on PA5: toggle every 1 second ── */
+    {
+        static uint32_t led_last_tick = 0;
+        uint32_t now = HAL_GetTick();
+        if ((now - led_last_tick) >= 1000U) {
+            led_last_tick = now;
+            HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+        }
+    }
+    
+//    if(HAL_GPIO_ReadPin(LED_OUT_GPIO_Port, LED_OUT_Pin)){
+//    	  Enable_HighSide_Power_Module(HS_MODULE_DRIVE, 500);
+//    	  Enable_HighSide_Power_Module(HS_MODULE_EXTRUDER, 500);
+//    	  Enable_HighSide_Power_Module(HS_MODULE_SCRUBBING, 500);
+//    }
+//    else{
+//    	  Disable_HighSide_Power_Module(HS_MODULE_DRIVE, 500);
+//    	  Disable_HighSide_Power_Module(HS_MODULE_EXTRUDER, 500);
+//    	  Disable_HighSide_Power_Module(HS_MODULE_SCRUBBING, 500);
+//    }
+=======
+>>>>>>> main
   }
   /* USER CODE END 3 */
 }
@@ -289,7 +352,11 @@ void SystemClock_Config(void)
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+<<<<<<< HEAD
+  RCC_OscInitStruct.HSIDiv = RCC_HSI_DIV1;
+=======
   RCC_OscInitStruct.HSIDiv = RCC_HSI_DIV2;
+>>>>>>> main
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
@@ -968,6 +1035,8 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+  (void)file;
+  (void)line;
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */

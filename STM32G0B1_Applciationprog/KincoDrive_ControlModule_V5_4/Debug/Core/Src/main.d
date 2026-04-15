@@ -38,10 +38,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Core/Inc/adc.h ../Core/Inc/main.h ../Core/Inc/dma.h \
  ../Core/Inc/fdcan.h ../Core/Inc/i2c.h ../Core/Inc/tim.h \
  ../Core/Inc/gpio.h ../Core/Inc/CAN_Handler.h ../Core/Inc/Fan_PWM.h \
- ../Core/Inc/Power_Electronic.h \
- ../Drivers/CMSIS/Device/ST/STM32G0xx/Include/stm32g0b1xx.h \
- ../Core/Inc/eeprom_driver.h ../Core/Inc/Core_Systems.h \
- ../Core/Inc/error_manager.h
+ ../Core/Inc/Power_Electronic.h ../Core/Inc/eeprom_driver.h \
+ ../Core/Inc/ESTOP.h ../Core/Inc/Endstop.h
 ../Core/Inc/main.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal.h:
 ../Core/Inc/stm32g0xx_hal_conf.h:
@@ -89,7 +87,6 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Core/Inc/CAN_Handler.h:
 ../Core/Inc/Fan_PWM.h:
 ../Core/Inc/Power_Electronic.h:
-../Drivers/CMSIS/Device/ST/STM32G0xx/Include/stm32g0b1xx.h:
 ../Core/Inc/eeprom_driver.h:
-../Core/Inc/Core_Systems.h:
-../Core/Inc/error_manager.h:
+../Core/Inc/ESTOP.h:
+../Core/Inc/Endstop.h:

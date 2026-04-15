@@ -1,0 +1,3 @@
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/can.c:226:6:CanInit	9
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/can.c:415:6:CanTransmitPacket	6
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/can.c:506:10:CanReceivePacket	6

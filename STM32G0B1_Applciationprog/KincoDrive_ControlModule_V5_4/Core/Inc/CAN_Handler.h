@@ -23,7 +23,7 @@
  *  Device identity
  * ═══════════════════════════════════════════════════════════════════════ */
 
-#define CAN_DEVICE_ID               0x0667U
+#define CAN_DEVICE_ID               0x667
 
 /* Build a 29-bit extended CAN ID from a message type */
 #define CAN_EXT_ID(msg_type)        ((((uint32_t)(msg_type) & 0x1FFFU) << 16) | CAN_DEVICE_ID)

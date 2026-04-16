@@ -110,8 +110,21 @@ void start_all_Fan_PWM(void)
 void start_Fan_Tacho_DMA(void)
 {
     for (int i = 0; i < 5; ++i) {
-        HAL_TIM_IC_Start_DMA(fan_tacho[i].timer, fan_tacho[i].channel,
-                             (uint32_t *)tacho_buf[i], TACHO_DMA_DEPTH);
+        /* Guard: skip if timer has no DMA handle linked for this channel.
+         * Without DMA configured in the MSP, the hdma[] pointers are NULL
+         * and HAL_TIM_IC_Start_DMA would dereference them → undefined behaviour.
+         * Fall back to interrupt-based capture instead. */
+        uint32_t ch  = fan_tacho[i].channel;
+        uint32_t idx = (ch == TIM_CHANNEL_1) ? TIM_DMA_ID_CC1 :
+                       (ch == TIM_CHANNEL_2) ? TIM_DMA_ID_CC2 :
+                       (ch == TIM_CHANNEL_3) ? TIM_DMA_ID_CC3 :
+                                               TIM_DMA_ID_CC4;
+        if (fan_tacho[i].timer->hdma[idx] != NULL) {
+            HAL_TIM_IC_Start_DMA(fan_tacho[i].timer, ch,
+                                 (uint32_t *)tacho_buf[i], TACHO_DMA_DEPTH);
+        } else {
+            HAL_TIM_IC_Start_IT(fan_tacho[i].timer, ch);
+        }
     }
 }
 

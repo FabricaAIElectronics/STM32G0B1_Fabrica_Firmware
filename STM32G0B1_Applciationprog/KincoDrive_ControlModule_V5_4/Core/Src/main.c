@@ -21,16 +21,12 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-<<<<<<< HEAD
 #include "CAN_Handler.h"
 #include "Fan_PWM.h"
 #include "Power_Electronic.h"
 #include "eeprom_driver.h"
 #include "ESTOP.h"
 #include "Endstop.h"
-=======
-
->>>>>>> main
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -62,13 +58,7 @@ TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim14;
 
 /* USER CODE BEGIN PV */
-uint32_t TimerCount = 0;
-volatile uint32_t ADCvalue[11] = {0};
-volatile float AnalogData[11] = {0};
-volatile uint32_t freqTim2[4];
-volatile uint32_t freqTim3[1];
-#define TIMERCLK 60000000
-#define PRESCALER 60
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -87,94 +77,7 @@ static void MX_TIM14_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void DigitalRead(){
 
-	if(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13))
-		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_5 ,GPIO_PIN_SET);
-else if(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_14))
-		HAL_GPIO_WritePin(GPIOA,GPIO_PIN_5,GPIO_PIN_SET);
-else if(HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_9))
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5,GPIO_PIN_SET);
-else if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_12))
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5,GPIO_PIN_SET);
-else if(HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_15))
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5,GPIO_PIN_SET);
-else if(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_8))
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5,GPIO_PIN_SET);
-else if(HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_9))
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5,GPIO_PIN_SET);
-else if(HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_0))
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5,GPIO_PIN_SET);
-else if(HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_1))
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5,GPIO_PIN_SET);
-else if(HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_2))
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5,GPIO_PIN_SET);
-else if(HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_3))
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5,GPIO_PIN_SET);
-else if(HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_4))
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5,GPIO_PIN_SET);
-else if(HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_5))
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5,GPIO_PIN_SET);
-else if(HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_6))
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5,GPIO_PIN_SET);
-else if(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_3))
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5,GPIO_PIN_SET);
-else if(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_4))
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5,GPIO_PIN_SET);
-else if(HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_5))
-		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5,GPIO_PIN_SET);
-else
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
-
-}
-volatile uint32_t timeoutCounter_CH = {0};
-volatile uint8_t signalPresent_CH = {0};
-
-void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
-
-	static uint32_t lastCapture[5] = {0};
-	uint32_t index = 0;
-	uint32_t capture = 0;
-	uint32_t diff = 0;
-	uint32_t timerclk = 0;
-	uint32_t prescaler = 0;
-	if(htim->Instance == TIM2){
-	timerclk = HAL_RCC_GetPCLK1Freq();
-	prescaler = htim->Init.Prescaler + 1;
-
-	if(htim->Channel==HAL_TIM_ACTIVE_CHANNEL_1){index = 0;capture = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);timeoutCounter_CH= 100000; signalPresent_CH= 1;}
-	if(htim->Channel==HAL_TIM_ACTIVE_CHANNEL_2){index = 1;capture = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);timeoutCounter_CH= 100000; signalPresent_CH = 1;}
-	if(htim->Channel==HAL_TIM_ACTIVE_CHANNEL_3){index = 2;capture = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_3);timeoutCounter_CH= 100000; signalPresent_CH= 1;}
-	if(htim->Channel==HAL_TIM_ACTIVE_CHANNEL_4){index = 3;capture = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_4);timeoutCounter_CH= 100000; signalPresent_CH= 1;}
-	diff = (capture >= lastCapture[index]) ? (capture - lastCapture[index]) : ((htim->Instance->ARR - lastCapture[index]) + capture);
-	freqTim2[index] = timerclk/(prescaler*diff);
-	lastCapture[index] = capture;
-	}
-	if(htim->Instance == TIM3){
-		timerclk = HAL_RCC_GetPCLK1Freq();
-		prescaler = htim->Init.Prescaler + 1;
-
-
-		if(htim->Channel==HAL_TIM_ACTIVE_CHANNEL_2){index = 4;capture = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);timeoutCounter_CH= 100000; signalPresent_CH = 1;}
-		diff = (capture >= lastCapture[index]) ? (capture - lastCapture[index]) : ((htim->Instance->ARR - lastCapture[index]) + capture);
-		freqTim3[0] = timerclk/(prescaler*diff);
-		lastCapture[index] = capture;
-		}
-
-}
-
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc){
-//	HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-	if(hadc->Instance==ADC1){
-	for (int i = 0; i<11; i++){
-		if(ADCvalue[i]>4096)
-			ADCvalue[i] = 0;
-		AnalogData[i] = (ADCvalue[i] *3.3f)/4095.0f;
-	}
-	HAL_ADC_Start_DMA(&hadc1,(uint32_t*)ADCvalue,11);
-	}
-
-}
 /* USER CODE END 0 */
 
 /**
@@ -185,7 +88,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  Pre_CAN_Handler_Init();   /* Vector table remap for bootloader compatibility */
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -213,99 +116,44 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM14_Init();
+  MX_FDCAN1_Init();
   /* USER CODE BEGIN 2 */
-<<<<<<< HEAD
-  
+
+  /* ── Fan PWM outputs and tachometer input capture ── */
   start_all_Fan_PWM();
   start_Fan_Tacho_DMA();
 
-  HAL_FDCAN_Start(&hfdcan1);
+  /* ── FDCAN: configure filters BEFORE Start (M_CAN requires Init mode) ── */
   CAN_Handler_Init();
+  HAL_FDCAN_Start(&hfdcan1);
 
+  /* ── ADC: calibrate, then start continuous DMA scan (12 channels) ── */
   Calibrate_ADC1();
   Start_ADC1_DMA();
 
+  /* ── EEPROM: read saved config and apply to hardware ── */
   EEPROM_Init();
-  EEPROM_ApplyStartupConfig();   /* apply saved HS + fan defaults to hardware */
+  EEPROM_ApplyStartupConfig();
+
+  /* ── Safety inputs ── */
   Endstop_Init();
   ESTOP_Init();
-//  HAL_GPIO_WritePin(HS_DR_EN_GPIO_Port, HS_DR_EN_Pin, GPIO_PIN_SET);
-//  HAL_GPIO_WritePin(HS_E_EN_GPIO_Port, HS_E_EN_Pin, GPIO_PIN_SET);
-//  HAL_GPIO_WritePin(HS_SC_EN_GPIO_Port,HS_SC_EN_Pin, GPIO_PIN_SET);
 
-
-  
-
-  
-=======
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
-  HAL_TIM_PWM_Start(&htim14, TIM_CHANNEL_1);
-  HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_1);
-  HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_2);
-  HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_3);
-  HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_4);
-  HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_2);
-  HAL_ADC_Start_DMA(&hadc1,(uint32_t*)ADCvalue,11);
-//  HAL_ADC_Start(&hadc1);
->>>>>>> main
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
- {
-//	  for(int i=0; i <5; i++){
-//	  HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
-//	  ADCvalue[i]= HAL_ADC_GetValue(&hadc1);
-//  }
-	  if(HAL_GetTick()-TimerCount>=500){
-	  HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_8);
-	  HAL_GPIO_TogglePin(GPIOB,GPIO_PIN_15);
-//	  HAL_GPIO_TogglePin(GPIOA,GPIO_PIN_5);
-	  HAL_GPIO_TogglePin(GPIOC,GPIO_PIN_3);
-	  HAL_GPIO_TogglePin(GPIOC,GPIO_PIN_2);
-	  HAL_GPIO_TogglePin(GPIOC,GPIO_PIN_1);
-	  TimerCount = HAL_GetTick();
-
-	  if((AnalogData[0]>2.0f)||(AnalogData[1]>2.0f)||(AnalogData[2]>2.0f)||(AnalogData[3]<2.0f)||(AnalogData[4]>2.0f)||(AnalogData[5]>2.0f)||(AnalogData[6]>2.0f)||(AnalogData[7]>2.0f)||(AnalogData[8]>2.0f)||(AnalogData[9]>2.0f)||(AnalogData[10]>2.0f)||(AnalogData[11]>2.0f))
-//	  if(AnalogData[6]>2.0f)
-		  HAL_GPIO_TogglePin(GPIOA,GPIO_PIN_5);
-
-
-	  }
-
-//	  DigitalRead();
-if((freqTim2[0]>20)||(freqTim2[1]>20)||(freqTim2[2]>20)||(freqTim2[3]>20)||freqTim3[0]>20){
-//	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
-}
-else
-//	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
-if (timeoutCounter_CH > 0)
-    {
-        timeoutCounter_CH--;
-        if (timeoutCounter_CH == 0)
-        {
-            signalPresent_CH = 0; // No signal detected
-            freqTim2[0] = 0;
-            freqTim2[1] = 0;
-            freqTim2[2] = 0;
-            freqTim2[3] = 0;
-            freqTim3[0] = 0;
-
-        }
-    }
-
+  {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-<<<<<<< HEAD
 
-
+    /* ── CAN: process pending commands and send periodic telemetry ── */
     CAN_Process();
     CAN_Broadcast(500);
+
+    /* ── ESTOP: debounced state machine (updates flag + LED) ── */
     ESTOP_State_Machine();
 
     /* ── Heartbeat LED on PA5: toggle every 1 second ── */
@@ -314,22 +162,9 @@ if (timeoutCounter_CH > 0)
         uint32_t now = HAL_GetTick();
         if ((now - led_last_tick) >= 1000U) {
             led_last_tick = now;
-            HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+            HAL_GPIO_TogglePin(LED_OUT_GPIO_Port, LED_OUT_Pin);
         }
     }
-    
-//    if(HAL_GPIO_ReadPin(LED_OUT_GPIO_Port, LED_OUT_Pin)){
-//    	  Enable_HighSide_Power_Module(HS_MODULE_DRIVE, 500);
-//    	  Enable_HighSide_Power_Module(HS_MODULE_EXTRUDER, 500);
-//    	  Enable_HighSide_Power_Module(HS_MODULE_SCRUBBING, 500);
-//    }
-//    else{
-//    	  Disable_HighSide_Power_Module(HS_MODULE_DRIVE, 500);
-//    	  Disable_HighSide_Power_Module(HS_MODULE_EXTRUDER, 500);
-//    	  Disable_HighSide_Power_Module(HS_MODULE_SCRUBBING, 500);
-//    }
-=======
->>>>>>> main
   }
   /* USER CODE END 3 */
 }
@@ -352,11 +187,7 @@ void SystemClock_Config(void)
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-<<<<<<< HEAD
-  RCC_OscInitStruct.HSIDiv = RCC_HSI_DIV1;
-=======
   RCC_OscInitStruct.HSIDiv = RCC_HSI_DIV2;
->>>>>>> main
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
@@ -547,19 +378,19 @@ void MX_FDCAN1_Init(void)
   hfdcan1.Init.ClockDivider = FDCAN_CLOCK_DIV1;
   hfdcan1.Init.FrameFormat = FDCAN_FRAME_CLASSIC;
   hfdcan1.Init.Mode = FDCAN_MODE_NORMAL;
-  hfdcan1.Init.AutoRetransmission = DISABLE;
+  hfdcan1.Init.AutoRetransmission = ENABLE;
   hfdcan1.Init.TransmitPause = DISABLE;
   hfdcan1.Init.ProtocolException = DISABLE;
-  hfdcan1.Init.NominalPrescaler = 16;
-  hfdcan1.Init.NominalSyncJumpWidth = 1;
-  hfdcan1.Init.NominalTimeSeg1 = 1;
-  hfdcan1.Init.NominalTimeSeg2 = 1;
-  hfdcan1.Init.DataPrescaler = 1;
-  hfdcan1.Init.DataSyncJumpWidth = 1;
-  hfdcan1.Init.DataTimeSeg1 = 1;
-  hfdcan1.Init.DataTimeSeg2 = 1;
+  hfdcan1.Init.NominalPrescaler = 6;
+  hfdcan1.Init.NominalSyncJumpWidth = 2;
+  hfdcan1.Init.NominalTimeSeg1 = 15;
+  hfdcan1.Init.NominalTimeSeg2 = 4;
+  hfdcan1.Init.DataPrescaler = 6;
+  hfdcan1.Init.DataSyncJumpWidth = 4;
+  hfdcan1.Init.DataTimeSeg1 = 15;
+  hfdcan1.Init.DataTimeSeg2 = 4;
   hfdcan1.Init.StdFiltersNbr = 0;
-  hfdcan1.Init.ExtFiltersNbr = 0;
+  hfdcan1.Init.ExtFiltersNbr = 2;
   hfdcan1.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
   if (HAL_FDCAN_Init(&hfdcan1) != HAL_OK)
   {
@@ -899,11 +730,6 @@ static void MX_DMA_Init(void)
   /* DMA controller clock enable */
   __HAL_RCC_DMA1_CLK_ENABLE();
 
-  /* DMA interrupt init */
-  /* DMA1_Channel1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
-
 }
 
 /**
@@ -929,75 +755,81 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, HS_DR_EN_Pin|HS_E_EN_Pin|HS_SC_EN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LED_OUT_GPIO_Port, LED_OUT_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(EStopLED_CTRL_GPIO_Port, EStopLED_CTRL_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(EStopLED_CTRL_INT_GPIO_Port, EStopLED_CTRL_INT_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(VBUCK_EN_GPIO_Port, VBUCK_EN_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(VBUCK_CTRL_GPIO_Port, VBUCK_CTRL_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : B1_Pin */
-  GPIO_InitStruct.Pin = B1_Pin;
+  /*Configure GPIO pin : BlueButton_Pin */
+  GPIO_InitStruct.Pin = BlueButton_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(BlueButton_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : HS_DR_EN_Pin HS_E_EN_Pin HS_SC_EN_Pin */
   GPIO_InitStruct.Pin = HS_DR_EN_Pin|HS_E_EN_Pin|HS_SC_EN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LED2_Pin */
-  GPIO_InitStruct.Pin = LED2_Pin;
+  /*Configure GPIO pin : LED_OUT_Pin */
+  GPIO_InitStruct.Pin = LED_OUT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LED2_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(LED_OUT_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : EStop_NO_Pin EStop_NC_Pin EndStop_EH_L_NO_Pin EndStop_EH_H_NO_Pin
-                           EndStop_EH_H_NC_Pin */
-  GPIO_InitStruct.Pin = EStop_NO_Pin|EStop_NC_Pin|EndStop_EH_L_NO_Pin|EndStop_EH_H_NO_Pin
-                          |EndStop_EH_H_NC_Pin;
+  /*Configure GPIO pins : EStop_NO_INT_Pin EStop_NC_INT_Pin ENDSTOP_EH_L_NO_INT_Pin ENDSTOP_EH_H_NO_INT_Pin
+                           ENDSTOP_EH_H_NC_INT_Pin */
+  GPIO_InitStruct.Pin = EStop_NO_INT_Pin|EStop_NC_INT_Pin|ENDSTOP_EH_L_NO_INT_Pin|ENDSTOP_EH_H_NO_INT_Pin
+                          |ENDSTOP_EH_H_NC_INT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : EStopLED_CTRL_Pin */
-  GPIO_InitStruct.Pin = EStopLED_CTRL_Pin;
+  /*Configure GPIO pin : EStopLED_CTRL_INT_Pin */
+  GPIO_InitStruct.Pin = EStopLED_CTRL_INT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(EStopLED_CTRL_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(EStopLED_CTRL_INT_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : VBUCK_EN_Pin */
-  GPIO_InitStruct.Pin = VBUCK_EN_Pin;
+  /*Configure GPIO pin : VBUCK_CTRL_Pin */
+  GPIO_InitStruct.Pin = VBUCK_CTRL_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(VBUCK_EN_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(VBUCK_CTRL_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : HS_DR_FT_Pin HS_SC_PG_Pin Endstop_SC_H_NO_Pin Endstop_SC_H_NC_Pin
-                           Endstop_EP_L_NO_Pin Endstop_EP_L_NC_Pin Endstop_EP_H_NO_Pin Endstop_EP_H_NC_Pin */
-  GPIO_InitStruct.Pin = HS_DR_FT_Pin|HS_SC_PG_Pin|Endstop_SC_H_NO_Pin|Endstop_SC_H_NC_Pin
-                          |Endstop_EP_L_NO_Pin|Endstop_EP_L_NC_Pin|Endstop_EP_H_NO_Pin|Endstop_EP_H_NC_Pin;
+  /*Configure GPIO pins : HS_DR_FT_Pin HS_SC_PG_Pin */
+  GPIO_InitStruct.Pin = HS_DR_FT_Pin|HS_SC_PG_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /*Configure GPIO pins : HS_DR_PG_Pin HS_E_FT_Pin */
   GPIO_InitStruct.Pin = HS_DR_PG_Pin|HS_E_FT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : HS_E_PG_Pin HS_SC_FT_Pin */
   GPIO_InitStruct.Pin = HS_E_PG_Pin|HS_SC_FT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : ENDSTOP_SC_H_NO_INT_Pin ENDSTOP_SC_H_NC_INT_Pin ENDSTOP_EP_L_NO_INT_Pin ENDSTOP_EP_L_NC_INT_Pin
+                           ENDSTOP_EP_H_NO_INT_Pin ENDSTOP_EP_H_NC_INT_Pin */
+  GPIO_InitStruct.Pin = ENDSTOP_SC_H_NO_INT_Pin|ENDSTOP_SC_H_NC_INT_Pin|ENDSTOP_EP_L_NO_INT_Pin|ENDSTOP_EP_L_NC_INT_Pin
+                          |ENDSTOP_EP_H_NO_INT_Pin|ENDSTOP_EP_H_NC_INT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
@@ -1015,10 +847,15 @@ static void MX_GPIO_Init(void)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
+  /* Fast LED blink on PA5 to signal Error_Handler was reached.
+   * IRQs are disabled → SysTick stops → use raw busy loop for delay.
+   * If the LED blinks fast (~5 Hz), we know it's Error_Handler.
+   * If the LED is dead, it's a HardFault instead. */
   __disable_irq();
   while (1)
   {
+      HAL_GPIO_TogglePin(LED_OUT_GPIO_Port, LED_OUT_Pin);
+      for (volatile uint32_t d = 0; d < 400000UL; d++) { __NOP(); }
   }
   /* USER CODE END Error_Handler_Debug */
 }

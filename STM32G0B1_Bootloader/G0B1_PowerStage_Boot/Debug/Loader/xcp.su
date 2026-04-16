@@ -1,0 +1,5 @@
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/xcp.c:503:19:XcpGetOrderedLong	0	static
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/xcp.c:152:6:XcpInit	0	static
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/xcp.c:169:10:XcpIsConnected	0	static
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/xcp.c:185:6:XcpPacketTransmitted	0	static
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/xcp.c:199:6:XcpPacketReceived	24	static

@@ -1,0 +1,4 @@
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/cpu.c:60:6:CpuInit	8	static
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/cpu.c:76:6:CpuStartUserProgram	8	static
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/cpu.c:170:6:CpuMemCopy	24	static
+C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/cpu.c:197:6:CpuMemSet	16	static

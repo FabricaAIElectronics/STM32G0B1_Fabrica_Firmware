@@ -20,6 +20,7 @@
 #include "CAN_Handler.h"
 #include "main.h"
 #include "fdcan.h"
+
 #include "stm32g0xx.h"
 #include <string.h>
 #include <stdbool.h>
@@ -72,8 +73,10 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
         HAL_NVIC_SystemReset();
     }
 
-    /* Save frame for main-loop processing */
-    uint8_t dlc = (uint8_t)(hdr.DataLength);  /* HAL already extracts DLC code (0–15) */
+    /* Save frame for main-loop processing.
+     * HAL FDCAN DataLength is encoded as FDCAN_DLC_BYTES_x (value in bits [19:16]).
+     * Shift right by 16 to extract the actual byte count (0–8). */
+    uint8_t dlc = (uint8_t)(hdr.DataLength >> 16);
     if (dlc > 8U) dlc = 8U;
     memset((void *)rx_data, 0, 8);          /* zero whole buffer before copy */
     memcpy((void *)rx_data, data, dlc);
@@ -217,20 +220,20 @@ void CAN_Handler_Init(void)
      *   mask bit 1 = must match FilterID1,  mask bit 0 = don't care.
      * 0x0000FFFF → bits[28:16] don't-care (any msg type), bits[15:0] must
      * match 0x0667. */
-    FDCAN_FilterTypeDef filt = {0};
-    filt.IdType       = FDCAN_EXTENDED_ID;
-    filt.FilterIndex  = 0;
-    filt.FilterType   = FDCAN_FILTER_MASK;
-    filt.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-    filt.FilterID1    = CAN_DEVICE_ID;      /* match value: 0x0667           */
-    filt.FilterID2    = 0x0000FFFFU;        /* mask: bits[15:0] must match   */
-
-    if (HAL_FDCAN_ConfigFilter(&hfdcan1, &filt) != HAL_OK)
-        Error_Handler();
-
-    HAL_FDCAN_ConfigGlobalFilter(&hfdcan1,
-                                 FDCAN_REJECT, FDCAN_REJECT,
-                                 FDCAN_REJECT_REMOTE, FDCAN_REJECT_REMOTE);
+//    FDCAN_FilterTypeDef filt = {0};
+//    filt.IdType       = FDCAN_EXTENDED_ID;
+//    filt.FilterIndex  = 0;
+//    filt.FilterType   = FDCAN_FILTER_MASK;
+//    filt.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+//    filt.FilterID1    = CAN_DEVICE_ID;      /* match value: 0x0667           */
+//    filt.FilterID2    = 0x0000FFFFU;        /* mask: bits[15:0] must match   */
+//
+//    if (HAL_FDCAN_ConfigFilter(&hfdcan1, &filt) != HAL_OK)
+//        Error_Handler();
+//
+//    HAL_FDCAN_ConfigGlobalFilter(&hfdcan1,
+//                                 FDCAN_REJECT, FDCAN_REJECT,
+//                                 FDCAN_REJECT_REMOTE, FDCAN_REJECT_REMOTE);
 
     if (HAL_FDCAN_ActivateNotification(&hfdcan1,
             FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK)

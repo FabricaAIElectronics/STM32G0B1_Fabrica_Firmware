@@ -1,5 +1,2 @@
-../Core/Src/fdcan.c:27:17:dlc_bytes_to_fdcan_dlc	16	static
-../Core/Src/fdcan.c:46:6:FDCAN_SendFrame	80	static
-../Core/Src/fdcan.c:74:6:MX_FDCAN1_Init	8	static
-../Core/Src/fdcan.c:118:6:HAL_FDCAN_MspInit	128	static
-../Core/Src/fdcan.c:163:6:HAL_FDCAN_MspDeInit	16	static
+../Core/Src/fdcan.c:15:17:dlc_bytes_to_fdcan_dlc	16	static
+../Core/Src/fdcan.c:27:6:FDCAN_SendFrame	80	static

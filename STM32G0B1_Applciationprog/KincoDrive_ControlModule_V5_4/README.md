@@ -40,7 +40,7 @@ Open the `.ioc` in STM32CubeIDE, generate code, then build.
 |----------|------|-----|---------|-------------|
 | 0x110 | Cmd_HS_Power | 1 | Byte 0 bitmask: bit0=Drive, bit1=Extruder, bit2=Scrubbing, bit3=12V Buck (0=OFF, 1=ON) | Set all 4 HS channels in one frame |
 | 0x140 | Cmd_Fan_PWM | 5 | Bytes 0–4 = DR/EP/EH/ST/SF speed (0–100 %) | Set all 5 fans in one frame |
-| 0x200 | Cmd_EEPROM | 1 | Byte 0 bitmask: bit0=Load defaults from EEPROM, bit1=Save current state to EEPROM | EEPROM startup config control |
+| 0x200 | Cmd_EEPROM | 1 | Byte 0: 0x00=Load safe defaults and apply, non-zero=Save current state to EEPROM | EEPROM startup config control |
 
 **Fan order** (bytes 0–4): Drive, Ext Platform, Ext Head, Stepper, Scrub Front
 
@@ -54,19 +54,19 @@ Open the `.ioc` in STM32CubeIDE, generate code, then build.
 |------|--------|----------|
 | 0 | Endstop triggered | bitfield (bit0=EH_Top, bit1=EH_Bot, bit2=EP_Top, bit3=EP_Bot, bit4=SC_Top, bit5=ESTOP) |
 | 1 | Endstop fault | same layout, 1=wiring fault |
-| 2–3 | Bus24V_Voltage | uint16 LE, 0.1V/bit |
-| 4 | Bus12V_Voltage | uint8, 0.1V/bit |
-| 5 | Dbg_Cmd_Count | wrapping counter, +1 per dispatched command |
-| 6–7 | Dbg_Last_MsgType | uint16 LE, last message type processed |
+| 2–3 | Bus24V_Voltage | uint16 LE, mV |
+| 4–5 | Bus12V_Voltage | uint16 LE, mV |
+| 6 | Dbg_Cmd_Count | wrapping counter, +1 per dispatched command |
+| 7 | Dbg_Last_MsgType | uint8, low byte of last message type processed |
 
-#### 0x601 — Bcast_Currents (5 bytes)
+#### 0x601 — Bcast_Currents (8 bytes)
 
 | Byte | Signal | Encoding |
 |------|--------|----------|
-| 0–1 | Bus24V_Current | uint16 LE, 0.1A/bit |
-| 2 | Drive_Current | uint8, 0.1A/bit |
-| 3 | Extruder_Current | uint8, 0.1A/bit |
-| 4 | Scrubbing_Current | uint8, 0.1A/bit |
+| 0–1 | Bus24V_Current | uint16 LE, mA |
+| 2–3 | Drive_Current | uint16 LE, mA |
+| 4–5 | Extruder_Current | uint16 LE, mA |
+| 6–7 | Scrubbing_Current | uint16 LE, mA |
 
 #### 0x602 — Bcast_Temps (6 bytes)
 
@@ -155,11 +155,10 @@ On power-up, `EEPROM_Init()` reads the config. If the magic or checksum is inval
 
 | Command byte | Effect |
 |---|---|
-| `0x01` (bit0) | Load: re-apply cached config to hardware immediately |
-| `0x02` (bit1) | Save: snapshot current GPIO/fan state to EEPROM |
-| `0x03` (both) | Save then respond with current config |
+| `0x00` | Load: reset to hardcoded safe defaults (all OFF) and apply to hardware |
+| non-zero (e.g. `0x01`) | Save: snapshot current GPIO/fan state to EEPROM |
 
-After any EEPROM command, `Bcast_Config` (0x606) is sent immediately.
+After any EEPROM command, `Bcast_Config` (0x606) is sent on the next periodic cycle.
 
 ---
 

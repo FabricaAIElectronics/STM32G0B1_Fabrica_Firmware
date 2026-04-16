@@ -1,23 +1,10 @@
-/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file    fdcan.h
-  * @brief   This file contains all the function prototypes for
-  *          the fdcan.c file
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2026 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
+  * @brief   FDCAN peripheral handle and TX helper.
   ******************************************************************************
   */
-/* USER CODE END Header */
-/* Define to prevent recursive inclusion -------------------------------------*/
+
 #ifndef __FDCAN_H__
 #define __FDCAN_H__
 
@@ -25,33 +12,26 @@
 extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
-/* USER CODE BEGIN Includes */
 #include <stdbool.h>
-#include <stdint.h>
 #include <string.h>
-#include "stm32g0xx_hal_fdcan.h"
-#include "stm32g0xx.h"
-
-/* USER CODE END Includes */
 
 extern FDCAN_HandleTypeDef hfdcan1;
 
-/* USER CODE BEGIN Private defines */
-
-/* USER CODE END Private defines */
-
 void MX_FDCAN1_Init(void);
 
-/* USER CODE BEGIN Prototypes */
+/**
+ * @brief  Transmit one Classic CAN frame using a 29-bit extended identifier.
+ *
+ * @param  ext_id  Full 29-bit extended CAN ID.
+ * @param  data    Pointer to payload data (may be NULL if len == 0).
+ * @param  len     Payload length in bytes (clamped to 8).
+ * @retval true on success, false on TX queue full or HAL error.
+ */
 bool FDCAN_SendFrame(uint32_t ext_id, const uint8_t *data, uint8_t len);
-/* USER CODE END Prototypes */
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* __FDCAN_H__ */
-

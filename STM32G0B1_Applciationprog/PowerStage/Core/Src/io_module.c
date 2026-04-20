@@ -57,7 +57,15 @@ void HS_init(void){
 			//print error
 		}
 	}
-//	HS_EnableWithoutCap();
+	HS_EnableWithoutCap();
+	uint32_t timeout = HAL_GetTick() + 2000; // 2s timeout
+	    while (!HS_PGood(&hotswap[RAIL_SBC])) {
+	        if (HAL_GetTick() > timeout) break; // handle fault
+	        HAL_Delay(10);
+	    }
+	    HAL_Delay(200); // extra settling margin
+
+	    // Fan can now be enabled by the application layer
 }
 
 void HS_Enable(HS_CTRL_ *HS){

@@ -90,17 +90,22 @@ static void Apply_Config(void)
     fan.auto_on_temp  = g_config.fan_auto_on_temp;
     fan.auto_off_temp = g_config.fan_auto_off_temp;
 
-    /* Actually drive the fan hardware to match the saved config */
+    /* Actually drive the fan hardware to match the saved config.
+     * Use the ramp target so the fan soft-starts rather than
+     * jumping immediately to the configured duty cycle. */
     if (fan.Mode == FAN_ON) {
         fan_ctrl_on();
-        fan_ctrl_speed(&fan, g_config.fan_default_duty);
+        fan.dutycycle_pct    = 0;
+        fan.target_dutycycle = g_config.fan_default_duty;
     } else if (fan.Mode == FAN_ON_AUTO) {
         /* AUTO will be handled by FAN_AutoControl() each cycle;
-         * just load the duty, don't force the fan on yet. */
-        fan.dutycycle_pct = g_config.fan_default_duty;
+         * start from zero so the first ramp-up is also gradual. */
+        fan.dutycycle_pct    = 0;
+        fan.target_dutycycle = 0;
     } else {
         fan_ctrl_off();
-        fan.dutycycle_pct = g_config.fan_default_duty;
+        fan.dutycycle_pct    = 0;
+        fan.target_dutycycle = 0;
     }
 }
 
@@ -168,13 +173,12 @@ static void Handle_CAN_Commands(void)
     /* ── Fan ─────────────────────────────────────────────── */
     if (can_rxMessage.fan_cmd_received) {
         can_rxMessage.fan_cmd_received = 0;
-        fan.Mode          = (fanMode_t)can_rxMessage.fan_mode;
-        fan.dutycycle_pct = can_rxMessage.fan_duty;
+        fan.Mode              = (fanMode_t)can_rxMessage.fan_mode;
+        fan.target_dutycycle  = can_rxMessage.fan_duty;
         if (fan.Mode == FAN_ON) {
-            fan_ctrl_on();
-            fan_ctrl_speed(&fan, fan.dutycycle_pct);
+            fan_ctrl_on();          /* enable GPIO; ramp handles speed */
         } else if (fan.Mode == FAN_OFF) {
-            fan_ctrl_off();
+            fan.target_dutycycle = 0;   /* ramp to zero, then disable GPIO */
         }
     }
 
@@ -296,6 +300,7 @@ static void Common_Task(void)
 
     /* ── Fan control (every cycle — cheap GPIO/PWM update) ────────── */
     FAN_AutoControl(&fan, measurements.NTCTemperature_C);
+    FAN_RampUpdate(&fan);
 
     /* ── Handle pending CAN RX commands ───────────────────────────── */
     Handle_CAN_Commands();

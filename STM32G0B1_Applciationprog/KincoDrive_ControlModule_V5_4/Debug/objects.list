@@ -1,3 +1,4 @@
+"./Core/Src/AppLogic.o"
 "./Core/Src/CAN_Handler.o"
 "./Core/Src/ESTOP.o"
 "./Core/Src/Endstop.o"

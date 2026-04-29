@@ -5,13 +5,9 @@
     </Connections>
     <MessageFilters/>
     <TransmitList>
-        <TransmitListItem Bus="1" CanId="17827431" Type="2" DLC="1" Data="0F" Creator="User"/>
-        <TransmitListItem Bus="1" CanId="17827431" Type="2" DLC="1" Data="" Creator="User"/>
-        <TransmitListItem Bus="1" CanId="20973159" Type="2" DLC="5" Data="3232323232" Creator="User"/>
-        <TransmitListItem Bus="1" CanId="20973159" Type="2" DLC="5" Data="" Creator="User"/>
-        <TransmitListItem Bus="1" CanId="20973159" Type="2" DLC="5" Data="6464646464" Creator="User"/>
-        <TransmitListItem Bus="1" CanId="33556071" Type="2" DLC="1" Data="" Creator="User"/>
-        <TransmitListItem Bus="1" CanId="33556071" Type="2" DLC="1" Data="01" Creator="User"/>
+        <TransmitListItem Bus="1" CanId="272" Type="0" DLC="1" Data="0F" Creator="User"/>
+        <TransmitListItem Bus="1" CanId="512" Type="0" DLC="1" Data="" Creator="User"/>
+        <TransmitListItem Bus="1" CanId="272" Type="0" DLC="1" Data="" Creator="User"/>
     </TransmitList>
     <Files>
         <File RelativePath="KincoDrive_ControlModule.dbc"/>

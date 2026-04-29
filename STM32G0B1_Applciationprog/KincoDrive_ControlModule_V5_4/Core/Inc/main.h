@@ -60,10 +60,14 @@ void MX_FDCAN1_Init(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define ENDSTOP_EH_LNC_INT1_Pin GPIO_PIN_11
+#define ENDSTOP_EH_LNC_INT1_GPIO_Port GPIOC
 #define FAN_PWM_5_Pin GPIO_PIN_12
 #define FAN_PWM_5_GPIO_Port GPIOC
 #define BlueButton_Pin GPIO_PIN_13
 #define BlueButton_GPIO_Port GPIOC
+#define Toggle_PosDetect_Pin GPIO_PIN_0
+#define Toggle_PosDetect_GPIO_Port GPIOC
 #define HS_DR_EN_Pin GPIO_PIN_1
 #define HS_DR_EN_GPIO_Port GPIOC
 #define HS_E_EN_Pin GPIO_PIN_2

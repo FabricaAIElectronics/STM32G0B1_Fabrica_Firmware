@@ -21,14 +21,14 @@ extern FDCAN_HandleTypeDef hfdcan1;
 void MX_FDCAN1_Init(void);
 
 /**
- * @brief  Transmit one Classic CAN frame using a 29-bit extended identifier.
+ * @brief  Transmit one Classic CAN frame using an 11-bit standard identifier.
  *
- * @param  ext_id  Full 29-bit extended CAN ID.
+ * @param  std_id  11-bit standard CAN ID (masked to 0x7FF internally).
  * @param  data    Pointer to payload data (may be NULL if len == 0).
  * @param  len     Payload length in bytes (clamped to 8).
  * @retval true on success, false on TX queue full or HAL error.
  */
-bool FDCAN_SendFrame(uint32_t ext_id, const uint8_t *data, uint8_t len);
+bool FDCAN_SendFrame(uint32_t std_id, const uint8_t *data, uint8_t len);
 
 #ifdef __cplusplus
 }

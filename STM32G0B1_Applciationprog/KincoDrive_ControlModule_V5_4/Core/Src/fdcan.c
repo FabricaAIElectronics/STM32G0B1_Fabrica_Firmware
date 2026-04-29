@@ -24,7 +24,7 @@ static uint32_t dlc_bytes_to_fdcan_dlc(uint8_t bytes)
 
 /* ── Public API ────────────────────────────────────────────────────────── */
 
-bool FDCAN_SendFrame(uint32_t ext_id, const uint8_t *data, uint8_t len)
+bool FDCAN_SendFrame(uint32_t std_id, const uint8_t *data, uint8_t len)
 {
     FDCAN_TxHeaderTypeDef tx_header;
     uint8_t tx_buf[8] = {0};
@@ -32,8 +32,8 @@ bool FDCAN_SendFrame(uint32_t ext_id, const uint8_t *data, uint8_t len)
 
     memset(&tx_header, 0, sizeof(tx_header));
 
-    tx_header.Identifier          = ext_id & 0x1FFFFFFFU;
-    tx_header.IdType              = FDCAN_EXTENDED_ID;
+    tx_header.Identifier          = std_id & 0x7FFU;       /* 11-bit mask */
+    tx_header.IdType              = FDCAN_STANDARD_ID;
     tx_header.TxFrameType         = FDCAN_DATA_FRAME;
     tx_header.DataLength          = dlc_bytes_to_fdcan_dlc(send_len);
     tx_header.BitRateSwitch       = FDCAN_BRS_OFF;

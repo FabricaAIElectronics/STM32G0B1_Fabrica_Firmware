@@ -21,6 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "AppLogic.h"
 #include "CAN_Handler.h"
 #include "Fan_PWM.h"
 #include "Power_Electronic.h"
@@ -88,7 +89,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-  Pre_CAN_Handler_Init();   /* Vector table remap for bootloader compatibility */
+  Pre_CAN_Init();   /* Vector table remap for bootloader compatibility */
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -116,28 +117,33 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM14_Init();
-  MX_FDCAN1_Init();
   /* USER CODE BEGIN 2 */
 
   /* ── Fan PWM outputs and tachometer input capture ── */
   start_all_Fan_PWM();
   start_Fan_Tacho_DMA();
 
-  /* ── FDCAN: configure filters BEFORE Start (M_CAN requires Init mode) ── */
-  CAN_Handler_Init();
+  /* ── FDCAN: init peripheral → configure filters → start ──
+   * MX_FDCAN1_Init() is "user-managed" in the .ioc (CubeMX won't auto-call
+   * it), so we invoke it explicitly here.  Order is load-bearing:
+   *   1. MX_FDCAN1_Init() — HAL_FDCAN_Init, peripheral enters Init mode
+   *   2. CAN_Init()       — ConfigGlobalFilter + ActivateNotification
+   *   3. HAL_FDCAN_Start()— leave Init, enter Normal operation
+   */
+  MX_FDCAN1_Init();
+  CAN_Init();
   HAL_FDCAN_Start(&hfdcan1);
 
   /* ── ADC: calibrate, then start continuous DMA scan (12 channels) ── */
   Calibrate_ADC1();
   Start_ADC1_DMA();
 
-  /* ── EEPROM: read saved config and apply to hardware ── */
-  EEPROM_Init();
-  EEPROM_ApplyStartupConfig();
-
   /* ── Safety inputs ── */
   Endstop_Init();
   ESTOP_Init();
+
+  /* ── Application state machine: load EEPROM → apply to HW → RUN ── */
+  App_Init();
 
   /* USER CODE END 2 */
 
@@ -149,9 +155,8 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-    /* ── CAN: process pending commands and send periodic telemetry ── */
-    CAN_Process();
-    CAN_Broadcast(500);
+    /* ── Application state machine: CAN dispatch + telemetry ── */
+    App_Run();
 
     /* ── ESTOP: debounced state machine (updates flag + LED) ── */
     ESTOP_State_Machine();
@@ -389,8 +394,8 @@ void MX_FDCAN1_Init(void)
   hfdcan1.Init.DataSyncJumpWidth = 4;
   hfdcan1.Init.DataTimeSeg1 = 15;
   hfdcan1.Init.DataTimeSeg2 = 4;
-  hfdcan1.Init.StdFiltersNbr = 0;
-  hfdcan1.Init.ExtFiltersNbr = 2;
+  hfdcan1.Init.StdFiltersNbr = 1;
+  hfdcan1.Init.ExtFiltersNbr = 0;
   hfdcan1.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
   if (HAL_FDCAN_Init(&hfdcan1) != HAL_OK)
   {
@@ -762,6 +767,12 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(VBUCK_CTRL_GPIO_Port, VBUCK_CTRL_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : ENDSTOP_EH_LNC_INT1_Pin Toggle_PosDetect_Pin */
+  GPIO_InitStruct.Pin = ENDSTOP_EH_LNC_INT1_Pin|Toggle_PosDetect_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : BlueButton_Pin */
   GPIO_InitStruct.Pin = BlueButton_Pin;

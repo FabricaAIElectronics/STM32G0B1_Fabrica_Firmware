@@ -59,8 +59,8 @@ typedef enum {
  *  High-side power module control
  * ═══════════════════════════════════════════════════════════════════════ */
 
-int Enable_HighSide_Power_Module(HighSide_Module_t module, uint32_t timeout_ms);
-int Disable_HighSide_Power_Module(HighSide_Module_t module, uint32_t timeout_ms);
+int Enable_HighSide_Power_Module(HighSide_Module_t module);
+int Disable_HighSide_Power_Module(HighSide_Module_t module);
 
 /* ═══════════════════════════════════════════════════════════════════════
  *  ADC calibration and DMA

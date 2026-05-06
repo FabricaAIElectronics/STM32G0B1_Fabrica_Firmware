@@ -42,9 +42,9 @@ volatile uint16_t ADC_VAL[ADC_BUF_LEN];
  *  High-side power module enable / disable
  * ═══════════════════════════════════════════════════════════════════════ */
 
-int Enable_HighSide_Power_Module(HighSide_Module_t module, uint32_t timeout_ms)
+int Enable_HighSide_Power_Module(HighSide_Module_t module)
 {
-    (void)timeout_ms;   /* non-blocking: host monitors PG via GPIO broadcast */
+
 
     switch (module) {
     case HS_MODULE_DRIVE:
@@ -63,9 +63,9 @@ int Enable_HighSide_Power_Module(HighSide_Module_t module, uint32_t timeout_ms)
     return PE_SUCCESS;
 }
 
-int Disable_HighSide_Power_Module(HighSide_Module_t module, uint32_t timeout_ms)
+int Disable_HighSide_Power_Module(HighSide_Module_t module)
 {
-    (void)timeout_ms;
+
 
     switch (module) {
     case HS_MODULE_DRIVE:
@@ -256,13 +256,18 @@ int Read_Thermistor_Temperature_C(ADC_Peripheral_t thermistor, int32_t *temperat
 
 int Enable_12V_Buck_Converter(void)
 {
-    uint32_t bus_mV = 0;
-    Read_24V_Voltage_mV(&bus_mV);
-
-    const uint32_t MIN_24V_FOR_12V_MV = 20000U;   /* 20.0 V minimum */
-    if (bus_mV < MIN_24V_FOR_12V_MV)
-        return PE_ERR_GEN;
-
+    /* ⚠ BRING-UP / DEBUG MODE: safety interlock disabled.
+     *
+     * Production code should check the 24 V rail before enabling the buck:
+     *
+     *     uint32_t bus_mV = 0;
+     *     Read_24V_Voltage_mV(&bus_mV);
+     *     if (bus_mV < 20000U) return PE_ERR_GEN;
+     *
+     * Re-enable this block once the hardware is confirmed working on real
+     * 24 V supply.  Running the buck with < 20 V input can brown-out the
+     * converter and the loads downstream of it.
+     */
     HAL_GPIO_WritePin(VBUCK_CTRL_GPIO_Port, VBUCK_CTRL_Pin, GPIO_PIN_SET);
     return PE_SUCCESS;
 }

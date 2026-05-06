@@ -1,17 +1,14 @@
 /**
  * @file    eeprom_driver.c
- * @brief   I2C EEPROM driver and startup configuration storage.
+ * @brief   I2C EEPROM driver — raw access + Config_t load/save.
  *
  * @author  jordan
- * @date    2026-03-26
+ * @date    2026-04-21
  */
 
 #include "eeprom_driver.h"
-#include "Power_Electronic.h"
-#include "Fan_PWM.h"
 #include "main.h"
 
-#include <math.h>
 #include <string.h>
 #include <stdbool.h>
 
@@ -25,46 +22,16 @@
 
 #define CFG_PAGE            0U
 #define CFG_OFFSET          0U
+#define CFG_MAGIC           0xA5U
+
+/* On-wire blob: 1B magic + Config_t + 1B checksum. */
+typedef struct __attribute__((packed)) {
+    uint8_t  magic;
+    Config_t cfg;
+    uint8_t  checksum;
+} EEPROM_Blob_t;
 
 extern I2C_HandleTypeDef hi2c1;
-
-/* ════════════════════════════════════════════════════════════════════════════
- *  RAM cache
- * ════════════════════════════════════════════════════════════════════════════ */
-
-static EEPROM_StartupConfig_t cached_cfg;
-
-/* ════════════════════════════════════════════════════════════════════════════
- *  Internal helpers
- * ════════════════════════════════════════════════════════════════════════════ */
-
-static uint8_t compute_checksum(const EEPROM_StartupConfig_t *cfg)
-{
-    uint8_t cs = 0;
-    const uint8_t *p = (const uint8_t *)cfg;
-    for (uint8_t i = 0; i < (uint8_t)(sizeof(EEPROM_StartupConfig_t) - 1U); ++i) {
-        cs ^= p[i];
-    }
-    return cs;
-}
-
-static bool config_is_valid(const EEPROM_StartupConfig_t *cfg)
-{
-    if (cfg->magic != EEPROM_MAGIC) return false;
-    return (compute_checksum(cfg) == cfg->checksum);
-}
-
-static void load_safe_defaults(EEPROM_StartupConfig_t *cfg)
-{
-    cfg->magic    = EEPROM_MAGIC;
-    cfg->hs_state = 0x00U;   /* all HS OFF */
-    cfg->fan_dr   = 0U;
-    cfg->fan_ep   = 0U;
-    cfg->fan_eh   = 0U;
-    cfg->fan_st   = 0U;
-    cfg->fan_sf   = 0U;
-    cfg->checksum = compute_checksum(cfg);
-}
 
 /* ════════════════════════════════════════════════════════════════════════════
  *  Low-level EEPROM read / write (page-boundary aware)
@@ -145,123 +112,52 @@ void EEPROM_pageErase(uint16_t page)
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
- *  Float utility (kept for compatibility with any callers)
+ *  Checksum helper  (XOR of magic + Config_t bytes)
  * ════════════════════════════════════════════════════════════════════════════ */
 
-uint32_t float2Bytes(float float_data)
+static uint8_t compute_checksum(const EEPROM_Blob_t *b)
 {
-    uint32_t raw;
-    memcpy(&raw, &float_data, sizeof(raw));
-    return raw;
-}
-
-float bytes2Float(uint8_t buffer[4])
-{
-    float f;
-    uint32_t raw = ((uint32_t)buffer[3] << 24) | ((uint32_t)buffer[2] << 16) |
-                   ((uint32_t)buffer[1] <<  8) |  (uint32_t)buffer[0];
-    memcpy(&f, &raw, sizeof(f));
-    return f;
+    uint8_t cs = b->magic;
+    const uint8_t *p = (const uint8_t *)&b->cfg;
+    for (uint8_t i = 0; i < (uint8_t)sizeof(Config_t); ++i) {
+        cs ^= p[i];
+    }
+    return cs;
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
- *  Startup config public API
+ *  Config_t load / save
  * ════════════════════════════════════════════════════════════════════════════ */
 
-void EEPROM_Init(void)
+bool EEPROM_Load(Config_t *out)
 {
-    EEPROM_StartupConfig_t cfg;
-    EEPROM_Read(CFG_PAGE, CFG_OFFSET, (uint8_t *)&cfg, (uint16_t)sizeof(cfg));
+    if (out == NULL) return false;
 
-    if (config_is_valid(&cfg)) {
-        /* Clamp fan values to 0–100 just in case of bit rot */
-        if (cfg.fan_dr > 100U) cfg.fan_dr = 0U;
-        if (cfg.fan_ep > 100U) cfg.fan_ep = 0U;
-        if (cfg.fan_eh > 100U) cfg.fan_eh = 0U;
-        if (cfg.fan_st > 100U) cfg.fan_st = 0U;
-        if (cfg.fan_sf > 100U) cfg.fan_sf = 0U;
-        cached_cfg = cfg;
-    } else {
-        /* Invalid EEPROM — use safe defaults in RAM; don't write to EEPROM */
-        load_safe_defaults(&cached_cfg);
-    }
+    EEPROM_Blob_t blob;
+    EEPROM_Read(CFG_PAGE, CFG_OFFSET, (uint8_t *)&blob, (uint16_t)sizeof(blob));
+
+    if (blob.magic != CFG_MAGIC)              return false;
+    if (compute_checksum(&blob) != blob.checksum) return false;
+
+    /* Clamp fan values to 0–100 in case of bit rot. */
+    if (blob.cfg.fan_dr > 100U) blob.cfg.fan_dr = 0U;
+    if (blob.cfg.fan_ep > 100U) blob.cfg.fan_ep = 0U;
+    if (blob.cfg.fan_eh > 100U) blob.cfg.fan_eh = 0U;
+    if (blob.cfg.fan_st > 100U) blob.cfg.fan_st = 0U;
+    if (blob.cfg.fan_sf > 100U) blob.cfg.fan_sf = 0U;
+
+    *out = blob.cfg;
+    return true;
 }
 
-void EEPROM_LoadAndApplyDefaults(void)
+void EEPROM_Save(const Config_t *in)
 {
-    load_safe_defaults(&cached_cfg);
-    EEPROM_ApplyStartupConfig();
-}
+    if (in == NULL) return;
 
-void EEPROM_ApplyStartupConfig(void)
-{
-    const EEPROM_StartupConfig_t *cfg = &cached_cfg;
+    EEPROM_Blob_t blob;
+    blob.magic    = CFG_MAGIC;
+    blob.cfg      = *in;
+    blob.checksum = compute_checksum(&blob);
 
-    /* ── High-side switches ── */
-    if (cfg->hs_state & EEPROM_HS_DR) {
-        Enable_HighSide_Power_Module(HS_MODULE_DRIVE, 0U);
-    } else {
-        Disable_HighSide_Power_Module(HS_MODULE_DRIVE, 0U);
-    }
-
-    if (cfg->hs_state & EEPROM_HS_E) {
-        Enable_HighSide_Power_Module(HS_MODULE_EXTRUDER, 0U);
-    } else {
-        Disable_HighSide_Power_Module(HS_MODULE_EXTRUDER, 0U);
-    }
-
-    if (cfg->hs_state & EEPROM_HS_SC) {
-        Enable_HighSide_Power_Module(HS_MODULE_SCRUBBING, 0U);
-    } else {
-        Disable_HighSide_Power_Module(HS_MODULE_SCRUBBING, 0U);
-    }
-
-    if (cfg->hs_state & EEPROM_HS_VBUCK) {
-        Enable_12V_Buck_Converter();
-    } else {
-        Disable_12V_Buck_Converter();
-    }
-
-    /* ── Fan speeds ── */
-    set_Fan_PWM(FAN_DR, cfg->fan_dr);
-    set_Fan_PWM(FAN_EP, cfg->fan_ep);
-    set_Fan_PWM(FAN_EH, cfg->fan_eh);
-    set_Fan_PWM(FAN_ST, cfg->fan_st);
-    set_Fan_PWM(FAN_SF, cfg->fan_sf);
-}
-
-void EEPROM_SaveStartupConfig(void)
-{
-    EEPROM_StartupConfig_t cfg;
-    cfg.magic = EEPROM_MAGIC;
-
-    /* ── Snapshot HS GPIO enable pins ── */
-    cfg.hs_state = 0U;
-    if (HAL_GPIO_ReadPin(HS_DR_EN_GPIO_Port, HS_DR_EN_Pin) == GPIO_PIN_SET)
-        cfg.hs_state |= EEPROM_HS_DR;
-    if (HAL_GPIO_ReadPin(HS_E_EN_GPIO_Port, HS_E_EN_Pin) == GPIO_PIN_SET)
-        cfg.hs_state |= EEPROM_HS_E;
-    if (HAL_GPIO_ReadPin(HS_SC_EN_GPIO_Port, HS_SC_EN_Pin) == GPIO_PIN_SET)
-        cfg.hs_state |= EEPROM_HS_SC;
-    if (HAL_GPIO_ReadPin(VBUCK_CTRL_GPIO_Port, VBUCK_CTRL_Pin) == GPIO_PIN_SET)
-        cfg.hs_state |= EEPROM_HS_VBUCK;
-
-    /* ── Snapshot fan PWM setpoints from shadow array ── */
-    cfg.fan_dr = get_Fan_PWM_Pct(FAN_DR);
-    cfg.fan_ep = get_Fan_PWM_Pct(FAN_EP);
-    cfg.fan_eh = get_Fan_PWM_Pct(FAN_EH);
-    cfg.fan_st = get_Fan_PWM_Pct(FAN_ST);
-    cfg.fan_sf = get_Fan_PWM_Pct(FAN_SF);
-
-    cfg.checksum = compute_checksum(&cfg);
-
-    EEPROM_Write(CFG_PAGE, CFG_OFFSET, (uint8_t *)&cfg, (uint16_t)sizeof(cfg));
-
-    /* Update RAM cache */
-    cached_cfg = cfg;
-}
-
-const EEPROM_StartupConfig_t *EEPROM_GetCachedConfig(void)
-{
-    return &cached_cfg;
+    EEPROM_Write(CFG_PAGE, CFG_OFFSET, (uint8_t *)&blob, (uint16_t)sizeof(blob));
 }

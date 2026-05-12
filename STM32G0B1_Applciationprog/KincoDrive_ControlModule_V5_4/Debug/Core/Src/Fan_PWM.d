@@ -34,8 +34,7 @@ Core/Src/Fan_PWM.o: ../Core/Src/Fan_PWM.c ../Core/Inc/Fan_PWM.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr_ex.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h \
- ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h \
- ../Core/Inc/tim.h ../Core/Inc/main.h
+ ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h
 ../Core/Inc/Fan_PWM.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal.h:
@@ -74,5 +73,3 @@ Core/Src/Fan_PWM.o: ../Core/Src/Fan_PWM.c ../Core/Inc/Fan_PWM.h \
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr_ex.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h:
-../Core/Inc/tim.h:
-../Core/Inc/main.h:

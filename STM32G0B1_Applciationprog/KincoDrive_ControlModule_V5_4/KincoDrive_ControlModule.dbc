@@ -36,38 +36,52 @@ BS_:
 BU_: Host KincoDrive
 
 
-BO_ 2165311079 Cmd_HS_Power: 1 Host
+BO_ 257 KD_Bootloader_RX: 2 Host
+ SG_ Boot_Cmd : 0|8@1+ (1,0) [0|255] "" KincoDrive
+
+BO_ 258 KD_Bootloader_TX: 8 KincoDrive
+ SG_ Boot_Resp : 0|8@1+ (1,0) [0|255] "" Host
+
+BO_ 272 Cmd_HS_Power: 1 Host
  SG_ HS_DR_OnOff : 0|1@1+ (1,0) [0|1] "" KincoDrive
  SG_ HS_E_OnOff : 1|1@1+ (1,0) [0|1] "" KincoDrive
  SG_ HS_SC_OnOff : 2|1@1+ (1,0) [0|1] "" KincoDrive
  SG_ VBUCK_OnOff : 3|1@1+ (1,0) [0|1] "" KincoDrive
 
-BO_ 2168456807 Cmd_Fan_PWM: 5 Host
+BO_ 273 Cmd_Fan_PWM: 5 Host
  SG_ Fan_DR_Speed : 0|8@1+ (1,0) [0|100] "%" KincoDrive
  SG_ Fan_EP_Speed : 8|8@1+ (1,0) [0|100] "%" KincoDrive
  SG_ Fan_EH_Speed : 16|8@1+ (1,0) [0|100] "%" KincoDrive
  SG_ Fan_ST_Speed : 24|8@1+ (1,0) [0|100] "%" KincoDrive
  SG_ Fan_SF_Speed : 32|8@1+ (1,0) [0|100] "%" KincoDrive
 
-BO_ 2181039719 Cmd_EEPROM: 1 Host
+BO_ 274 Cmd_EEPROM: 1 Host
  SG_ EEPROM_Action : 0|8@1+ (1,0) [0|1] "" KincoDrive
 
+BO_ 275 Cmd_OC_Threshold: 6 Host
+ SG_ OC_DR_mA : 0|16@1+ (1,0) [0|65535] "mA" KincoDrive
+ SG_ OC_EXT_mA : 16|16@1+ (1,0) [0|65535] "mA" KincoDrive
+ SG_ OC_SC_mA : 32|16@1+ (1,0) [0|65535] "mA" KincoDrive
 
-BO_ 2248148583 Bcast_Status: 8 KincoDrive
- SG_ Endstop_Triggered : 0|8@1+ (1,0) [0|63] "" Host
- SG_ Endstop_Fault : 8|8@1+ (1,0) [0|63] "" Host
- SG_ Bus24V_Voltage : 16|16@1+ (1,0) [0|65535] "mV" Host
- SG_ Bus12V_Voltage : 32|16@1+ (1,0) [0|65535] "mV" Host
- SG_ Dbg_Cmd_Count : 48|8@1+ (1,0) [0|255] "" Host
- SG_ Dbg_Last_MsgType : 56|8@1+ (1,0) [0|255] "" Host
+BO_ 276 Cmd_UV_Threshold: 4 Host
+ SG_ UV_24V_mV : 0|16@1+ (1,0) [0|65535] "mV" KincoDrive
+ SG_ UV_12V_mV : 16|16@1+ (1,0) [0|65535] "mV" KincoDrive
 
-BO_ 2248214119 Bcast_Currents: 8 KincoDrive
+
+BO_ 288 Bcast_Status: 8 KincoDrive
+ SG_ V24_mV : 0|16@1+ (1,0) [0|65535] "mV" Host
+ SG_ V12_mV : 16|16@1+ (1,0) [0|65535] "mV" Host
+ SG_ I_24V_mA : 32|16@1+ (1,0) [0|65535] "mA" Host
+ SG_ Sys_State : 48|8@1+ (1,0) [0|2] "" Host
+ SG_ Error_Mask : 56|8@1+ (1,0) [0|255] "" Host
+
+BO_ 289 Bcast_Currents: 8 KincoDrive
  SG_ Bus24V_Current : 0|16@1+ (1,0) [0|65535] "mA" Host
  SG_ Drive_Current : 16|16@1+ (1,0) [0|65535] "mA" Host
  SG_ Extruder_Current : 32|16@1+ (1,0) [0|65535] "mA" Host
  SG_ Scrubbing_Current : 48|16@1+ (1,0) [0|65535] "mA" Host
 
-BO_ 2248279655 Bcast_Temps: 6 KincoDrive
+BO_ 290 Bcast_Temps: 6 KincoDrive
  SG_ Temp_PTC1 : 0|8@1+ (1,-40) [-40|215] "degC" Host
  SG_ Temp_PTC2 : 8|8@1+ (1,-40) [-40|215] "degC" Host
  SG_ Temp_PTC3 : 16|8@1+ (1,-40) [-40|215] "degC" Host
@@ -75,14 +89,14 @@ BO_ 2248279655 Bcast_Temps: 6 KincoDrive
  SG_ Temp_PTC5 : 32|8@1+ (1,-40) [-40|215] "degC" Host
  SG_ Temp_PTC6 : 40|8@1+ (1,-40) [-40|215] "degC" Host
 
-BO_ 2248345191 Bcast_Fans: 5 KincoDrive
- SG_ Fan_DR_Speed : 0|8@1+ (1,0) [0|100] "%" Host
- SG_ Fan_EP_Speed : 8|8@1+ (1,0) [0|100] "%" Host
- SG_ Fan_EH_Speed : 16|8@1+ (1,0) [0|100] "%" Host
- SG_ Fan_ST_Speed : 24|8@1+ (1,0) [0|100] "%" Host
- SG_ Fan_SF_Speed : 32|8@1+ (1,0) [0|100] "%" Host
+BO_ 291 Bcast_Fans: 5 KincoDrive
+ SG_ Fan_DR_Tach : 0|8@1+ (1,0) [0|100] "%" Host
+ SG_ Fan_EP_Tach : 8|8@1+ (1,0) [0|100] "%" Host
+ SG_ Fan_EH_Tach : 16|8@1+ (1,0) [0|100] "%" Host
+ SG_ Fan_ST_Tach : 24|8@1+ (1,0) [0|100] "%" Host
+ SG_ Fan_SF_Tach : 32|8@1+ (1,0) [0|100] "%" Host
 
-BO_ 2248410727 Bcast_GPIO: 8 KincoDrive
+BO_ 292 Bcast_GPIO: 8 KincoDrive
  SG_ HS_DR_Enable : 0|1@1+ (1,0) [0|1] "" Host
  SG_ HS_E_Enable : 1|1@1+ (1,0) [0|1] "" Host
  SG_ HS_SC_Enable : 2|1@1+ (1,0) [0|1] "" Host
@@ -93,24 +107,11 @@ BO_ 2248410727 Bcast_GPIO: 8 KincoDrive
  SG_ HS_DR_Fault : 16|1@1+ (1,0) [0|1] "" Host
  SG_ HS_E_Fault : 17|1@1+ (1,0) [0|1] "" Host
  SG_ HS_SC_Fault : 18|1@1+ (1,0) [0|1] "" Host
- SG_ ESTOP_NO_Pin : 24|1@1+ (1,0) [0|1] "" Host
- SG_ ESTOP_NC_Pin : 25|1@1+ (1,0) [0|1] "" Host
- SG_ ESTOP_Triggered : 26|1@1+ (1,0) [0|1] "" Host
- SG_ ESTOP_WiringFault : 27|1@1+ (1,0) [0|1] "" Host
- SG_ EH_Top_NO : 32|1@1+ (1,0) [0|1] "" Host
- SG_ EH_Bot_NO : 33|1@1+ (1,0) [0|1] "" Host
- SG_ EP_Top_NO : 34|1@1+ (1,0) [0|1] "" Host
- SG_ EP_Bot_NO : 35|1@1+ (1,0) [0|1] "" Host
- SG_ SC_Top_NO : 36|1@1+ (1,0) [0|1] "" Host
- SG_ EH_Top_NC : 40|1@1+ (1,0) [0|1] "" Host
- SG_ EP_Top_NC : 42|1@1+ (1,0) [0|1] "" Host
- SG_ EP_Bot_NC : 43|1@1+ (1,0) [0|1] "" Host
- SG_ SC_Top_NC : 44|1@1+ (1,0) [0|1] "" Host
- SG_ LED_Out : 48|1@1+ (1,0) [0|1] "" Host
- SG_ BlueButton : 49|1@1+ (1,0) [0|1] "" Host
- SG_ Dbg_ISR_Count : 56|8@1+ (1,0) [0|255] "" Host
+ SG_ B1_Pin : 24|1@1+ (1,0) [0|1] "" Host
+ SG_ Toggle_Pos_Detect : 25|1@1+ (1,0) [0|1] "" Host
+ SG_ LED2_Out : 32|1@1+ (1,0) [0|1] "" Host
 
-BO_ 2248476263 Bcast_Raw_ADC: 6 KincoDrive
+BO_ 293 Bcast_Raw_ADC: 6 KincoDrive
  SG_ ADC_PTC1_PTC2 : 0|8@1+ (1,0) [0|255] "" Host
  SG_ ADC_PTC3_PTC4 : 8|8@1+ (1,0) [0|255] "" Host
  SG_ ADC_PTC5_PTC6 : 16|8@1+ (1,0) [0|255] "" Host
@@ -118,85 +119,82 @@ BO_ 2248476263 Bcast_Raw_ADC: 6 KincoDrive
  SG_ ADC_CURR3_V24 : 32|8@1+ (1,0) [0|255] "" Host
  SG_ ADC_V12_CURR24V : 40|8@1+ (1,0) [0|255] "" Host
 
-BO_ 2248541799 Bcast_Config: 6 KincoDrive
- SG_ Def_HS_DR : 0|1@1+ (1,0) [0|1] "" Host
- SG_ Def_HS_E : 1|1@1+ (1,0) [0|1] "" Host
- SG_ Def_HS_SC : 2|1@1+ (1,0) [0|1] "" Host
- SG_ Def_VBUCK : 3|1@1+ (1,0) [0|1] "" Host
- SG_ Def_Fan_DR : 8|8@1+ (1,0) [0|100] "%" Host
- SG_ Def_Fan_EP : 16|8@1+ (1,0) [0|100] "%" Host
- SG_ Def_Fan_EH : 24|8@1+ (1,0) [0|100] "%" Host
- SG_ Def_Fan_ST : 32|8@1+ (1,0) [0|100] "%" Host
- SG_ Def_Fan_SF : 40|8@1+ (1,0) [0|100] "%" Host
+BO_ 294 Bcast_Config_A: 8 KincoDrive
+ SG_ Cfg_HS_State : 0|8@1+ (1,0) [0|15] "" Host
+ SG_ Cfg_OC_DR_mA : 8|16@1+ (1,0) [0|65535] "mA" Host
+ SG_ Cfg_OC_EXT_mA : 24|16@1+ (1,0) [0|65535] "mA" Host
+ SG_ Cfg_OC_SC_mA : 40|16@1+ (1,0) [0|65535] "mA" Host
+
+BO_ 295 Bcast_Config_B: 8 KincoDrive
+ SG_ Cfg_UV_24V_mV : 0|16@1+ (1,0) [0|65535] "mV" Host
+ SG_ Cfg_UV_12V_mV : 16|16@1+ (1,0) [0|65535] "mV" Host
+ SG_ Cfg_Fan_DR_Default : 32|8@1+ (1,0) [0|100] "%" Host
+ SG_ Cfg_Fan_EP_Default : 40|8@1+ (1,0) [0|100] "%" Host
+ SG_ Cfg_Fan_EH_Default : 48|8@1+ (1,0) [0|100] "%" Host
+ SG_ Cfg_Fan_ST_Default : 56|8@1+ (1,0) [0|100] "%" Host
 
 
-CM_ BU_ KincoDrive "KincoDrive Control Module V5.4 - Device ID 0x0667";
-CM_ BU_ Host "Host controller / CAN analyzer";
+CM_ BU_ KincoDrive "KincoDrive Control Module V5.4 (low-level driver build). 11-bit standard IDs in CANopen-safe gap 0x101-0x12F. Bootloader RX 0x101 / TX 0x102. Protections: OC per HS channel + UV per bus only.";
+CM_ BU_ Host "Host controller / CAN analyzer.";
 
-CM_ BO_ 2165311079 "CMD 0x110: High-side power control. DLC=1. One bit per channel: 0=OFF 1=ON. All channels set in one frame.";
-CM_ BO_ 2168456807 "CMD 0x140: Fan PWM speed. DLC=5. One byte per fan (0-100%). Bytes 0-4 = DR/EP/EH/ST/SF.";
-CM_ BO_ 2181039719 "CMD 0x200: EEPROM config. DLC=1. Byte0: 0=Load hard-coded safe defaults (all OFF), 1=Save current HS/fan state to EEPROM. Device responds with Bcast_Config (0x606).";
+CM_ BO_ 257 "OpenBLT bootloader RX (0x101). DLC=2, byte0=0xFF triggers app reset; bootloader then re-handles XCP CONNECT on the same ID.";
+CM_ BO_ 258 "OpenBLT bootloader TX (0x102). XCP responses target->host while in bootloader.";
+CM_ BO_ 272 "CMD 0x110: high-side power control. DLC=1 bitmask (bit0=Drive bit1=Extruder bit2=Scrubbing bit3=12V_Buck). Setting an HS bit also clears any latched OC error for that channel.";
+CM_ BO_ 273 "CMD 0x111: fan PWM speeds. DLC=5. One byte per fan (0-100%). Order DR/EP/EH/ST/SF.";
+CM_ BO_ 274 "CMD 0x112: EEPROM action. DLC=1. Byte0: 0=load defaults and apply, 1=snapshot current state to EEPROM.";
+CM_ BO_ 275 "CMD 0x113: per-channel OC thresholds. DLC=6. uint16 LE per channel (DR/EXT/SC) in mA. RAM-only; persist with Cmd_EEPROM.";
+CM_ BO_ 276 "CMD 0x114: undervoltage thresholds. DLC=4. uint16 LE for V24 then V12 in mV. RAM-only; persist with Cmd_EEPROM.";
 
-CM_ BO_ 2248148583 "BCAST 0x600: Voltages (mV) and endstop/ESTOP summary. Integer-only, no FPU. Period: 500 ms.";
-CM_ BO_ 2248214119 "BCAST 0x601: 24V bus and per-module high-side currents in mA. Integer-only, no FPU. DLC=8. Period: 500 ms.";
-CM_ BO_ 2248279655 "BCAST 0x602: 6 PTC thermistor temperatures. Wire: value = degC + 40. Period: 500 ms.";
-CM_ BO_ 2248345191 "BCAST 0x603: Fan tachometer speed as % of 5000 RPM max. Period: 500 ms.";
-CM_ BO_ 2248410727 "BCAST 0x604: GPIO pin states. All signals are direct pin reads. Period: 500 ms.";
-CM_ BO_ 2248476263 "BCAST 0x605: Raw ADC, 12 channels packed as 4-bit nibbles (raw >> 8). Period: 500 ms.";
-CM_ BO_ 2248541799 "BCAST 0x606: EEPROM startup defaults (HS on/off + fan %). Sent on startup and after any EEPROM command. Period: 500 ms.";
+CM_ BO_ 288 "BCAST 0x120: voltages, 24V bus current, system state, error mask. Period: ~167 ms (phase 0 of 3).";
+CM_ BO_ 289 "BCAST 0x121: 24V bus + per-HS module currents in mA. Period: ~167 ms (phase 0 of 3).";
+CM_ BO_ 290 "BCAST 0x122: 6 PTC thermistor temperatures. Wire: value = degC + 40. Period: ~167 ms (phase 0 of 3).";
+CM_ BO_ 291 "BCAST 0x123: fan tachometer % (0-100). Period: ~167 ms (phase 1 of 3).";
+CM_ BO_ 292 "BCAST 0x124: full raw GPIO state - HS EN/PG/FT for 3 channels, VBUCK_EN, B1, Toggle_Pos_Detect, LED2. No interpretation. Period: ~167 ms (phase 1 of 3).";
+CM_ BO_ 293 "BCAST 0x125: 12 ADC channels packed as 4-bit nibbles (raw>>8). Period: ~167 ms (phase 1 of 3).";
+CM_ BO_ 294 "BCAST 0x126: EEPROM config part A - HS boot state + per-channel OC thresholds. Period: ~167 ms (phase 2 of 3).";
+CM_ BO_ 295 "BCAST 0x127: EEPROM config part B - UV thresholds + fan boot defaults. Period: ~167 ms (phase 2 of 3).";
 
-CM_ SG_ 2248410727 HS_DR_PwrGood "Active LOW inverted: 1=power good, 0=not good";
-CM_ SG_ 2248410727 HS_E_PwrGood "Active LOW inverted: 1=power good, 0=not good";
-CM_ SG_ 2248410727 HS_SC_PwrGood "Active LOW inverted: 1=power good, 0=not good";
-CM_ SG_ 2248410727 HS_DR_Fault "Active LOW inverted: 1=fault active, 0=normal";
-CM_ SG_ 2248410727 HS_E_Fault "Active LOW inverted: 1=fault active, 0=normal";
-CM_ SG_ 2248410727 HS_SC_Fault "Active LOW inverted: 1=fault active, 0=normal";
-CM_ SG_ 2248410727 ESTOP_NO_Pin "Raw NO input pin: 1=HIGH";
-CM_ SG_ 2248410727 ESTOP_NC_Pin "Raw NC input pin: 1=HIGH";
-CM_ SG_ 2248410727 ESTOP_Triggered "Debounced ESTOP state: 1=triggered";
-CM_ SG_ 2248410727 ESTOP_WiringFault "1=NO/NC state inconsistent (wiring fault)";
-CM_ SG_ 2248410727 EH_Top_NO "Extruder Head top endstop, NO contact: 1=HIGH";
-CM_ SG_ 2248410727 EH_Bot_NO "Extruder Head bottom endstop, NO contact: 1=HIGH (NO-only switch)";
-CM_ SG_ 2248410727 EP_Top_NO "Extruder Platform top endstop, NO contact: 1=HIGH";
-CM_ SG_ 2248410727 EP_Bot_NO "Extruder Platform bottom endstop, NO contact: 1=HIGH";
-CM_ SG_ 2248410727 SC_Top_NO "Scrubbing top endstop, NO contact: 1=HIGH";
-CM_ SG_ 2248410727 EH_Top_NC "Extruder Head top endstop, NC contact: 1=HIGH";
-CM_ SG_ 2248410727 EP_Top_NC "Extruder Platform top endstop, NC contact: 1=HIGH";
-CM_ SG_ 2248410727 EP_Bot_NC "Extruder Platform bottom endstop, NC contact: 1=HIGH";
-CM_ SG_ 2248410727 SC_Top_NC "Scrubbing top endstop, NC contact: 1=HIGH";
-CM_ SG_ 2248410727 Dbg_ISR_Count "DEBUG: wrapping counter +1 each CAN frame received by ISR";
-CM_ SG_ 2248148583 Endstop_Triggered "Bit0=EH_Top, Bit1=EH_Bot, Bit2=EP_Top, Bit3=EP_Bot, Bit4=SC_Top, Bit5=ESTOP";
-CM_ SG_ 2248148583 Endstop_Fault "Same bit layout as Endstop_Triggered. 1=wiring fault detected.";
-CM_ SG_ 2248148583 Dbg_Cmd_Count "DEBUG: wrapping counter +1 each command dispatched by CAN_Process";
-CM_ SG_ 2248148583 Dbg_Last_MsgType "DEBUG: last message type processed (0x110=HS_Power, 0x140=Fan_PWM, 0x200=EEPROM)";
-CM_ SG_ 2248476263 ADC_PTC1_PTC2 "Hi nibble=PTC1, Lo nibble=PTC2 (raw ADC >> 8)";
-CM_ SG_ 2248476263 ADC_PTC3_PTC4 "Hi nibble=PTC3, Lo nibble=PTC4";
-CM_ SG_ 2248476263 ADC_PTC5_PTC6 "Hi nibble=PTC5, Lo nibble=PTC6";
-CM_ SG_ 2248476263 ADC_CURR1_CURR2 "Hi nibble=CURR_MON_1, Lo nibble=CURR_MON_2";
-CM_ SG_ 2248476263 ADC_CURR3_V24 "Hi nibble=CURR_MON_3, Lo nibble=VADC_24";
-CM_ SG_ 2248476263 ADC_V12_CURR24V "Hi nibble=VADC_12, Lo nibble=CURR_MON_24V";
-CM_ SG_ 2248541799 Def_HS_DR "Saved default for Drive HS: 1=ON at boot";
-CM_ SG_ 2248541799 Def_HS_E "Saved default for Extruder HS: 1=ON at boot";
-CM_ SG_ 2248541799 Def_HS_SC "Saved default for Scrubbing HS: 1=ON at boot";
-CM_ SG_ 2248541799 Def_VBUCK "Saved default for 12V Buck: 1=ON at boot";
-CM_ SG_ 2248541799 Def_Fan_DR "Saved default Drive fan speed (0-100%) at boot";
-CM_ SG_ 2248541799 Def_Fan_EP "Saved default Extruder Platform fan speed at boot";
-CM_ SG_ 2248541799 Def_Fan_EH "Saved default Extruder Head fan speed at boot";
-CM_ SG_ 2248541799 Def_Fan_ST "Saved default Stepper fan speed at boot";
-CM_ SG_ 2248541799 Def_Fan_SF "Saved default Scrubbing Front fan speed at boot";
+CM_ SG_ 288 Sys_State "0=INIT 1=LOAD_CONFIG 2=RUNNING.";
+CM_ SG_ 288 Error_Mask "Bitmask: bit0=OC_DR, bit1=OC_EXT, bit2=OC_SC, bit3=UV_24V, bit4=UV_12V. OC bits latch until host re-enables the channel; UV bits auto-clear on recovery (500 mV hysteresis).";
+CM_ SG_ 292 HS_DR_PwrGood "TPS2493 PGOOD pin (asserted when rail healthy).";
+CM_ SG_ 292 HS_E_PwrGood "TPS2493 PGOOD pin (asserted when rail healthy).";
+CM_ SG_ 292 HS_SC_PwrGood "TPS2493 PGOOD pin (asserted when rail healthy).";
+CM_ SG_ 292 HS_DR_Fault "TPS2493 FAULT pin (asserted when fault present).";
+CM_ SG_ 292 HS_E_Fault "TPS2493 FAULT pin (asserted when fault present).";
+CM_ SG_ 292 HS_SC_Fault "TPS2493 FAULT pin (asserted when fault present).";
+CM_ SG_ 292 B1_Pin "Blue button raw input (PC13).";
+CM_ SG_ 292 Toggle_Pos_Detect "Toggle position detect raw input (PC0).";
+CM_ SG_ 292 LED2_Out "LED2 output state (PA5, heartbeat).";
+CM_ SG_ 293 ADC_PTC1_PTC2 "Hi nibble=PTC1, Lo nibble=PTC2 (raw ADC >> 8)";
+CM_ SG_ 293 ADC_PTC3_PTC4 "Hi nibble=PTC3, Lo nibble=PTC4";
+CM_ SG_ 293 ADC_PTC5_PTC6 "Hi nibble=PTC5, Lo nibble=PTC6";
+CM_ SG_ 293 ADC_CURR1_CURR2 "Hi nibble=CURR_MON_1 (Drive), Lo nibble=CURR_MON_2 (Extruder)";
+CM_ SG_ 293 ADC_CURR3_V24 "Hi nibble=CURR_MON_3 (Scrubbing), Lo nibble=VADC_24";
+CM_ SG_ 293 ADC_V12_CURR24V "Hi nibble=VADC_12, Lo nibble=CURR_MON_24V";
 
-BA_DEF_  "MultiplexExtEnabled" ENUM  "No","Yes";
-BA_DEF_  "BusType" STRING ;
-BA_DEF_ BO_  "GenMsgCycleTime" INT 0 10000;
-BA_DEF_DEF_  "MultiplexExtEnabled" "No";
-BA_DEF_DEF_  "BusType" "CAN";
-BA_DEF_DEF_  "GenMsgCycleTime" 0;
+BA_DEF_ "MultiplexExtEnabled" ENUM "No","Yes";
+BA_DEF_ "BusType" STRING ;
+BA_DEF_ BO_ "GenMsgCycleTime" INT 0 10000;
+BA_DEF_ BO_ "GenMsgSendType"  STRING;
+BA_DEF_DEF_ "MultiplexExtEnabled" "No";
+BA_DEF_DEF_ "BusType" "CAN";
+BA_DEF_DEF_ "GenMsgCycleTime" 0;
+BA_DEF_DEF_ "GenMsgSendType"  "Cyclic";
 
-BA_ "GenMsgCycleTime" BO_ 2248148583 500;
-BA_ "GenMsgCycleTime" BO_ 2248214119 500;
-BA_ "GenMsgCycleTime" BO_ 2248279655 500;
-BA_ "GenMsgCycleTime" BO_ 2248345191 500;
-BA_ "GenMsgCycleTime" BO_ 2248410727 500;
-BA_ "GenMsgCycleTime" BO_ 2248476263 500;
-BA_ "GenMsgCycleTime" BO_ 2248541799 500;
+BA_ "GenMsgCycleTime" BO_ 288 500;
+BA_ "GenMsgCycleTime" BO_ 289 500;
+BA_ "GenMsgCycleTime" BO_ 290 500;
+BA_ "GenMsgCycleTime" BO_ 291 500;
+BA_ "GenMsgCycleTime" BO_ 292 500;
+BA_ "GenMsgCycleTime" BO_ 293 500;
+BA_ "GenMsgCycleTime" BO_ 294 500;
+BA_ "GenMsgCycleTime" BO_ 295 500;
+BA_ "GenMsgSendType"  BO_ 257 "Event";
+BA_ "GenMsgSendType"  BO_ 272 "Event";
+BA_ "GenMsgSendType"  BO_ 273 "Event";
+BA_ "GenMsgSendType"  BO_ 274 "Event";
+BA_ "GenMsgSendType"  BO_ 275 "Event";
+BA_ "GenMsgSendType"  BO_ 276 "Event";
 
+VAL_ 274 EEPROM_Action 0 "LOAD_DEFAULTS_AND_APPLY" 1 "SAVE_CURRENT" ;
+VAL_ 288 Sys_State 0 "INIT" 1 "LOAD_CONFIG" 2 "RUNNING" ;

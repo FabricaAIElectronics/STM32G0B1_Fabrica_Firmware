@@ -37,6 +37,7 @@
 #include "display_scheduler.h"
 #include "ssd1306.h"
 #include "fonts.h"
+#include "battery.h"
 #include <string.h>
 
 /* ============================================================
@@ -102,6 +103,16 @@ static void Apply_Config(void)
         fan_ctrl_off();
         fan.dutycycle_pct = g_config.fan_default_duty;
     }
+
+    for (uint8_t i = 0; i < RAIL_COUNT; i++){
+    	if((g_config.hs_default_state>>i)&0x01){
+    		HS_Enable(&hotswap[i]);
+    	}
+    	else{
+    		HS_Disable(&hotswap[i]);
+    	}
+    }
+
 }
 
 /* Run all ADC-based measurements into the global `measurements` struct */
@@ -117,6 +128,15 @@ static void Run_Measurements(void)
     VCAP_volt_measurement(&measurements);
     V12_volt_measurement(&measurements);
     NTC_Temp_measurement(&measurements);
+
+    /* SOC last — uses V24 + I_BAT computed above. The raw SOC is noisy
+     * (V24/I sensor noise + transient load steps), so we feed it through
+     * a smoothing filter with asymmetric hysteresis before broadcasting.
+     * See Battery_FilterSOC_pct() in battery.c. */
+    uint8_t raw_soc = Battery_EstimateSOC_pct(
+        measurements.voltage_mV.V24,
+        measurements.current_mA._currbat);
+    measurements.battery_soc_pct = Battery_FilterSOC_pct(raw_soc);
 }
 
 /* Update OC fault / warning masks from live currents and HW FLT pins.
@@ -178,10 +198,14 @@ static void Handle_CAN_Commands(void)
         }
     }
 
-    /* ── HS switch enable/disable ────────────────────────── */
+    /* ── HS switch enable/disable ────────────────────────── *
+     * RAIL_SBC has no MCU-driven enable line on the PowerStage board —
+     * its hot-swap is permanently configured by hardware. We skip it
+     * here so the host can't accidentally believe it has control. */
     if (can_rxMessage.hs_cmd_received) {
         can_rxMessage.hs_cmd_received = 0;
         for (uint8_t i = 0; i < RAIL_COUNT; i++) {
+            if (i == RAIL_SBC) continue;
             if (can_rxMessage.hs_state[i])
                 HS_Enable(&hotswap[i]);
             else
@@ -189,11 +213,16 @@ static void Handle_CAN_Commands(void)
         }
     }
 
-    /* ── Overcurrent threshold / fault reset ─────────────── */
+    /* ── Overcurrent threshold / fault reset ─────────────── *
+     * RAIL_SBC's software OC limit cannot be set from CAN: the rail
+     * isn't controllable, so a software trip wouldn't have anywhere to
+     * cut power. Threshold for SBC stays at 0 (= disabled) — see
+     * LoadDefault() in eeprom_driver.c. */
     if (can_rxMessage.oc_cmd_received) {
         can_rxMessage.oc_cmd_received = 0;
         if (can_rxMessage.oc_cmd == OC_CMD_SET_THRESHOLD) {
             for (uint8_t i = 0; i < RAIL_COUNT; i++) {
+                if (i == RAIL_SBC) continue;
                 if ((can_rxMessage.oc_rail_mask == 0xFF) ||
                     (can_rxMessage.oc_rail_mask & (1u << i))) {
                     oc_status.oc_threshold_mA[i] = can_rxMessage.oc_threshold_mA;
@@ -315,6 +344,7 @@ static void Common_Task(void)
         CAN_Broadcast_UV();
         CAN_Broadcast_OC_Config();
         CAN_Broadcast_IO_Status();
+        CAN_Broadcast_Battery_Cfg();
     }
 
     /* ── Display scheduler ─────────────────────────────────────────── */

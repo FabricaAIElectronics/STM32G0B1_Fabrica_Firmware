@@ -53,17 +53,20 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
-void MX_FDCAN1_Init(void);
 
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define EneStop_EH_L_NO1_Pin GPIO_PIN_11
+#define EneStop_EH_L_NO1_GPIO_Port GPIOC
 #define FAN_PWM_5_Pin GPIO_PIN_12
 #define FAN_PWM_5_GPIO_Port GPIOC
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
+#define Toggle_Pos_Detect_Pin GPIO_PIN_0
+#define Toggle_Pos_Detect_GPIO_Port GPIOC
 #define HS_DR_EN_Pin GPIO_PIN_1
 #define HS_DR_EN_GPIO_Port GPIOC
 #define HS_E_EN_Pin GPIO_PIN_2

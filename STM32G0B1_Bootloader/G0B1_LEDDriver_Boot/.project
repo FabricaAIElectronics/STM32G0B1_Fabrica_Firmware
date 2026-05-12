@@ -38,7 +38,7 @@
 	</linkedResources>
 	<filteredResources>
 		<filter>
-			<id>1765343972138</id>
+			<id>1778141142284</id>
 			<name>Loader</name>
 			<type>9</type>
 			<matcher>
@@ -47,7 +47,7 @@
 			</matcher>
 		</filter>
 		<filter>
-			<id>1765343985061</id>
+			<id>1778141154165</id>
 			<name>Loader/ARMCM0_STM32G0</name>
 			<type>9</type>
 			<matcher>

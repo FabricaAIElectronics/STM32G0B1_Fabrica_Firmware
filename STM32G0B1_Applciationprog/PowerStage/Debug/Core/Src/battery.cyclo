@@ -1,0 +1,2 @@
+../Core/Src/battery.c:52:9:Battery_EstimateSOC_pct	7
+../Core/Src/battery.c:102:9:Battery_FilterSOC_pct	6

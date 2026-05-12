@@ -28,6 +28,23 @@ typedef enum {
 	ENABLE_BUCK  = 0x01
 }BUCK_STATUS;
 
+/* Buck control mode set via CAN VOLTAGESET (byte 4).
+ *
+ *   BUCK_MANUAL_OFF — force buck OFF regardless of voltage.
+ *   BUCK_MANUAL_ON  — force buck ON regardless of voltage.
+ *                     Useful for bench testing; will keep buck on even in
+ *                     STATE_ERROR (i.e. defeats the UV-triggered shutdown).
+ *   BUCK_AUTO       — buck is enabled when V24 >= under_voltage_24 threshold,
+ *                     disabled otherwise. The under_voltage_24 value sent
+ *                     via VOLTAGESET acts as both the UV trip threshold AND
+ *                     the buck-enable threshold.
+ */
+typedef enum {
+	BUCK_MANUAL_OFF = 0x00,
+	BUCK_MANUAL_ON  = 0x01,
+	BUCK_AUTO       = 0x02
+}BUCK_MODE_t;
+
 void SET_BUCK(BUCK_STATUS buck_Status);
 void TrigerADCMEasurement();
 uint16_t READADC(ADC_CHANNEL channel);

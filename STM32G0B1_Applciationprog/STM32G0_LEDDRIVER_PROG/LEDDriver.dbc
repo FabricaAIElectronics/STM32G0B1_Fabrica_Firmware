@@ -1,0 +1,128 @@
+VERSION ""
+
+
+NS_ :
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: Host LEDDriver
+
+
+BO_ 352 DEVICEID: 2 Host
+ SG_ Boot_Cmd : 0|8@1+ (1,0) [0|255] "" LEDDriver
+
+BO_ 353 LED_Bootloader_TX: 8 LEDDriver
+ SG_ Boot_Resp : 0|8@1+ (1,0) [0|255] "" Host
+
+BO_ 368 LIGHTSET: 3 Host
+ SG_ PWM_Channel0 : 0|8@1+ (1,0) [0|100] "%" LEDDriver
+ SG_ PWM_Channel1 : 8|8@1+ (1,0) [0|100] "%" LEDDriver
+ SG_ PWM_Channel2 : 16|8@1+ (1,0) [0|100] "%" LEDDriver
+
+BO_ 369 VOLTAGESET: 5 Host
+ SG_ UV_24V_mV : 7|16@0+ (1,0) [0|30000] "mV" LEDDriver
+ SG_ UV_17V5_mV : 23|16@0+ (1,0) [0|20000] "mV" LEDDriver
+ SG_ Buck_Mode : 32|8@1+ (1,0) [0|2] "" LEDDriver
+
+BO_ 370 EEPROMSET: 1 Host
+ SG_ EEPROM_Action : 0|8@1+ (1,0) [0|3] "" LEDDriver
+
+BO_ 376 EEPROMDATA: 8 LEDDriver
+ SG_ Cfg_UV_24V_mV : 7|16@0+ (1,0) [0|30000] "mV" Host
+ SG_ Cfg_UV_17V5_mV : 23|16@0+ (1,0) [0|20000] "mV" Host
+ SG_ Cfg_PWM_Ch0 : 32|8@1+ (1,0) [0|100] "%" Host
+ SG_ Cfg_PWM_Ch1 : 40|8@1+ (1,0) [0|100] "%" Host
+ SG_ Cfg_PWM_Ch2 : 48|8@1+ (1,0) [0|100] "%" Host
+ SG_ Cfg_Buck_Mode : 56|8@1+ (1,0) [0|2] "" Host
+
+BO_ 377 LIGHTSTATUS: 8 LEDDriver
+ SG_ PWM_Ch0_State : 0|8@1+ (1,0) [0|100] "%" Host
+ SG_ PWM_Ch1_State : 8|8@1+ (1,0) [0|100] "%" Host
+ SG_ PWM_Ch2_State : 16|8@1+ (1,0) [0|100] "%" Host
+ SG_ V24_mV : 31|16@0+ (1,0) [0|30000] "mV" Host
+ SG_ V17V5_mV : 47|16@0+ (1,0) [0|20000] "mV" Host
+ SG_ Heartbeat_Count : 56|8@1+ (1,0) [0|255] "" Host
+
+BO_ 378 DEVSTATUS: 2 LEDDriver
+ SG_ System_State : 0|8@1+ (1,0) [0|255] "" Host
+ SG_ Error_Code : 8|8@1+ (1,0) [0|255] "" Host
+
+
+CM_ BU_ LEDDriver "STM32G0B1 LED driver. 11-bit standard IDs in CANopen-safe gap 0x160-0x17F. Bootloader RX 0x160 (also app reset trigger) / TX 0x161. 3-channel PWM with voltage monitoring and EEPROM-stored config.";
+CM_ BU_ Host "Host controller / CAN analyzer.";
+
+CM_ BO_ 352 "DEVICEID (0x160). Also OpenBLT bootloader RX. 0xFF (DLC=2) triggers reset and re-enters bootloader, which then re-handles XCP CONNECT on the same ID.";
+CM_ BO_ 353 "OpenBLT bootloader TX (0x161). XCP responses target->host while in bootloader.";
+CM_ BO_ 368 "CMD 0x170: set 3-channel PWM duty cycle (0-100% per channel).";
+CM_ BO_ 369 "CMD 0x171: set UV thresholds (V24, V17.5) in mV big-endian, AND buck control mode (byte 4: 0=MANUAL_OFF, 1=MANUAL_ON, 2=AUTO). DLC=5; older DLC=4 frames preserve previous mode. AUTO mode ties buck-enable to V24 >= UV_24V_mV threshold.";
+CM_ BO_ 370 "CMD 0x172: EEPROM action. bit0=save live config, bit1=load defaults.";
+CM_ BO_ 376 "BCAST 0x178: echo of EEPROM-stored config (UV thresholds + PWM defaults + buck mode). DLC=8. Broadcast at ~3.3 Hz alongside LIGHTSTATUS and DEVSTATUS in a phased scheduler so the host always has a recent snapshot.";
+CM_ BO_ 377 "BCAST 0x179: live PWM levels, voltages, and a wrapping heartbeat counter.";
+CM_ BO_ 378 "BCAST 0x17A: system state (init/running/error) and error code.";
+
+CM_ SG_ 352 Boot_Cmd "0xFF (DLC=2) = software reset and re-enter OpenBLT bootloader.";
+CM_ SG_ 368 PWM_Channel0 "PWM duty cycle 0-100% for channel 0.";
+CM_ SG_ 368 PWM_Channel1 "PWM duty cycle 0-100% for channel 1.";
+CM_ SG_ 368 PWM_Channel2 "PWM duty cycle 0-100% for channel 2.";
+CM_ SG_ 369 UV_24V_mV "UV trip threshold for 24V rail in mV big-endian.";
+CM_ SG_ 369 UV_17V5_mV "UV trip threshold for 17.5V rail in mV big-endian.";
+CM_ SG_ 370 EEPROM_Action "Bitmask: bit0=save current config, bit1=restore factory defaults. May combine.";
+CM_ SG_ 377 V24_mV "24V rail voltage in mV big-endian.";
+CM_ SG_ 377 V17V5_mV "17.5V rail voltage in mV big-endian.";
+CM_ SG_ 377 Heartbeat_Count "Wrapping counter incremented on each broadcast.";
+CM_ SG_ 378 System_State "0=INIT 1=LOAD_CONFIG 2=RUNNING 3=ERROR 4=RECOVERY (values per applogic.h).";
+CM_ SG_ 378 Error_Code "Bitmask of active error conditions.";
+
+BA_DEF_  "MultiplexExtEnabled" ENUM  "No","Yes";
+BA_DEF_  "BusType" STRING ;
+BA_DEF_ BO_  "GenMsgCycleTime" INT 0 10000;
+BA_DEF_ BO_  "GenMsgSendType"  STRING;
+BA_DEF_DEF_  "MultiplexExtEnabled" "No";
+BA_DEF_DEF_  "BusType" "CAN";
+BA_DEF_DEF_  "GenMsgCycleTime" 0;
+BA_DEF_DEF_  "GenMsgSendType"  "Cyclic";
+
+BA_ "GenMsgCycleTime" BO_ 376 1000;
+BA_ "GenMsgCycleTime" BO_ 377 500;
+BA_ "GenMsgCycleTime" BO_ 378 1000;
+BA_ "GenMsgSendType"  BO_ 352 "Event";
+BA_ "GenMsgSendType"  BO_ 353 "Event";
+BA_ "GenMsgSendType"  BO_ 368 "Event";
+BA_ "GenMsgSendType"  BO_ 369 "Event";
+BA_ "GenMsgSendType"  BO_ 370 "Event";
+BA_ "GenMsgSendType"  BO_ 376 "Cyclic";
+BA_ "GenMsgSendType"  BO_ 377 "Cyclic";
+BA_ "GenMsgSendType"  BO_ 378 "Cyclic";
+
+VAL_ 352 Boot_Cmd 255 "RESET_BOOTLOADER" ;
+VAL_ 369 Buck_Mode 0 "MANUAL_OFF" 1 "MANUAL_ON" 2 "AUTO" ;
+VAL_ 376 Cfg_Buck_Mode 0 "MANUAL_OFF" 1 "MANUAL_ON" 2 "AUTO" ;
+VAL_ 378 System_State 0 "INIT" 1 "LOAD_CONFIG" 2 "RUNNING" 3 "ERROR" 4 "RECOVERY" ;

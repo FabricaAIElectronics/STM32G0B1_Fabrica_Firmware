@@ -27,12 +27,16 @@ void LoadDefault(Config *config){
     /* HS switch boot state: all 5 rails enabled (bitmask 0b00011111) */
     config->hs_default_state    = 0x00;
 
-    /* OC thresholds per rail [AUX, LED, DRIVE, CAP, SBC] */
+    /* OC thresholds per rail [AUX, LED, DRIVE, CAP, SBC]
+     * Threshold of 0 disables the software OC check for that rail.
+     * RAIL_SBC has no MCU-controlled EN line, so a software OC trip would
+     * have nothing to cut — leave it at 0. The hardware FLT pin is still
+     * read for telemetry. */
     config->oc_threshold_mA[0]  = 5000;    // RAIL_AUX   5 A
     config->oc_threshold_mA[1]  = 2000;    // RAIL_LED   2 A
     config->oc_threshold_mA[2]  = 5000;    // RAIL_DRIVE 5 A
     config->oc_threshold_mA[3]  = 5000;    // RAIL_CAP   5 A
-    config->oc_threshold_mA[4]  = 5000;    // RAIL_SBC   5 A
+    config->oc_threshold_mA[4]  = 0;       // RAIL_SBC   disabled (no MCU EN)
 
     /* UV thresholds */
     config->uv_V24_mV           = 20000;   // 20.0 V

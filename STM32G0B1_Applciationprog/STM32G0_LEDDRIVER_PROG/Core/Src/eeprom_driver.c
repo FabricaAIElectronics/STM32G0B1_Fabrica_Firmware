@@ -15,18 +15,18 @@
 #define PAGE_NUM 512 //number in page
 
 void LoadDefault(Config *config){
-	config->magic = 0x3584;
+	config->magic = EEPROM_CFG_MAGIC;
 	config->pwm0 = 50;
 	config->pwm1 = 30;
 	config->pwm2 = 30;
-	config->under_voltage_24 = 20000;
-	config->under_voltage_17_5 = 15000;
-
-
+	config->under_voltage_24   = 20000;   /* 20.0 V */
+	config->under_voltage_17_5 = 15000;   /* 15.0 V */
+	config->buck_mode          = 0x02;    /* BUCK_AUTO — safe default */
+	config->reserved           = 0;
 }
 
 bool checkcfg(Config *cfg){
-	if(cfg->magic==0x3584)
+	if(cfg->magic == EEPROM_CFG_MAGIC)
 		return true;
 	else
 		return false;

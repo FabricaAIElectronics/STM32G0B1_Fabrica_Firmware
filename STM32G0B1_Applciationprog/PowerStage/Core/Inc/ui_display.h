@@ -79,7 +79,7 @@ typedef enum {
 
 /* Dwell time per page in display_scheduler ticks (500 ms each)
  * PAGE_DWELL 10 → 5 seconds per page                         */
-#define PAGE_DWELL          10
+#define PAGE_DWELL          15
 
 /* ============================================================
  * Overheat threshold (°C)
@@ -100,6 +100,9 @@ typedef struct {
     uint16_t        vcap_mV;
     uint16_t        v12_mV;
     float           temp_C;
+
+    /* Battery SOC (0..100 %), estimated from V24 + I_BAT — see battery.c */
+    uint8_t         battery_soc_pct;
 
     /* Currents (mA) */
     uint16_t        i_bat_mA;

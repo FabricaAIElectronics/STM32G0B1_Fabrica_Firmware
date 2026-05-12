@@ -67,8 +67,8 @@ all: main-build
 main-build: openblt_stm32g0b1.elf secondary-outputs
 
 # Tool invocations
-openblt_stm32g0b1.elf openblt_stm32g0b1.map: $(OBJS) $(USER_OBJS) C:\Users\jorda\Documents\GitHub\STM32G0B1_Fabrica_Firmware\STM32G0B1_Bootloader\G0B1_LEDDriver_Boot\STM32G0B1RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "openblt_stm32g0b1.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0plus -T"C:\Users\jorda\Documents\GitHub\STM32G0B1_Fabrica_Firmware\STM32G0B1_Bootloader\G0B1_LEDDriver_Boot\STM32G0B1RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="openblt_stm32g0b1.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+openblt_stm32g0b1.elf openblt_stm32g0b1.map: $(OBJS) $(USER_OBJS) C:\Users\jorda\Documents\GitHub\STM32G0B1_Fabrica_Firmware\STM32G0B1_Bootloader\G0B1_PowerStage_Boot\STM32G0B1RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "openblt_stm32g0b1.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m0plus -T"C:\Users\jorda\Documents\GitHub\STM32G0B1_Fabrica_Firmware\STM32G0B1_Bootloader\G0B1_PowerStage_Boot\STM32G0B1RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="openblt_stm32g0b1.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

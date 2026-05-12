@@ -15,7 +15,11 @@
  * Magic number — identifies a valid PowerStage config in EEPROM
  * Change this if Config struct layout changes (forces re-init)
  * ============================================================ */
-#define CONFIG_MAGIC            0xAB13
+/* Bump CONFIG_MAGIC whenever the Config layout OR the LoadDefault values
+ * change in a way that should override an existing device's saved config.
+ *  0xAB13 → 0xAB14: SBC OC threshold default changed 5000 → 0 (no MCU EN).
+ */
+#define CONFIG_MAGIC            0xAB14
 
 /* ============================================================
  * Rail count — must match PowerRailIndex_t in io_module.h

@@ -2,119 +2,82 @@
  * @file    CAN_Handler.h
  * @brief   CAN protocol definitions and public API.
  *
- * @details All CAN communication uses 29-bit Extended IDs:
+ * @details All frames are 11-bit standard IDs in CANopen-coexistence-safe
+ *          range 0x101..0x12F.  KincoDrive sub-block layout:
  *
- *            [28:16]  Message type (function code)
- *            [15:0]   Device ID  (0x0667)
- *
- *          Example: broadcast status (msg 0x600) from device 0x0667
- *                   => extended ID = 0x06000667
+ *            0x101  Bootloader RX  (XCP CONNECT + app reset trigger)
+ *            0x102  Bootloader TX  (XCP responses)
+ *            0x110  CMD_HS_POWER          (1B bitmask)
+ *            0x111  CMD_FAN_PWM           (5B)
+ *            0x112  CMD_EEPROM            (1B)
+ *            0x113  CMD_OC_THRESHOLD      (6B)
+ *            0x114  CMD_UV_THRESHOLD      (4B)
+ *            0x120  BCAST_STATUS          (8B) — voltages, current, state, error
+ *            0x121  BCAST_CURRENTS        (8B) — bus + per-HS currents
+ *            0x122  BCAST_TEMPS           (6B) — 6× PTC
+ *            0x123  BCAST_FANS            (5B) — fan tach %
+ *            0x124  BCAST_GPIO            (8B) — full raw GPIO state
+ *            0x125  BCAST_RAW_ADC         (6B) — packed nibbles
+ *            0x126  BCAST_CONFIG_A        (8B) — HS state + 3× OC thresholds
+ *            0x127  BCAST_CONFIG_B        (8B) — UV thresholds + fan defaults
  *
  * @author  jordan
- * @date    2026-03-26
+ * @date    2026-05-06
  */
 
 #ifndef CAN_HANDLER_H
 #define CAN_HANDLER_H
 
 #include <stdint.h>
+#include "applogic.h"
 
-/* ═══════════════════════════════════════════════════════════════════════
- *  Device identity
- * ═══════════════════════════════════════════════════════════════════════ */
+/* ────────── Bootloader / system ────────── */
 
-#define CAN_DEVICE_ID               0x0667U
+/* Bootloader RX (host→target). XCP CONNECT here also triggers app reset.
+ * Must match STM32G0B1_Bootloader/G0B1_KincoDrive_Boot/App/blt_conf.h. */
+#define CAN_ID_BOOTLOADER           0x101U
+#define CAN_ID_BOOTLOADER_TX        0x102U
 
-/* Build a 29-bit extended CAN ID from a message type */
-#define CAN_EXT_ID(msg_type)        ((((uint32_t)(msg_type) & 0x1FFFU) << 16) | CAN_DEVICE_ID)
+/* ────────── Commands ────────── */
 
-/* Extract message type from a 29-bit extended CAN ID */
-#define CAN_MSG_TYPE(ext_id)        (((ext_id) >> 16) & 0x1FFFU)
+#define CAN_ID_CMD_HS_POWER         0x110U
+#define CAN_ID_CMD_FAN_PWM          0x111U
+#define CAN_ID_CMD_EEPROM           0x112U
+#define CAN_ID_CMD_OC_THRESHOLD     0x113U
+#define CAN_ID_CMD_UV_THRESHOLD     0x114U
 
-/* Extract device ID from a 29-bit extended CAN ID */
-#define CAN_GET_DEVICE(ext_id)      ((ext_id) & 0xFFFFU)
+/* ────────── Broadcasts ────────── */
 
-/* ═══════════════════════════════════════════════════════════════════════
- *  Commands  (Host → Device)
- *
- *  Send a frame to CAN_EXT_ID(MSG_CMD_xxx) with the described payload.
- * ═══════════════════════════════════════════════════════════════════════ */
+#define CAN_ID_BCAST_STATUS         0x120U
+#define CAN_ID_BCAST_CURRENTS       0x121U
+#define CAN_ID_BCAST_TEMPS          0x122U
+#define CAN_ID_BCAST_FANS           0x123U
+#define CAN_ID_BCAST_GPIO           0x124U
+#define CAN_ID_BCAST_RAW_ADC        0x125U
+#define CAN_ID_BCAST_CONFIG_A       0x126U   /* hs_state + 3× OC threshold */
+#define CAN_ID_BCAST_CONFIG_B       0x127U   /* UV thresholds + fan defaults */
 
-/*
- * MSG_CMD_HS_POWER  0x110  DLC=1
- *   Byte 0 bitmask: bit0=Drive  bit1=Extruder  bit2=Scrubbing  bit3=12V Buck
- *   0=OFF, 1=ON for each bit.
- */
-#define MSG_CMD_HS_POWER            0x110
+/* ────────── Filter range ────────── */
 
-/*
- * MSG_CMD_FAN_PWM  0x140  DLC=5
- *   Byte 0=Fan_DR  Byte 1=Fan_EP  Byte 2=Fan_EH  Byte 3=Fan_ST  Byte 4=Fan_SF
- *   Values 0–100 (%).
- */
-#define MSG_CMD_FAN_PWM             0x140
+#define CAN_ID_RANGE_LOW            0x101U
+#define CAN_ID_RANGE_HIGH           0x12FU
 
-/*
- * MSG_CMD_EEPROM  0x200  DLC=1
- *   Byte 0:  0 = Load hard-coded safe defaults (all OFF) and apply
- *            1 = Save current HS/fan state to EEPROM
- */
-#define MSG_CMD_EEPROM              0x200
-
-/* ═══════════════════════════════════════════════════════════════════════
- *  Broadcasts  (Device → Host, every 500 ms)
- * ═══════════════════════════════════════════════════════════════════════ */
-
-#define MSG_BCAST_STATUS            0x600   /* voltages (mV) + endstop/ESTOP     */
-#define MSG_BCAST_CURRENTS          0x601   /* currents (mA), DLC=8              */
-#define MSG_BCAST_TEMPS             0x602   /* 6x PTC thermistors                */
-#define MSG_BCAST_FANS              0x603   /* 5x fan tachometer %               */
-#define MSG_BCAST_GPIO              0x604   /* HS/ESTOP/endstop pin states       */
-#define MSG_BCAST_RAW_ADC           0x605   /* 12 ADC channels (4-bit each)      */
-#define MSG_BCAST_CONFIG            0x606   /* EEPROM startup config             */
-
-/* ═══════════════════════════════════════════════════════════════════════
- *  Precomputed extended IDs  (avoid runtime shifts)
- * ═══════════════════════════════════════════════════════════════════════ */
-
-/* Commands */
-#define CAN_ID_CMD_HS_POWER         CAN_EXT_ID(MSG_CMD_HS_POWER)
-#define CAN_ID_CMD_FAN_PWM          CAN_EXT_ID(MSG_CMD_FAN_PWM)
-#define CAN_ID_CMD_EEPROM           CAN_EXT_ID(MSG_CMD_EEPROM)
-
-/* Broadcasts */
-#define CAN_ID_BCAST_STATUS         CAN_EXT_ID(MSG_BCAST_STATUS)
-#define CAN_ID_BCAST_CURRENTS       CAN_EXT_ID(MSG_BCAST_CURRENTS)
-#define CAN_ID_BCAST_TEMPS          CAN_EXT_ID(MSG_BCAST_TEMPS)
-#define CAN_ID_BCAST_FANS           CAN_EXT_ID(MSG_BCAST_FANS)
-#define CAN_ID_BCAST_GPIO           CAN_EXT_ID(MSG_BCAST_GPIO)
-#define CAN_ID_BCAST_RAW_ADC        CAN_EXT_ID(MSG_BCAST_RAW_ADC)
-#define CAN_ID_BCAST_CONFIG         CAN_EXT_ID(MSG_BCAST_CONFIG)
-
-/* Bootloader: host sends to device ID with payload[0] = 0xFF */
-#define CAN_ID_BOOTLOADER           CAN_DEVICE_ID
-
-/* ═══════════════════════════════════════════════════════════════════════
- *  Return codes
- * ═══════════════════════════════════════════════════════════════════════ */
+/* ────────── Return codes ────────── */
 
 #define CAN_SUCCESS     0
 #define CAN_ERROR       (-1)
 
-/* ═══════════════════════════════════════════════════════════════════════
- *  Public API
- * ═══════════════════════════════════════════════════════════════════════ */
+/* ────────── Public API ────────── */
 
-/** Remap vector table for bootloader compatibility. Call before HAL_Init(). */
-void Pre_CAN_Handler_Init(void);
 
-/** Configure CAN filters and enable RX interrupt. Call after HAL_FDCAN_Start(). */
+/** Configure RX filter (range 0x101–0x12F) + enable RX FIFO0 IRQ.
+ *  Call after HAL_FDCAN_Start(). */
 void CAN_Handler_Init(void);
 
 /** Process one pending CAN command (if any). Call from main loop. */
 void CAN_Process(void);
 
-/** Broadcast all telemetry frames at the given interval. Call from main loop. */
+/** Broadcast all telemetry frames at the given interval (3-phase staggered). */
 int  CAN_Broadcast(uint32_t period_ms);
 
 #endif /* CAN_HANDLER_H */

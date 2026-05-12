@@ -35,12 +35,6 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr_ex.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h \
- C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/header.h \
- C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/blt_conf.h \
- C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/app.h \
- C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/boot.h \
- C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/led.h \
- C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/timer.h \
  ../Core/Inc/powerstage_app.h ../Core/Inc/main.h \
  ../Core/Inc/eeprom_driver.h ../Core/Inc/io_module.h
 ../Core/Inc/main.h:
@@ -80,12 +74,6 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr_ex.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h:
-C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/header.h:
-C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/blt_conf.h:
-C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/app.h:
-C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/boot.h:
-C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/led.h:
-C:/Users/jorda/Documents/GitHub/STM32G0B1_Fabrica_Firmware/STM32G0B1_Applciationprog/PowerStage/App/timer.h:
 ../Core/Inc/powerstage_app.h:
 ../Core/Inc/main.h:
 ../Core/Inc/eeprom_driver.h:

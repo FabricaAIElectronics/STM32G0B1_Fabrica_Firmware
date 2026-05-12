@@ -23,7 +23,7 @@
  *  ║LED    Y    N   N ║  row 2
  *  ║DRV    Y    N   N ║  row 3
  *  ║CAP    Y    N   N ║  row 4
- *  ║SBC    Y    N   N ║  row 5
+ *  ║SBC    □    N   N ║  row 5  blank squares — no MCU EN disabled
  *  ╚══════════════════╝
  *  PG=PowerGood  FLT=HW fault  OC=software OC warning
  *
@@ -89,6 +89,14 @@ static inline void draw_at(uint16_t x, uint16_t y, const char *str)
     SSD1306_Puts(str, &Font_7x10, SSD1306_COLOR_WHITE);
 }
 
+/* Draw a 5×6 outlined rectangle centred in a 7×10 font cell.
+ * Used as a placeholder for "not applicable / not controllable" — e.g.
+ * the SBC row on Page 1 (no MCU EN, no software OC). */
+static inline void draw_blank_box(uint16_t x, uint16_t y)
+{
+    SSD1306_DrawRectangle(x + 1, y + 2, 5, 6, SSD1306_COLOR_WHITE);
+}
+
 /* Format float as "±XXX.X" into buf (no %f needed) */
 static void fmt_f1(char *buf, uint8_t bufsize, float val)
 {
@@ -128,10 +136,24 @@ DisplayData_t display_data = {0};
 
 /* ----------------------------------------------------------
  * Page 0 — System Overview
+ *
+ *   ╔══════════════════╗
+ *   ║ST:RUN  ERR:0x0000║  state + error code
+ *   ║V24:24.1V  SOC: 75║  V24 + battery SOC % (NEW)
+ *   ║V12:12.0V VC:23.8V║  V12 + VCAP (VC moved here)
+ *   ║ T:45.2C BT:1.250A║  NTC temp + battery current
+ *   ║DR:1.500A SB:0.300║  DRIVE + SBC currents
+ *   ║AX:0.200A LD:0.150║  AUX + LED currents
+ *   ╚══════════════════╝
+ *
+ *   CAP current dropped from this page — visible via the rail-status
+ *   page and the BCAST_HS_CURR_A CAN frame. Battery SOC sits inline next
+ *   to V24 because that's where the user is naturally looking for the
+ *   "is the pack OK?" answer.
  * ---------------------------------------------------------- */
 static void Draw_Page_Overview(void)
 {
-    char buf[26];   /* 26 = 9 (left half) + 13 (right half: "VC:±XXXX.X\0") + margin */
+    char buf[26];
     char tmp[10];
 
     /* Row 0: State + error code */
@@ -142,35 +164,34 @@ static void Draw_Page_Overview(void)
              (unsigned int)display_data.error_code);
     draw_row(0, buf);
 
-    /* Row 1: V24 + VCAP (with V unit) */
+    /* Row 1: V24 + battery SOC (next to V24 per user request) */
     fmt_f1(tmp, sizeof(tmp), display_data.v24_mV / 1000.0f);
-    snprintf(buf, sizeof(buf), "V24:%-4sV", tmp);
-    fmt_f1(tmp, sizeof(tmp), display_data.vcap_mV / 1000.0f);
-    snprintf(buf + 9, sizeof(buf) - 9, "VC:%-4sV", tmp);
+    snprintf(buf, sizeof(buf), "V24:%-4sV  SOC:%3u",
+             tmp, (unsigned)display_data.battery_soc_pct);
     draw_row(1, buf);
 
-    /* Row 2: V12 + Temperature (with V and C units) */
+    /* Row 2: V12 + VCAP */
     fmt_f1(tmp, sizeof(tmp), display_data.v12_mV / 1000.0f);
     snprintf(buf, sizeof(buf), "V12:%-4sV", tmp);
-    fmt_f1(tmp, sizeof(tmp), display_data.temp_C);
-    snprintf(buf + 9, sizeof(buf) - 9, " T:%-4sC", tmp);
+    fmt_f1(tmp, sizeof(tmp), display_data.vcap_mV / 1000.0f);
+    snprintf(buf + 9, sizeof(buf) - 9, "VC:%-4sV", tmp);
     draw_row(2, buf);
 
-    /* Row 3: BAT + CAP current (A, 1 decimal) */
+    /* Row 3: NTC temperature + battery current */
+    fmt_f1(tmp, sizeof(tmp), display_data.temp_C);
+    snprintf(buf, sizeof(buf), " T:%-4sC", tmp);
     fmt_f1(tmp, sizeof(tmp), display_data.i_bat_mA / 1000.0f);
-    snprintf(buf, sizeof(buf), "BT:%4sA", tmp);
-    fmt_f1(tmp, sizeof(tmp), display_data.i_cap_mA / 1000.0f);
-    snprintf(buf + 8, sizeof(buf) - 8, " CP:%4sA", tmp);
+    snprintf(buf + 8, sizeof(buf) - 8, " BT:%4sA", tmp);
     draw_row(3, buf);
 
-    /* Row 4: DRIVE + SBC current (A) */
+    /* Row 4: DRIVE + SBC current */
     fmt_f1(tmp, sizeof(tmp), display_data.i_drive_mA / 1000.0f);
     snprintf(buf, sizeof(buf), "DR:%4sA", tmp);
     fmt_f1(tmp, sizeof(tmp), display_data.i_sbc_mA / 1000.0f);
     snprintf(buf + 8, sizeof(buf) - 8, " SB:%4sA", tmp);
     draw_row(4, buf);
 
-    /* Row 5: AUX + LED current (A) */
+    /* Row 5: AUX + LED current */
     fmt_f1(tmp, sizeof(tmp), display_data.i_aux_mA / 1000.0f);
     snprintf(buf, sizeof(buf), "AX:%4sA", tmp);
     fmt_f1(tmp, sizeof(tmp), display_data.i_led_mA / 1000.0f);
@@ -192,17 +213,27 @@ static void Draw_Page_RailStatus(void)
     draw_at(COL_FLT,  UI_ROW(0), "FLT");
     draw_at(COL_OC,   UI_ROW(0), "OC");
 
-    /* Rows 1-5: one per rail */
+    /* Rows 1-5: one per rail. RAIL_SBC has no MCU-controlled enable line,
+     * its software OC threshold is forced to 0 (disabled), and it is
+     * intentionally skipped by the CMD_HS handler, so we render blank
+     * squares in place of Y/N to make the read-only nature visible. */
     for (uint8_t i = 0; i < RAIL_COUNT; i++) {
+        uint8_t y = UI_ROW(i + 1);
+
+        draw_at(COL_RAIL, y, rail_lbl[i]);
+
+//        if (i == RAIL_SBC) {
+//            draw_blank_box(COL_PG,  y);
+//            draw_blank_box(COL_FLT, y);
+//            draw_blank_box(COL_OC,  y);
+//            continue;
+//        }
+
         char ch_pg  = (display_data.hs_pgood_mask   & (1u << i)) ? 'Y' : 'N';
         char ch_flt = (display_data.hs_fault_mask   & (1u << i)) ? 'Y' : 'N';
         char ch_oc  = (display_data.hs_oc_warn_mask & (1u << i)) ? 'Y' : 'N';
 
-        uint8_t y = UI_ROW(i + 1);
         char single[2] = {0, 0};
-
-        draw_at(COL_RAIL, y, rail_lbl[i]);
-
         single[0] = ch_pg;  draw_at(COL_PG,  y, single);
         single[0] = ch_flt; draw_at(COL_FLT, y, single);
         single[0] = ch_oc;  draw_at(COL_OC,  y, single);
@@ -347,7 +378,10 @@ void UI_Display_UpdateFromModules(SystemMeasurement_t *ms, FanCTRL_t *fan)
     display_data.v24_mV  = ms->voltage_mV.V24;
     display_data.vcap_mV = ms->voltage_mV.VCAP;
     display_data.v12_mV  = ms->voltage_mV.V12;
-    display_data.temp_C = ms->NTCTemperature_C;
+    display_data.temp_C  = ms->NTCTemperature_C;
+
+    /* Battery SOC (already computed by Run_Measurements via Battery_EstimateSOC_pct) */
+    display_data.battery_soc_pct = ms->battery_soc_pct;
 
     /* Currents */
     display_data.i_bat_mA   = ms->current_mA._currbat;

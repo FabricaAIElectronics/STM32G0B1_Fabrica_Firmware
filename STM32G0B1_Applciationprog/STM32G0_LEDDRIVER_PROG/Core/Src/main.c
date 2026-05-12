@@ -21,7 +21,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "header.h"
 #include "eeprom_driver.h"
 #include "can_operation.h"
 #include "peripheral.h"
@@ -122,12 +121,13 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
+  MX_FDCAN1_Init();
   MX_I2C1_Init();
   MX_TIM1_Init();
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
-  AppInit();
-  CAN_Init();
+  CAN_Init();   /* configures filter + RX FIFO0 IRQ + HAL_FDCAN_Start */
+
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
@@ -140,8 +140,17 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  AppTask();           /* Bootloader LED toggle + activation check */
-	  AppLogic_Run(&sm);   /* State machine tick */
+    /* ── Heartbeat LED on PA5 (LED_GREEN): toggle every 500 ms ── */
+    {
+      static uint32_t led_last_tick = 0;
+      uint32_t now = HAL_GetTick();
+      if ((now - led_last_tick) >= 500U) {
+        led_last_tick = now;
+        HAL_GPIO_TogglePin(LED_GREEN_GPIO_Port, LED_GREEN_Pin);
+      }
+    }
+
+    AppLogic_Run(&sm);   /* State machine tick */
 
     /* USER CODE END WHILE */
 
@@ -285,15 +294,15 @@ void MX_FDCAN1_Init(void)
   hfdcan1.Init.AutoRetransmission = DISABLE;
   hfdcan1.Init.TransmitPause = DISABLE;
   hfdcan1.Init.ProtocolException = DISABLE;
-  hfdcan1.Init.NominalPrescaler = 16;
+  hfdcan1.Init.NominalPrescaler = 8;
   hfdcan1.Init.NominalSyncJumpWidth = 1;
-  hfdcan1.Init.NominalTimeSeg1 = 1;
-  hfdcan1.Init.NominalTimeSeg2 = 1;
+  hfdcan1.Init.NominalTimeSeg1 = 10;
+  hfdcan1.Init.NominalTimeSeg2 = 4;
   hfdcan1.Init.DataPrescaler = 1;
   hfdcan1.Init.DataSyncJumpWidth = 1;
   hfdcan1.Init.DataTimeSeg1 = 1;
   hfdcan1.Init.DataTimeSeg2 = 1;
-  hfdcan1.Init.StdFiltersNbr = 0;
+  hfdcan1.Init.StdFiltersNbr = 2;
   hfdcan1.Init.ExtFiltersNbr = 0;
   hfdcan1.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
   if (HAL_FDCAN_Init(&hfdcan1) != HAL_OK)

@@ -1,0 +1,8 @@
+../Core/Src/hs_switch.c:39:5:HS_Enable	2
+../Core/Src/hs_switch.c:46:5:HS_Disable	2
+../Core/Src/hs_switch.c:53:6:HS_IsEnabled	2
+../Core/Src/hs_switch.c:59:6:HS_PowerGood	2
+../Core/Src/hs_switch.c:66:6:HS_FaultPin	2
+../Core/Src/hs_switch.c:75:6:Buck12V_Enable	1
+../Core/Src/hs_switch.c:80:6:Buck12V_Disable	1
+../Core/Src/hs_switch.c:85:6:Buck12V_IsEnabled	1

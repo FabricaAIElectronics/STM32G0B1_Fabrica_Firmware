@@ -2,22 +2,26 @@
  * @file    eeprom_driver.h
  * @brief   I2C EEPROM driver and startup configuration storage.
  *
- * @details Provides page-based read/write for an I2C EEPROM (64-byte pages,
- *          512 pages), an 8-byte startup config struct with magic + XOR
- *          checksum, and functions to save/load/apply the config over I2C.
+ * @details Page-based read/write (64-byte pages, 512 pages) plus a
+ *          structured startup-config record stored at page 0, offset 0.
  *
- *          Config layout (page 0, offset 0):
- *            Byte 0  magic    (0xA5 = valid)
- *            Byte 1  hs_state (bit0=DR, bit1=E, bit2=SC, bit3=VBUCK)
- *            Byte 2  fan_dr   (0–100 %)
- *            Byte 3  fan_ep   (0–100 %)
- *            Byte 4  fan_eh   (0–100 %)
- *            Byte 5  fan_st   (0–100 %)
- *            Byte 6  fan_sf   (0–100 %)
- *            Byte 7  checksum (XOR of bytes 0–6)
+ *          Config layout (24 bytes, packed):
+ *            Byte 0     magic              0xA6 = current layout
+ *            Byte 1     hs_state           bit0=DR, bit1=E, bit2=SC, bit3=VBUCK
+ *            Byte 2..6  fan_dr/ep/eh/st/sf 0–100 %
+ *            Byte 7..8  oc_dr_mA           uint16 LE
+ *            Byte 9..10 oc_e_mA            uint16 LE
+ *            Byte 11..12 oc_sc_mA          uint16 LE
+ *            Byte 13..14 uv_24V_mV         uint16 LE
+ *            Byte 15..16 uv_12V_mV         uint16 LE
+ *            Byte 17..22 reserved          (zero)
+ *            Byte 23    checksum           XOR of bytes 0..22
+ *
+ *          Magic byte was bumped from 0xA5 → 0xA6 with the layout change so
+ *          existing devices fall back to safe defaults on first boot.
  *
  * @author  jordan
- * @date    2026-03-26
+ * @date    2026-05-06
  */
 
 #ifndef EEPROM_DRIVER_H
@@ -27,21 +31,23 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/* ════════════════════════════════════════════════════════════════════════════
- *  Startup configuration structure (stored in EEPROM page 0, offset 0)
- * ════════════════════════════════════════════════════════════════════════════ */
-
 #define EEPROM_MAGIC    0xA5U
 
 typedef struct __attribute__((packed)) {
-    uint8_t magic;      /* 0xA5 = valid config                        */
-    uint8_t hs_state;   /* bit0=DR, bit1=E, bit2=SC, bit3=VBUCK (1=ON) */
-    uint8_t fan_dr;     /* Drive fan default speed (0–100 %)          */
-    uint8_t fan_ep;     /* Extruder Platform fan  (0–100 %)           */
-    uint8_t fan_eh;     /* Extruder Head fan      (0–100 %)           */
-    uint8_t fan_st;     /* Stepper fan            (0–100 %)           */
-    uint8_t fan_sf;     /* Scrubbing Front fan    (0–100 %)           */
-    uint8_t checksum;   /* XOR of bytes 0–6                           */
+    uint8_t  magic;
+    uint8_t  hs_state;          /* bit0=DR, bit1=E, bit2=SC, bit3=VBUCK */
+    uint8_t  fan_dr;
+    uint8_t  fan_ep;
+    uint8_t  fan_eh;
+    uint8_t  fan_st;
+    uint8_t  fan_sf;
+    uint16_t oc_dr_mA;
+    uint16_t oc_e_mA;
+    uint16_t oc_sc_mA;
+    uint16_t uv_24V_mV;
+    uint16_t uv_12V_mV;
+    uint8_t  reserved[6];
+    uint8_t  checksum;
 } EEPROM_StartupConfig_t;
 
 /* hs_state bitmask helpers */
@@ -50,62 +56,36 @@ typedef struct __attribute__((packed)) {
 #define EEPROM_HS_SC    (1U << 2)
 #define EEPROM_HS_VBUCK (1U << 3)
 
-/* ════════════════════════════════════════════════════════════════════════════
- *  Low-level EEPROM access
- * ════════════════════════════════════════════════════════════════════════════ */
+/* ────────── Low-level EEPROM access ────────── */
 
-/** Write raw bytes to EEPROM (handles page boundaries automatically). */
 void EEPROM_Write(uint16_t page, uint16_t offset, uint8_t *data, uint16_t size);
-
-/** Read raw bytes from EEPROM. */
-void EEPROM_Read(uint16_t page, uint16_t offset, uint8_t *data, uint16_t size);
-
-/** Erase a single EEPROM page (fill with 0xFF). */
+void EEPROM_Read (uint16_t page, uint16_t offset, uint8_t *data, uint16_t size);
 void EEPROM_pageErase(uint16_t page);
 
-/* ════════════════════════════════════════════════════════════════════════════
- *  Startup config management
- * ════════════════════════════════════════════════════════════════════════════ */
+/* ────────── Startup config management ────────── */
 
 /**
- * @brief  Initialize EEPROM: read config into RAM cache.
- *         If magic or checksum is invalid, loads hardcoded safe defaults
- *         (all HS OFF, all fans 0 %) into the cache but does NOT write to
- *         EEPROM — call EEPROM_SaveStartupConfig() explicitly if desired.
+ * @brief  Read config from EEPROM into RAM cache. If magic or checksum is
+ *         invalid, load hard-coded safe defaults into the cache (does NOT
+ *         write to EEPROM).
  */
 void EEPROM_Init(void);
 
-/**
- * @brief  Reset the RAM cache to hardcoded safe defaults (all HS OFF, all
- *         fans 0 %) and apply to hardware.  Does NOT write to EEPROM.
- */
+/** Reset the RAM cache to safe defaults (HS off, fans 0, OC=5A, UV=20V/10V). */
 void EEPROM_LoadAndApplyDefaults(void);
 
 /**
- * @brief  Apply the cached startup config to hardware.
- *         Calls Enable/Disable for each HS channel and set_Fan_PWM() for
- *         each fan.  Safe to call before peripheral clocks are ready only
- *         if hardware is already init'd.
+ * @brief  Apply the cached config to hardware:
+ *           - HS channels set per cfg->hs_state
+ *           - Fan PWMs set per cfg->fan_xx
+ *           - OC + UV thresholds pushed to power_monitor
  */
 void EEPROM_ApplyStartupConfig(void);
 
-/**
- * @brief  Snapshot current HS GPIO states and fan PWM setpoints, write to
- *         EEPROM, and update the RAM cache.
- */
+/** Snapshot current HS GPIOs, fan setpoints, and OC/UV thresholds → EEPROM. */
 void EEPROM_SaveStartupConfig(void);
 
-/**
- * @brief  Return pointer to the cached startup config (never NULL — returns
- *         hardcoded defaults if EEPROM was invalid at init).
- */
+/** Pointer to the cached config (never NULL). */
 const EEPROM_StartupConfig_t *EEPROM_GetCachedConfig(void);
-
-/* ════════════════════════════════════════════════════════════════════════════
- *  Utility
- * ════════════════════════════════════════════════════════════════════════════ */
-
-uint32_t float2Bytes(float float_data);
-float    bytes2Float(uint8_t buffer[4]);
 
 #endif /* EEPROM_DRIVER_H */

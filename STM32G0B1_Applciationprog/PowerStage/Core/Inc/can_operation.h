@@ -63,6 +63,21 @@
  *  CMD_CTRL    [0x145] DLC=2
  *    Byte[0] : V_LED_PWR     (0=OFF, 1=ON)
  *    Byte[1] : CAN relay     (0=disable, 1=enable)
+ *
+ *  CMD_PAGE_DWELL [0x146] DLC=3
+ *    Byte[0] : Page 0 (OVERVIEW)     dwell in 500 ms ticks. 0=default.
+ *    Byte[1] : Page 1 (RAIL_STATUS)  dwell in 500 ms ticks. 0=default.
+ *    Byte[2] : Page 2 (FAULT_DETAIL) dwell in 500 ms ticks. 0=default.
+ *    Range 1..255 → 0.5 s .. 127.5 s per page. Send CMD_EEPROM 0x01
+ *    afterward to persist across reboots.
+ *
+ *  CMD_BAT_CFG [0x147] DLC=1
+ *    Byte[0] : Battery SOC-low warning threshold in % (0..100).
+ *              0    = warning disabled.
+ *              1-100 = trip when filtered SOC < threshold.
+ *              When tripped, UV_Fault_Mask bit 3 (UV_FAULT_SOC_LOW) is set
+ *              in BCAST_VOLTAGE and the OLED V24/SOC row blinks at 1 Hz.
+ *              Send CMD_EEPROM 0x01 afterward to persist.
  * ============================================================ */
 #define DEVICE_ADDR         0x130
 #define CMD_FAN             0x140
@@ -71,6 +86,8 @@
 #define CMD_EEPROM          0x143
 #define CMD_UV              0x144
 #define CMD_CTRL            0x145
+#define CMD_PAGE_DWELL      0x146
+#define CMD_BAT_CFG         0x147
 
 /* ============================================================
  * CAN IDs — Broadcast (TX — this device transmits, 0x150..0x15F)
@@ -168,6 +185,7 @@
 #define UV_FAULT_V24            (1 << 0)
 #define UV_FAULT_VCAP           (1 << 1)
 #define UV_FAULT_V12            (1 << 2)
+#define UV_FAULT_SOC_LOW        (1 << 3)   /* Battery SOC < BATTERY_LOW_SOC_PCT — see battery.h */
 
 /* ============================================================
  * Structs
@@ -200,6 +218,14 @@ typedef struct {
     uint8_t     led_pwr_state;         // 0=OFF, 1=ON
     uint8_t     relay_state;           // 0=disable, 1=enable
     uint8_t     ctrl_cmd_received;
+
+    /* --- OLED per-page dwell (in 500 ms scheduler ticks) --- */
+    uint8_t     page_dwell[CONFIG_PAGE_COUNT];
+    uint8_t     page_dwell_cmd_received;
+
+    /* --- Battery SOC-low warning threshold (% SOC, 0 = disabled) --- */
+    uint8_t     bat_low_soc_pct;
+    uint8_t     bat_cfg_cmd_received;
 
     /* --- EEPROM --- */
     uint8_t     flash_detected;

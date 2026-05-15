@@ -91,8 +91,13 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
             can_rxMessage.under_voltage_17_5 = voltage_1;
 
             /* DLC=5 form includes buck mode; older DLC=4 leaves mode untouched.
-             * Clamp to valid range (0=OFF, 1=ON, 2=AUTO). */
-            if (rxMsgHeader.DataLength == FDCAN_DLC_BYTES_5) {
+             * Clamp to valid range (0=OFF, 1=ON, 2=AUTO).
+             *
+             * HAL note: HAL_FDCAN_GetRxMessage() puts the RAW 4-bit DLC code
+             * (0..15) in the low nibble of DataLength — NOT the bit-shifted
+             * FDCAN_DLC_BYTES_x form. Compare against the integer byte
+             * count, not against the macro. */
+            if ((rxMsgHeader.DataLength & 0x0FU) >= 5U) {
                 uint8_t mode = rxMsgData[4];
                 if (mode > 0x02) mode = 0x02;
                 can_rxMessage.buck_mode = mode;
@@ -101,18 +106,19 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
             can_rxMessage.newcommandreceived = 1;
         }
         if (rxMsgData[0] == 0xFF) {
-            /* HAL fills DataLength with FDCAN_DLC_BYTES_x bit-positioned constants
-             * (e.g. FDCAN_DLC_BYTES_2 = 0x00020000), NOT the raw byte count, so
-             * the previous "==2" / "==1" checks never matched. */
+            /* HAL note: HAL_FDCAN_GetRxMessage() puts the RAW 4-bit DLC code
+             * (0..15) in the low nibble of DataLength — NOT the bit-shifted
+             * FDCAN_DLC_BYTES_x form. Mask with 0x0F before comparing to a
+             * plain integer byte count. */
+            uint8_t dlc = (uint8_t)(rxMsgHeader.DataLength & 0x0FU);
 
             /* Bootloader entry: XCP CONNECT (byte0=0xFF, dlc=2) on DEVICEID. */
-            if ((rxMsgHeader.Identifier == DEVICEID) &&
-                (rxMsgHeader.DataLength == FDCAN_DLC_BYTES_2)) {
+            if ((rxMsgHeader.Identifier == DEVICEID) && (dlc == 2U)) {
                 NVIC_SystemReset();
             }
 
             /* Flash-in-progress detect (XCP poll, byte0=0xFF, dlc=1). */
-            if (rxMsgHeader.DataLength == FDCAN_DLC_BYTES_1) {
+            if (dlc == 1U) {
                 can_rxMessage.flashdetected = 1;
                 lastFlashMsgTick = HAL_GetTick();
             }

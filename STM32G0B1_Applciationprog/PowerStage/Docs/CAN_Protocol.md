@@ -91,6 +91,8 @@ RX (cmd)   | 0x142  | CMD_OC            |  4  | Master      | Event
 RX (cmd)   | 0x143  | CMD_EEPROM        |  1  | Master      | Event
 RX (cmd)   | 0x144  | CMD_UV            |  6  | Master      | Event
 RX (cmd)   | 0x145  | CMD_CTRL          |  2  | Master      | Event
+RX (cmd)   | 0x146  | CMD_PAGE_DWELL    |  3  | Master      | Event
+RX (cmd)   | 0x147  | CMD_BAT_CFG       |  1  | Master      | Event
 TX (bcast) | 0x150  | BCAST_HS_STATE    |  5  | PowerStage  | 500 ms
 TX (bcast) | 0x151  | BCAST_HS_CURR_A   |  8  | PowerStage  | 500 ms
 TX (bcast) | 0x152  | BCAST_VOLTAGE    |  8  | PowerStage  | 500 ms
@@ -195,6 +197,63 @@ Control V_LED_PWR output and CAN relay enable/disable.
 
 ---
 
+### 0x146 — CMD_PAGE_DWELL (RX, DLC = 3)
+
+Set the OLED dwell time for each of the three rotating pages. Each byte is
+in units of 500 ms scheduler ticks: `1` = 0.5 s, `10` = 5 s, `255` = 127.5 s.
+A value of `0` resets that page to the firmware default (currently 10 ticks).
+
+| Byte | Signal | Page |
+|---|---|---|
+| 0 | `Page_Dwell_Overview`     | Page 0 — System Overview |
+| 1 | `Page_Dwell_RailStatus`   | Page 1 — Rail Status |
+| 2 | `Page_Dwell_FaultDetail`  | Page 2 — Fault Detail |
+
+Live values can be read back via `BCAST_EEPROM`-class flow — they are also
+echoed in CMD_PAGE_DWELL form by the host's own DBC. Send `CMD_EEPROM 0x01`
+afterward to persist the new dwell into EEPROM so it survives reboots.
+
+**Example — quick scan (1 s overview, 0.5 s on each fault page):**
+```
+ID: 0x146  DLC: 3  Data: 02 01 01
+```
+
+**Example — only the overview page (10 s overview, 1 tick on others):**
+```
+ID: 0x146  DLC: 3  Data: 14 01 01
+```
+
+---
+
+### 0x147 — CMD_BAT_CFG (RX, DLC = 1)
+
+Set the SOC-low warning threshold (% SOC). When the filtered SOC falls
+strictly below the threshold:
+
+  - `BCAST_VOLTAGE` byte 6 bit 3 (`UV_FAULT_SOC_LOW`) is set every cycle.
+  - `display_data.error_code` OR's `ERR_BAT_LOW`.
+  - OLED Page 0 row 1 blinks the `SOC:nnn` slice on/off at 1 Hz (the V24
+    half stays solid).
+
+| Byte | Signal | Values | Description |
+|---|---|---|---|
+| 0 | `Bat_Low_SOC_Threshold_pct` | 0..100 | `0` disables the warning entirely. `1..100` trips the warning when filtered SOC sits below this value. Factory default is `BATTERY_LOW_SOC_PCT` (15). |
+
+Send `CMD_EEPROM 0x01` afterwards to persist the new threshold. The
+threshold survives reboots through `Config.bat_low_soc_pct`.
+
+**Example — set warning to 25 %:**
+```
+ID: 0x147  DLC: 1  Data: 19
+```
+
+**Example — disable warning entirely:**
+```
+ID: 0x147  DLC: 1  Data: 00
+```
+
+---
+
 ### 0x150 — BCAST_HS_STATE (TX, DLC = 5)
 
 Periodic broadcast of all five hot-swap rail status bitmasks.
@@ -234,7 +293,7 @@ Voltage values are `uint16_t mV` big-endian. **Scale x 0.001 to get Volts.**
 | 0-1 | `V24_mV` | 0-30000 | mV | 24V bus |
 | 2-3 | `VCAP_mV` | 0-30000 | mV | Capacitor bus |
 | 4-5 | `V12_mV` | 0-15000 | mV | 12V bus |
-| 6 | `UV_Fault_Mask` | 0-7 | — | bit 0 = V24 UV, bit 1 = VCAP UV, bit 2 = V12 UV |
+| 6 | `UV_Fault_Mask` | 0-15 | — | bit 0 = V24 UV, bit 1 = VCAP UV, bit 2 = V12 UV, bit 3 = SOC LOW (battery_soc_pct < `BATTERY_LOW_SOC_PCT`, default 15 %). bits 4-7 reserved. |
 | 7 | `Battery_SOC_pct` | 0-100 | % | 6S Li-ion/Li-Po pack state-of-charge. 0 % = 19.6 V cutoff (3.27 V/cell), 100 % = 25.2 V (4.20 V/cell). Estimated by `Battery_EstimateSOC_pct()` with IR compensation (default 200 mΩ pack resistance) — see `battery.c`. |
 
 ---

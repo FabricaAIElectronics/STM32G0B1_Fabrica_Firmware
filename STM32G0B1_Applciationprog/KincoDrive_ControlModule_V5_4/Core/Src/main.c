@@ -748,17 +748,23 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(VBUCK_EN_GPIO_Port, VBUCK_EN_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : EneStop_EH_L_NO1_Pin Toggle_Pos_Detect_Pin */
-  GPIO_InitStruct.Pin = EneStop_EH_L_NO1_Pin|Toggle_Pos_Detect_Pin;
+  /*Configure GPIO pin : EndStop_EH_L_NO1_Pin */
+  GPIO_InitStruct.Pin = EndStop_EH_L_NO1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  HAL_GPIO_Init(EndStop_EH_L_NO1_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : Toggle_Pos_Detect_Pin */
+  GPIO_InitStruct.Pin = Toggle_Pos_Detect_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(Toggle_Pos_Detect_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : HS_DR_EN_Pin HS_E_EN_Pin HS_SC_EN_Pin */
   GPIO_InitStruct.Pin = HS_DR_EN_Pin|HS_E_EN_Pin|HS_SC_EN_Pin;
@@ -774,12 +780,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED2_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : EStop_NO_Pin EStop_NC_Pin EndStop_EH_L_NO_Pin EndStop_EH_H_NO_Pin
-                           EndStop_EH_H_NC_Pin */
-  GPIO_InitStruct.Pin = EStop_NO_Pin|EStop_NC_Pin|EndStop_EH_L_NO_Pin|EndStop_EH_H_NO_Pin
-                          |EndStop_EH_H_NC_Pin;
+  /*Configure GPIO pins : EStop_NO_Pin EStop_NC_Pin */
+  GPIO_InitStruct.Pin = EStop_NO_Pin|EStop_NC_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pin : EStopLED_CTRL_Pin */
@@ -819,10 +823,54 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin = Endstop_SC_H_NO_Pin|Endstop_SC_H_NC_Pin|Endstop_EP_L_NO_Pin|Endstop_EP_L_NC_Pin
                           |Endstop_EP_H_NO_Pin|Endstop_EP_H_NC_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : EndStop_EH_L_NO_Pin EndStop_EH_H_NO_Pin EndStop_EH_H_NC_Pin */
+  GPIO_InitStruct.Pin = EndStop_EH_L_NO_Pin|EndStop_EH_H_NO_Pin|EndStop_EH_H_NC_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
   /* USER CODE BEGIN MX_GPIO_Init_2 */
+
+  /* Re-init EStop / Endstop inputs with internal pull-ups.
+   *
+   * CubeMX currently generates these pins as GPIO_NOPULL, which leaves
+   * unconnected (open-contact) switch inputs floating — they pick up
+   * nanosecond noise from adjacent traces and produce random 0/1 reads.
+   * The CAN BCAST_GPIO frame showed all of these bits flickering even
+   * though the physical switches weren't moving.
+   *
+   * Standard wiring on this board is "switch to GND", so a pull-up
+   * gives: open = 1, closed = 0. The same convention as the existing
+   * HS_*_PG / HS_*_FT pins (which were already PULLUP and stable).
+   *
+   * TODO(CubeMX): also flip Pull to GPIO_PULLUP for these pin groups
+   *               in the .ioc so the regenerated MX_GPIO_Init matches
+   *               and this override becomes redundant.
+   */
+  {
+    GPIO_InitTypeDef pull_fix = {0};
+    pull_fix.Mode = GPIO_MODE_INPUT;
+    pull_fix.Pull = GPIO_PULLUP;
+
+    /* GPIOC : EneStop_EH_L_NO1 (PC11) — Toggle_Pos_Detect (PC0) stays NOPULL
+     * because it has its own external bias on the board. */
+    pull_fix.Pin = EndStop_EH_L_NO1_Pin;
+    HAL_GPIO_Init(EndStop_EH_L_NO1_GPIO_Port, &pull_fix);
+
+    /* GPIOB : EStop_NO/NC + EndStop_EH_L_NO / EH_H_NO / EH_H_NC */
+    pull_fix.Pin = EStop_NO_Pin | EStop_NC_Pin
+                 | EndStop_EH_L_NO_Pin | EndStop_EH_H_NO_Pin | EndStop_EH_H_NC_Pin;
+    HAL_GPIO_Init(GPIOB, &pull_fix);
+
+    /* GPIOD : Endstop_SC_H_NO/NC + Endstop_EP_L_NO/NC + Endstop_EP_H_NO/NC */
+    pull_fix.Pin = Endstop_SC_H_NO_Pin | Endstop_SC_H_NC_Pin
+                 | Endstop_EP_L_NO_Pin | Endstop_EP_L_NC_Pin
+                 | Endstop_EP_H_NO_Pin | Endstop_EP_H_NC_Pin;
+    HAL_GPIO_Init(GPIOD, &pull_fix);
+  }
 
   /* USER CODE END MX_GPIO_Init_2 */
 }

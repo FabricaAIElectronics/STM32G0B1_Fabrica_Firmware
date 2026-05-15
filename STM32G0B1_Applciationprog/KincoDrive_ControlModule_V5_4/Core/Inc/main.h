@@ -59,8 +59,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define EneStop_EH_L_NO1_Pin GPIO_PIN_11
-#define EneStop_EH_L_NO1_GPIO_Port GPIOC
+#define EndStop_EH_L_NO1_Pin GPIO_PIN_11
+#define EndStop_EH_L_NO1_GPIO_Port GPIOC
 #define FAN_PWM_5_Pin GPIO_PIN_12
 #define FAN_PWM_5_GPIO_Port GPIOC
 #define B1_Pin GPIO_PIN_13

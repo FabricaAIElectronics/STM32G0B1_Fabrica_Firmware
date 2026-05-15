@@ -109,6 +109,8 @@ Error mask bits (Bcast_Status byte 7): `0x01`=OC_DRIVE, `0x02`=OC_EXT, `0x04`=OC
 | `0x143` | CMD_EEPROM | RX | 1 | Event | save / load defaults |
 | `0x144` | CMD_UV | RX | 6 | Event | UV thresholds |
 | `0x145` | CMD_CTRL | RX | 2 | Event | V_LED_PWR + CAN relay |
+| `0x146` | CMD_PAGE_DWELL | RX | 3 | Event | OLED per-page dwell (500 ms ticks per page) |
+| `0x147` | CMD_BAT_CFG | RX | 1 | Event | SOC-low warning threshold (% SOC, 0 = disabled) |
 | `0x150` | BCAST_HS_STATE | TX | 5 | 500 ms | Enable / fault / pgood / OC bitmasks |
 | `0x151` | BCAST_HS_CURR_A | TX | 8 | 500 ms | BAT, CAP, SBC, DRIVE mA |
 | `0x152` | BCAST_VOLTAGE | TX | 8 | 500 ms | V24, VCAP, V12 mV + UV fault mask |

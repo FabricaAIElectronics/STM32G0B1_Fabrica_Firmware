@@ -2,7 +2,7 @@
 ../Core/Src/can_operation.c:24:6:CAN_Init	1
 ../Core/Src/can_operation.c:53:6:CAN_Send	3
 ../Core/Src/can_operation.c:67:6:HAL_FDCAN_RxFifo0Callback	14
-../Core/Src/can_operation.c:134:6:broadcastEEPROMData	1
-../Core/Src/can_operation.c:148:6:braodcastLEDStatus	2
-../Core/Src/can_operation.c:170:6:broadcastDeviceStatus	1
-../Core/Src/can_operation.c:184:6:FOCdetection	2
+../Core/Src/can_operation.c:140:6:broadcastEEPROMData	1
+../Core/Src/can_operation.c:154:6:braodcastLEDStatus	2
+../Core/Src/can_operation.c:176:6:broadcastDeviceStatus	1
+../Core/Src/can_operation.c:190:6:FOCdetection	2

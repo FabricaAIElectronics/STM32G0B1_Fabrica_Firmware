@@ -67,6 +67,10 @@ typedef enum {
 /* Thermal */
 #define ERR_OVERHEAT        (1u << 13)
 
+/* Battery SOC below BATTERY_LOW_SOC_PCT. Causes Page 0 row 1
+ * (V24/SOC) to blink at the 500 ms scheduler tick rate. */
+#define ERR_BAT_LOW         (1u << 14)
+
 /* ============================================================
  * Display page cycle
  * ============================================================ */
@@ -77,9 +81,14 @@ typedef enum {
     PAGE_COUNT
 } DisplayPage_t;
 
-/* Dwell time per page in display_scheduler ticks (500 ms each)
- * PAGE_DWELL 10 → 5 seconds per page                         */
-#define PAGE_DWELL          15
+/* Default dwell time per page in display_scheduler ticks (500 ms each).
+ * Per-page values are stored in `s_page_dwell[]` inside ui_display.c and
+ * can be overridden at runtime via UI_Display_SetPageDwell() or via the
+ * CAN CMD_PAGE_DWELL (0x146) frame. They are persisted in
+ * Config.page_dwell[] on EEPROM save. */
+#define PAGE_DWELL_DEFAULT  15U
+#define PAGE_DWELL_MIN      1U
+#define PAGE_DWELL_MAX      255U
 
 /* ============================================================
  * Overheat threshold (°C)
@@ -148,6 +157,20 @@ void UI_Display_SetErrorCode(uint16_t error_code);
 
 /* Force an immediate screen redraw without waiting for scheduler */
 void UI_Display_Update(void);
+
+/* ============================================================
+ * Per-page dwell control
+ *
+ *   page  — DisplayPage_t value (0..PAGE_COUNT-1). Out-of-range is a no-op.
+ *   ticks — 500 ms units; clamped to [PAGE_DWELL_MIN, PAGE_DWELL_MAX].
+ *           Pass 0 to "use default" (PAGE_DWELL_DEFAULT).
+ *
+ *   The CAN command CMD_PAGE_DWELL (0x146) calls SetPageDwell for each
+ *   page. powerstage_app applies Config.page_dwell[] at boot and snapshots
+ *   live values on EEPROM save.
+ * ============================================================ */
+void    UI_Display_SetPageDwell(uint8_t page, uint8_t ticks);
+uint8_t UI_Display_GetPageDwell(uint8_t page);
 
 /* ============================================================
  * display_scheduler callback — do NOT call directly.

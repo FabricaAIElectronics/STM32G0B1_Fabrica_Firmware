@@ -23,6 +23,7 @@
 #define INC_BATTERY_H_
 
 #include <stdint.h>
+#include <stdbool.h>
 
 /* ====================== Configuration ====================== */
 
@@ -36,6 +37,14 @@
 /** Estimated total internal resistance of the pack in milliohms.
  *  Used to undo the load-induced voltage sag before the OCV→SOC lookup. */
 #define BATTERY_INT_R_MILLIOHM  200U
+
+/** Compile-time default for the SOC-low warning threshold (in %).
+ *  This is just the value applied on a factory reset; the live threshold
+ *  is configurable at runtime via CMD_BAT_CFG (0x147) and persisted in
+ *  Config.bat_low_soc_pct. The warning fires when the filtered SOC sits
+ *  strictly below the live threshold; setting it to 0 disables the
+ *  warning entirely (since unsigned SOC is never < 0). */
+#define BATTERY_LOW_SOC_PCT     40U
 
 /* ====================== SOC filter tuning ====================== */
 
@@ -94,5 +103,22 @@ uint8_t Battery_FilterSOC_pct(uint8_t raw_soc_pct);
  *         Useful for the host to display a "low battery" warning consistently.
  */
 static inline uint16_t Battery_GetCutoffVoltage_mV(void) { return BATTERY_CUTOFF_MV; }
+
+/**
+ * @brief  Set the SOC-low warning threshold (%). Pass 0 to disable the
+ *         warning. Values >100 are clamped to 100. State is module-local
+ *         and reset to BATTERY_LOW_SOC_PCT on power-up; persistence is
+ *         handled by Config.bat_low_soc_pct on EEPROM save.
+ */
+void    Battery_SetLowSocThreshold_pct(uint8_t pct);
+
+/** Read back the current live SOC-low threshold (0..100). */
+uint8_t Battery_GetLowSocThreshold_pct(void);
+
+/**
+ * @brief  Returns true if SOC is below the current live threshold AND the
+ *         warning is enabled (threshold > 0).
+ */
+bool    Battery_IsLow(uint8_t soc_pct);
 
 #endif /* INC_BATTERY_H_ */

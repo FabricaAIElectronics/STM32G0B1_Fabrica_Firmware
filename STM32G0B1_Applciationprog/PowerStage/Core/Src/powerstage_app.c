@@ -113,6 +113,13 @@ static void Apply_Config(void)
     	}
     }
 
+    /* OLED per-page dwell (Config.page_dwell[] = ticks per page; 0 = default). */
+    for (uint8_t i = 0; i < CONFIG_PAGE_COUNT; i++) {
+        UI_Display_SetPageDwell(i, g_config.page_dwell[i]);
+    }
+
+    /* SOC-low warning threshold (0 disables the warning). */
+    Battery_SetLowSocThreshold_pct(g_config.bat_low_soc_pct);
 }
 
 /* Run all ADC-based measurements into the global `measurements` struct */
@@ -269,6 +276,14 @@ static void Handle_CAN_Commands(void)
         g_config.uv_V24_mV  = uv_status.uv_V24_mV;
         g_config.uv_VCAP_mV = uv_status.uv_VCAP_mV;
         g_config.uv_V12_mV  = uv_status.uv_V12_mV;
+
+        /* Snapshot live OLED page-dwell values */
+        for (uint8_t i = 0; i < CONFIG_PAGE_COUNT; i++)
+            g_config.page_dwell[i] = UI_Display_GetPageDwell(i);
+
+        /* Snapshot live battery low-SOC warning threshold */
+        g_config.bat_low_soc_pct = Battery_GetLowSocThreshold_pct();
+
         if (g_eeprom_present)
             EEPROM_Write_Config(1, 0, &g_config);
     }
@@ -288,6 +303,20 @@ static void Handle_CAN_Commands(void)
         HAL_GPIO_WritePin(V_LED_PWR_GPIO_Port, V_LED_PWR_Pin,
                           can_rxMessage.led_pwr_state ? GPIO_PIN_SET : GPIO_PIN_RESET);
         canstat.relay_enabled = (can_rxMessage.relay_state != 0);
+    }
+
+    /* ── OLED per-page dwell ─────────────────────────────── */
+    if (can_rxMessage.page_dwell_cmd_received) {
+        can_rxMessage.page_dwell_cmd_received = 0;
+        for (uint8_t i = 0; i < CONFIG_PAGE_COUNT; i++) {
+            UI_Display_SetPageDwell(i, can_rxMessage.page_dwell[i]);
+        }
+    }
+
+    /* ── Battery SOC-low warning threshold ───────────────── */
+    if (can_rxMessage.bat_cfg_cmd_received) {
+        can_rxMessage.bat_cfg_cmd_received = 0;
+        Battery_SetLowSocThreshold_pct(can_rxMessage.bat_low_soc_pct);
     }
 }
 

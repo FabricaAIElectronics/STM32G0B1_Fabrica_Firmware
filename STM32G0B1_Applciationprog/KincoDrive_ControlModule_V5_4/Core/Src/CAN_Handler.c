@@ -92,10 +92,17 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
     if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &hdr, data) != HAL_OK)
         return;
 
-    /* Bootloader entry: XCP CONNECT (byte[0]=0xFF, dlc=2) on bootloader RX ID. */
+    /* Bootloader entry: XCP CONNECT (byte[0]=0xFF, dlc=2) on bootloader RX ID.
+     *
+     * Note on DLC encoding: the STM32G0 HAL's HAL_FDCAN_GetRxMessage() returns
+     * the RAW 4-bit DLC code in the low nibble of hdr.DataLength (0..15) — it
+     * does NOT use the FDCAN_DLC_BYTES_x bit-positioned form. Comparing
+     * against FDCAN_DLC_BYTES_2 (= 0x00020000) here would never match. Same
+     * bug applied to dlc_to_bytes() above before the user's >> 16 → & 0x0F
+     * fix. */
     if ((hdr.Identifier == CAN_ID_BOOTLOADER) &&
         (data[0] == 0xFF) &&
-        (hdr.DataLength == FDCAN_DLC_BYTES_2)) {
+        ((hdr.DataLength & 0x0FU) == 2U)) {
         HAL_NVIC_SystemReset();
     }
 
@@ -304,8 +311,17 @@ static void send_bcast_fans(void)
  *   byte[1] HS PG bits         bit0=DR bit1=E bit2=SC  (1 = PGOOD asserted)
  *   byte[2] HS FT bits         bit0=DR bit1=E bit2=SC  (1 = FAULT asserted)
  *   byte[3] Misc IN raw bits   bit0=B1 bit1=Toggle_Pos_Detect
- *   byte[4] Misc OUT raw bits  bit0=LED2
- *   byte[5..7] reserved
+ *   byte[4] Misc OUT raw bits  bit0=LED2 bit1=EStopLED_CTRL
+ *   byte[5] EStop raw bits     bit0=EStop_NO bit1=EStop_NC
+ *   byte[6] Endstop SC/EP bits bit0=SC_H_NO bit1=SC_H_NC
+ *                              bit2=EP_L_NO bit3=EP_L_NC
+ *                              bit4=EP_H_NO bit5=EP_H_NC
+ *   byte[7] Endstop EH bits    bit0=EH_L_NO1(PC11) bit1=EH_L_NO(PB3)
+ *                              bit2=EH_H_NO(PB4)   bit3=EH_H_NC(PB5)
+ *
+ * All raw GPIO levels; the host interprets NO/NC pairs and active-low/high
+ * polarity. No software action is taken on any of these pins in firmware —
+ * this broadcast is purely telemetry to support HW + FW bring-up.
  */
 static void send_bcast_gpio(void)
 {
@@ -328,6 +344,22 @@ static void send_bcast_gpio(void)
     if (HAL_GPIO_ReadPin(Toggle_Pos_Detect_GPIO_Port, Toggle_Pos_Detect_Pin))     p[3] |= 0x02U;
 
     if (HAL_GPIO_ReadPin(LED2_GPIO_Port, LED2_Pin))                               p[4] |= 0x01U;
+    if (HAL_GPIO_ReadPin(EStopLED_CTRL_GPIO_Port, EStopLED_CTRL_Pin))             p[4] |= 0x02U;
+
+    if (HAL_GPIO_ReadPin(EStop_NO_GPIO_Port, EStop_NO_Pin))                       p[5] |= 0x01U;
+    if (HAL_GPIO_ReadPin(EStop_NC_GPIO_Port, EStop_NC_Pin))                       p[5] |= 0x02U;
+
+    if (HAL_GPIO_ReadPin(Endstop_SC_H_NO_GPIO_Port, Endstop_SC_H_NO_Pin))         p[6] |= 0x01U;
+    if (HAL_GPIO_ReadPin(Endstop_SC_H_NC_GPIO_Port, Endstop_SC_H_NC_Pin))         p[6] |= 0x02U;
+    if (HAL_GPIO_ReadPin(Endstop_EP_L_NO_GPIO_Port, Endstop_EP_L_NO_Pin))         p[6] |= 0x04U;
+    if (HAL_GPIO_ReadPin(Endstop_EP_L_NC_GPIO_Port, Endstop_EP_L_NC_Pin))         p[6] |= 0x08U;
+    if (HAL_GPIO_ReadPin(Endstop_EP_H_NO_GPIO_Port, Endstop_EP_H_NO_Pin))         p[6] |= 0x10U;
+    if (HAL_GPIO_ReadPin(Endstop_EP_H_NC_GPIO_Port, Endstop_EP_H_NC_Pin))         p[6] |= 0x20U;
+
+    if (HAL_GPIO_ReadPin(EndStop_EH_L_NO1_GPIO_Port, EndStop_EH_L_NO1_Pin))       p[7] |= 0x01U;
+    if (HAL_GPIO_ReadPin(EndStop_EH_L_NO_GPIO_Port, EndStop_EH_L_NO_Pin))         p[7] |= 0x02U;
+    if (HAL_GPIO_ReadPin(EndStop_EH_H_NO_GPIO_Port, EndStop_EH_H_NO_Pin))         p[7] |= 0x04U;
+    if (HAL_GPIO_ReadPin(EndStop_EH_H_NC_GPIO_Port, EndStop_EH_H_NC_Pin))         p[7] |= 0x08U;
 
     fdcan_send_std(CAN_ID_BCAST_GPIO, p, 8);
 }

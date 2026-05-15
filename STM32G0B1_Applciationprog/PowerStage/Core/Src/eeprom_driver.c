@@ -25,7 +25,7 @@ void LoadDefault(Config *config){
     config->fan_auto_off_temp   = 45;       // turn OFF below 45 °C (hysteresis)
 
     /* HS switch boot state: all 5 rails enabled (bitmask 0b00011111) */
-    config->hs_default_state    = 0x00;
+    config->hs_default_state    = 0x0F;
 
     /* OC thresholds per rail [AUX, LED, DRIVE, CAP, SBC]
      * Threshold of 0 disables the software OC check for that rail.
@@ -34,14 +34,27 @@ void LoadDefault(Config *config){
      * read for telemetry. */
     config->oc_threshold_mA[0]  = 5000;    // RAIL_AUX   5 A
     config->oc_threshold_mA[1]  = 2000;    // RAIL_LED   2 A
-    config->oc_threshold_mA[2]  = 5000;    // RAIL_DRIVE 5 A
+    config->oc_threshold_mA[2]  = 10000;    // RAIL_DRIVE 5 A
     config->oc_threshold_mA[3]  = 5000;    // RAIL_CAP   5 A
     config->oc_threshold_mA[4]  = 0;       // RAIL_SBC   disabled (no MCU EN)
 
     /* UV thresholds */
-    config->uv_V24_mV           = 20000;   // 20.0 V
-    config->uv_VCAP_mV          = 20000;   // 20.0 V
-    config->uv_V12_mV           = 10000;   // 10.0 V
+    config->uv_V24_mV           = 18000;   // 18.0 V
+    config->uv_VCAP_mV          = 18000;   // 18.0 V
+    config->uv_V12_mV           = 11000;   // 11.0 V
+
+    /* OLED dwell defaults: 5 s per page (10 ticks × 500 ms). */
+//    for (uint8_t i = 0; i < CONFIG_PAGE_COUNT; i++) {
+//        config->page_dwell[i] = 10;
+//    }
+    config->page_dwell[0] = 10;
+    config->page_dwell[1] = 2;
+    config->page_dwell[2] = 1;
+
+    /* SOC-low warning threshold default — see BATTERY_LOW_SOC_PCT (battery.h).
+     * Cannot directly use the define here without including battery.h, so
+     * mirror the same numeric value. Keep the two in sync. */
+    config->bat_low_soc_pct     = 40;       // BATTERY_LOW_SOC_PCT
 }
 
 bool checkcfg(Config *cfg){

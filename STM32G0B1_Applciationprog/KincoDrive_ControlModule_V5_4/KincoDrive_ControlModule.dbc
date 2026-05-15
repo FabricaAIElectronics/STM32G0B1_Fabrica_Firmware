@@ -110,6 +110,19 @@ BO_ 292 Bcast_GPIO: 8 KincoDrive
  SG_ B1_Pin : 24|1@1+ (1,0) [0|1] "" Host
  SG_ Toggle_Pos_Detect : 25|1@1+ (1,0) [0|1] "" Host
  SG_ LED2_Out : 32|1@1+ (1,0) [0|1] "" Host
+ SG_ EStopLED_CTRL_Out : 33|1@1+ (1,0) [0|1] "" Host
+ SG_ EStop_NO_In : 40|1@1+ (1,0) [0|1] "" Host
+ SG_ EStop_NC_In : 41|1@1+ (1,0) [0|1] "" Host
+ SG_ Endstop_SC_H_NO_In : 48|1@1+ (1,0) [0|1] "" Host
+ SG_ Endstop_SC_H_NC_In : 49|1@1+ (1,0) [0|1] "" Host
+ SG_ Endstop_EP_L_NO_In : 50|1@1+ (1,0) [0|1] "" Host
+ SG_ Endstop_EP_L_NC_In : 51|1@1+ (1,0) [0|1] "" Host
+ SG_ Endstop_EP_H_NO_In : 52|1@1+ (1,0) [0|1] "" Host
+ SG_ Endstop_EP_H_NC_In : 53|1@1+ (1,0) [0|1] "" Host
+ SG_ Endstop_EH_L_NO1_In : 56|1@1+ (1,0) [0|1] "" Host
+ SG_ Endstop_EH_L_NO_In : 57|1@1+ (1,0) [0|1] "" Host
+ SG_ Endstop_EH_H_NO_In : 58|1@1+ (1,0) [0|1] "" Host
+ SG_ Endstop_EH_H_NC_In : 59|1@1+ (1,0) [0|1] "" Host
 
 BO_ 293 Bcast_Raw_ADC: 6 KincoDrive
  SG_ ADC_PTC1_PTC2 : 0|8@1+ (1,0) [0|255] "" Host
@@ -165,6 +178,19 @@ CM_ SG_ 292 HS_SC_Fault "TPS2493 FAULT pin (asserted when fault present).";
 CM_ SG_ 292 B1_Pin "Blue button raw input (PC13).";
 CM_ SG_ 292 Toggle_Pos_Detect "Toggle position detect raw input (PC0).";
 CM_ SG_ 292 LED2_Out "LED2 output state (PA5, heartbeat).";
+CM_ SG_ 292 EStopLED_CTRL_Out "EStop LED control output state (PB15).";
+CM_ SG_ 292 EStop_NO_In "EStop normally-open contact raw input (PB13).";
+CM_ SG_ 292 EStop_NC_In "EStop normally-closed contact raw input (PB14).";
+CM_ SG_ 292 Endstop_SC_H_NO_In "Scrubbing high endstop NO raw input (PD1).";
+CM_ SG_ 292 Endstop_SC_H_NC_In "Scrubbing high endstop NC raw input (PD2).";
+CM_ SG_ 292 Endstop_EP_L_NO_In "Extruder low endstop NO raw input (PD3).";
+CM_ SG_ 292 Endstop_EP_L_NC_In "Extruder low endstop NC raw input (PD4).";
+CM_ SG_ 292 Endstop_EP_H_NO_In "Extruder high endstop NO raw input (PD5).";
+CM_ SG_ 292 Endstop_EP_H_NC_In "Extruder high endstop NC raw input (PD6).";
+CM_ SG_ 292 Endstop_EH_L_NO1_In "Extruder heater low endstop NO1 raw input (PC11).";
+CM_ SG_ 292 Endstop_EH_L_NO_In "Extruder heater low endstop NO raw input (PB3).";
+CM_ SG_ 292 Endstop_EH_H_NO_In "Extruder heater high endstop NO raw input (PB4).";
+CM_ SG_ 292 Endstop_EH_H_NC_In "Extruder heater high endstop NC raw input (PB5).";
 CM_ SG_ 293 ADC_PTC1_PTC2 "Hi nibble=PTC1, Lo nibble=PTC2 (raw ADC >> 8)";
 CM_ SG_ 293 ADC_PTC3_PTC4 "Hi nibble=PTC3, Lo nibble=PTC4";
 CM_ SG_ 293 ADC_PTC5_PTC6 "Hi nibble=PTC5, Lo nibble=PTC6";

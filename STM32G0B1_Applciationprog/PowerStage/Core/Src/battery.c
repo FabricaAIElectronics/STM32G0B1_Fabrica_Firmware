@@ -9,6 +9,32 @@
 #include "battery.h"
 
 /* ============================================================
+ * Runtime SOC-low warning threshold.
+ *   Initialised to BATTERY_LOW_SOC_PCT (15) at boot.
+ *   Overridden by Battery_SetLowSocThreshold_pct() — typically called
+ *   from Apply_Config() after EEPROM load and from the CMD_BAT_CFG
+ *   (0x147) handler.
+ *   A value of 0 disables the warning entirely.
+ * ============================================================ */
+static uint8_t s_low_soc_threshold = BATTERY_LOW_SOC_PCT;
+
+void Battery_SetLowSocThreshold_pct(uint8_t pct)
+{
+    s_low_soc_threshold = (pct > 100U) ? 100U : pct;
+}
+
+uint8_t Battery_GetLowSocThreshold_pct(void)
+{
+    return s_low_soc_threshold;
+}
+
+bool Battery_IsLow(uint8_t soc_pct)
+{
+    /* 0 threshold = warning disabled. */
+    return (s_low_soc_threshold > 0U) && (soc_pct < s_low_soc_threshold);
+}
+
+/* ============================================================
  * 6S Li-ion / Li-Po SOC vs OCV (open-circuit pack voltage in mV).
  *
  *   per cell × 6 cells = pack mV

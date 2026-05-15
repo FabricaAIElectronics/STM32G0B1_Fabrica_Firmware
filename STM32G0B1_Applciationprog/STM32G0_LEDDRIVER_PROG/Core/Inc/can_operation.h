@@ -15,17 +15,26 @@ extern FDCAN_HandleTypeDef hfdcan1;
  * one XCP CONNECT frame (byte[0]=0xFF, dlc=2) on 0x160 resets the running
  * application and is then re-handled by the bootloader on the same ID.
  * Must match STM32G0B1_Bootloader/G0B1_LEDDriver_Boot/App/blt_conf.h. */
-#define DEVICEID    0x160       /* RX: bootloader RX / app reset trigger        */
-#define LIGHTSET    0x170       /* RX: 3-channel PWM set, DLC=3                 */
-#define VOLTAGESET  0x171       /* RX: UV thresholds + buck mode, DLC=5         */
-                                /*   byte 0..1 V24 UV mV (BE)                   */
-                                /*   byte 2..3 V17.5 UV mV (BE)                 */
-                                /*   byte 4    buck mode (0=OFF 1=ON 2=AUTO)    */
-                                /*   shorter DLC keeps previous bytes' value    */
-#define EEPROMSET   0x172       /* RX: EEPROM save/load default, DLC=1          */
-#define EEPROMDATA  0x178       /* TX: EEPROM config echo (DLC=8 incl. mode)    */
-#define LIGHTSTATUS 0x179       /* TX: PWM + voltages telemetry                 */
-#define DEVSTATUS   0x17A       /* TX: state + error code                       */
+#define LED_DEVICEID        0x160   /* RX: bootloader RX / app reset trigger        */
+#define LED_CMD_LIGHTSET    0x170   /* RX: 3-channel PWM set, DLC=3                 */
+#define LED_CMD_VOLTAGESET  0x171   /* RX: UV thresholds + buck mode, DLC=5         */
+                                    /*   byte 0..1 V24 UV mV (BE)                   */
+                                    /*   byte 2..3 V17.5 UV mV (BE)                 */
+                                    /*   byte 4    buck mode (0=OFF 1=ON 2=AUTO)    */
+                                    /*   shorter DLC keeps previous bytes' value    */
+#define LED_CMD_EEPROMSET   0x172   /* RX: EEPROM save/load default, DLC=1          */
+#define LED_BCAST_EEPROMDATA  0x178 /* TX: EEPROM config echo (DLC=8 incl. mode)    */
+#define LED_BCAST_LIGHTSTATUS 0x179 /* TX: PWM + voltages telemetry                 */
+#define LED_BCAST_DEVSTATUS   0x17A /* TX: state + error code                       */
+
+/* Legacy aliases — keep until external tools migrate. Safe to remove later. */
+#define DEVICEID    LED_DEVICEID
+#define LIGHTSET    LED_CMD_LIGHTSET
+#define VOLTAGESET  LED_CMD_VOLTAGESET
+#define EEPROMSET   LED_CMD_EEPROMSET
+#define EEPROMDATA  LED_BCAST_EEPROMDATA
+#define LIGHTSTATUS LED_BCAST_LIGHTSTATUS
+#define DEVSTATUS   LED_BCAST_DEVSTATUS
 typedef struct {
     uint16_t 	under_voltage_24;
     uint16_t    under_voltage_17_5;

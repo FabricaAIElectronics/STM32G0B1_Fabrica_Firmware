@@ -42,6 +42,8 @@
  */
 
 #include "ui_display.h"
+#include "battery.h"
+#include <stdbool.h>
 #include "ssd1306.h"
 #include "fonts.h"
 #include "can_operation.h"      /* oc_status, uv_status             */
@@ -130,6 +132,21 @@ static const char * const rail_lbl[] = {
  * ============================================================ */
 DisplayData_t display_data = {0};
 
+/* Per-page dwell, in scheduler ticks (500 ms each). Mutable at runtime via
+ * UI_Display_SetPageDwell() / CMD_PAGE_DWELL (0x146). Initialised from the
+ * compile-time default; powerstage_app overwrites these on boot using the
+ * EEPROM-cached Config.page_dwell[] values. */
+static uint8_t s_page_dwell[PAGE_COUNT] = {
+    [PAGE_OVERVIEW]     = PAGE_DWELL_DEFAULT,
+    [PAGE_RAIL_STATUS]  = PAGE_DWELL_DEFAULT,
+    [PAGE_FAULT_DETAIL] = PAGE_DWELL_DEFAULT,
+};
+
+/* 500 ms blink phase — toggled once per DisplayContent_Update call.
+ * Used by Draw_Page_Overview to flash the SOC section when ERR_BAT_LOW
+ * is set. 0 = "show", 1 = "hide". */
+static uint8_t s_blink_phase = 0;
+
 /* ============================================================
  * Private page draw functions
  * ============================================================ */
@@ -164,10 +181,20 @@ static void Draw_Page_Overview(void)
              (unsigned int)display_data.error_code);
     draw_row(0, buf);
 
-    /* Row 1: V24 + battery SOC (next to V24 per user request) */
+    /* Row 1: V24 + battery SOC. When ERR_BAT_LOW is set the SOC section
+     * blinks at 1 Hz (toggled by s_blink_phase in DisplayContent_Update),
+     * giving the user a clear visual "battery low" cue without losing the
+     * V24 reading. The V24 half of the row stays visible at all times. */
     fmt_f1(tmp, sizeof(tmp), display_data.v24_mV / 1000.0f);
-    snprintf(buf, sizeof(buf), "V24:%-4sV  SOC:%3u",
-             tmp, (unsigned)display_data.battery_soc_pct);
+
+    bool blank_soc = (display_data.error_code & ERR_BAT_LOW) && s_blink_phase;
+
+    if (blank_soc) {
+        snprintf(buf, sizeof(buf), "V24:%-4sV          ", tmp);
+    } else {
+        snprintf(buf, sizeof(buf), "V24:%-4sV  SOC:%3u",
+                 tmp, (unsigned)display_data.battery_soc_pct);
+    }
     draw_row(1, buf);
 
     /* Row 2: V12 + VCAP */
@@ -296,12 +323,24 @@ static void Draw_Page_FaultDetail(void)
  * ============================================================ */
 void DisplayContent_Update(void)
 {
-    static uint8_t tick = 0;
+    /* Flip the blink phase every scheduler tick (500 ms). Row-level
+     * renderers consult this when ERR_BAT_LOW is set to toggle the SOC
+     * section on and off at 1 Hz. */
+    s_blink_phase ^= 1U;
 
-    tick++;
-    if (tick >= (PAGE_DWELL * (uint8_t)PAGE_COUNT)) tick = 0;
+    /* Per-page dwell: walk a (page, tick_in_page) cursor so each page can
+     * have its own dwell length without recomputing a total each cycle. */
+    static uint8_t       page_tick = 0;
+    static DisplayPage_t page      = PAGE_OVERVIEW;
 
-    DisplayPage_t page = (DisplayPage_t)(tick / PAGE_DWELL);
+    page_tick++;
+    uint8_t dwell = s_page_dwell[(uint8_t)page];
+    if (dwell < PAGE_DWELL_MIN) dwell = PAGE_DWELL_DEFAULT;  /* defensive */
+
+    if (page_tick >= dwell) {
+        page_tick = 0;
+        page = (DisplayPage_t)(((uint8_t)page + 1U) % (uint8_t)PAGE_COUNT);
+    }
 
     SSD1306_Fill(SSD1306_COLOR_BLACK);
 
@@ -325,6 +364,28 @@ void DisplayContent_Update(void)
     }
 
     SSD1306_UpdateScreen();
+}
+
+/* ============================================================
+ * Per-page dwell control
+ * ============================================================ */
+void UI_Display_SetPageDwell(uint8_t page, uint8_t ticks)
+{
+    if (page >= (uint8_t)PAGE_COUNT) return;
+
+    if (ticks == 0U) {
+        s_page_dwell[page] = PAGE_DWELL_DEFAULT;
+    } else if (ticks < PAGE_DWELL_MIN) {
+        s_page_dwell[page] = PAGE_DWELL_MIN;
+    } else {
+        s_page_dwell[page] = ticks;
+    }
+}
+
+uint8_t UI_Display_GetPageDwell(uint8_t page)
+{
+    if (page >= (uint8_t)PAGE_COUNT) return 0U;
+    return s_page_dwell[page];
 }
 
 /* ============================================================
@@ -430,6 +491,12 @@ void UI_Display_UpdateFromModules(SystemMeasurement_t *ms, FanCTRL_t *fan)
 
     /* Thermal */
     if (ms->NTCTemperature_C >= UI_OVERHEAT_TEMP_C)   err |= ERR_OVERHEAT;
+
+    /* Battery low — runtime threshold lives in battery.c (default
+     * BATTERY_LOW_SOC_PCT, override via CMD_BAT_CFG 0x147 + EEPROM save).
+     * Threshold of 0 disables the warning. The SOC filter already smooths
+     * fluctuations so this won't flap around the trip point. */
+    if (Battery_IsLow(ms->battery_soc_pct))          err |= ERR_BAT_LOW;
 
     display_data.error_code = err;
 

@@ -8,7 +8,11 @@
 #ifndef INC_PERIPHERAL_H_
 #define INC_PERIPHERAL_H_
 
-extern uint16_t ADC_VALUE[2];
+/* DMA1 Channel 1 writes ADC1 conversion results here asynchronously.
+ * Width MUST match the CubeMX "Memory Data Width" setting (Half Word →
+ * uint16_t). 'volatile' tells the compiler not to cache reads, since
+ * the value can change between any two source-level accesses. */
+extern volatile uint16_t ADC_VALUE[2];
 
 typedef struct {
 	volatile uint8_t pwm[3];

@@ -189,9 +189,14 @@ HAL_StatusTypeDef CAN_SendAll(uint16_t canid, uint8_t dlc, uint8_t *data)
  * ============================================================ */
 static void Parse_RX_Commands(uint32_t id, uint8_t *data, uint32_t dlc)
 {
-    /* ---- System reset / bootloader ---- */
+    /* ---- System reset / bootloader ----
+     * HAL note: HAL_FDCAN_GetRxMessage() puts the RAW 4-bit DLC code
+     * (0..15) in the low nibble of DataLength — NOT the bit-shifted
+     * FDCAN_DLC_BYTES_x form. The `dlc` parameter comes straight from
+     * rxHdr.DataLength, so compare it against the integer byte count
+     * (mask with 0x0F for safety against any future HAL change). */
     if (id == DEVICE_ADDR) {
-        if ((data[0] == 0xFF) && (dlc == FDCAN_DLC_BYTES_2)) {
+        if ((data[0] == 0xFF) && ((dlc & 0x0FU) == 2U)) {
             canstat.system_update_detected = true;
             canstat.system_transmit_stat   = false;
             NVIC_SystemReset();
@@ -247,8 +252,24 @@ static void Parse_RX_Commands(uint32_t id, uint8_t *data, uint32_t dlc)
         can_rxMessage.ctrl_cmd_received = 1;
     }
 
-    /* ---- Flash-over-CAN watchdog ---- */
-    if ((data[0] == 0xFF) && (dlc == FDCAN_DLC_BYTES_1)) {
+    /* ---- OLED per-page dwell ---- */
+    if (id == CMD_PAGE_DWELL) {
+        can_rxMessage.page_dwell[0]            = data[0];
+        can_rxMessage.page_dwell[1]            = data[1];
+        can_rxMessage.page_dwell[2]            = data[2];
+        can_rxMessage.page_dwell_cmd_received  = 1;
+    }
+
+    /* ---- Battery SOC-low warning threshold ---- */
+    if (id == CMD_BAT_CFG) {
+        can_rxMessage.bat_low_soc_pct       = data[0];
+        can_rxMessage.bat_cfg_cmd_received  = 1;
+    }
+
+    /* ---- Flash-over-CAN watchdog ----
+     * HAL note: rxHdr.DataLength is the raw 4-bit DLC code (0..15), not
+     * the bit-shifted FDCAN_DLC_BYTES_x form. Mask & compare to byte count. */
+    if ((data[0] == 0xFF) && ((dlc & 0x0FU) == 1U)) {
         can_rxMessage.flash_detected = 1;
         lastFlashMsgTick = HAL_GetTick();
     }
@@ -475,11 +496,21 @@ void CAN_Broadcast_Voltage(SystemMeasurement_t *ms)
     uint16_t vcap = ms->voltage_mV.VCAP;
     uint16_t v12  = ms->voltage_mV.V12;
 
-    /* Update UV fault flags from live measurements vs thresholds */
+    /* Update UV fault flags from live measurements vs thresholds.
+     * uv_fault_mask bit layout (broadcast in BCAST_VOLTAGE byte 6):
+     *   bit 0 — V24  UV
+     *   bit 1 — VCAP UV
+     *   bit 2 — V12  UV
+     *   bit 3 — SOC LOW  (filtered SOC < Battery_GetLowSocThreshold_pct,
+     *                     configurable via CMD_BAT_CFG 0x147)
+     *   bits 4..7 — reserved
+     * The bit is set fresh every broadcast so it follows the live SOC
+     * without latching. */
     uv_status.uv_fault_mask = 0;
-    if (v24  < uv_status.uv_V24_mV)  uv_status.uv_fault_mask |= UV_FAULT_V24;
-    if (vcap < uv_status.uv_VCAP_mV) uv_status.uv_fault_mask |= UV_FAULT_VCAP;
-    if (v12  < uv_status.uv_V12_mV)  uv_status.uv_fault_mask |= UV_FAULT_V12;
+    if (v24  < uv_status.uv_V24_mV)        uv_status.uv_fault_mask |= UV_FAULT_V24;
+    if (vcap < uv_status.uv_VCAP_mV)       uv_status.uv_fault_mask |= UV_FAULT_VCAP;
+    if (v12  < uv_status.uv_V12_mV)        uv_status.uv_fault_mask |= UV_FAULT_V12;
+    if (Battery_IsLow(ms->battery_soc_pct)) uv_status.uv_fault_mask |= UV_FAULT_SOC_LOW;
 
     uint8_t data[8];
     data[0] = (v24  >> 8) & 0xFF;  data[1] = v24  & 0xFF;

@@ -5,52 +5,52 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../Core/Src/AppLogic.c \
 ../Core/Src/CAN_Handler.c \
-../Core/Src/ESTOP.c \
-../Core/Src/Endstop.c \
 ../Core/Src/Fan_PWM.c \
-../Core/Src/Power_Electronic.c \
+../Core/Src/adc_driver.c \
+../Core/Src/applogic.c \
 ../Core/Src/eeprom_driver.c \
-../Core/Src/fdcan.c \
+../Core/Src/hs_switch.c \
 ../Core/Src/main.c \
+../Core/Src/power_monitor.c \
 ../Core/Src/stm32g0xx_hal_msp.c \
 ../Core/Src/stm32g0xx_it.c \
 ../Core/Src/syscalls.c \
 ../Core/Src/sysmem.c \
-../Core/Src/system_stm32g0xx.c 
+../Core/Src/system_stm32g0xx.c \
+../Core/Src/thermistor.c 
 
 OBJS += \
-./Core/Src/AppLogic.o \
 ./Core/Src/CAN_Handler.o \
-./Core/Src/ESTOP.o \
-./Core/Src/Endstop.o \
 ./Core/Src/Fan_PWM.o \
-./Core/Src/Power_Electronic.o \
+./Core/Src/adc_driver.o \
+./Core/Src/applogic.o \
 ./Core/Src/eeprom_driver.o \
-./Core/Src/fdcan.o \
+./Core/Src/hs_switch.o \
 ./Core/Src/main.o \
+./Core/Src/power_monitor.o \
 ./Core/Src/stm32g0xx_hal_msp.o \
 ./Core/Src/stm32g0xx_it.o \
 ./Core/Src/syscalls.o \
 ./Core/Src/sysmem.o \
-./Core/Src/system_stm32g0xx.o 
+./Core/Src/system_stm32g0xx.o \
+./Core/Src/thermistor.o 
 
 C_DEPS += \
-./Core/Src/AppLogic.d \
 ./Core/Src/CAN_Handler.d \
-./Core/Src/ESTOP.d \
-./Core/Src/Endstop.d \
 ./Core/Src/Fan_PWM.d \
-./Core/Src/Power_Electronic.d \
+./Core/Src/adc_driver.d \
+./Core/Src/applogic.d \
 ./Core/Src/eeprom_driver.d \
-./Core/Src/fdcan.d \
+./Core/Src/hs_switch.d \
 ./Core/Src/main.d \
+./Core/Src/power_monitor.d \
 ./Core/Src/stm32g0xx_hal_msp.d \
 ./Core/Src/stm32g0xx_it.d \
 ./Core/Src/syscalls.d \
 ./Core/Src/sysmem.d \
-./Core/Src/system_stm32g0xx.d 
+./Core/Src/system_stm32g0xx.d \
+./Core/Src/thermistor.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
@@ -60,7 +60,7 @@ Core/Src/%.o Core/Src/%.su Core/Src/%.cyclo: ../Core/Src/%.c Core/Src/subdir.mk
 clean: clean-Core-2f-Src
 
 clean-Core-2f-Src:
-	-$(RM) ./Core/Src/AppLogic.cyclo ./Core/Src/AppLogic.d ./Core/Src/AppLogic.o ./Core/Src/AppLogic.su ./Core/Src/CAN_Handler.cyclo ./Core/Src/CAN_Handler.d ./Core/Src/CAN_Handler.o ./Core/Src/CAN_Handler.su ./Core/Src/ESTOP.cyclo ./Core/Src/ESTOP.d ./Core/Src/ESTOP.o ./Core/Src/ESTOP.su ./Core/Src/Endstop.cyclo ./Core/Src/Endstop.d ./Core/Src/Endstop.o ./Core/Src/Endstop.su ./Core/Src/Fan_PWM.cyclo ./Core/Src/Fan_PWM.d ./Core/Src/Fan_PWM.o ./Core/Src/Fan_PWM.su ./Core/Src/Power_Electronic.cyclo ./Core/Src/Power_Electronic.d ./Core/Src/Power_Electronic.o ./Core/Src/Power_Electronic.su ./Core/Src/eeprom_driver.cyclo ./Core/Src/eeprom_driver.d ./Core/Src/eeprom_driver.o ./Core/Src/eeprom_driver.su ./Core/Src/fdcan.cyclo ./Core/Src/fdcan.d ./Core/Src/fdcan.o ./Core/Src/fdcan.su ./Core/Src/main.cyclo ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/stm32g0xx_hal_msp.cyclo ./Core/Src/stm32g0xx_hal_msp.d ./Core/Src/stm32g0xx_hal_msp.o ./Core/Src/stm32g0xx_hal_msp.su ./Core/Src/stm32g0xx_it.cyclo ./Core/Src/stm32g0xx_it.d ./Core/Src/stm32g0xx_it.o ./Core/Src/stm32g0xx_it.su ./Core/Src/syscalls.cyclo ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.cyclo ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/system_stm32g0xx.cyclo ./Core/Src/system_stm32g0xx.d ./Core/Src/system_stm32g0xx.o ./Core/Src/system_stm32g0xx.su
+	-$(RM) ./Core/Src/CAN_Handler.cyclo ./Core/Src/CAN_Handler.d ./Core/Src/CAN_Handler.o ./Core/Src/CAN_Handler.su ./Core/Src/Fan_PWM.cyclo ./Core/Src/Fan_PWM.d ./Core/Src/Fan_PWM.o ./Core/Src/Fan_PWM.su ./Core/Src/adc_driver.cyclo ./Core/Src/adc_driver.d ./Core/Src/adc_driver.o ./Core/Src/adc_driver.su ./Core/Src/applogic.cyclo ./Core/Src/applogic.d ./Core/Src/applogic.o ./Core/Src/applogic.su ./Core/Src/eeprom_driver.cyclo ./Core/Src/eeprom_driver.d ./Core/Src/eeprom_driver.o ./Core/Src/eeprom_driver.su ./Core/Src/hs_switch.cyclo ./Core/Src/hs_switch.d ./Core/Src/hs_switch.o ./Core/Src/hs_switch.su ./Core/Src/main.cyclo ./Core/Src/main.d ./Core/Src/main.o ./Core/Src/main.su ./Core/Src/power_monitor.cyclo ./Core/Src/power_monitor.d ./Core/Src/power_monitor.o ./Core/Src/power_monitor.su ./Core/Src/stm32g0xx_hal_msp.cyclo ./Core/Src/stm32g0xx_hal_msp.d ./Core/Src/stm32g0xx_hal_msp.o ./Core/Src/stm32g0xx_hal_msp.su ./Core/Src/stm32g0xx_it.cyclo ./Core/Src/stm32g0xx_it.d ./Core/Src/stm32g0xx_it.o ./Core/Src/stm32g0xx_it.su ./Core/Src/syscalls.cyclo ./Core/Src/syscalls.d ./Core/Src/syscalls.o ./Core/Src/syscalls.su ./Core/Src/sysmem.cyclo ./Core/Src/sysmem.d ./Core/Src/sysmem.o ./Core/Src/sysmem.su ./Core/Src/system_stm32g0xx.cyclo ./Core/Src/system_stm32g0xx.d ./Core/Src/system_stm32g0xx.o ./Core/Src/system_stm32g0xx.su ./Core/Src/thermistor.cyclo ./Core/Src/thermistor.d ./Core/Src/thermistor.o ./Core/Src/thermistor.su
 
 .PHONY: clean-Core-2f-Src
 

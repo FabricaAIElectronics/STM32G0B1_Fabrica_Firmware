@@ -21,13 +21,12 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "AppLogic.h"
+#include "applogic.h"
 #include "CAN_Handler.h"
 #include "Fan_PWM.h"
-#include "Power_Electronic.h"
+#include "adc_driver.h"
+#include "hs_switch.h"
 #include "eeprom_driver.h"
-#include "ESTOP.h"
-#include "Endstop.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,7 +58,7 @@ TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim14;
 
 /* USER CODE BEGIN PV */
-
+AppStateMachine app_sm;     /* not static — referenced by CAN_Handler.c for state telemetry */
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -67,6 +66,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_ADC1_Init(void);
+static void MX_FDCAN1_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM2_Init(void);
@@ -79,6 +79,22 @@ static void MX_TIM14_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+/**
+ * @brief  ADC end-of-sequence callback. Re-arms DMA for the next sweep.
+ */
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
+{
+    if (hadc->Instance == ADC1) {
+        HAL_ADC_Start_DMA(&hadc1, (uint32_t *)ADC_VAL, ADC_BUF_LEN);
+    }
+}
+
+static void VectorBase_Config(void)
+{
+    extern const unsigned long g_pfnVectors[];
+    SCB->VTOR = (unsigned long)&g_pfnVectors[0];
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -89,7 +105,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-  Pre_CAN_Init();   /* Vector table remap for bootloader compatibility */
+	VectorBase_Config();
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -112,6 +128,7 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_ADC1_Init();
+  MX_FDCAN1_Init();
   MX_I2C1_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
@@ -119,31 +136,9 @@ int main(void)
   MX_TIM14_Init();
   /* USER CODE BEGIN 2 */
 
-  /* ── Fan PWM outputs and tachometer input capture ── */
-  start_all_Fan_PWM();
-  start_Fan_Tacho_DMA();
-
-  /* ── FDCAN: init peripheral → configure filters → start ──
-   * MX_FDCAN1_Init() is "user-managed" in the .ioc (CubeMX won't auto-call
-   * it), so we invoke it explicitly here.  Order is load-bearing:
-   *   1. MX_FDCAN1_Init() — HAL_FDCAN_Init, peripheral enters Init mode
-   *   2. CAN_Init()       — ConfigGlobalFilter + ActivateNotification
-   *   3. HAL_FDCAN_Start()— leave Init, enter Normal operation
-   */
-  MX_FDCAN1_Init();
-  CAN_Init();
-  HAL_FDCAN_Start(&hfdcan1);
-
-  /* ── ADC: calibrate, then start continuous DMA scan (12 channels) ── */
-  Calibrate_ADC1();
-  Start_ADC1_DMA();
-
-  /* ── Safety inputs ── */
-  Endstop_Init();
-  ESTOP_Init();
-
-  /* ── Application state machine: load EEPROM → apply to HW → RUN ── */
-  App_Init();
+  /* High-level application init: ADC calibration + DMA, fan PWM start,
+   * tachometer DMA, FDCAN start + filter, EEPROM load + apply boot config. */
+  AppLogic_Init(&app_sm);
 
   /* USER CODE END 2 */
 
@@ -154,22 +149,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-    /* ── Application state machine: CAN dispatch + telemetry ── */
-    App_Run();
-
-    /* ── ESTOP: debounced state machine (updates flag + LED) ── */
-    ESTOP_State_Machine();
-
-    /* ── Heartbeat LED on PA5: toggle every 1 second ── */
-    {
-        static uint32_t led_last_tick = 0;
-        uint32_t now = HAL_GetTick();
-        if ((now - led_last_tick) >= 1000U) {
-            led_last_tick = now;
-            HAL_GPIO_TogglePin(LED_OUT_GPIO_Port, LED_OUT_Pin);
-        }
-    }
+    AppLogic_Run(&app_sm);
   }
   /* USER CODE END 3 */
 }
@@ -369,7 +349,7 @@ static void MX_ADC1_Init(void)
   * @param None
   * @retval None
   */
-void MX_FDCAN1_Init(void)
+static void MX_FDCAN1_Init(void)
 {
 
   /* USER CODE BEGIN FDCAN1_Init 0 */
@@ -386,15 +366,15 @@ void MX_FDCAN1_Init(void)
   hfdcan1.Init.AutoRetransmission = ENABLE;
   hfdcan1.Init.TransmitPause = DISABLE;
   hfdcan1.Init.ProtocolException = DISABLE;
-  hfdcan1.Init.NominalPrescaler = 6;
-  hfdcan1.Init.NominalSyncJumpWidth = 2;
-  hfdcan1.Init.NominalTimeSeg1 = 15;
+  hfdcan1.Init.NominalPrescaler = 8;
+  hfdcan1.Init.NominalSyncJumpWidth = 1;
+  hfdcan1.Init.NominalTimeSeg1 = 10;
   hfdcan1.Init.NominalTimeSeg2 = 4;
-  hfdcan1.Init.DataPrescaler = 6;
-  hfdcan1.Init.DataSyncJumpWidth = 4;
-  hfdcan1.Init.DataTimeSeg1 = 15;
-  hfdcan1.Init.DataTimeSeg2 = 4;
-  hfdcan1.Init.StdFiltersNbr = 1;
+  hfdcan1.Init.DataPrescaler = 1;
+  hfdcan1.Init.DataSyncJumpWidth = 1;
+  hfdcan1.Init.DataTimeSeg1 = 1;
+  hfdcan1.Init.DataTimeSeg2 = 1;
+  hfdcan1.Init.StdFiltersNbr = 2;
   hfdcan1.Init.ExtFiltersNbr = 0;
   hfdcan1.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
   if (HAL_FDCAN_Init(&hfdcan1) != HAL_OK)
@@ -760,61 +740,65 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, HS_DR_EN_Pin|HS_E_EN_Pin|HS_SC_EN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LED_OUT_GPIO_Port, LED_OUT_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(EStopLED_CTRL_INT_GPIO_Port, EStopLED_CTRL_INT_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(EStopLED_CTRL_GPIO_Port, EStopLED_CTRL_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(VBUCK_CTRL_GPIO_Port, VBUCK_CTRL_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(VBUCK_EN_GPIO_Port, VBUCK_EN_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : ENDSTOP_EH_LNC_INT1_Pin Toggle_PosDetect_Pin */
-  GPIO_InitStruct.Pin = ENDSTOP_EH_LNC_INT1_Pin|Toggle_PosDetect_Pin;
+  /*Configure GPIO pin : EndStop_EH_L_NO1_Pin */
+  GPIO_InitStruct.Pin = EndStop_EH_L_NO1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  HAL_GPIO_Init(EndStop_EH_L_NO1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : BlueButton_Pin */
-  GPIO_InitStruct.Pin = BlueButton_Pin;
+  /*Configure GPIO pin : B1_Pin */
+  GPIO_InitStruct.Pin = B1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(BlueButton_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : Toggle_Pos_Detect_Pin */
+  GPIO_InitStruct.Pin = Toggle_Pos_Detect_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(Toggle_Pos_Detect_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : HS_DR_EN_Pin HS_E_EN_Pin HS_SC_EN_Pin */
   GPIO_InitStruct.Pin = HS_DR_EN_Pin|HS_E_EN_Pin|HS_SC_EN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LED_OUT_Pin */
-  GPIO_InitStruct.Pin = LED_OUT_Pin;
+  /*Configure GPIO pin : LED2_Pin */
+  GPIO_InitStruct.Pin = LED2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LED_OUT_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(LED2_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : EStop_NO_INT_Pin EStop_NC_INT_Pin ENDSTOP_EH_L_NO_INT_Pin ENDSTOP_EH_H_NO_INT_Pin
-                           ENDSTOP_EH_H_NC_INT_Pin */
-  GPIO_InitStruct.Pin = EStop_NO_INT_Pin|EStop_NC_INT_Pin|ENDSTOP_EH_L_NO_INT_Pin|ENDSTOP_EH_H_NO_INT_Pin
-                          |ENDSTOP_EH_H_NC_INT_Pin;
+  /*Configure GPIO pins : EStop_NO_Pin EStop_NC_Pin */
+  GPIO_InitStruct.Pin = EStop_NO_Pin|EStop_NC_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : EStopLED_CTRL_INT_Pin */
-  GPIO_InitStruct.Pin = EStopLED_CTRL_INT_Pin;
+  /*Configure GPIO pin : EStopLED_CTRL_Pin */
+  GPIO_InitStruct.Pin = EStopLED_CTRL_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(EStopLED_CTRL_INT_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(EStopLED_CTRL_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : VBUCK_CTRL_Pin */
-  GPIO_InitStruct.Pin = VBUCK_CTRL_Pin;
+  /*Configure GPIO pin : VBUCK_EN_Pin */
+  GPIO_InitStruct.Pin = VBUCK_EN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(VBUCK_CTRL_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(VBUCK_EN_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : HS_DR_FT_Pin HS_SC_PG_Pin */
   GPIO_InitStruct.Pin = HS_DR_FT_Pin|HS_SC_PG_Pin;
@@ -834,15 +818,59 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : ENDSTOP_SC_H_NO_INT_Pin ENDSTOP_SC_H_NC_INT_Pin ENDSTOP_EP_L_NO_INT_Pin ENDSTOP_EP_L_NC_INT_Pin
-                           ENDSTOP_EP_H_NO_INT_Pin ENDSTOP_EP_H_NC_INT_Pin */
-  GPIO_InitStruct.Pin = ENDSTOP_SC_H_NO_INT_Pin|ENDSTOP_SC_H_NC_INT_Pin|ENDSTOP_EP_L_NO_INT_Pin|ENDSTOP_EP_L_NC_INT_Pin
-                          |ENDSTOP_EP_H_NO_INT_Pin|ENDSTOP_EP_H_NC_INT_Pin;
+  /*Configure GPIO pins : Endstop_SC_H_NO_Pin Endstop_SC_H_NC_Pin Endstop_EP_L_NO_Pin Endstop_EP_L_NC_Pin
+                           Endstop_EP_H_NO_Pin Endstop_EP_H_NC_Pin */
+  GPIO_InitStruct.Pin = Endstop_SC_H_NO_Pin|Endstop_SC_H_NC_Pin|Endstop_EP_L_NO_Pin|Endstop_EP_L_NC_Pin
+                          |Endstop_EP_H_NO_Pin|Endstop_EP_H_NC_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : EndStop_EH_L_NO_Pin EndStop_EH_H_NO_Pin EndStop_EH_H_NC_Pin */
+  GPIO_InitStruct.Pin = EndStop_EH_L_NO_Pin|EndStop_EH_H_NO_Pin|EndStop_EH_H_NC_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
   /* USER CODE BEGIN MX_GPIO_Init_2 */
+
+  /* Re-init EStop / Endstop inputs with internal pull-ups.
+   *
+   * CubeMX currently generates these pins as GPIO_NOPULL, which leaves
+   * unconnected (open-contact) switch inputs floating — they pick up
+   * nanosecond noise from adjacent traces and produce random 0/1 reads.
+   * The CAN BCAST_GPIO frame showed all of these bits flickering even
+   * though the physical switches weren't moving.
+   *
+   * Standard wiring on this board is "switch to GND", so a pull-up
+   * gives: open = 1, closed = 0. The same convention as the existing
+   * HS_*_PG / HS_*_FT pins (which were already PULLUP and stable).
+   *
+   * TODO(CubeMX): also flip Pull to GPIO_PULLUP for these pin groups
+   *               in the .ioc so the regenerated MX_GPIO_Init matches
+   *               and this override becomes redundant.
+   */
+  {
+    GPIO_InitTypeDef pull_fix = {0};
+    pull_fix.Mode = GPIO_MODE_INPUT;
+    pull_fix.Pull = GPIO_PULLUP;
+
+    /* GPIOC : EneStop_EH_L_NO1 (PC11) — Toggle_Pos_Detect (PC0) stays NOPULL
+     * because it has its own external bias on the board. */
+    pull_fix.Pin = EndStop_EH_L_NO1_Pin;
+    HAL_GPIO_Init(EndStop_EH_L_NO1_GPIO_Port, &pull_fix);
+
+    /* GPIOB : EStop_NO/NC + EndStop_EH_L_NO / EH_H_NO / EH_H_NC */
+    pull_fix.Pin = EStop_NO_Pin | EStop_NC_Pin
+                 | EndStop_EH_L_NO_Pin | EndStop_EH_H_NO_Pin | EndStop_EH_H_NC_Pin;
+    HAL_GPIO_Init(GPIOB, &pull_fix);
+
+    /* GPIOD : Endstop_SC_H_NO/NC + Endstop_EP_L_NO/NC + Endstop_EP_H_NO/NC */
+    pull_fix.Pin = Endstop_SC_H_NO_Pin | Endstop_SC_H_NC_Pin
+                 | Endstop_EP_L_NO_Pin | Endstop_EP_L_NC_Pin
+                 | Endstop_EP_H_NO_Pin | Endstop_EP_H_NC_Pin;
+    HAL_GPIO_Init(GPIOD, &pull_fix);
+  }
 
   /* USER CODE END MX_GPIO_Init_2 */
 }
@@ -858,15 +886,10 @@ static void MX_GPIO_Init(void)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* Fast LED blink on PA5 to signal Error_Handler was reached.
-   * IRQs are disabled → SysTick stops → use raw busy loop for delay.
-   * If the LED blinks fast (~5 Hz), we know it's Error_Handler.
-   * If the LED is dead, it's a HardFault instead. */
+  /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
   while (1)
   {
-      HAL_GPIO_TogglePin(LED_OUT_GPIO_Port, LED_OUT_Pin);
-      for (volatile uint32_t d = 0; d < 400000UL; d++) { __NOP(); }
   }
   /* USER CODE END Error_Handler_Debug */
 }

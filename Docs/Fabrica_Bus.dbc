@@ -1,0 +1,556 @@
+VERSION ""
+
+
+NS_ :
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: Host KincoDrive PowerStage LEDDriver
+
+
+BO_ 257 KD_Bootloader_RX: 2 Host
+ SG_ KD_Boot_Cmd : 0|8@1+ (1,0) [0|255] "" KincoDrive
+
+BO_ 258 KD_Bootloader_TX: 8 KincoDrive
+ SG_ KD_Boot_Resp : 0|8@1+ (1,0) [0|255] "" Host
+
+BO_ 272 KD_Cmd_HS_Power: 1 Host
+ SG_ KD_HS_DR_OnOff : 0|1@1+ (1,0) [0|1] "" KincoDrive
+ SG_ KD_HS_E_OnOff : 1|1@1+ (1,0) [0|1] "" KincoDrive
+ SG_ KD_HS_SC_OnOff : 2|1@1+ (1,0) [0|1] "" KincoDrive
+ SG_ KD_VBUCK_OnOff : 3|1@1+ (1,0) [0|1] "" KincoDrive
+
+BO_ 273 KD_Cmd_Fan_PWM: 5 Host
+ SG_ KD_Fan_DR_Speed : 0|8@1+ (1,0) [0|100] "%" KincoDrive
+ SG_ KD_Fan_EP_Speed : 8|8@1+ (1,0) [0|100] "%" KincoDrive
+ SG_ KD_Fan_EH_Speed : 16|8@1+ (1,0) [0|100] "%" KincoDrive
+ SG_ KD_Fan_ST_Speed : 24|8@1+ (1,0) [0|100] "%" KincoDrive
+ SG_ KD_Fan_SF_Speed : 32|8@1+ (1,0) [0|100] "%" KincoDrive
+
+BO_ 274 KD_Cmd_EEPROM: 1 Host
+ SG_ KD_EEPROM_Action : 0|8@1+ (1,0) [0|1] "" KincoDrive
+
+BO_ 275 KD_Cmd_OC_Threshold: 6 Host
+ SG_ KD_OC_DR_mA : 0|16@1+ (1,0) [0|65535] "mA" KincoDrive
+ SG_ KD_OC_EXT_mA : 16|16@1+ (1,0) [0|65535] "mA" KincoDrive
+ SG_ KD_OC_SC_mA : 32|16@1+ (1,0) [0|65535] "mA" KincoDrive
+
+BO_ 276 KD_Cmd_UV_Threshold: 4 Host
+ SG_ KD_UV_24V_mV : 0|16@1+ (1,0) [0|65535] "mV" KincoDrive
+ SG_ KD_UV_12V_mV : 16|16@1+ (1,0) [0|65535] "mV" KincoDrive
+
+BO_ 288 KD_Bcast_Status: 8 KincoDrive
+ SG_ KD_V24_mV : 0|16@1+ (1,0) [0|65535] "mV" Host
+ SG_ KD_V12_mV : 16|16@1+ (1,0) [0|65535] "mV" Host
+ SG_ KD_I_24V_mA : 32|16@1+ (1,0) [0|65535] "mA" Host
+ SG_ KD_Sys_State : 48|8@1+ (1,0) [0|2] "" Host
+ SG_ KD_Err_OC_DR : 56|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_Err_OC_EXT : 57|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_Err_OC_SC : 58|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_Err_UV_24V : 59|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_Err_UV_12V : 60|1@1+ (1,0) [0|1] "" Host
+
+BO_ 289 KD_Bcast_Currents: 8 KincoDrive
+ SG_ KD_Bus24V_Current : 0|16@1+ (1,0) [0|65535] "mA" Host
+ SG_ KD_Drive_Current : 16|16@1+ (1,0) [0|65535] "mA" Host
+ SG_ KD_Extruder_Current : 32|16@1+ (1,0) [0|65535] "mA" Host
+ SG_ KD_Scrubbing_Current : 48|16@1+ (1,0) [0|65535] "mA" Host
+
+BO_ 290 KD_Bcast_Temps: 6 KincoDrive
+ SG_ KD_Temp_PTC1 : 0|8@1+ (1,-40) [-40|215] "degC" Host
+ SG_ KD_Temp_PTC2 : 8|8@1+ (1,-40) [-40|215] "degC" Host
+ SG_ KD_Temp_PTC3 : 16|8@1+ (1,-40) [-40|215] "degC" Host
+ SG_ KD_Temp_PTC4 : 24|8@1+ (1,-40) [-40|215] "degC" Host
+ SG_ KD_Temp_PTC5 : 32|8@1+ (1,-40) [-40|215] "degC" Host
+ SG_ KD_Temp_PTC6 : 40|8@1+ (1,-40) [-40|215] "degC" Host
+
+BO_ 291 KD_Bcast_Fans: 5 KincoDrive
+ SG_ KD_Fan_DR_Tach : 0|8@1+ (1,0) [0|100] "%" Host
+ SG_ KD_Fan_EP_Tach : 8|8@1+ (1,0) [0|100] "%" Host
+ SG_ KD_Fan_EH_Tach : 16|8@1+ (1,0) [0|100] "%" Host
+ SG_ KD_Fan_ST_Tach : 24|8@1+ (1,0) [0|100] "%" Host
+ SG_ KD_Fan_SF_Tach : 32|8@1+ (1,0) [0|100] "%" Host
+
+BO_ 292 KD_Bcast_GPIO: 8 KincoDrive
+ SG_ KD_HS_DR_Enable : 0|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_HS_E_Enable : 1|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_HS_SC_Enable : 2|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_VBUCK_Enable : 3|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_HS_DR_PwrGood : 8|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_HS_E_PwrGood : 9|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_HS_SC_PwrGood : 10|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_HS_DR_Fault : 16|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_HS_E_Fault : 17|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_HS_SC_Fault : 18|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_B1_Pin : 24|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_Toggle_Pos_Detect : 25|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_LED2_Out : 32|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_EStopLED_CTRL_Out : 33|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_EStop_NO_In : 40|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_EStop_NC_In : 41|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_Endstop_SC_H_NO_In : 48|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_Endstop_SC_H_NC_In : 49|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_Endstop_EP_L_NO_In : 50|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_Endstop_EP_L_NC_In : 51|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_Endstop_EP_H_NO_In : 52|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_Endstop_EP_H_NC_In : 53|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_Endstop_EH_L_NO1_In : 56|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_Endstop_EH_L_NO_In : 57|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_Endstop_EH_H_NO_In : 58|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_Endstop_EH_H_NC_In : 59|1@1+ (1,0) [0|1] "" Host
+
+BO_ 293 KD_Bcast_Raw_ADC: 6 KincoDrive
+ SG_ KD_ADC_PTC1_PTC2 : 0|8@1+ (1,0) [0|255] "" Host
+ SG_ KD_ADC_PTC3_PTC4 : 8|8@1+ (1,0) [0|255] "" Host
+ SG_ KD_ADC_PTC5_PTC6 : 16|8@1+ (1,0) [0|255] "" Host
+ SG_ KD_ADC_CURR1_CURR2 : 24|8@1+ (1,0) [0|255] "" Host
+ SG_ KD_ADC_CURR3_V24 : 32|8@1+ (1,0) [0|255] "" Host
+ SG_ KD_ADC_V12_CURR24V : 40|8@1+ (1,0) [0|255] "" Host
+
+BO_ 294 KD_Bcast_Config_A: 8 KincoDrive
+ SG_ KD_Cfg_HS_DR_Default : 0|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_Cfg_HS_E_Default : 1|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_Cfg_HS_SC_Default : 2|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_Cfg_VBUCK_Default : 3|1@1+ (1,0) [0|1] "" Host
+ SG_ KD_Cfg_OC_DR_mA : 8|16@1+ (1,0) [0|65535] "mA" Host
+ SG_ KD_Cfg_OC_EXT_mA : 24|16@1+ (1,0) [0|65535] "mA" Host
+ SG_ KD_Cfg_OC_SC_mA : 40|16@1+ (1,0) [0|65535] "mA" Host
+
+BO_ 295 KD_Bcast_Config_B: 8 KincoDrive
+ SG_ KD_Cfg_UV_24V_mV : 0|16@1+ (1,0) [0|65535] "mV" Host
+ SG_ KD_Cfg_UV_12V_mV : 16|16@1+ (1,0) [0|65535] "mV" Host
+ SG_ KD_Cfg_Fan_DR_Default : 32|8@1+ (1,0) [0|100] "%" Host
+ SG_ KD_Cfg_Fan_EP_Default : 40|8@1+ (1,0) [0|100] "%" Host
+ SG_ KD_Cfg_Fan_EH_Default : 48|8@1+ (1,0) [0|100] "%" Host
+ SG_ KD_Cfg_Fan_ST_Default : 56|8@1+ (1,0) [0|100] "%" Host
+
+
+BO_ 304 PS_DEVICE_ADDR: 2 Host
+ SG_ PS_Device_Command : 0|8@1+ (1,0) [0|255] "" PowerStage
+
+BO_ 305 PS_Bootloader_TX: 8 PowerStage
+ SG_ PS_Boot_Resp : 0|8@1+ (1,0) [0|255] "" Host
+
+BO_ 320 PS_CMD_FAN: 2 Host
+ SG_ PS_Fan_Mode : 0|8@1+ (1,0) [0|2] "" PowerStage
+ SG_ PS_Fan_Duty : 8|8@1+ (1,0) [0|100] "%" PowerStage
+
+BO_ 321 PS_CMD_HS: 1 Host
+ SG_ PS_HS_Cmd_AUX : 0|1@1+ (1,0) [0|1] "" PowerStage
+ SG_ PS_HS_Cmd_LED : 1|1@1+ (1,0) [0|1] "" PowerStage
+ SG_ PS_HS_Cmd_DRIVE : 2|1@1+ (1,0) [0|1] "" PowerStage
+ SG_ PS_HS_Cmd_CAP : 3|1@1+ (1,0) [0|1] "" PowerStage
+ SG_ PS_HS_Cmd_SBC : 4|1@1+ (1,0) [0|1] "" PowerStage
+
+BO_ 322 PS_CMD_OC: 4 Host
+ SG_ PS_OC_Target_AUX : 0|1@1+ (1,0) [0|1] "" PowerStage
+ SG_ PS_OC_Target_LED : 1|1@1+ (1,0) [0|1] "" PowerStage
+ SG_ PS_OC_Target_DRIVE : 2|1@1+ (1,0) [0|1] "" PowerStage
+ SG_ PS_OC_Target_CAP : 3|1@1+ (1,0) [0|1] "" PowerStage
+ SG_ PS_OC_Target_SBC : 4|1@1+ (1,0) [0|1] "" PowerStage
+ SG_ PS_OC_Cmd : 8|8@1+ (1,0) [0|255] "" PowerStage
+ SG_ PS_OC_Threshold_mA : 23|16@0+ (1,0) [0|50000] "mA" PowerStage
+
+BO_ 323 PS_CMD_EEPROM: 1 Host
+ SG_ PS_EEPROM_Cmd : 0|8@1+ (1,0) [0|255] "" PowerStage
+
+BO_ 324 PS_CMD_UV: 6 Host
+ SG_ PS_UV_V24_mV : 7|16@0+ (1,0) [0|30000] "mV" PowerStage
+ SG_ PS_UV_VCAP_mV : 23|16@0+ (1,0) [0|30000] "mV" PowerStage
+ SG_ PS_UV_V12_mV : 39|16@0+ (1,0) [0|15000] "mV" PowerStage
+
+BO_ 325 PS_CMD_CTRL: 2 Host
+ SG_ PS_V_LED_PWR_Cmd : 0|8@1+ (1,0) [0|1] "" PowerStage
+ SG_ PS_CAN_Relay_Enable : 8|8@1+ (1,0) [0|1] "" PowerStage
+
+BO_ 326 PS_CMD_PAGE_DWELL: 3 Host
+ SG_ PS_Page_Dwell_Overview : 0|8@1+ (0.5,0) [0|127.5] "s" PowerStage
+ SG_ PS_Page_Dwell_RailStatus : 8|8@1+ (0.5,0) [0|127.5] "s" PowerStage
+ SG_ PS_Page_Dwell_FaultDetail : 16|8@1+ (0.5,0) [0|127.5] "s" PowerStage
+
+BO_ 327 PS_CMD_BAT_CFG: 1 Host
+ SG_ PS_Bat_Low_SOC_Threshold_pct : 0|8@1+ (1,0) [0|100] "%" PowerStage
+
+BO_ 336 PS_BCAST_HS_STATE: 5 PowerStage
+ SG_ PS_HS_Enable_AUX : 0|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_Enable_LED : 1|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_Enable_DRIVE : 2|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_Enable_CAP : 3|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_Enable_SBC : 4|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_Fault_AUX : 8|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_Fault_LED : 9|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_Fault_DRIVE : 10|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_Fault_CAP : 11|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_Fault_SBC : 12|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_PGood_AUX : 16|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_PGood_LED : 17|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_PGood_DRIVE : 18|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_PGood_CAP : 19|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_PGood_SBC : 20|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_OC_Warn_AUX : 24|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_OC_Warn_LED : 25|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_OC_Warn_DRIVE : 26|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_OC_Warn_CAP : 27|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_OC_Warn_SBC : 28|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_OC_Fault_AUX : 32|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_OC_Fault_LED : 33|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_OC_Fault_DRIVE : 34|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_OC_Fault_CAP : 35|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_HS_OC_Fault_SBC : 36|1@1+ (1,0) [0|1] "" Host
+
+BO_ 337 PS_BCAST_HS_CURR_A: 8 PowerStage
+ SG_ PS_I_BAT_mA : 7|16@0+ (1,0) [0|50000] "mA" Host
+ SG_ PS_I_CAP_mA : 23|16@0+ (1,0) [0|50000] "mA" Host
+ SG_ PS_I_SBC_mA : 39|16@0+ (1,0) [0|50000] "mA" Host
+ SG_ PS_I_DRIVE_mA : 55|16@0+ (1,0) [0|50000] "mA" Host
+
+BO_ 338 PS_BCAST_VOLTAGE: 8 PowerStage
+ SG_ PS_V24_mV : 7|16@0+ (1,0) [0|30000] "mV" Host
+ SG_ PS_VCAP_mV : 23|16@0+ (1,0) [0|30000] "mV" Host
+ SG_ PS_V12_mV : 39|16@0+ (1,0) [0|15000] "mV" Host
+ SG_ PS_UV_Fault_V24 : 48|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_UV_Fault_VCAP : 49|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_UV_Fault_V12 : 50|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_Battery_SOC_Low_Flag : 51|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_Battery_SOC_pct : 56|8@1+ (1,0) [0|100] "%" Host
+
+BO_ 339 PS_BCAST_FAN: 4 PowerStage
+ SG_ PS_Fan_Mode_State : 0|8@1+ (1,0) [0|2] "" Host
+ SG_ PS_Fan_Duty_State : 8|8@1+ (1,0) [0|100] "%" Host
+ SG_ PS_Temperature_C : 23|16@0- (0.1,0) [-40|150] "degC" Host
+
+BO_ 340 PS_BCAST_EEPROM: 8 PowerStage
+ SG_ PS_Cfg_Fan_Def_Mode : 0|8@1+ (1,0) [0|2] "" Host
+ SG_ PS_Cfg_Fan_Def_Duty : 8|8@1+ (1,0) [0|100] "%" Host
+ SG_ PS_Cfg_Fan_Min_Duty : 16|8@1+ (1,0) [0|100] "%" Host
+ SG_ PS_Cfg_Auto_On_Temp : 24|8@1+ (1,0) [0|150] "degC" Host
+ SG_ PS_Cfg_Auto_Off_Temp : 32|8@1+ (1,0) [0|150] "degC" Host
+ SG_ PS_Cfg_HS_Def_AUX : 40|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_Cfg_HS_Def_LED : 41|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_Cfg_HS_Def_DRIVE : 42|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_Cfg_HS_Def_CAP : 43|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_Cfg_HS_Def_SBC : 44|1@1+ (1,0) [0|1] "" Host
+ SG_ PS_Cfg_Reserved : 48|16@1+ (1,0) [0|65535] "" Host
+
+BO_ 341 PS_BCAST_HS_CURR_B: 4 PowerStage
+ SG_ PS_I_AUX_mA : 7|16@0+ (1,0) [0|50000] "mA" Host
+ SG_ PS_I_LED_mA : 23|16@0+ (1,0) [0|50000] "mA" Host
+
+BO_ 342 PS_BCAST_UV: 6 PowerStage
+ SG_ PS_UV_Active_V24_mV : 7|16@0+ (1,0) [0|30000] "mV" Host
+ SG_ PS_UV_Active_VCAP_mV : 23|16@0+ (1,0) [0|30000] "mV" Host
+ SG_ PS_UV_Active_V12_mV : 39|16@0+ (1,0) [0|15000] "mV" Host
+
+BO_ 343 PS_BCAST_OC_CFG_A: 8 PowerStage
+ SG_ PS_OC_Thr_AUX_mA : 7|16@0+ (1,0) [0|50000] "mA" Host
+ SG_ PS_OC_Thr_LED_mA : 23|16@0+ (1,0) [0|50000] "mA" Host
+ SG_ PS_OC_Thr_DRIVE_mA : 39|16@0+ (1,0) [0|50000] "mA" Host
+ SG_ PS_OC_Thr_CAP_mA : 55|16@0+ (1,0) [0|50000] "mA" Host
+
+BO_ 344 PS_BCAST_OC_CFG_B: 2 PowerStage
+ SG_ PS_OC_Thr_SBC_mA : 7|16@0+ (1,0) [0|50000] "mA" Host
+
+BO_ 345 PS_BCAST_IO_STATUS: 3 PowerStage
+ SG_ PS_SW_Pin_State : 0|8@1+ (1,0) [0|1] "" Host
+ SG_ PS_V_LED_PWR_State : 8|8@1+ (1,0) [0|1] "" Host
+ SG_ PS_CAN_Relay_State : 16|8@1+ (1,0) [0|1] "" Host
+
+BO_ 346 PS_BCAST_BATTERY_CFG: 8 PowerStage
+ SG_ PS_Bat_Cutoff_mV : 7|16@0+ (1,0) [0|65535] "mV" Host
+ SG_ PS_Bat_Full_mV : 23|16@0+ (1,0) [0|65535] "mV" Host
+ SG_ PS_Bat_Rint_mOhm : 39|16@0+ (1,0) [0|65535] "mOhm" Host
+ SG_ PS_Bat_Cell_Count : 48|8@1+ (1,0) [0|16] "" Host
+
+
+BO_ 352 LED_DEVICEID: 2 Host
+ SG_ LED_Boot_Cmd : 0|8@1+ (1,0) [0|255] "" LEDDriver
+
+BO_ 353 LED_Bootloader_TX: 8 LEDDriver
+ SG_ LED_Boot_Resp : 0|8@1+ (1,0) [0|255] "" Host
+
+BO_ 368 LED_CMD_LIGHTSET: 3 Host
+ SG_ LED_PWM_Channel0 : 0|8@1+ (1,0) [0|100] "%" LEDDriver
+ SG_ LED_PWM_Channel1 : 8|8@1+ (1,0) [0|100] "%" LEDDriver
+ SG_ LED_PWM_Channel2 : 16|8@1+ (1,0) [0|100] "%" LEDDriver
+
+BO_ 369 LED_CMD_VOLTAGESET: 5 Host
+ SG_ LED_UV_24V_mV : 7|16@0+ (1,0) [0|30000] "mV" LEDDriver
+ SG_ LED_UV_17V5_mV : 23|16@0+ (1,0) [0|20000] "mV" LEDDriver
+ SG_ LED_Buck_Mode : 32|8@1+ (1,0) [0|2] "" LEDDriver
+
+BO_ 370 LED_CMD_EEPROMSET: 1 Host
+ SG_ LED_EEPROM_Save_Flag : 0|1@1+ (1,0) [0|1] "" LEDDriver
+ SG_ LED_EEPROM_LoadDefault_Flag : 1|1@1+ (1,0) [0|1] "" LEDDriver
+
+BO_ 376 LED_BCAST_EEPROMDATA: 8 LEDDriver
+ SG_ LED_Cfg_UV_24V_mV : 7|16@0+ (1,0) [0|30000] "mV" Host
+ SG_ LED_Cfg_UV_17V5_mV : 23|16@0+ (1,0) [0|20000] "mV" Host
+ SG_ LED_Cfg_PWM_Ch0 : 32|8@1+ (1,0) [0|100] "%" Host
+ SG_ LED_Cfg_PWM_Ch1 : 40|8@1+ (1,0) [0|100] "%" Host
+ SG_ LED_Cfg_PWM_Ch2 : 48|8@1+ (1,0) [0|100] "%" Host
+ SG_ LED_Cfg_Buck_Mode : 56|8@1+ (1,0) [0|2] "" Host
+
+BO_ 377 LED_BCAST_LIGHTSTATUS: 8 LEDDriver
+ SG_ LED_PWM_Ch0_State : 0|8@1+ (1,0) [0|100] "%" Host
+ SG_ LED_PWM_Ch1_State : 8|8@1+ (1,0) [0|100] "%" Host
+ SG_ LED_PWM_Ch2_State : 16|8@1+ (1,0) [0|100] "%" Host
+ SG_ LED_V24_mV : 31|16@0+ (1,0) [0|30000] "mV" Host
+ SG_ LED_V17V5_mV : 47|16@0+ (1,0) [0|20000] "mV" Host
+ SG_ LED_Heartbeat_Count : 56|8@1+ (1,0) [0|255] "" Host
+
+BO_ 378 LED_BCAST_DEVSTATUS: 2 LEDDriver
+ SG_ LED_System_State : 0|8@1+ (1,0) [0|255] "" Host
+ SG_ LED_Err_UV_24V : 8|1@1+ (1,0) [0|1] "" Host
+ SG_ LED_Err_UV_17V5 : 9|1@1+ (1,0) [0|1] "" Host
+
+
+CM_ BU_ Host "Supervisory host or CAN analyzer. Issues commands to the three Fabrica devices and consumes their broadcasts.";
+CM_ BU_ KincoDrive "Fabrica KincoDrive Control Module V5.4. Standard 11-bit IDs in 0x101-0x12F. Bootloader RX 0x101 / TX 0x102.";
+CM_ BU_ PowerStage "Fabrica PowerStage Controller. Standard 11-bit IDs in 0x130-0x15F. Bootloader RX 0x130 / TX 0x131. Dual-bus relay (FDCAN1 internal, FDCAN2 host).";
+CM_ BU_ LEDDriver "Fabrica 3-channel LED Driver. Standard 11-bit IDs in 0x160-0x17F. Bootloader RX 0x160 / TX 0x161.";
+
+CM_ BO_ 257 "0x101 KincoDrive bootloader RX. byte0=0xFF DLC=2 = XCP CONNECT (also resets running app into bootloader).";
+CM_ BO_ 258 "0x102 KincoDrive bootloader TX (XCP responses).";
+CM_ BO_ 275 "0x113 KincoDrive: per-channel OC thresholds, uint16 LE × 3 (DR/EXT/SC) in mA.";
+CM_ BO_ 276 "0x114 KincoDrive: undervoltage thresholds, uint16 LE × 2 (V24/V12) in mV.";
+CM_ BO_ 294 "0x126 KincoDrive: BCAST_CONFIG_A - HS boot state bits + OC thresholds from EEPROM.";
+CM_ BO_ 295 "0x127 KincoDrive: BCAST_CONFIG_B - UV thresholds + fan boot defaults from EEPROM.";
+CM_ SG_ 288 KD_Sys_State "0=INIT 1=LOAD_CONFIG 2=RUNNING";
+CM_ SG_ 288 KD_Err_OC_DR "Drive rail OC fault latched (auto-disabled). Host re-enables via CMD_HS_POWER.";
+CM_ SG_ 288 KD_Err_OC_EXT "Extruder rail OC fault latched.";
+CM_ SG_ 288 KD_Err_OC_SC "Scrubbing rail OC fault latched.";
+CM_ SG_ 288 KD_Err_UV_24V "24V bus undervoltage active (auto-clears with hysteresis).";
+CM_ SG_ 288 KD_Err_UV_12V "12V bus undervoltage active (auto-clears with hysteresis).";
+CM_ SG_ 294 KD_Cfg_HS_DR_Default "EEPROM boot default for HS_DR (drive) channel.";
+CM_ SG_ 294 KD_Cfg_HS_E_Default "EEPROM boot default for HS_E (extruder) channel.";
+CM_ SG_ 294 KD_Cfg_HS_SC_Default "EEPROM boot default for HS_SC (scrubbing) channel.";
+CM_ SG_ 294 KD_Cfg_VBUCK_Default "EEPROM boot default for VBUCK (12V buck) enable.";
+CM_ SG_ 292 KD_EStopLED_CTRL_Out "EStop LED control output state (PB15).";
+CM_ SG_ 292 KD_EStop_NO_In "EStop NO contact raw input (PB13).";
+CM_ SG_ 292 KD_EStop_NC_In "EStop NC contact raw input (PB14).";
+CM_ SG_ 292 KD_Endstop_SC_H_NO_In "Scrubbing high endstop NO raw input (PD1).";
+CM_ SG_ 292 KD_Endstop_SC_H_NC_In "Scrubbing high endstop NC raw input (PD2).";
+CM_ SG_ 292 KD_Endstop_EP_L_NO_In "Extruder low endstop NO raw input (PD3).";
+CM_ SG_ 292 KD_Endstop_EP_L_NC_In "Extruder low endstop NC raw input (PD4).";
+CM_ SG_ 292 KD_Endstop_EP_H_NO_In "Extruder high endstop NO raw input (PD5).";
+CM_ SG_ 292 KD_Endstop_EP_H_NC_In "Extruder high endstop NC raw input (PD6).";
+CM_ SG_ 292 KD_Endstop_EH_L_NO1_In "Extruder heater low endstop NO1 raw input (PC11).";
+CM_ SG_ 292 KD_Endstop_EH_L_NO_In "Extruder heater low endstop NO raw input (PB3).";
+CM_ SG_ 292 KD_Endstop_EH_H_NO_In "Extruder heater high endstop NO raw input (PB4).";
+CM_ SG_ 292 KD_Endstop_EH_H_NC_In "Extruder heater high endstop NC raw input (PB5).";
+
+CM_ BO_ 304 "0x130 PowerStage DEVICE_ADDR / bootloader RX. byte0=0xFF DLC=2 resets into bootloader, which re-handles XCP CONNECT on the same ID.";
+CM_ SG_ 304 PS_Device_Command "0xFF (DLC=2) = software reset and re-enter OpenBLT bootloader.";
+CM_ BO_ 305 "0x131 PowerStage bootloader TX (XCP responses).";
+CM_ BO_ 320 "0x140 PowerStage CMD_FAN: set fan mode and manual duty cycle. Accepted from both CAN buses.";
+CM_ SG_ 320 PS_Fan_Mode "0=OFF 1=ON_MANUAL 2=AUTO. In AUTO mode Fan_Duty is ignored.";
+CM_ SG_ 320 PS_Fan_Duty "Manual duty cycle 0-100%. Applied only when Fan_Mode=1.";
+CM_ BO_ 321 "0x141 PowerStage CMD_HS: per-rail enable bits (1 byte, bit0=AUX..bit4=SBC). Accepted from both CAN buses.";
+CM_ SG_ 321 PS_HS_Cmd_AUX "0=disable RAIL_AUX 1=enable.";
+CM_ SG_ 321 PS_HS_Cmd_LED "0=disable RAIL_LED 1=enable.";
+CM_ SG_ 321 PS_HS_Cmd_DRIVE "0=disable RAIL_DRIVE 1=enable.";
+CM_ SG_ 321 PS_HS_Cmd_CAP "0=disable RAIL_CAP 1=enable.";
+CM_ SG_ 321 PS_HS_Cmd_SBC "IGNORED. SBC rail has no MCU-driven EN line (permanently enabled by hardware). Bit reserved.";
+CM_ BO_ 322 "0x142 PowerStage CMD_OC: configure per-rail software OC threshold or clear latched OC faults. Target bits select rails (set all 5 to apply to all). OC_Cmd: 0x01=SET, 0x02=RESET_FAULT.";
+CM_ SG_ 322 PS_OC_Cmd "0x01=SET_THRESHOLD (apply OC_Threshold_mA). 0x02=RESET_FAULT (clear masks).";
+CM_ SG_ 322 PS_OC_Threshold_mA "New software OC warning threshold in mA big-endian.";
+CM_ BO_ 323 "0x143 PowerStage CMD_EEPROM: 0x01 saves live config; 0x02 restores factory defaults.";
+CM_ SG_ 323 PS_EEPROM_Cmd "0x01=save live config to EEPROM. 0x02=load factory defaults and overwrite EEPROM.";
+CM_ BO_ 324 "0x144 PowerStage CMD_UV: update UV trip thresholds for V24, VCAP, V12 in mV big-endian.";
+CM_ SG_ 324 PS_UV_V24_mV "New UV trip threshold for V24 bus in mV big-endian.";
+CM_ SG_ 324 PS_UV_VCAP_mV "New UV trip threshold for VCAP bus in mV big-endian.";
+CM_ SG_ 324 PS_UV_V12_mV "New UV trip threshold for V12 bus in mV big-endian.";
+CM_ BO_ 325 "0x145 PowerStage CMD_CTRL: control V_LED_PWR output and CAN1<->CAN2 relay enable.";
+CM_ SG_ 325 PS_V_LED_PWR_Cmd "0=OFF 1=ON. Controls V_LED_PWR output (PC0).";
+CM_ SG_ 325 PS_CAN_Relay_Enable "0=disable 1=enable. Controls CAN1<->CAN2 frame forwarding.";
+CM_ BO_ 326 "0x146 PowerStage CMD_PAGE_DWELL: set OLED per-page dwell in 500 ms ticks. Each byte 0 = use default (10 ticks = 5 s). Persist with CMD_EEPROM 0x01.";
+CM_ SG_ 326 PS_Page_Dwell_Overview "OLED Page 0 dwell. Raw value is 500 ms ticks; scale 0.5 → seconds.";
+CM_ SG_ 326 PS_Page_Dwell_RailStatus "OLED Page 1 dwell. Ticks of 500 ms; scale 0.5 → seconds.";
+CM_ SG_ 326 PS_Page_Dwell_FaultDetail "OLED Page 2 dwell. Ticks of 500 ms; scale 0.5 → seconds.";
+CM_ BO_ 327 "0x147 PowerStage CMD_BAT_CFG: set battery SOC-low warning threshold (%). 0 = disable. Persist with CMD_EEPROM 0x01.";
+CM_ SG_ 327 PS_Bat_Low_SOC_Threshold_pct "Battery low-SOC warning trip point in %. 0 disables warning entirely.";
+CM_ BO_ 336 "0x150 PowerStage BCAST_HS_STATE: per-rail enable / fault / pgood / OC-warn / OC-fault bits.";
+CM_ BO_ 337 "0x151 PowerStage BCAST_HS_CURR_A: BAT, CAP, SBC, DRIVE currents (uint16 mA big-endian).";
+CM_ SG_ 337 PS_I_BAT_mA "Battery input current.";
+CM_ SG_ 337 PS_I_CAP_mA "Capacitor rail current.";
+CM_ SG_ 337 PS_I_SBC_mA "SBC rail current.";
+CM_ SG_ 337 PS_I_DRIVE_mA "Drive rail current.";
+CM_ BO_ 338 "0x152 PowerStage BCAST_VOLTAGE: V24, VCAP, V12 (mV BE), UV/SOC-low flags, and battery SOC %.";
+CM_ SG_ 338 PS_V24_mV "24V bus voltage in mV big-endian.";
+CM_ SG_ 338 PS_VCAP_mV "Capacitor bus voltage in mV big-endian.";
+CM_ SG_ 338 PS_V12_mV "12V bus voltage in mV big-endian.";
+CM_ SG_ 338 PS_UV_Fault_V24 "1 = V24 below UV trip.";
+CM_ SG_ 338 PS_UV_Fault_VCAP "1 = VCAP below UV trip.";
+CM_ SG_ 338 PS_UV_Fault_V12 "1 = V12 below UV trip.";
+CM_ SG_ 338 PS_Battery_SOC_Low_Flag "1 = filtered SOC strictly below configured low-SOC threshold (CMD_BAT_CFG, default 40%).";
+CM_ SG_ 338 PS_Battery_SOC_pct "6S Li pack SOC (0-100 %), OCV+IR compensated, EMA + asymmetric hysteresis filtered.";
+CM_ BO_ 339 "0x153 PowerStage BCAST_FAN: fan mode, duty, NTC temperature (int16 degCx10, scale 0.1).";
+CM_ SG_ 339 PS_Fan_Mode_State "Current active fan mode.";
+CM_ SG_ 339 PS_Fan_Duty_State "Current active PWM duty cycle.";
+CM_ SG_ 339 PS_Temperature_C "NTC temperature, scale 0.1 °C.";
+CM_ BO_ 340 "0x154 PowerStage BCAST_EEPROM: live echo of EEPROM-stored boot config.";
+CM_ SG_ 340 PS_Cfg_HS_Def_AUX "Boot-default enable state for RAIL_AUX.";
+CM_ SG_ 340 PS_Cfg_HS_Def_LED "Boot-default enable state for RAIL_LED.";
+CM_ SG_ 340 PS_Cfg_HS_Def_DRIVE "Boot-default enable state for RAIL_DRIVE.";
+CM_ SG_ 340 PS_Cfg_HS_Def_CAP "Boot-default enable state for RAIL_CAP.";
+CM_ SG_ 340 PS_Cfg_HS_Def_SBC "Boot-default enable state for RAIL_SBC (ignored on this board, no MCU EN).";
+CM_ BO_ 341 "0x155 PowerStage BCAST_HS_CURR_B: AUX, LED rail currents (uint16 mA BE).";
+CM_ BO_ 342 "0x156 PowerStage BCAST_UV: currently active UV thresholds.";
+CM_ BO_ 343 "0x157 PowerStage BCAST_OC_CFG_A: AUX, LED, DRIVE, CAP OC thresholds (mA).";
+CM_ BO_ 344 "0x158 PowerStage BCAST_OC_CFG_B: SBC OC threshold (always 0; software OC disabled — SBC has no MCU EN).";
+CM_ SG_ 344 PS_OC_Thr_SBC_mA "Always 0 — software OC disabled on this board (no MCU-driven EN).";
+CM_ BO_ 345 "0x159 PowerStage BCAST_IO_STATUS: SW pin / V_LED_PWR / CAN relay state.";
+CM_ BO_ 346 "0x15A PowerStage BCAST_BATTERY_CFG: static 6S battery refs (cutoff, full, R_int, cell count). Defaults: 19.6 V / 25.2 V / 200 mΩ / 6S.";
+CM_ SG_ 346 PS_Bat_Cutoff_mV "0 % SOC reference voltage (mV). Default 19600 (3.27 V/cell × 6).";
+CM_ SG_ 346 PS_Bat_Full_mV "100 % SOC reference voltage (mV). Default 25200 (4.20 V/cell × 6).";
+CM_ SG_ 346 PS_Bat_Rint_mOhm "Pack internal resistance (mΩ) used for IR compensation.";
+CM_ SG_ 346 PS_Bat_Cell_Count "Series cell count (6 for 6S Li-ion / Li-Po).";
+
+CM_ BO_ 352 "0x160 LEDDriver DEVICEID / bootloader RX. byte0=0xFF DLC=2 resets into bootloader, which re-handles XCP CONNECT on the same ID.";
+CM_ BO_ 353 "0x161 LEDDriver bootloader TX (XCP responses).";
+CM_ BO_ 368 "0x170 LEDDriver CMD_LIGHTSET: 3-channel PWM duty (0-100% per channel).";
+CM_ BO_ 369 "0x171 LEDDriver CMD_VOLTAGESET: UV thresholds (V24, V17.5) big-endian + buck mode (byte 4: 0=OFF, 1=ON, 2=AUTO). DLC=4 form preserves previous mode.";
+CM_ BO_ 370 "0x172 LEDDriver CMD_EEPROMSET: Save and/or LoadDefault flags. Save processed first.";
+CM_ SG_ 370 LED_EEPROM_Save_Flag "1 = snapshot live config to EEPROM (bit0).";
+CM_ SG_ 370 LED_EEPROM_LoadDefault_Flag "1 = restore factory defaults and overwrite EEPROM (bit1).";
+CM_ BO_ 376 "0x178 LEDDriver BCAST_EEPROMDATA: EEPROM config echo (UV thresholds + PWM defaults + buck mode).";
+CM_ BO_ 377 "0x179 LEDDriver BCAST_LIGHTSTATUS: live PWM levels, voltages, and a wrapping heartbeat counter.";
+CM_ BO_ 378 "0x17A LEDDriver BCAST_DEVSTATUS: system state + per-bit error flags.";
+CM_ SG_ 378 LED_Err_UV_24V "1 = 24V rail undervoltage (bit 0 of legacy Error_Code byte).";
+CM_ SG_ 378 LED_Err_UV_17V5 "1 = 17.5V rail undervoltage (bit 1 of legacy Error_Code byte).";
+
+BA_DEF_  "BusType" STRING ;
+BA_DEF_  "MultiplexExtEnabled" ENUM  "No","Yes";
+BA_DEF_ BO_  "GenMsgCycleTime" INT 0 10000;
+BA_DEF_ BO_  "GenMsgSendType"  STRING;
+BA_DEF_DEF_  "BusType" "CAN";
+BA_DEF_DEF_  "MultiplexExtEnabled" "No";
+BA_DEF_DEF_  "GenMsgCycleTime" 0;
+BA_DEF_DEF_  "GenMsgSendType"  "Cyclic";
+
+BA_ "GenMsgSendType" BO_ 257 "Event";
+BA_ "GenMsgSendType" BO_ 272 "Event";
+BA_ "GenMsgSendType" BO_ 273 "Event";
+BA_ "GenMsgSendType" BO_ 274 "Event";
+BA_ "GenMsgSendType" BO_ 275 "Event";
+BA_ "GenMsgSendType" BO_ 276 "Event";
+BA_ "GenMsgSendType" BO_ 288 "Cyclic";
+BA_ "GenMsgSendType" BO_ 289 "Cyclic";
+BA_ "GenMsgSendType" BO_ 290 "Cyclic";
+BA_ "GenMsgSendType" BO_ 291 "Cyclic";
+BA_ "GenMsgSendType" BO_ 292 "Cyclic";
+BA_ "GenMsgSendType" BO_ 293 "Cyclic";
+BA_ "GenMsgSendType" BO_ 294 "Cyclic";
+BA_ "GenMsgSendType" BO_ 295 "Cyclic";
+BA_ "GenMsgSendType" BO_ 304 "Event";
+BA_ "GenMsgSendType" BO_ 320 "Event";
+BA_ "GenMsgSendType" BO_ 321 "Event";
+BA_ "GenMsgSendType" BO_ 322 "Event";
+BA_ "GenMsgSendType" BO_ 323 "Event";
+BA_ "GenMsgSendType" BO_ 324 "Event";
+BA_ "GenMsgSendType" BO_ 325 "Event";
+BA_ "GenMsgSendType" BO_ 326 "Event";
+BA_ "GenMsgSendType" BO_ 327 "Event";
+BA_ "GenMsgSendType" BO_ 336 "Cyclic";
+BA_ "GenMsgSendType" BO_ 337 "Cyclic";
+BA_ "GenMsgSendType" BO_ 338 "Cyclic";
+BA_ "GenMsgSendType" BO_ 339 "Cyclic";
+BA_ "GenMsgSendType" BO_ 340 "Cyclic";
+BA_ "GenMsgSendType" BO_ 341 "Cyclic";
+BA_ "GenMsgSendType" BO_ 342 "Cyclic";
+BA_ "GenMsgSendType" BO_ 343 "Cyclic";
+BA_ "GenMsgSendType" BO_ 344 "Cyclic";
+BA_ "GenMsgSendType" BO_ 345 "Cyclic";
+BA_ "GenMsgSendType" BO_ 346 "Cyclic";
+BA_ "GenMsgSendType" BO_ 352 "Event";
+BA_ "GenMsgSendType" BO_ 368 "Event";
+BA_ "GenMsgSendType" BO_ 369 "Event";
+BA_ "GenMsgSendType" BO_ 370 "Event";
+BA_ "GenMsgSendType" BO_ 376 "Cyclic";
+BA_ "GenMsgSendType" BO_ 377 "Cyclic";
+BA_ "GenMsgSendType" BO_ 378 "Cyclic";
+
+BA_ "GenMsgCycleTime" BO_ 288 500;
+BA_ "GenMsgCycleTime" BO_ 289 500;
+BA_ "GenMsgCycleTime" BO_ 290 500;
+BA_ "GenMsgCycleTime" BO_ 291 500;
+BA_ "GenMsgCycleTime" BO_ 292 500;
+BA_ "GenMsgCycleTime" BO_ 293 500;
+BA_ "GenMsgCycleTime" BO_ 294 500;
+BA_ "GenMsgCycleTime" BO_ 295 500;
+BA_ "GenMsgCycleTime" BO_ 336 500;
+BA_ "GenMsgCycleTime" BO_ 337 500;
+BA_ "GenMsgCycleTime" BO_ 338 500;
+BA_ "GenMsgCycleTime" BO_ 339 500;
+BA_ "GenMsgCycleTime" BO_ 340 500;
+BA_ "GenMsgCycleTime" BO_ 341 500;
+BA_ "GenMsgCycleTime" BO_ 342 500;
+BA_ "GenMsgCycleTime" BO_ 343 500;
+BA_ "GenMsgCycleTime" BO_ 344 500;
+BA_ "GenMsgCycleTime" BO_ 345 500;
+BA_ "GenMsgCycleTime" BO_ 346 500;
+BA_ "GenMsgCycleTime" BO_ 376 1000;
+BA_ "GenMsgCycleTime" BO_ 377 500;
+BA_ "GenMsgCycleTime" BO_ 378 1000;
+
+VAL_ 257 KD_Boot_Cmd 255 "RESET_BOOTLOADER" ;
+VAL_ 274 KD_EEPROM_Action 0 "LOAD_DEFAULTS_AND_APPLY" 1 "SAVE_CURRENT" ;
+VAL_ 288 KD_Sys_State 0 "INIT" 1 "LOAD_CONFIG" 2 "RUNNING" ;
+VAL_ 288 KD_Err_OC_DR 0 "OK" 1 "OC_FAULT" ;
+VAL_ 288 KD_Err_OC_EXT 0 "OK" 1 "OC_FAULT" ;
+VAL_ 288 KD_Err_OC_SC 0 "OK" 1 "OC_FAULT" ;
+VAL_ 288 KD_Err_UV_24V 0 "OK" 1 "UV_FAULT" ;
+VAL_ 288 KD_Err_UV_12V 0 "OK" 1 "UV_FAULT" ;
+VAL_ 304 PS_Device_Command 255 "RESET_BOOTLOADER" ;
+VAL_ 320 PS_Fan_Mode 0 "OFF" 1 "ON_MANUAL" 2 "AUTO" ;
+VAL_ 321 PS_HS_Cmd_AUX 0 "DISABLE" 1 "ENABLE" ;
+VAL_ 321 PS_HS_Cmd_LED 0 "DISABLE" 1 "ENABLE" ;
+VAL_ 321 PS_HS_Cmd_DRIVE 0 "DISABLE" 1 "ENABLE" ;
+VAL_ 321 PS_HS_Cmd_CAP 0 "DISABLE" 1 "ENABLE" ;
+VAL_ 321 PS_HS_Cmd_SBC 0 "IGNORED" 1 "IGNORED" ;
+VAL_ 322 PS_OC_Cmd 1 "SET_THRESHOLD" 2 "RESET_FAULT" ;
+VAL_ 323 PS_EEPROM_Cmd 1 "SAVE_CONFIG" 2 "LOAD_DEFAULT" ;
+VAL_ 325 PS_V_LED_PWR_Cmd 0 "OFF" 1 "ON" ;
+VAL_ 325 PS_CAN_Relay_Enable 0 "DISABLE" 1 "ENABLE" ;
+VAL_ 338 PS_UV_Fault_V24 0 "OK" 1 "UV_FAULT" ;
+VAL_ 338 PS_UV_Fault_VCAP 0 "OK" 1 "UV_FAULT" ;
+VAL_ 338 PS_UV_Fault_V12 0 "OK" 1 "UV_FAULT" ;
+VAL_ 338 PS_Battery_SOC_Low_Flag 0 "OK" 1 "SOC_LOW" ;
+VAL_ 339 PS_Fan_Mode_State 0 "OFF" 1 "ON_MANUAL" 2 "AUTO" ;
+VAL_ 340 PS_Cfg_Fan_Def_Mode 0 "OFF" 1 "ON_MANUAL" 2 "AUTO" ;
+VAL_ 352 LED_Boot_Cmd 255 "RESET_BOOTLOADER" ;
+VAL_ 369 LED_Buck_Mode 0 "MANUAL_OFF" 1 "MANUAL_ON" 2 "AUTO" ;
+VAL_ 370 LED_EEPROM_Save_Flag 0 "NO_OP" 1 "SAVE_CONFIG" ;
+VAL_ 370 LED_EEPROM_LoadDefault_Flag 0 "NO_OP" 1 "LOAD_DEFAULTS" ;
+VAL_ 376 LED_Cfg_Buck_Mode 0 "MANUAL_OFF" 1 "MANUAL_ON" 2 "AUTO" ;
+VAL_ 378 LED_System_State 0 "INIT" 1 "LOAD_CONFIG" 2 "RUNNING" 3 "ERROR" 4 "RECOVERY" ;
+VAL_ 378 LED_Err_UV_24V 0 "OK" 1 "UV_FAULT" ;
+VAL_ 378 LED_Err_UV_17V5 0 "OK" 1 "UV_FAULT" ;

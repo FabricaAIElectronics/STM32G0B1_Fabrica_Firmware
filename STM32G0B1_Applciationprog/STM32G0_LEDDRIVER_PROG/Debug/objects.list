@@ -1,7 +1,3 @@
-"./App/app.o"
-"./App/boot.o"
-"./App/led.o"
-"./App/timer.o"
 "./Core/Src/applogic.o"
 "./Core/Src/can_operation.o"
 "./Core/Src/eeprom_driver.o"

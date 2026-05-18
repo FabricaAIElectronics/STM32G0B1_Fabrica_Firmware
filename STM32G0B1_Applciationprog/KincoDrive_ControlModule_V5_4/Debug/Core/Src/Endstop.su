@@ -1,3 +1,0 @@
-../Core/Src/Endstop.c:26:6:Endstop_Init	8	static
-../Core/Src/Endstop.c:41:5:Endstop_Check	40	static
-../Core/Src/Endstop.c:88:8:CAN_Packer_Endstop_and_ESTOP_2Byte	40	static

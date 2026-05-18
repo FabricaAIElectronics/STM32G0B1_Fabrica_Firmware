@@ -42,7 +42,7 @@ Core/Src/powerstage_app.o: ../Core/Src/powerstage_app.c \
  ../Core/Inc/io_module.h ../Core/Inc/fan_ctrl.h \
  ../Core/Inc/eeprom_driver.h ../Core/Inc/ui_display.h \
  ../Core/Inc/display_scheduler.h ../Core/Inc/ssd1306.h \
- ../Core/Inc/fonts.h ../Core/Inc/fonts.h
+ ../Core/Inc/fonts.h ../Core/Inc/fonts.h ../Core/Inc/battery.h
 ../Core/Inc/powerstage_app.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal.h:
@@ -94,3 +94,4 @@ Core/Src/powerstage_app.o: ../Core/Src/powerstage_app.c \
 ../Core/Inc/ssd1306.h:
 ../Core/Inc/fonts.h:
 ../Core/Inc/fonts.h:
+../Core/Inc/battery.h:

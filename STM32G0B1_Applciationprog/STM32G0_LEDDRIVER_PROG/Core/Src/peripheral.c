@@ -11,7 +11,7 @@
 extern TIM_HandleTypeDef htim1;
 extern ADC_HandleTypeDef hadc1;
 
-uint16_t ADC_VALUE[2];
+volatile uint16_t ADC_VALUE[2];
 AppContext app = {0};
 
 void apply_pwm(AppContext *ctx)

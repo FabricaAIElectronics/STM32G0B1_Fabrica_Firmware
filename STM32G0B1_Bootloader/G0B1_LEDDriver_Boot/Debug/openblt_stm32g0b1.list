@@ -37,13 +37,13 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  16 .debug_macro  0001d8e5  00000000  00000000  0001809d  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   000127eb  00000000  00000000  00035982  2**0
+ 17 .debug_line   000127f3  00000000  00000000  00035982  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    000b4169  00000000  00000000  0004816d  2**0
+ 18 .debug_str    000b4167  00000000  00000000  00048175  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000043  00000000  00000000  000fc2d6  2**0
+ 19 .comment      00000043  00000000  00000000  000fc2dc  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  000018d4  00000000  00000000  000fc31c  2**2
+ 20 .debug_frame  000018d0  00000000  00000000  000fc320  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  21 .debug_loclists 000050c7  00000000  00000000  000fdbf0  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
@@ -615,8 +615,8 @@ void Error_Handler(void)
 
 08000388 <main>:
 {
- 8000388:	b570      	push	{r4, r5, r6, lr}
- 800038a:	b086      	sub	sp, #24
+ 8000388:	b530      	push	{r4, r5, lr}
+ 800038a:	b087      	sub	sp, #28
   HAL_Init();
  800038c:	f000 f92e 	bl	80005ec <HAL_Init>
   SystemClock_Config();
@@ -639,36 +639,37 @@ void Error_Handler(void)
  80003b0:	2002      	movs	r0, #2
  80003b2:	f7ff ff83 	bl	80002bc <LL_IOP_GRP1_EnableClock>
  80003b6:	23a0      	movs	r3, #160	@ 0xa0
- 80003b8:	2620      	movs	r6, #32
+ 80003b8:	2520      	movs	r5, #32
  80003ba:	05db      	lsls	r3, r3, #23
- 80003bc:	629e      	str	r6, [r3, #40]	@ 0x28
+ 80003bc:	629d      	str	r5, [r3, #40]	@ 0x28
   GPIO_InitStruct.Pin = LL_GPIO_PIN_13;
  80003be:	2380      	movs	r3, #128	@ 0x80
   GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
  80003c0:	2400      	movs	r4, #0
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
- 80003c2:	2501      	movs	r5, #1
   GPIO_InitStruct.Pin = LL_GPIO_PIN_13;
- 80003c4:	019b      	lsls	r3, r3, #6
+ 80003c2:	019b      	lsls	r3, r3, #6
   LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
- 80003c6:	4669      	mov	r1, sp
- 80003c8:	480a      	ldr	r0, [pc, #40]	@ (80003f4 <main+0x6c>)
+ 80003c4:	4669      	mov	r1, sp
+ 80003c6:	480b      	ldr	r0, [pc, #44]	@ (80003f4 <main+0x6c>)
   GPIO_InitStruct.Pin = LL_GPIO_PIN_13;
- 80003ca:	9300      	str	r3, [sp, #0]
+ 80003c8:	9300      	str	r3, [sp, #0]
   GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
- 80003cc:	9401      	str	r4, [sp, #4]
+ 80003ca:	9401      	str	r4, [sp, #4]
   GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
- 80003ce:	9504      	str	r5, [sp, #16]
+ 80003cc:	9404      	str	r4, [sp, #16]
   LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
- 80003d0:	f000 fe38 	bl	8001044 <LL_GPIO_Init>
+ 80003ce:	f000 fe39 	bl	8001044 <LL_GPIO_Init>
   LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
- 80003d4:	20a0      	movs	r0, #160	@ 0xa0
+ 80003d2:	20a0      	movs	r0, #160	@ 0xa0
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+ 80003d4:	2301      	movs	r3, #1
+  LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
  80003d6:	4669      	mov	r1, sp
  80003d8:	05c0      	lsls	r0, r0, #23
-  GPIO_InitStruct.Pin = LL_GPIO_PIN_5;
- 80003da:	9600      	str	r6, [sp, #0]
   GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
- 80003dc:	9501      	str	r5, [sp, #4]
+ 80003da:	9301      	str	r3, [sp, #4]
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_5;
+ 80003dc:	9500      	str	r5, [sp, #0]
   GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
  80003de:	9402      	str	r4, [sp, #8]
   GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
@@ -3785,8 +3786,8 @@ void CanInit(void)
 
   /* set the CAN controller channel, which is needed by HAL_FDCAN_MspInit(). */
   canHandle.Instance = CAN_CHANNEL;
- 8001256:	4c41      	ldr	r4, [pc, #260]	@ (800135c <CanInit+0x108>)
- 8001258:	4b41      	ldr	r3, [pc, #260]	@ (8001360 <CanInit+0x10c>)
+ 8001256:	4c42      	ldr	r4, [pc, #264]	@ (8001360 <CanInit+0x10c>)
+ 8001258:	4b42      	ldr	r3, [pc, #264]	@ (8001364 <CanInit+0x110>)
 {
  800125a:	b08d      	sub	sp, #52	@ 0x34
    * done before calling HAL_FDCAN_Init(). explicitly calling HAL_FDCAN_MspInit() here
@@ -3810,12 +3811,12 @@ void CanInit(void)
  8001266:	0080      	lsls	r0, r0, #2
  8001268:	f7ff ffc2 	bl	80011f0 <LL_RCC_GetFDCANClockFreq>
       if (periph_params->base_freq < (baud * bitTqMin))
- 800126c:	4b3d      	ldr	r3, [pc, #244]	@ (8001364 <CanInit+0x110>)
+ 800126c:	4b3e      	ldr	r3, [pc, #248]	@ (8001368 <CanInit+0x114>)
   periphParams.base_freq = LL_RCC_GetFDCANClockFreq(LL_RCC_FDCAN_CLKSOURCE);
  800126e:	9004      	str	r0, [sp, #16]
       if (periph_params->base_freq < (baud * bitTqMin))
  8001270:	4298      	cmp	r0, r3
- 8001272:	d969      	bls.n	8001348 <CanInit+0xf4>
+ 8001272:	d96a      	bls.n	800134a <CanInit+0xf6>
  8001274:	2301      	movs	r3, #1
  8001276:	9303      	str	r3, [sp, #12]
       if ( ((periph_params->base_freq % prescaler) == 0U) &&
@@ -3824,17 +3825,17 @@ void CanInit(void)
  800127c:	f7fe ffd4 	bl	8000228 <__aeabi_uidivmod>
  8001280:	0005      	movs	r5, r0
  8001282:	2900      	cmp	r1, #0
- 8001284:	d15a      	bne.n	800133c <CanInit+0xe8>
+ 8001284:	d15b      	bne.n	800133e <CanInit+0xea>
            (((periph_params->base_freq / prescaler) % baud) == 0U) )
  8001286:	0028      	movs	r0, r5
- 8001288:	4937      	ldr	r1, [pc, #220]	@ (8001368 <CanInit+0x114>)
+ 8001288:	4938      	ldr	r1, [pc, #224]	@ (800136c <CanInit+0x118>)
  800128a:	f7fe ffcd 	bl	8000228 <__aeabi_uidivmod>
       if ( ((periph_params->base_freq % prescaler) == 0U) &&
  800128e:	2900      	cmp	r1, #0
- 8001290:	d154      	bne.n	800133c <CanInit+0xe8>
+ 8001290:	d155      	bne.n	800133e <CanInit+0xea>
         bitTq = (periph_params->base_freq / prescaler) / baud;
  8001292:	0028      	movs	r0, r5
- 8001294:	4934      	ldr	r1, [pc, #208]	@ (8001368 <CanInit+0x114>)
+ 8001294:	4935      	ldr	r1, [pc, #212]	@ (800136c <CanInit+0x118>)
  8001296:	f7fe ff41 	bl	800011c <__udivsi3>
         if ( (bitTq >= bitTqMin) && (bitTq <= bitTqMax) )
  800129a:	22bf      	movs	r2, #191	@ 0xbf
@@ -3844,7 +3845,7 @@ void CanInit(void)
         if ( (bitTq >= bitTqMin) && (bitTq <= bitTqMax) )
  80012a0:	0052      	lsls	r2, r2, #1
  80012a2:	4293      	cmp	r3, r2
- 80012a4:	d84a      	bhi.n	800133c <CanInit+0xe8>
+ 80012a4:	d84b      	bhi.n	800133e <CanInit+0xea>
           tseg2 = ((bitTq * 2U) + 9U) / 10U;
  80012a6:	0040      	lsls	r0, r0, #1
  80012a8:	210a      	movs	r1, #10
@@ -3860,7 +3861,7 @@ void CanInit(void)
  80012b8:	0006      	movs	r6, r0
           if ( (tseg1 >= periph_params->tseg1_min) &&
  80012ba:	2aff      	cmp	r2, #255	@ 0xff
- 80012bc:	d83e      	bhi.n	800133c <CanInit+0xe8>
+ 80012bc:	d83f      	bhi.n	800133e <CanInit+0xea>
             samplePoint = (blt_int8u)(((1U + tseg1) * 100UL) / bitTq);
  80012be:	2064      	movs	r0, #100	@ 0x64
           tseg1 = (bitTq - tseg2) - 1U;
@@ -3875,7 +3876,7 @@ void CanInit(void)
  80012ce:	3841      	subs	r0, #65	@ 0x41
  80012d0:	b2c0      	uxtb	r0, r0
  80012d2:	280f      	cmp	r0, #15
- 80012d4:	d832      	bhi.n	800133c <CanInit+0xe8>
+ 80012d4:	d833      	bhi.n	800133e <CanInit+0xea>
               if (bittiming_config->sjw == 0U)
  80012d6:	2f01      	cmp	r7, #1
  80012d8:	d000      	beq.n	80012dc <CanInit+0x88>
@@ -3949,69 +3950,72 @@ void CanInit(void)
   filterConfig.FilterType = FDCAN_FILTER_DUAL;
   filterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
   filterConfig.FilterID1 = rxMsgId;
- 800130e:	4b17      	ldr	r3, [pc, #92]	@ (800136c <CanInit+0x118>)
+ 800130e:	23b0      	movs	r3, #176	@ 0xb0
   filterConfig.FilterID2 = rxMsgId;
   (void)HAL_FDCAN_ConfigFilter(&canHandle, &filterConfig);
  8001310:	a906      	add	r1, sp, #24
- 8001312:	0020      	movs	r0, r4
   filterConfig.FilterID1 = rxMsgId;
- 8001314:	930a      	str	r3, [sp, #40]	@ 0x28
-  filterConfig.FilterID2 = rxMsgId;
- 8001316:	930b      	str	r3, [sp, #44]	@ 0x2c
-    filterConfig.IdType = FDCAN_STANDARD_ID;
- 8001318:	9506      	str	r5, [sp, #24]
-  filterConfig.FilterIndex = 0;
- 800131a:	9507      	str	r5, [sp, #28]
-  filterConfig.FilterType = FDCAN_FILTER_DUAL;
- 800131c:	9608      	str	r6, [sp, #32]
-  filterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
- 800131e:	9609      	str	r6, [sp, #36]	@ 0x24
+ 8001312:	005b      	lsls	r3, r3, #1
   (void)HAL_FDCAN_ConfigFilter(&canHandle, &filterConfig);
- 8001320:	f7ff fae8 	bl	80008f4 <HAL_FDCAN_ConfigFilter>
+ 8001314:	0020      	movs	r0, r4
+  filterConfig.FilterID1 = rxMsgId;
+ 8001316:	930a      	str	r3, [sp, #40]	@ 0x28
+  filterConfig.FilterID2 = rxMsgId;
+ 8001318:	930b      	str	r3, [sp, #44]	@ 0x2c
+    filterConfig.IdType = FDCAN_STANDARD_ID;
+ 800131a:	9506      	str	r5, [sp, #24]
+  filterConfig.FilterIndex = 0;
+ 800131c:	9507      	str	r5, [sp, #28]
+  filterConfig.FilterType = FDCAN_FILTER_DUAL;
+ 800131e:	9608      	str	r6, [sp, #32]
+  filterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+ 8001320:	9609      	str	r6, [sp, #36]	@ 0x24
+  (void)HAL_FDCAN_ConfigFilter(&canHandle, &filterConfig);
+ 8001322:	f7ff fae7 	bl	80008f4 <HAL_FDCAN_ConfigFilter>
 
   /* configure global filter to reject all non-matching frames. */
   HAL_FDCAN_ConfigGlobalFilter(&canHandle, FDCAN_REJECT, FDCAN_REJECT, 
- 8001324:	2202      	movs	r2, #2
- 8001326:	0033      	movs	r3, r6
- 8001328:	0011      	movs	r1, r2
- 800132a:	0020      	movs	r0, r4
- 800132c:	9600      	str	r6, [sp, #0]
- 800132e:	f7ff fb0a 	bl	8000946 <HAL_FDCAN_ConfigGlobalFilter>
+ 8001326:	2202      	movs	r2, #2
+ 8001328:	0033      	movs	r3, r6
+ 800132a:	0011      	movs	r1, r2
+ 800132c:	0020      	movs	r0, r4
+ 800132e:	9600      	str	r6, [sp, #0]
+ 8001330:	f7ff fb09 	bl	8000946 <HAL_FDCAN_ConfigGlobalFilter>
   }
 #endif
 
   /* start the CAN peripheral. no need to evaluate the return value as there is nothing
    * we can do about a faulty CAN controller. */
   (void)HAL_FDCAN_Start(&canHandle);
- 8001332:	0020      	movs	r0, r4
- 8001334:	f7ff fb23 	bl	800097e <HAL_FDCAN_Start>
+ 8001334:	0020      	movs	r0, r4
+ 8001336:	f7ff fb22 	bl	800097e <HAL_FDCAN_Start>
 } /*** end of CanInit ***/
- 8001338:	b00d      	add	sp, #52	@ 0x34
- 800133a:	bdf0      	pop	{r4, r5, r6, r7, pc}
+ 800133a:	b00d      	add	sp, #52	@ 0x34
+ 800133c:	bdf0      	pop	{r4, r5, r6, r7, pc}
          prescaler <= periph_params->prescaler_max; prescaler++)
- 800133c:	9b03      	ldr	r3, [sp, #12]
- 800133e:	4a0c      	ldr	r2, [pc, #48]	@ (8001370 <CanInit+0x11c>)
- 8001340:	3301      	adds	r3, #1
- 8001342:	9303      	str	r3, [sp, #12]
- 8001344:	4293      	cmp	r3, r2
- 8001346:	d197      	bne.n	8001278 <CanInit+0x24>
+ 800133e:	9b03      	ldr	r3, [sp, #12]
+ 8001340:	4a0b      	ldr	r2, [pc, #44]	@ (8001370 <CanInit+0x11c>)
+ 8001342:	3301      	adds	r3, #1
+ 8001344:	9303      	str	r3, [sp, #12]
+ 8001346:	4293      	cmp	r3, r2
+ 8001348:	d196      	bne.n	8001278 <CanInit+0x24>
     ASSERT_RT(BLT_FALSE);
- 8001348:	219d      	movs	r1, #157	@ 0x9d
- 800134a:	2600      	movs	r6, #0
- 800134c:	4809      	ldr	r0, [pc, #36]	@ (8001374 <CanInit+0x120>)
- 800134e:	0049      	lsls	r1, r1, #1
- 8001350:	f000 fbea 	bl	8001b28 <AssertFailure>
+ 800134a:	219d      	movs	r1, #157	@ 0x9d
+ 800134c:	2600      	movs	r6, #0
+ 800134e:	4809      	ldr	r0, [pc, #36]	@ (8001374 <CanInit+0x120>)
+ 8001350:	0049      	lsls	r1, r1, #1
+ 8001352:	f000 fbe9 	bl	8001b28 <AssertFailure>
   tCanBitTimingConfig bittimingConfig = { 0 };
- 8001354:	0037      	movs	r7, r6
+ 8001356:	0037      	movs	r7, r6
     ASSERT_RT(BLT_FALSE);
- 8001356:	9605      	str	r6, [sp, #20]
- 8001358:	9603      	str	r6, [sp, #12]
- 800135a:	e7bf      	b.n	80012dc <CanInit+0x88>
- 800135c:	20000090 	.word	0x20000090
- 8001360:	40006400 	.word	0x40006400
- 8001364:	0016e35f 	.word	0x0016e35f
- 8001368:	0007a120 	.word	0x0007a120
- 800136c:	00000667 	.word	0x00000667
+ 8001358:	9605      	str	r6, [sp, #20]
+ 800135a:	9603      	str	r6, [sp, #12]
+ 800135c:	e7be      	b.n	80012dc <CanInit+0x88>
+ 800135e:	46c0      	nop			@ (mov r8, r8)
+ 8001360:	20000090 	.word	0x20000090
+ 8001364:	40006400 	.word	0x40006400
+ 8001368:	0016e35f 	.word	0x0016e35f
+ 800136c:	0007a120 	.word	0x0007a120
  8001370:	00000201 	.word	0x00000201
  8001374:	08002050 	.word	0x08002050
 
@@ -4035,7 +4039,7 @@ void CanTransmitPacket(blt_int8u *data, blt_int8u len)
  8001380:	2908      	cmp	r1, #8
  8001382:	d904      	bls.n	800138e <CanTransmitPacket+0x16>
  8001384:	21da      	movs	r1, #218	@ 0xda
- 8001386:	4818      	ldr	r0, [pc, #96]	@ (80013e8 <CanTransmitPacket+0x70>)
+ 8001386:	4819      	ldr	r0, [pc, #100]	@ (80013ec <CanTransmitPacket+0x74>)
  8001388:	0049      	lsls	r1, r1, #1
  800138a:	f000 fbcd 	bl	8001b28 <AssertFailure>
 
@@ -4044,7 +4048,7 @@ void CanTransmitPacket(blt_int8u *data, blt_int8u len)
   {
     /* set the 11-bit CAN identifier. */
     txMsgHeader.Identifier = txMsgId;
- 800138e:	4b17      	ldr	r3, [pc, #92]	@ (80013ec <CanTransmitPacket+0x74>)
+ 800138e:	2362      	movs	r3, #98	@ 0x62
 
   txMsgHeader.TxFrameType = FDCAN_DATA_FRAME;
   txMsgHeader.FDFormat = FDCAN_CLASSIC_CAN;
@@ -4053,88 +4057,89 @@ void CanTransmitPacket(blt_int8u *data, blt_int8u len)
   txMsgHeader.MessageMarker = 0x52;
  8001390:	2252      	movs	r2, #82	@ 0x52
     txMsgHeader.Identifier = txMsgId;
- 8001392:	9301      	str	r3, [sp, #4]
+ 8001392:	33ff      	adds	r3, #255	@ 0xff
+ 8001394:	9301      	str	r3, [sp, #4]
     txMsgHeader.IdType = FDCAN_STANDARD_ID;
- 8001394:	2300      	movs	r3, #0
+ 8001396:	2300      	movs	r3, #0
     txMsgHeader.BitRateSwitch = FDCAN_BRS_ON;
   }
 #endif
 
   /* add the message to the transmit FIFO to request its transmission. */
   status = HAL_FDCAN_AddMessageToTxFifoQ(&canHandle, &txMsgHeader, data);
- 8001396:	4e16      	ldr	r6, [pc, #88]	@ (80013f0 <CanTransmitPacket+0x78>)
+ 8001398:	4e15      	ldr	r6, [pc, #84]	@ (80013f0 <CanTransmitPacket+0x78>)
     txMsgHeader.Identifier = txMsgId;
- 8001398:	a901      	add	r1, sp, #4
+ 800139a:	a901      	add	r1, sp, #4
   txMsgHeader.MessageMarker = 0x52;
- 800139a:	620a      	str	r2, [r1, #32]
+ 800139c:	620a      	str	r2, [r1, #32]
   status = HAL_FDCAN_AddMessageToTxFifoQ(&canHandle, &txMsgHeader, data);
- 800139c:	0030      	movs	r0, r6
- 800139e:	002a      	movs	r2, r5
+ 800139e:	0030      	movs	r0, r6
+ 80013a0:	002a      	movs	r2, r5
   txMsgHeader.DataLength = len;
- 80013a0:	60cc      	str	r4, [r1, #12]
+ 80013a2:	60cc      	str	r4, [r1, #12]
     txMsgHeader.IdType = FDCAN_STANDARD_ID;
- 80013a2:	604b      	str	r3, [r1, #4]
+ 80013a4:	604b      	str	r3, [r1, #4]
   txMsgHeader.TxFrameType = FDCAN_DATA_FRAME;
- 80013a4:	608b      	str	r3, [r1, #8]
+ 80013a6:	608b      	str	r3, [r1, #8]
   txMsgHeader.FDFormat = FDCAN_CLASSIC_CAN;
- 80013a6:	618b      	str	r3, [r1, #24]
+ 80013a8:	618b      	str	r3, [r1, #24]
   txMsgHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
- 80013a8:	610b      	str	r3, [r1, #16]
+ 80013aa:	610b      	str	r3, [r1, #16]
   txMsgHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
- 80013aa:	61cb      	str	r3, [r1, #28]
+ 80013ac:	61cb      	str	r3, [r1, #28]
   txMsgHeader.BitRateSwitch = FDCAN_BRS_OFF;
- 80013ac:	614b      	str	r3, [r1, #20]
+ 80013ae:	614b      	str	r3, [r1, #20]
   status = HAL_FDCAN_AddMessageToTxFifoQ(&canHandle, &txMsgHeader, data);
- 80013ae:	f7ff fafd 	bl	80009ac <HAL_FDCAN_AddMessageToTxFifoQ>
- 80013b2:	0005      	movs	r5, r0
+ 80013b0:	f7ff fafc 	bl	80009ac <HAL_FDCAN_AddMessageToTxFifoQ>
+ 80013b4:	0005      	movs	r5, r0
   /* read out which FIFO buffer was used for the last transmit request. */
   txMsgBuffer = HAL_FDCAN_GetLatestTxFifoQRequestBuffer(&canHandle);
- 80013b4:	0030      	movs	r0, r6
- 80013b6:	f7ff fb5d 	bl	8000a74 <HAL_FDCAN_GetLatestTxFifoQRequestBuffer>
- 80013ba:	0004      	movs	r4, r0
+ 80013b6:	0030      	movs	r0, r6
+ 80013b8:	f7ff fb5c 	bl	8000a74 <HAL_FDCAN_GetLatestTxFifoQRequestBuffer>
+ 80013bc:	0004      	movs	r4, r0
 
   /* only continue with polling for transmit completion if the message transmit request
    * could be submitted to a valid FIFO buffer.
    */
   if ((status == HAL_OK) && (txMsgBuffer != 0))
- 80013bc:	2d00      	cmp	r5, #0
- 80013be:	d111      	bne.n	80013e4 <CanTransmitPacket+0x6c>
- 80013c0:	2800      	cmp	r0, #0
- 80013c2:	d00f      	beq.n	80013e4 <CanTransmitPacket+0x6c>
+ 80013be:	2d00      	cmp	r5, #0
+ 80013c0:	d111      	bne.n	80013e6 <CanTransmitPacket+0x6e>
+ 80013c2:	2800      	cmp	r0, #0
+ 80013c4:	d00f      	beq.n	80013e6 <CanTransmitPacket+0x6e>
   {
     /* determine timeout time for the transmit completion. */
     timeout = TimerGet() + CAN_MSG_TX_TIMEOUT_MS;
- 80013c4:	f000 fba0 	bl	8001b08 <TimerGet>
- 80013c8:	3032      	adds	r0, #50	@ 0x32
- 80013ca:	0005      	movs	r5, r0
+ 80013c6:	f000 fb9f 	bl	8001b08 <TimerGet>
+ 80013ca:	3032      	adds	r0, #50	@ 0x32
+ 80013cc:	0005      	movs	r5, r0
     /* poll for completion of the transmit operation. */
     while (HAL_FDCAN_IsTxBufferMessagePending(&canHandle, txMsgBuffer) != 0)
- 80013cc:	0021      	movs	r1, r4
- 80013ce:	0030      	movs	r0, r6
- 80013d0:	f7ff fbe0 	bl	8000b94 <HAL_FDCAN_IsTxBufferMessagePending>
- 80013d4:	2800      	cmp	r0, #0
- 80013d6:	d005      	beq.n	80013e4 <CanTransmitPacket+0x6c>
+ 80013ce:	0021      	movs	r1, r4
+ 80013d0:	0030      	movs	r0, r6
+ 80013d2:	f7ff fbdf 	bl	8000b94 <HAL_FDCAN_IsTxBufferMessagePending>
+ 80013d6:	2800      	cmp	r0, #0
+ 80013d8:	d005      	beq.n	80013e6 <CanTransmitPacket+0x6e>
     {
       /* service the watchdog. */
       CopService();
- 80013d8:	f000 fc88 	bl	8001cec <CopService>
+ 80013da:	f000 fc87 	bl	8001cec <CopService>
       /* break loop upon timeout. this would indicate a hardware failure or no other
        * nodes connected to the bus.
        */
       if (TimerGet() > timeout)
- 80013dc:	f000 fb94 	bl	8001b08 <TimerGet>
- 80013e0:	42a8      	cmp	r0, r5
- 80013e2:	d9f3      	bls.n	80013cc <CanTransmitPacket+0x54>
+ 80013de:	f000 fb93 	bl	8001b08 <TimerGet>
+ 80013e2:	42a8      	cmp	r0, r5
+ 80013e4:	d9f3      	bls.n	80013ce <CanTransmitPacket+0x56>
       {
         break;
       }
     }
   }
 } /*** end of CanTransmitPacket ***/
- 80013e4:	b00a      	add	sp, #40	@ 0x28
- 80013e6:	bd70      	pop	{r4, r5, r6, pc}
- 80013e8:	08002050 	.word	0x08002050
- 80013ec:	000007e1 	.word	0x000007e1
+ 80013e6:	b00a      	add	sp, #40	@ 0x28
+ 80013e8:	bd70      	pop	{r4, r5, r6, pc}
+ 80013ea:	46c0      	nop			@ (mov r8, r8)
+ 80013ec:	08002050 	.word	0x08002050
  80013f0:	20000090 	.word	0x20000090
 
 080013f4 <CanReceivePacket>:
@@ -4151,7 +4156,7 @@ blt_bool CanReceivePacket(blt_int8u *data, blt_int8u *len)
 
   /* check if the expected CAN message was received? */
   if (HAL_FDCAN_GetRxFifoFillLevel(&canHandle, FDCAN_RX_FIFO0) > 0)
- 80013f6:	4f13      	ldr	r7, [pc, #76]	@ (8001444 <CanReceivePacket+0x50>)
+ 80013f6:	4f14      	ldr	r7, [pc, #80]	@ (8001448 <CanReceivePacket+0x54>)
 {
  80013f8:	0006      	movs	r6, r0
  80013fa:	000c      	movs	r4, r1
@@ -4182,28 +4187,29 @@ blt_bool CanReceivePacket(blt_int8u *data, blt_int8u *len)
  800141c:	2800      	cmp	r0, #0
  800141e:	d1f4      	bne.n	800140a <CanReceivePacket+0x16>
       if ( (rxMsgHeader.Identifier == rxMsgId) &&
- 8001420:	4b09      	ldr	r3, [pc, #36]	@ (8001448 <CanReceivePacket+0x54>)
+ 8001420:	23b0      	movs	r3, #176	@ 0xb0
  8001422:	9a00      	ldr	r2, [sp, #0]
- 8001424:	429a      	cmp	r2, r3
- 8001426:	d1f0      	bne.n	800140a <CanReceivePacket+0x16>
- 8001428:	9b01      	ldr	r3, [sp, #4]
- 800142a:	2b00      	cmp	r3, #0
- 800142c:	d1ed      	bne.n	800140a <CanReceivePacket+0x16>
+ 8001424:	005b      	lsls	r3, r3, #1
+ 8001426:	429a      	cmp	r2, r3
+ 8001428:	d1ef      	bne.n	800140a <CanReceivePacket+0x16>
+ 800142a:	9b01      	ldr	r3, [sp, #4]
+ 800142c:	2b00      	cmp	r3, #0
+ 800142e:	d1ec      	bne.n	800140a <CanReceivePacket+0x16>
       *len = (blt_int8u)(rxMsgHeader.DataLength);
- 800142e:	9b03      	ldr	r3, [sp, #12]
- 8001430:	b2db      	uxtb	r3, r3
- 8001432:	7023      	strb	r3, [r4, #0]
+ 8001430:	9b03      	ldr	r3, [sp, #12]
+ 8001432:	b2db      	uxtb	r3, r3
+ 8001434:	7023      	strb	r3, [r4, #0]
       ASSERT_RT(*len <= BOOT_COM_CAN_RX_MAX_DATA);
- 8001434:	2b08      	cmp	r3, #8
- 8001436:	d903      	bls.n	8001440 <CanReceivePacket+0x4c>
- 8001438:	4804      	ldr	r0, [pc, #16]	@ (800144c <CanReceivePacket+0x58>)
- 800143a:	4905      	ldr	r1, [pc, #20]	@ (8001450 <CanReceivePacket+0x5c>)
- 800143c:	f000 fb74 	bl	8001b28 <AssertFailure>
+ 8001436:	2b08      	cmp	r3, #8
+ 8001438:	d903      	bls.n	8001442 <CanReceivePacket+0x4e>
+ 800143a:	4804      	ldr	r0, [pc, #16]	@ (800144c <CanReceivePacket+0x58>)
+ 800143c:	4904      	ldr	r1, [pc, #16]	@ (8001450 <CanReceivePacket+0x5c>)
+ 800143e:	f000 fb73 	bl	8001b28 <AssertFailure>
         result = BLT_TRUE;
- 8001440:	2001      	movs	r0, #1
- 8001442:	e7e3      	b.n	800140c <CanReceivePacket+0x18>
- 8001444:	20000090 	.word	0x20000090
- 8001448:	00000667 	.word	0x00000667
+ 8001442:	2001      	movs	r0, #1
+ 8001444:	e7e2      	b.n	800140c <CanReceivePacket+0x18>
+ 8001446:	46c0      	nop			@ (mov r8, r8)
+ 8001448:	20000090 	.word	0x20000090
  800144c:	08002050 	.word	0x08002050
  8001450:	00000233 	.word	0x00000233
 

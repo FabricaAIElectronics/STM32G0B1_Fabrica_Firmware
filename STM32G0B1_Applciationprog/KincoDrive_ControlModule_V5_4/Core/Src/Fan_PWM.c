@@ -8,8 +8,12 @@
 
 #include "Fan_PWM.h"
 #include "main.h"
-#include "tim.h"
 #include <stdint.h>
+
+extern TIM_HandleTypeDef htim1;
+extern TIM_HandleTypeDef htim2;
+extern TIM_HandleTypeDef htim3;
+extern TIM_HandleTypeDef htim14;
 
 /* ════════════════════════════════════════════════════════════════════════════
  *  PWM pin mapping

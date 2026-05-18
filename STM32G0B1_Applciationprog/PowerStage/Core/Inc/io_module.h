@@ -41,11 +41,11 @@
  *
  * Calibration log:
  *   V24:  reported 22.20 V at actual 23.62 V (multimeter)
- *           → K = 6.286 × (23.62 / 22.20) = 6.689
+ *           → K = 6.286 × (22.5 / 22.9) = 6.689
  *   VCAP: not yet calibrated — start with 6.286, tune from a multimeter read.
  *   V12:  not yet calibrated — same, lower nominal voltage so easier to verify.
  * ------------------------------------------------------------------ */
-#define K_V24_MV_PER_COUNT      6.689f
+#define K_V24_MV_PER_COUNT      6.571f
 #define K_VCAP_MV_PER_COUNT     6.289f
 #define K_V12_MV_PER_COUNT      6.289f
 typedef struct {

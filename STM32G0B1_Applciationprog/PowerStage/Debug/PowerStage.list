@@ -6901,7 +6901,7 @@ void V24_volt_measurement(SystemMeasurement_t *ms){
  8005f30:	b002      	add	sp, #8
  8005f32:	bd80      	pop	{r7, pc}
  8005f34:	200001dc 	.word	0x200001dc
- 8005f38:	40d60c4a 	.word	0x40d60c4a
+ 8005f38:	40d245a2 	.word	0x40d245a2
 
 08005f3c <VCAP_volt_measurement>:
 

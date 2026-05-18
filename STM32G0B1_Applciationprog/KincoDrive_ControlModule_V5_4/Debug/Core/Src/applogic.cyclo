@@ -1,8 +1,0 @@
-../Core/Src/AppLogic.c:31:13:app_defaults	1
-../Core/Src/AppLogic.c:45:13:apply_hs	5
-../Core/Src/AppLogic.c:60:13:apply_fans	1
-../Core/Src/AppLogic.c:69:13:apply_all	1
-../Core/Src/AppLogic.c:79:13:handle_can	10
-../Core/Src/AppLogic.c:130:6:App_Init	2
-../Core/Src/AppLogic.c:143:6:App_Run	4
-../Core/Src/AppLogic.c:171:17:App_GetConfig	1

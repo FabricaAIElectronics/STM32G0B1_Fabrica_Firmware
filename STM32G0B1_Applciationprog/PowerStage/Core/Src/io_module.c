@@ -133,13 +133,13 @@ void NTC_Temp_measurement(SystemMeasurement_t *ms){
 }
 
 void V24_volt_measurement(SystemMeasurement_t *ms){
-	ms->voltage_mV.V24 = (uint16_t)(adc_buffer[ADC_V_24] * K_V24_MV_PER_COUNT);
+	ms->voltage_mV.V24 = (uint16_t)(adc_buffer[ADC_V_24]*6.286f);
 }
 
 void VCAP_volt_measurement(SystemMeasurement_t *ms){
-	ms->voltage_mV.VCAP = (uint16_t)(adc_buffer[ADC_V_CAP] * K_VCAP_MV_PER_COUNT);
+	ms->voltage_mV.VCAP = (uint16_t)(adc_buffer[ADC_V_CAP]*6.286f);
 }
 
 void V12_volt_measurement(SystemMeasurement_t *ms){
-	ms->voltage_mV.V12 = (uint16_t)(adc_buffer[ADC_V_12] * K_V12_MV_PER_COUNT);
+	ms->voltage_mV.V12 = (uint16_t)(adc_buffer[ADC_V_12]*6.286f);
 }

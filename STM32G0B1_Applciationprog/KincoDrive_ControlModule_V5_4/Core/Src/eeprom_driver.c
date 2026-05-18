@@ -1,65 +1,41 @@
 /**
  * @file    eeprom_driver.c
- * @brief   I2C EEPROM driver and startup configuration storage.
+ * @brief   I2C EEPROM driver — raw access + Config_t load/save.
  *
  * @author  jordan
- * @date    2026-05-06
+ * @date    2026-04-21
  */
 
 #include "eeprom_driver.h"
-#include "hs_switch.h"
-#include "power_monitor.h"
-#include "Fan_PWM.h"
 #include "main.h"
 
 #include <string.h>
 #include <stdbool.h>
 
+/* ════════════════════════════════════════════════════════════════════════════
+ *  EEPROM hardware constants
+ * ════════════════════════════════════════════════════════════════════════════ */
+
 #define EEPROM_I2C_ADDR     0xA0U
-#define PAGE_SIZE           64U
-#define PAGE_COUNT          512U
+#define PAGE_SIZE           64U     /* bytes per page */
+#define PAGE_COUNT          512U    /* total pages    */
 
 #define CFG_PAGE            0U
 #define CFG_OFFSET          0U
+#define CFG_MAGIC           0xA5U
+
+/* On-wire blob: 1B magic + Config_t + 1B checksum. */
+typedef struct __attribute__((packed)) {
+    uint8_t  magic;
+    Config_t cfg;
+    uint8_t  checksum;
+} EEPROM_Blob_t;
 
 extern I2C_HandleTypeDef hi2c1;
 
-/* ────────── RAM cache ────────── */
-
-static EEPROM_StartupConfig_t cached_cfg;
-
-/* ────────── Internal helpers ────────── */
-
-static uint8_t compute_checksum(const EEPROM_StartupConfig_t *cfg)
-{
-    uint8_t cs = 0;
-    const uint8_t *p = (const uint8_t *)cfg;
-    for (uint8_t i = 0; i < (uint8_t)(sizeof(EEPROM_StartupConfig_t) - 1U); ++i) {
-        cs ^= p[i];
-    }
-    return cs;
-}
-
-static bool config_is_valid(const EEPROM_StartupConfig_t *cfg)
-{
-    if (cfg->magic != EEPROM_MAGIC) return false;
-    return (compute_checksum(cfg) == cfg->checksum);
-}
-
-static void load_safe_defaults(EEPROM_StartupConfig_t *cfg)
-{
-    memset(cfg, 0, sizeof(*cfg));
-    cfg->magic     = EEPROM_MAGIC;
-    cfg->hs_state  = 0x0FU;                          /* all HS ON                */
-    cfg->oc_dr_mA  = OC_THRESHOLD_DEFAULT_MA;        /* 5000 mA per channel       */
-    cfg->oc_e_mA   = OC_THRESHOLD_DEFAULT_MA;
-    cfg->oc_sc_mA  = OC_THRESHOLD_DEFAULT_MA;
-    cfg->uv_24V_mV = UV_24V_THRESHOLD_DEFAULT;       /* 20.0 V                    */
-    cfg->uv_12V_mV = UV_12V_THRESHOLD_DEFAULT;       /* 10.0 V                    */
-    cfg->checksum  = compute_checksum(cfg);
-}
-
-/* ────────── Low-level EEPROM read / write (page-boundary aware) ────────── */
+/* ════════════════════════════════════════════════════════════════════════════
+ *  Low-level EEPROM read / write (page-boundary aware)
+ * ════════════════════════════════════════════════════════════════════════════ */
 
 static uint16_t bytes_to_page_end(uint16_t size, uint16_t offset)
 {
@@ -82,8 +58,11 @@ void EEPROM_Write(uint16_t page, uint16_t offset, uint8_t *data, uint16_t size)
             return;
         }
 
+        /* Wait for EEPROM internal write cycle */
         for (int retry = 0; retry < 10; ++retry) {
-            if (HAL_I2C_IsDeviceReady(&hi2c1, EEPROM_I2C_ADDR, 1U, 100U) == HAL_OK) break;
+            if (HAL_I2C_IsDeviceReady(&hi2c1, EEPROM_I2C_ADDR, 1U, 100U) == HAL_OK) {
+                break;
+            }
         }
 
         current_page++;
@@ -126,103 +105,59 @@ void EEPROM_pageErase(uint16_t page)
     HAL_Delay(5U);
 
     for (int retry = 0; retry < 10; ++retry) {
-        if (HAL_I2C_IsDeviceReady(&hi2c1, EEPROM_I2C_ADDR, 1U, 100U) == HAL_OK) break;
+        if (HAL_I2C_IsDeviceReady(&hi2c1, EEPROM_I2C_ADDR, 1U, 100U) == HAL_OK) {
+            break;
+        }
     }
 }
 
-/* ────────── Startup config public API ────────── */
+/* ════════════════════════════════════════════════════════════════════════════
+ *  Checksum helper  (XOR of magic + Config_t bytes)
+ * ════════════════════════════════════════════════════════════════════════════ */
 
-void EEPROM_Init(void)
+static uint8_t compute_checksum(const EEPROM_Blob_t *b)
 {
-    EEPROM_StartupConfig_t cfg;
-    EEPROM_Read(CFG_PAGE, CFG_OFFSET, (uint8_t *)&cfg, (uint16_t)sizeof(cfg));
-
-    if (config_is_valid(&cfg)) {
-        /* Clamp fan values to 0–100 just in case of bit rot */
-        if (cfg.fan_dr > 100U) cfg.fan_dr = 0U;
-        if (cfg.fan_ep > 100U) cfg.fan_ep = 0U;
-        if (cfg.fan_eh > 100U) cfg.fan_eh = 0U;
-        if (cfg.fan_st > 100U) cfg.fan_st = 0U;
-        if (cfg.fan_sf > 100U) cfg.fan_sf = 0U;
-        cached_cfg = cfg;
-    } else {
-        /* Invalid EEPROM — use safe defaults in RAM; don't write */
-        load_safe_defaults(&cached_cfg);
+    uint8_t cs = b->magic;
+    const uint8_t *p = (const uint8_t *)&b->cfg;
+    for (uint8_t i = 0; i < (uint8_t)sizeof(Config_t); ++i) {
+        cs ^= p[i];
     }
+    return cs;
 }
 
-void EEPROM_LoadAndApplyDefaults(void)
+/* ════════════════════════════════════════════════════════════════════════════
+ *  Config_t load / save
+ * ════════════════════════════════════════════════════════════════════════════ */
+
+bool EEPROM_Load(Config_t *out)
 {
-    load_safe_defaults(&cached_cfg);
-    EEPROM_ApplyStartupConfig();
+    if (out == NULL) return false;
+
+    EEPROM_Blob_t blob;
+    EEPROM_Read(CFG_PAGE, CFG_OFFSET, (uint8_t *)&blob, (uint16_t)sizeof(blob));
+
+    if (blob.magic != CFG_MAGIC)              return false;
+    if (compute_checksum(&blob) != blob.checksum) return false;
+
+    /* Clamp fan values to 0–100 in case of bit rot. */
+    if (blob.cfg.fan_dr > 100U) blob.cfg.fan_dr = 0U;
+    if (blob.cfg.fan_ep > 100U) blob.cfg.fan_ep = 0U;
+    if (blob.cfg.fan_eh > 100U) blob.cfg.fan_eh = 0U;
+    if (blob.cfg.fan_st > 100U) blob.cfg.fan_st = 0U;
+    if (blob.cfg.fan_sf > 100U) blob.cfg.fan_sf = 0U;
+
+    *out = blob.cfg;
+    return true;
 }
 
-void EEPROM_ApplyStartupConfig(void)
+void EEPROM_Save(const Config_t *in)
 {
-    const EEPROM_StartupConfig_t *cfg = &cached_cfg;
+    if (in == NULL) return;
 
-    /* ── High-side switches (boot HS state per EEPROM — user requirement) ── */
-    if (cfg->hs_state & EEPROM_HS_DR)    HS_Enable(HS_MODULE_DRIVE);
-    else                                 HS_Disable(HS_MODULE_DRIVE);
+    EEPROM_Blob_t blob;
+    blob.magic    = CFG_MAGIC;
+    blob.cfg      = *in;
+    blob.checksum = compute_checksum(&blob);
 
-    if (cfg->hs_state & EEPROM_HS_E)     HS_Enable(HS_MODULE_EXTRUDER);
-    else                                 HS_Disable(HS_MODULE_EXTRUDER);
-
-    if (cfg->hs_state & EEPROM_HS_SC)    HS_Enable(HS_MODULE_SCRUBBING);
-    else                                 HS_Disable(HS_MODULE_SCRUBBING);
-
-    if (cfg->hs_state & EEPROM_HS_VBUCK) Buck12V_Enable();
-    else                                 Buck12V_Disable();
-
-    /* ── Fan speeds ── */
-    set_Fan_PWM(FAN_DR, cfg->fan_dr);
-    set_Fan_PWM(FAN_EP, cfg->fan_ep);
-    set_Fan_PWM(FAN_EH, cfg->fan_eh);
-    set_Fan_PWM(FAN_ST, cfg->fan_st);
-    set_Fan_PWM(FAN_SF, cfg->fan_sf);
-
-    /* ── OC + UV thresholds ── */
-    PM_Set_OC_Threshold(HS_MODULE_DRIVE,     cfg->oc_dr_mA);
-    PM_Set_OC_Threshold(HS_MODULE_EXTRUDER,  cfg->oc_e_mA);
-    PM_Set_OC_Threshold(HS_MODULE_SCRUBBING, cfg->oc_sc_mA);
-    PM_Set_UV_24V_Threshold(cfg->uv_24V_mV);
-    PM_Set_UV_12V_Threshold(cfg->uv_12V_mV);
-}
-
-void EEPROM_SaveStartupConfig(void)
-{
-    EEPROM_StartupConfig_t cfg;
-    memset(&cfg, 0, sizeof(cfg));
-    cfg.magic = EEPROM_MAGIC;
-
-    /* ── Snapshot HS GPIO + buck enable ── */
-    cfg.hs_state = 0U;
-    if (HS_IsEnabled(HS_MODULE_DRIVE))     cfg.hs_state |= EEPROM_HS_DR;
-    if (HS_IsEnabled(HS_MODULE_EXTRUDER))  cfg.hs_state |= EEPROM_HS_E;
-    if (HS_IsEnabled(HS_MODULE_SCRUBBING)) cfg.hs_state |= EEPROM_HS_SC;
-    if (Buck12V_IsEnabled())               cfg.hs_state |= EEPROM_HS_VBUCK;
-
-    /* ── Snapshot fan setpoints ── */
-    cfg.fan_dr = get_Fan_PWM_Pct(FAN_DR);
-    cfg.fan_ep = get_Fan_PWM_Pct(FAN_EP);
-    cfg.fan_eh = get_Fan_PWM_Pct(FAN_EH);
-    cfg.fan_st = get_Fan_PWM_Pct(FAN_ST);
-    cfg.fan_sf = get_Fan_PWM_Pct(FAN_SF);
-
-    /* ── Snapshot live thresholds ── */
-    cfg.oc_dr_mA  = PM_Get_OC_Threshold(HS_MODULE_DRIVE);
-    cfg.oc_e_mA   = PM_Get_OC_Threshold(HS_MODULE_EXTRUDER);
-    cfg.oc_sc_mA  = PM_Get_OC_Threshold(HS_MODULE_SCRUBBING);
-    cfg.uv_24V_mV = PM_Get_UV_24V_Threshold();
-    cfg.uv_12V_mV = PM_Get_UV_12V_Threshold();
-
-    cfg.checksum = compute_checksum(&cfg);
-
-    EEPROM_Write(CFG_PAGE, CFG_OFFSET, (uint8_t *)&cfg, (uint16_t)sizeof(cfg));
-    cached_cfg = cfg;
-}
-
-const EEPROM_StartupConfig_t *EEPROM_GetCachedConfig(void)
-{
-    return &cached_cfg;
+    EEPROM_Write(CFG_PAGE, CFG_OFFSET, (uint8_t *)&blob, (uint16_t)sizeof(blob));
 }

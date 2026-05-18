@@ -19,7 +19,6 @@
 #include "io_module.h"
 #include "fan_ctrl.h"
 #include "eeprom_driver.h"
-#include "battery.h"
 #include <string.h>
 #include <stdbool.h>
 
@@ -63,7 +62,6 @@ UV_Status_t uv_status = {
     .uv_VCAP_mV     = 20000,
     .uv_V12_mV      = 10000              // 10.0 V default
 };
-
 
 /* ============================================================
  * CANInitTxHeader — CAN1 (internal bus) TX header
@@ -189,14 +187,9 @@ HAL_StatusTypeDef CAN_SendAll(uint16_t canid, uint8_t dlc, uint8_t *data)
  * ============================================================ */
 static void Parse_RX_Commands(uint32_t id, uint8_t *data, uint32_t dlc)
 {
-    /* ---- System reset / bootloader ----
-     * HAL note: HAL_FDCAN_GetRxMessage() puts the RAW 4-bit DLC code
-     * (0..15) in the low nibble of DataLength — NOT the bit-shifted
-     * FDCAN_DLC_BYTES_x form. The `dlc` parameter comes straight from
-     * rxHdr.DataLength, so compare it against the integer byte count
-     * (mask with 0x0F for safety against any future HAL change). */
+    /* ---- System reset / bootloader ---- */
     if (id == DEVICE_ADDR) {
-        if ((data[0] == 0xFF) && ((dlc & 0x0FU) == 2U)) {
+        if ((data[0] == 0xFF) && (dlc == FDCAN_DLC_BYTES_2)) {
             canstat.system_update_detected = true;
             canstat.system_transmit_stat   = false;
             NVIC_SystemReset();
@@ -218,7 +211,7 @@ static void Parse_RX_Commands(uint32_t id, uint8_t *data, uint32_t dlc)
     /* ---- HS switch control ---- */
     if (id == CMD_HS) {
         for (uint8_t i = 0; i < RAIL_COUNT; i++) {
-            can_rxMessage.hs_state[i] = (((*data>>i)&0x01) != 0) ? 1 : 0;
+            can_rxMessage.hs_state[i] = (data[i] != 0) ? 1 : 0;
         }
         can_rxMessage.hs_cmd_received = 1;
     }
@@ -252,24 +245,8 @@ static void Parse_RX_Commands(uint32_t id, uint8_t *data, uint32_t dlc)
         can_rxMessage.ctrl_cmd_received = 1;
     }
 
-    /* ---- OLED per-page dwell ---- */
-    if (id == CMD_PAGE_DWELL) {
-        can_rxMessage.page_dwell[0]            = data[0];
-        can_rxMessage.page_dwell[1]            = data[1];
-        can_rxMessage.page_dwell[2]            = data[2];
-        can_rxMessage.page_dwell_cmd_received  = 1;
-    }
-
-    /* ---- Battery SOC-low warning threshold ---- */
-    if (id == CMD_BAT_CFG) {
-        can_rxMessage.bat_low_soc_pct       = data[0];
-        can_rxMessage.bat_cfg_cmd_received  = 1;
-    }
-
-    /* ---- Flash-over-CAN watchdog ----
-     * HAL note: rxHdr.DataLength is the raw 4-bit DLC code (0..15), not
-     * the bit-shifted FDCAN_DLC_BYTES_x form. Mask & compare to byte count. */
-    if ((data[0] == 0xFF) && ((dlc & 0x0FU) == 1U)) {
+    /* ---- Flash-over-CAN watchdog ---- */
+    if ((data[0] == 0xFF) && (dlc == FDCAN_DLC_BYTES_1)) {
         can_rxMessage.flash_detected = 1;
         lastFlashMsgTick = HAL_GetTick();
     }
@@ -402,7 +379,7 @@ void FOCdetection(void)
 /* ============================================================
  * CAN_Broadcast_HS_State
  *
- * [0x150] DLC=5
+ * [0x662] DLC=5
  *   Byte[0]: Enable bitmask
  *   Byte[1]: Fault  bitmask   (TPS2493 FLT pin)
  *   Byte[2]: PGood  bitmask   (TPS2493 PG  pin)
@@ -437,7 +414,7 @@ void CAN_Broadcast_HS_State(void)
 /* ============================================================
  * CAN_Broadcast_HS_Current_A
  *
- * [0x151] DLC=8 — BAT, CAP, SBC, DRIVE current (uint16_t mA)
+ * [0x663] DLC=8 — BAT, CAP, SBC, DRIVE current (uint16_t mA)
  * ============================================================ */
 void CAN_Broadcast_HS_Current_A(SystemMeasurement_t *ms)
 {
@@ -460,7 +437,7 @@ void CAN_Broadcast_HS_Current_A(SystemMeasurement_t *ms)
 /* ============================================================
  * CAN_Broadcast_HS_Current_B
  *
- * [0x155] DLC=4 — AUX, LED current (uint16_t mA)
+ * [0x66C] DLC=4 — AUX, LED current (uint16_t mA)
  * ============================================================ */
 void CAN_Broadcast_HS_Current_B(SystemMeasurement_t *ms)
 {
@@ -479,7 +456,7 @@ void CAN_Broadcast_HS_Current_B(SystemMeasurement_t *ms)
 /* ============================================================
  * CAN_Broadcast_Voltage
  *
- * [0x152] DLC=8
+ * [0x664] DLC=8
  *   Byte[0-1]: V24  (uint16_t mV)
  *   Byte[2-3]: VCAP (uint16_t mV)
  *   Byte[4-5]: V12  (uint16_t mV)
@@ -496,28 +473,18 @@ void CAN_Broadcast_Voltage(SystemMeasurement_t *ms)
     uint16_t vcap = ms->voltage_mV.VCAP;
     uint16_t v12  = ms->voltage_mV.V12;
 
-    /* Update UV fault flags from live measurements vs thresholds.
-     * uv_fault_mask bit layout (broadcast in BCAST_VOLTAGE byte 6):
-     *   bit 0 — V24  UV
-     *   bit 1 — VCAP UV
-     *   bit 2 — V12  UV
-     *   bit 3 — SOC LOW  (filtered SOC < Battery_GetLowSocThreshold_pct,
-     *                     configurable via CMD_BAT_CFG 0x147)
-     *   bits 4..7 — reserved
-     * The bit is set fresh every broadcast so it follows the live SOC
-     * without latching. */
+    /* Update UV fault flags from live measurements vs thresholds */
     uv_status.uv_fault_mask = 0;
-    if (v24  < uv_status.uv_V24_mV)        uv_status.uv_fault_mask |= UV_FAULT_V24;
-    if (vcap < uv_status.uv_VCAP_mV)       uv_status.uv_fault_mask |= UV_FAULT_VCAP;
-    if (v12  < uv_status.uv_V12_mV)        uv_status.uv_fault_mask |= UV_FAULT_V12;
-    if (Battery_IsLow(ms->battery_soc_pct)) uv_status.uv_fault_mask |= UV_FAULT_SOC_LOW;
+    if (v24  < uv_status.uv_V24_mV)  uv_status.uv_fault_mask |= UV_FAULT_V24;
+    if (vcap < uv_status.uv_VCAP_mV) uv_status.uv_fault_mask |= UV_FAULT_VCAP;
+    if (v12  < uv_status.uv_V12_mV)  uv_status.uv_fault_mask |= UV_FAULT_V12;
 
     uint8_t data[8];
     data[0] = (v24  >> 8) & 0xFF;  data[1] = v24  & 0xFF;
     data[2] = (vcap >> 8) & 0xFF;  data[3] = vcap & 0xFF;
     data[4] = (v12  >> 8) & 0xFF;  data[5] = v12  & 0xFF;
     data[6] = uv_status.uv_fault_mask;
-    data[7] = ms->battery_soc_pct;   /* 6S Li-ion SOC 0..100 % (was Reserved) */
+    data[7] = 0x00;
 
     CAN_SendAll(BCAST_VOLTAGE, FDCAN_DLC_BYTES_8, data);
 }
@@ -525,7 +492,7 @@ void CAN_Broadcast_Voltage(SystemMeasurement_t *ms)
 /* ============================================================
  * CAN_Broadcast_Fan
  *
- * [0x153] DLC=4
+ * [0x66A] DLC=4
  *   Byte[0]  : Fan mode  (0=OFF, 1=ON, 2=AUTO)
  *   Byte[1]  : Duty %    (0–100)
  *   Byte[2-3]: Temp      (int16_t °C × 10)
@@ -548,7 +515,7 @@ void CAN_Broadcast_Fan(FanCTRL_t *fan, float temp_C)
 /* ============================================================
  * CAN_Broadcast_EEPROM
  *
- * [0x154] DLC=8 — fan defaults + hs_default_state from Config
+ * [0x66B] DLC=8 — fan defaults + hs_default_state from Config
  *   Byte[0]: fan_default_mode
  *   Byte[1]: fan_default_duty
  *   Byte[2]: fan_min_duty
@@ -577,7 +544,7 @@ void CAN_Broadcast_EEPROM(Config *cfg)
 /* ============================================================
  * CAN_Broadcast_UV
  *
- * [0x156] DLC=6 — active UV thresholds from uv_status
+ * [0x66E] DLC=6 — active UV thresholds from uv_status
  *   Byte[0-1]: V24  UV threshold (uint16_t mV)
  *   Byte[2-3]: VCAP UV threshold (uint16_t mV)
  *   Byte[4-5]: V12  UV threshold (uint16_t mV)
@@ -600,13 +567,13 @@ void CAN_Broadcast_UV(void)
 /* ============================================================
  * CAN_Broadcast_OC_Config
  *
- * [0x157] DLC=8 — OC thresholds RAIL_AUX … RAIL_CAP
+ * [0x66F] DLC=8 — OC thresholds RAIL_AUX … RAIL_CAP
  *   Byte[0-1]: RAIL_AUX   (uint16_t mA)
  *   Byte[2-3]: RAIL_LED   (uint16_t mA)
  *   Byte[4-5]: RAIL_DRIVE (uint16_t mA)
  *   Byte[6-7]: RAIL_CAP   (uint16_t mA)
  *
- * [0x158] DLC=2 — OC threshold RAIL_SBC
+ * [0x670] DLC=2 — OC threshold RAIL_SBC
  *   Byte[0-1]: RAIL_SBC   (uint16_t mA)
  * ============================================================ */
 void CAN_Broadcast_OC_Config(void)
@@ -637,7 +604,7 @@ void CAN_Broadcast_OC_Config(void)
 /* ============================================================
  * CAN_Broadcast_IO_Status
  *
- * [0x159] DLC=3
+ * [0x672] DLC=3
  *   Byte[0]: SW pin state       (0/1)
  *   Byte[1]: V_LED_PWR state    (0/1)
  *   Byte[2]: CAN relay enabled  (0/1)
@@ -652,35 +619,4 @@ void CAN_Broadcast_IO_Status(void)
     data[2] = (uint8_t)canstat.relay_enabled;
 
     CAN_SendAll(BCAST_IO_STATUS, FDCAN_DLC_BYTES_3, data);
-}
-
-/* ============================================================
- * CAN_Broadcast_Battery_Cfg
- *
- * [0x15A] DLC=8 — static battery configuration. Lets the host display
- * the cutoff and full reference voltages without hardcoding them, and
- * see which internal-resistance value is being used for IR compensation.
- *
- *   Byte[0-1] : V_cutoff_mV   (uint16 BE) — 0% SOC reference
- *   Byte[2-3] : V_full_mV     (uint16 BE) — 100% SOC reference
- *   Byte[4-5] : R_int_mOhm    (uint16 BE) — pack internal resistance
- *   Byte[6]   : Cell_Count    (uint8)     — series cells (6 for 6S)
- *   Byte[7]   : Reserved
- * ============================================================ */
-void CAN_Broadcast_Battery_Cfg(void)
-{
-    if (!canstat.system_transmit_stat) return;
-
-    const uint16_t v_cut  = BATTERY_CUTOFF_MV;
-    const uint16_t v_full = BATTERY_FULL_MV;
-    const uint16_t r_int  = BATTERY_INT_R_MILLIOHM;
-
-    uint8_t data[8];
-    data[0] = (v_cut  >> 8) & 0xFF;  data[1] = v_cut  & 0xFF;
-    data[2] = (v_full >> 8) & 0xFF;  data[3] = v_full & 0xFF;
-    data[4] = (r_int  >> 8) & 0xFF;  data[5] = r_int  & 0xFF;
-    data[6] = 6U;     /* 6S Li-ion / Li-Po */
-    data[7] = 0x00;
-
-    CAN_SendAll(BCAST_BATTERY_CFG, FDCAN_DLC_BYTES_8, data);
 }

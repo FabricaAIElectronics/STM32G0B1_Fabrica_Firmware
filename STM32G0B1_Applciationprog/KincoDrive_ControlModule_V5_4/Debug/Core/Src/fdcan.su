@@ -1,0 +1,2 @@
+../Core/Src/fdcan.c:15:17:dlc_bytes_to_fdcan_dlc	16	static
+../Core/Src/fdcan.c:27:6:FDCAN_SendFrame	80	static

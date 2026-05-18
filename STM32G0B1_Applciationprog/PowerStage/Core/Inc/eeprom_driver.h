@@ -15,23 +15,13 @@
  * Magic number — identifies a valid PowerStage config in EEPROM
  * Change this if Config struct layout changes (forces re-init)
  * ============================================================ */
-/* Bump CONFIG_MAGIC whenever the Config layout OR the LoadDefault values
- * change in a way that should override an existing device's saved config.
- *  0xAB13 → 0xAB14: SBC OC threshold default changed 5000 → 0 (no MCU EN).
- *  0xAB14 → 0xAB15: added page_dwell[CONFIG_PAGE_COUNT] for per-page OLED dwell.
- *  0xAB15 → 0xAB16: added bat_low_soc_pct for runtime SOC-low warning threshold.
- */
-#define CONFIG_MAGIC            0xAB16
+#define CONFIG_MAGIC            0xAB13
 
 /* ============================================================
  * Rail count — must match PowerRailIndex_t in io_module.h
  * Defined here to avoid circular include with io_module.h
  * ============================================================ */
 #define CONFIG_RAIL_COUNT       5       // AUX, LED, DRIVE, CAP, SBC
-
-/* OLED page count — must match DisplayPage_t in ui_display.h.
- * Duplicated here to avoid pulling ui_display.h into the EEPROM driver. */
-#define CONFIG_PAGE_COUNT       3       // OVERVIEW, RAIL_STATUS, FAULT_DETAIL
 
 /* ============================================================
  * Config — persisted to EEPROM
@@ -75,18 +65,6 @@ typedef struct __attribute__((packed)) {
     uint16_t uv_V24_mV;                            // V24  UV trip point (e.g. 20000 = 20 V)
     uint16_t uv_VCAP_mV;                           // VCAP UV trip point
     uint16_t uv_V12_mV;                            // V12  UV trip point (e.g. 10000 = 10 V)
-
-    /* ---- OLED per-page dwell, in scheduler ticks (1 tick = 500 ms) ----
-     * Index matches DisplayPage_t: [OVERVIEW, RAIL_STATUS, FAULT_DETAIL].
-     * A value of 0 means "use the firmware default" — currently 10 ticks
-     * (= 5 s). Range otherwise 1..255 → 0.5 s .. 127.5 s per page. */
-    uint8_t  page_dwell[CONFIG_PAGE_COUNT];
-
-    /* ---- Battery SOC-low warning threshold (% SOC) ----
-     * Set via CMD_BAT_CFG (0x147). 0 disables the warning entirely;
-     * 1..100 trips ERR_BAT_LOW / UV_FAULT_SOC_LOW when filtered SOC < pct.
-     * Factory default is BATTERY_LOW_SOC_PCT (battery.h). */
-    uint8_t  bat_low_soc_pct;
 
 } Config;
 

@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "header.h"
 #include "powerstage_app.h"
 #include "io_module.h"
 /* USER CODE END Includes */
@@ -128,7 +128,7 @@ int main(void)
   MX_I2C1_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-//  AppInit();        /* OpenBLT bootloader hook */
+  AppInit();        /* OpenBLT bootloader hook */
   PS_App_Init();    /* PowerStage: CAN TX header init (full init deferred to first task call) */
   HS_DisableAll();
   /* USER CODE END 2 */
@@ -140,7 +140,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-//    AppTask();        /* OpenBLT bootloader hook */
+    AppTask();        /* OpenBLT bootloader hook */
     PS_App_Task();    /* PowerStage state machine: Init → Running ↔ Fault */
   }
   /* USER CODE END 3 */
@@ -486,7 +486,7 @@ static void MX_TIM1_Init(void)
   htim1.Init.Period = 999;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
-  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
   {
     Error_Handler();

@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PCANExplorerProject Version="5.0" Name="KincoDrivePcanTest">
     <Connections AutoReset="0" IgnoreRTRLength="0" ProcessRTR="1">
-        <Connection Bus="1" Enabled="0" Protocol="0" CalcBusLoad="1" SymbolsFileName="KincoDrive_ControlModule.dbc" BitRate="28" Connection="pcan500@pcan_usb" Name="Connection1"/>
+        <Connection Bus="1" Enabled="1" Protocol="0" SymbolsFileName="KincoDrive_ControlModule.dbc" BitRate="28" Connection="pcan500@pcan_usb" Name="Connection1"/>
     </Connections>
     <MessageFilters/>
     <TransmitList>
-        <TransmitListItem Bus="1" CanId="272" Type="0" DLC="1" Data="01" Creator="User"/>
-        <TransmitListItem Bus="1" CanId="257" Type="0" DLC="2" Data="FF" Creator="User"/>
-        <TransmitListItem Bus="1" CanId="276" Type="0" DLC="4" Data="" Creator="User"/>
-        <TransmitListItem Bus="1" CanId="274" Type="0" DLC="1" Data="01" Creator="User"/>
-        <TransmitListItem Bus="1" CanId="291" Type="0" DLC="8" Data="010203040506" CycleTime="50" IsPaused="0" Creator="User"/>
-        <TransmitListItem Bus="1" CanId="521208099" Type="2" DLC="8" Data="1122334411" CycleTime="50" IsPaused="0" Creator="User"/>
+        <TransmitListItem Bus="1" CanId="17827431" Type="2" DLC="1" Data="0F" Creator="User"/>
+        <TransmitListItem Bus="1" CanId="1639" Type="0" DLC="2" Data="FF" Creator="User"/>
+        <TransmitListItem Bus="1" CanId="33556071" Type="2" DLC="1" Data="01" Creator="User"/>
+        <TransmitListItem Bus="1" CanId="17827431" Type="2" DLC="1" Data="" Creator="User"/>
     </TransmitList>
     <Files>
         <File RelativePath="KincoDrive_ControlModule.dbc"/>

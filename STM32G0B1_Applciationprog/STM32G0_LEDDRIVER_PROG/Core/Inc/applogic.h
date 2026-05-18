@@ -9,6 +9,7 @@
 #define INC_APPLOGIC_H_
 
 #include "main.h"
+#include "header.h"
 #include "eeprom_driver.h"
 #include "can_operation.h"
 #include "peripheral.h"

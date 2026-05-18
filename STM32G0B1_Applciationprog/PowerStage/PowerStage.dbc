@@ -1,7 +1,6 @@
 VERSION ""
 
-
-NS_ : 
+NS_ :
 	NS_DESC_
 	CM_
 	BA_DEF_
@@ -11,321 +10,226 @@ NS_ :
 	CAT_
 	FILTER
 	BA_DEF_DEF_
-	EV_DATA_
-	ENVVAR_DATA_
-	SGTYPE_
-	SGTYPE_VAL_
 	BA_DEF_SGTYPE_
 	BA_SGTYPE_
-	SIG_TYPE_REF_
-	VAL_TABLE_
-	SIG_GROUP_
-	SIG_VALTYPE_
-	SIGTYPE_VALTYPE_
-	BO_TX_BU_
-	BA_DEF_REL_
-	BA_REL_
-	BA_DEF_DEF_REL_
-	BU_SG_REL_
-	BU_EV_REL_
-	BU_BO_REL_
-	SG_MUL_VAL_
+	BA_DEF_CD_
+	BA_ALIAS_
+	BA_DEF_ATTR_
+	BA_ATTR_
 
 BS_:
 
 BU_: PowerStage Master
 
+BO_ 1634 BCAST_HS_STATE : 5 PowerStage
+ SG_ HS_Enable_Mask    : 0|8@1+  (1,0)       [0|31]   ""      Master
+ SG_ HS_Fault_Mask     : 8|8@1+  (1,0)       [0|31]   ""      Master
+ SG_ HS_PGood_Mask     : 16|8@1+ (1,0)       [0|31]   ""      Master
+ SG_ HS_OC_Warn_Mask   : 24|8@1+ (1,0)       [0|31]   ""      Master
+ SG_ HS_OC_Fault_Mask  : 32|8@1+ (1,0)       [0|31]   ""      Master
 
-BO_ 304 DEVICE_ADDR: 2 Master
- SG_ Device_Command : 0|8@1+ (1,0) [0|255] ""  PowerStage
+BO_ 1635 BCAST_HS_CURR_A : 8 PowerStage
+ SG_ I_BAT_mA          : 7|16@0+  (1,0)  [0|50000]   "mA"     Master
+ SG_ I_CAP_mA          : 23|16@0+ (1,0)  [0|50000]   "mA"     Master
+ SG_ I_SBC_mA          : 39|16@0+ (1,0)  [0|50000]   "mA"     Master
+ SG_ I_DRIVE_mA        : 55|16@0+ (1,0)  [0|50000]   "mA"     Master
 
-BO_ 305 PS_Bootloader_TX: 8 PowerStage
- SG_ Boot_Resp : 0|8@1+ (1,0) [0|255] ""  Master
+BO_ 1636 BCAST_VOLTAGE : 8 PowerStage
+ SG_ V24_mV            : 7|16@0+  (1,0)  [0|30000]   "mV"     Master
+ SG_ VCAP_mV           : 23|16@0+ (1,0)  [0|30000]   "mV"     Master
+ SG_ V12_mV            : 39|16@0+ (1,0)  [0|15000]   "mV"     Master
+ SG_ UV_Fault_Mask     : 48|8@1+  (1,0)      [0|7]    ""      Master
+ SG_ Reserved_B7       : 56|8@1+  (1,0)      [0|255]  ""      Master
 
-BO_ 320 CMD_FAN: 2 Master
- SG_ Fan_Mode : 0|8@1+ (1,0) [0|2] ""  PowerStage
- SG_ Fan_Duty : 8|8@1+ (1,0) [0|100] "%"  PowerStage
+BO_ 1637 CMD_FAN : 2 Master
+ SG_ Fan_Mode          : 0|8@1+  (1,0)       [0|2]    ""      PowerStage
+ SG_ Fan_Duty          : 8|8@1+  (1,0)       [0|100]  "%"     PowerStage
 
-BO_ 321 CMD_HS: 1 Master
- SG_ HS_Cmd_AUX : 0|1@1+ (1,0) [0|1] ""  PowerStage
- SG_ HS_Cmd_LED : 1|1@1+ (1,0) [0|1] ""  PowerStage
- SG_ HS_Cmd_DRIVE : 2|1@1+ (1,0) [0|1] ""  PowerStage
- SG_ HS_Cmd_CAP : 3|1@1+ (1,0) [0|1] ""  PowerStage
- SG_ HS_Cmd_SBC : 4|1@1+ (1,0) [0|1] ""  PowerStage
+BO_ 1638 CMD_HS : 5 Master
+ SG_ HS_Cmd_AUX        : 0|8@1+  (1,0)       [0|1]    ""      PowerStage
+ SG_ HS_Cmd_LED        : 8|8@1+  (1,0)       [0|1]    ""      PowerStage
+ SG_ HS_Cmd_DRIVE      : 16|8@1+ (1,0)       [0|1]    ""      PowerStage
+ SG_ HS_Cmd_CAP        : 24|8@1+ (1,0)       [0|1]    ""      PowerStage
+ SG_ HS_Cmd_SBC        : 32|8@1+ (1,0)       [0|1]    ""      PowerStage
 
-BO_ 322 CMD_OC: 4 Master
- SG_ OC_Target_AUX : 0|1@1+ (1,0) [0|1] ""  PowerStage
- SG_ OC_Target_LED : 1|1@1+ (1,0) [0|1] ""  PowerStage
- SG_ OC_Target_DRIVE : 2|1@1+ (1,0) [0|1] ""  PowerStage
- SG_ OC_Target_CAP : 3|1@1+ (1,0) [0|1] ""  PowerStage
- SG_ OC_Target_SBC : 4|1@1+ (1,0) [0|1] ""  PowerStage
- SG_ OC_Cmd : 8|8@1+ (1,0) [0|255] ""  PowerStage
- SG_ OC_Threshold_mA : 23|16@0+ (1,0) [0|50000] "mA"  PowerStage
+BO_ 1639 DEVICE_ADDR : 2 Master
+ SG_ Device_Command    : 0|8@1+  (1,0)       [0|255]  ""      PowerStage
 
-BO_ 323 CMD_EEPROM: 1 Master
- SG_ EEPROM_Cmd : 0|8@1+ (1,0) [0|255] ""  PowerStage
+BO_ 1640 CMD_OC : 4 Master
+ SG_ OC_Rail_Mask      : 0|8@1+  (1,0)       [0|255]  ""      PowerStage
+ SG_ OC_Cmd            : 8|8@1+  (1,0)       [0|255]  ""      PowerStage
+ SG_ OC_Threshold_mA   : 23|16@0+(1,0)       [0|50000] "mA"   PowerStage
 
-BO_ 324 CMD_UV: 6 Master
- SG_ UV_V24_mV : 7|16@0+ (1,0) [0|30000] "mV"  PowerStage
- SG_ UV_VCAP_mV : 23|16@0+ (1,0) [0|30000] "mV"  PowerStage
- SG_ UV_V12_mV : 39|16@0+ (1,0) [0|15000] "mV"  PowerStage
+BO_ 1641 CMD_EEPROM : 1 Master
+ SG_ EEPROM_Cmd        : 0|8@1+  (1,0)       [0|255]  ""      PowerStage
 
-BO_ 325 CMD_CTRL: 2 Master
- SG_ V_LED_PWR_Cmd : 0|8@1+ (1,0) [0|1] ""  PowerStage
- SG_ CAN_Relay_Enable : 8|8@1+ (1,0) [0|1] ""  PowerStage
+BO_ 1642 BCAST_FAN : 4 PowerStage
+ SG_ Fan_Mode_State    : 0|8@1+  (1,0)       [0|2]    ""      Master
+ SG_ Fan_Duty_State    : 8|8@1+  (1,0)       [0|100]  "%"     Master
+ SG_ Temperature_C     : 23|16@0-(0.1,0)     [-40|150] "degC" Master
 
-BO_ 326 CMD_PAGE_DWELL: 3 Master
- SG_ Page_Dwell_Overview : 0|8@1+ (0.5,0) [0|127.5] "s"  PowerStage
- SG_ Page_Dwell_RailStatus : 8|8@1+ (0.5,0) [0|127.5] "s"  PowerStage
- SG_ Page_Dwell_FaultDetail : 16|8@1+ (0.5,0) [0|127.5] "s"  PowerStage
+BO_ 1643 BCAST_EEPROM : 8 PowerStage
+ SG_ Cfg_Fan_Def_Mode  : 0|8@1+  (1,0)       [0|2]    ""      Master
+ SG_ Cfg_Fan_Def_Duty  : 8|8@1+  (1,0)       [0|100]  "%"     Master
+ SG_ Cfg_Fan_Min_Duty  : 16|8@1+ (1,0)       [0|100]  "%"     Master
+ SG_ Cfg_Auto_On_Temp  : 24|8@1+ (1,0)       [0|150]  "degC"  Master
+ SG_ Cfg_Auto_Off_Temp : 32|8@1+ (1,0)       [0|150]  "degC"  Master
+ SG_ Cfg_HS_Def_State  : 40|8@1+ (1,0)       [0|31]   ""      Master
+ SG_ Cfg_Reserved      : 48|16@1+(1,0)       [0|65535] ""     Master
 
-BO_ 327 CMD_BAT_CFG: 1 Master
- SG_ Bat_Low_SOC_Threshold_pct : 0|8@1+ (1,0) [0|100] "%"  PowerStage
+BO_ 1644 BCAST_HS_CURR_B : 4 PowerStage
+ SG_ I_AUX_mA          : 7|16@0+  (1,0)  [0|50000]   "mA"     Master
+ SG_ I_LED_mA          : 23|16@0+ (1,0)  [0|50000]   "mA"     Master
 
-BO_ 336 BCAST_HS_STATE: 5 PowerStage
- SG_ HS_Enable_AUX : 0|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_Enable_LED : 1|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_Enable_DRIVE : 2|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_Enable_CAP : 3|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_Enable_SBC : 4|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_Fault_AUX : 8|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_Fault_LED : 9|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_Fault_DRIVE : 10|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_Fault_CAP : 11|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_Fault_SBC : 12|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_PGood_AUX : 16|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_PGood_LED : 17|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_PGood_DRIVE : 18|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_PGood_CAP : 19|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_PGood_SBC : 20|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_OC_Warn_AUX : 24|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_OC_Warn_LED : 25|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_OC_Warn_DRIVE : 26|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_OC_Warn_CAP : 27|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_OC_Warn_SBC : 28|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_OC_Fault_AUX : 32|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_OC_Fault_LED : 33|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_OC_Fault_DRIVE : 34|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_OC_Fault_CAP : 35|1@1+ (1,0) [0|1] ""  Master
- SG_ HS_OC_Fault_SBC : 36|1@1+ (1,0) [0|1] ""  Master
+BO_ 1645 CMD_UV : 6 Master
+ SG_ UV_V24_mV         : 7|16@0+  (1,0)  [0|30000]   "mV"     PowerStage
+ SG_ UV_VCAP_mV        : 23|16@0+ (1,0)  [0|30000]   "mV"     PowerStage
+ SG_ UV_V12_mV         : 39|16@0+ (1,0)  [0|15000]   "mV"     PowerStage
 
-BO_ 337 BCAST_HS_CURR_A: 8 PowerStage
- SG_ I_BAT_mA : 7|16@0+ (1,0) [0|50000] "mA"  Master
- SG_ I_CAP_mA : 23|16@0+ (1,0) [0|50000] "mA"  Master
- SG_ I_SBC_mA : 39|16@0+ (1,0) [0|50000] "mA"  Master
- SG_ I_DRIVE_mA : 55|16@0+ (1,0) [0|50000] "mA"  Master
+BO_ 1646 BCAST_UV : 6 PowerStage
+ SG_ UV_Active_V24_mV  : 7|16@0+  (1,0)  [0|30000]   "mV"     Master
+ SG_ UV_Active_VCAP_mV : 23|16@0+ (1,0)  [0|30000]   "mV"     Master
+ SG_ UV_Active_V12_mV  : 39|16@0+ (1,0)  [0|15000]   "mV"     Master
 
-BO_ 338 BCAST_VOLTAGE: 8 PowerStage
- SG_ V24_mV : 7|16@0+ (1,0) [0|30000] "mV"  Master
- SG_ VCAP_mV : 23|16@0+ (1,0) [0|30000] "mV"  Master
- SG_ V12_mV : 39|16@0+ (1,0) [0|15000] "mV"  Master
- SG_ UV_Fault_V24 : 48|1@1+ (1,0) [0|1] ""  Master
- SG_ UV_Fault_VCAP : 49|1@1+ (1,0) [0|1] ""  Master
- SG_ UV_Fault_V12 : 50|1@1+ (1,0) [0|1] ""  Master
- SG_ Battery_SOC_Low_Flag : 51|1@1+ (1,0) [0|1] ""  Master
- SG_ Battery_SOC_pct : 56|8@1+ (1,0) [0|100] "%"  Master
+BO_ 1647 BCAST_OC_CFG_A : 8 PowerStage
+ SG_ OC_Thr_AUX_mA    : 7|16@0+  (1,0)  [0|50000]   "mA"     Master
+ SG_ OC_Thr_LED_mA    : 23|16@0+ (1,0)  [0|50000]   "mA"     Master
+ SG_ OC_Thr_DRIVE_mA  : 39|16@0+ (1,0)  [0|50000]   "mA"     Master
+ SG_ OC_Thr_CAP_mA    : 55|16@0+ (1,0)  [0|50000]   "mA"     Master
 
-BO_ 339 BCAST_FAN: 4 PowerStage
- SG_ Fan_Mode_State : 0|8@1+ (1,0) [0|2] ""  Master
- SG_ Fan_Duty_State : 8|8@1+ (1,0) [0|100] "%"  Master
- SG_ Temperature_C : 23|16@0- (0.1,0) [-40|150] "degC"  Master
+BO_ 1648 BCAST_OC_CFG_B : 2 PowerStage
+ SG_ OC_Thr_SBC_mA    : 7|16@0+  (1,0)  [0|50000]   "mA"     Master
 
-BO_ 340 BCAST_EEPROM: 8 PowerStage
- SG_ Cfg_Fan_Def_Mode : 0|8@1+ (1,0) [0|2] ""  Master
- SG_ Cfg_Fan_Def_Duty : 8|8@1+ (1,0) [0|100] "%"  Master
- SG_ Cfg_Fan_Min_Duty : 16|8@1+ (1,0) [0|100] "%"  Master
- SG_ Cfg_Auto_On_Temp : 24|8@1+ (1,0) [0|150] "degC"  Master
- SG_ Cfg_Auto_Off_Temp : 32|8@1+ (1,0) [0|150] "degC"  Master
- SG_ Cfg_HS_Def_AUX : 40|1@1+ (1,0) [0|1] ""  Master
- SG_ Cfg_HS_Def_LED : 41|1@1+ (1,0) [0|1] ""  Master
- SG_ Cfg_HS_Def_DRIVE : 42|1@1+ (1,0) [0|1] ""  Master
- SG_ Cfg_HS_Def_CAP : 43|1@1+ (1,0) [0|1] ""  Master
- SG_ Cfg_HS_Def_SBC : 44|1@1+ (1,0) [0|1] ""  Master
- SG_ Cfg_Reserved : 48|16@1+ (1,0) [0|65535] ""  Master
+BO_ 1649 CMD_CTRL : 2 Master
+ SG_ V_LED_PWR_Cmd     : 0|8@1+  (1,0)       [0|1]    ""      PowerStage
+ SG_ CAN_Relay_Enable  : 8|8@1+  (1,0)       [0|1]    ""      PowerStage
 
-BO_ 341 BCAST_HS_CURR_B: 4 PowerStage
- SG_ I_AUX_mA : 7|16@0+ (1,0) [0|50000] "mA"  Master
- SG_ I_LED_mA : 23|16@0+ (1,0) [0|50000] "mA"  Master
+BO_ 1650 BCAST_IO_STATUS : 3 PowerStage
+ SG_ SW_Pin_State      : 0|8@1+  (1,0)       [0|1]    ""      Master
+ SG_ V_LED_PWR_State   : 8|8@1+  (1,0)       [0|1]    ""      Master
+ SG_ CAN_Relay_State   : 16|8@1+ (1,0)       [0|1]    ""      Master
 
-BO_ 342 BCAST_UV: 6 PowerStage
- SG_ UV_Active_V24_mV : 7|16@0+ (1,0) [0|30000] "mV"  Master
- SG_ UV_Active_VCAP_mV : 23|16@0+ (1,0) [0|30000] "mV"  Master
- SG_ UV_Active_V12_mV : 39|16@0+ (1,0) [0|15000] "mV"  Master
-
-BO_ 343 BCAST_OC_CFG_A: 8 PowerStage
- SG_ OC_Thr_AUX_mA : 7|16@0+ (1,0) [0|50000] "mA"  Master
- SG_ OC_Thr_LED_mA : 23|16@0+ (1,0) [0|50000] "mA"  Master
- SG_ OC_Thr_DRIVE_mA : 39|16@0+ (1,0) [0|50000] "mA"  Master
- SG_ OC_Thr_CAP_mA : 55|16@0+ (1,0) [0|50000] "mA"  Master
-
-BO_ 344 BCAST_OC_CFG_B: 2 PowerStage
- SG_ OC_Thr_SBC_mA : 7|16@0+ (1,0) [0|50000] "mA"  Master
-
-BO_ 345 BCAST_IO_STATUS: 3 PowerStage
- SG_ SW_Pin_State : 0|8@1+ (1,0) [0|1] ""  Master
- SG_ V_LED_PWR_State : 8|8@1+ (1,0) [0|1] ""  Master
- SG_ CAN_Relay_State : 16|8@1+ (1,0) [0|1] ""  Master
-
-BO_ 346 BCAST_BATTERY_CFG: 8 PowerStage
- SG_ Bat_Cutoff_mV : 7|16@0+ (1,0) [0|65535] "mV"  Master
- SG_ Bat_Full_mV   : 23|16@0+ (1,0) [0|65535] "mV"  Master
- SG_ Bat_Rint_mOhm : 39|16@0+ (1,0) [0|65535] "mOhm"  Master
- SG_ Bat_Cell_Count : 48|8@1+ (1,0) [0|16] ""  Master
-
-
-
-CM_ BU_ PowerStage "STM32G0B1 PowerStage controller. 11-bit standard IDs in CANopen-safe gap 0x130-0x15F. Bootloader RX 0x130 (also app reset trigger) / TX 0x131. Manages 5 TPS2493 hot-swap rails, fan, ADC and EEPROM config. Dual CAN bus: FDCAN1 (PB8/PB9) = internal, FDCAN2 (PC2/PC3) = host relay. All messages mirrored on both buses.";
+CM_ BU_ PowerStage "STM32G0B1 PowerStage controller. Manages 5 TPS2493 hot-swap rails, fan, ADC and EEPROM config. Dual CAN bus: FDCAN1 (PB8/PB9) = internal, FDCAN2 (PC2/PC3) = host relay. All messages mirrored on both buses.";
 CM_ BU_ Master "Supervisory host or gateway node that issues commands to PowerStage. Can connect to either CAN1 or CAN2 bus.";
-CM_ BO_ 304 "DEVICE_ADDR (0x130). Also OpenBLT bootloader RX. 0xFF (DLC=2) triggers reset and re-enters bootloader, which then re-handles XCP CONNECT on the same ID.";
-CM_ SG_ 304 Device_Command "0xFF (DLC=2) = software reset and re-enter OpenBLT bootloader.";
-CM_ BO_ 305 "OpenBLT bootloader TX (0x131). XCP responses target->host while in bootloader.";
-CM_ BO_ 320 "CMD 0x140: set fan mode and manual duty cycle. Accepted from both CAN buses.";
-CM_ SG_ 320 Fan_Mode "0=OFF 1=ON_MANUAL 2=AUTO. In AUTO mode Fan_Duty is ignored.";
-CM_ SG_ 320 Fan_Duty "Manual duty cycle 0-100%. Applied only when Fan_Mode=1.";
-CM_ BO_ 321 "CMD 0x141: individually enable or disable each of the 5 HS rails. Accepted from both CAN buses.";
-CM_ SG_ 321 HS_Cmd_AUX "0=disable RAIL_AUX 1=enable.";
-CM_ SG_ 321 HS_Cmd_LED "0=disable RAIL_LED 1=enable.";
-CM_ SG_ 321 HS_Cmd_DRIVE "0=disable RAIL_DRIVE 1=enable.";
-CM_ SG_ 321 HS_Cmd_CAP "0=disable RAIL_CAP 1=enable.";
-CM_ SG_ 321 HS_Cmd_SBC "IGNORED. The SBC rail has no MCU-driven EN line on this board (permanently enabled by hardware). The bit is reserved for backward compatibility — the firmware skips it in the CMD_HS handler.";
-CM_ BO_ 322 "CMD 0x142: configure per-rail software OC threshold or clear latched OC faults. OC_Rail_Mask 0xFF = all rails.";
-CM_ SG_ 322 OC_Target_AUX "1 = command applies to RAIL_AUX.";
-CM_ SG_ 322 OC_Target_LED "1 = command applies to RAIL_LED.";
-CM_ SG_ 322 OC_Target_DRIVE "1 = command applies to RAIL_DRIVE.";
-CM_ SG_ 322 OC_Target_CAP "1 = command applies to RAIL_CAP.";
-CM_ SG_ 322 OC_Target_SBC "1 = command applies to RAIL_SBC (ignored — no MCU EN).";
-CM_ SG_ 322 OC_Cmd "0x01=SET_THRESHOLD (apply OC_Threshold_mA). 0x02=RESET_FAULT (clear masks).";
-CM_ SG_ 322 OC_Threshold_mA "New software OC warning threshold in mA big-endian. Applied to rails in OC_Rail_Mask when Cmd=0x01.";
-CM_ BO_ 323 "CMD 0x143: EEPROM operations. 0x01 saves live config; 0x02 restores factory defaults.";
-CM_ SG_ 323 EEPROM_Cmd "0x01=save live config to EEPROM. 0x02=load factory defaults and overwrite EEPROM.";
-CM_ BO_ 324 "CMD 0x144: update UV trip thresholds for V24, VCAP, V12 in mV big-endian.";
-CM_ SG_ 324 UV_V24_mV "New UV trip threshold for V24 bus in mV big-endian.";
-CM_ SG_ 324 UV_VCAP_mV "New UV trip threshold for VCAP bus in mV big-endian.";
-CM_ SG_ 324 UV_V12_mV "New UV trip threshold for V12 bus in mV big-endian.";
-CM_ BO_ 325 "CMD 0x145: control V_LED_PWR output and CAN relay enable/disable. Accepted from both CAN buses.";
-CM_ BO_ 326 "CMD 0x146: set OLED per-page dwell in 500 ms ticks. Bytes 0..2 = OVERVIEW, RAIL_STATUS, FAULT_DETAIL. Each byte 0 = use default (10 ticks = 5 s). Send CMD_EEPROM 0x01 afterward to persist.";
-CM_ SG_ 326 Page_Dwell_Overview "OLED Page 0 (System Overview) dwell. Raw value is 500 ms ticks; signal scale 0.5 → engineering unit is seconds.";
-CM_ SG_ 326 Page_Dwell_RailStatus "OLED Page 1 (Rail Status) dwell. 500 ms ticks; scale 0.5 → seconds.";
-CM_ SG_ 326 Page_Dwell_FaultDetail "OLED Page 2 (Fault Detail) dwell. 500 ms ticks; scale 0.5 → seconds.";
-CM_ BO_ 327 "CMD 0x147: set battery SOC-low warning threshold (%). Below this, BCAST_VOLTAGE byte 6 bit 3 is set and the OLED V24/SOC row blinks at 1 Hz. 0 = disable warning. Send CMD_EEPROM 0x01 afterward to persist.";
-CM_ SG_ 327 Bat_Low_SOC_Threshold_pct "Battery low-SOC warning trip point in % SOC. Range 0..100; 0 disables the warning entirely. Factory default 15 %.";
-CM_ SG_ 325 V_LED_PWR_Cmd "0=OFF 1=ON. Controls V_LED_PWR output (PC0).";
-CM_ SG_ 325 CAN_Relay_Enable "0=disable relay 1=enable relay. Controls CAN1<->CAN2 frame forwarding.";
-CM_ BO_ 336 "BCAST 0x150: periodic HS rail status. Bitmask bit order: bit0=AUX bit1=LED bit2=DRIVE bit3=CAP bit4=SBC. Sent on both CAN1+CAN2.";
-CM_ SG_ 336 HS_Enable_AUX "1 = RAIL_AUX EN GPIO asserted.";
-CM_ SG_ 336 HS_Fault_AUX "1 = TPS2493 hardware FLT pin asserted on AUX (latched fault).";
-CM_ SG_ 336 HS_PGood_AUX "1 = TPS2493 PGOOD asserted on AUX (rail healthy).";
-CM_ SG_ 336 HS_OC_Warn_AUX "1 = software OC warning threshold exceeded on AUX.";
-CM_ SG_ 336 HS_OC_Fault_AUX "1 = hardware OC fault latched on AUX (TPS2493 FLT triggered by OC).";
-CM_ BO_ 337 "BCAST 0x151: periodic broadcast of BAT, CAP, SBC, DRIVE rail currents. uint16 mA big-endian, scale 0.001 for A.";
-CM_ SG_ 337 I_BAT_mA "Battery input current. uint16 mA big-endian. Scale 0.001 for A.";
-CM_ SG_ 337 I_CAP_mA "Capacitor rail current. uint16 mA big-endian.";
-CM_ SG_ 337 I_SBC_mA "SBC rail current. uint16 mA big-endian.";
-CM_ SG_ 337 I_DRIVE_mA "Drive rail current. uint16 mA big-endian.";
-CM_ BO_ 338 "BCAST 0x152: periodic broadcast of V24, VCAP, V12 voltages in mV and UV fault bitmask. Scale 0.001 for V.";
-CM_ SG_ 338 V24_mV "24V bus voltage in mV big-endian. Scale 0.001 for V.";
-CM_ SG_ 338 VCAP_mV "Capacitor bus voltage in mV big-endian.";
-CM_ SG_ 338 V12_mV "12V bus voltage in mV big-endian.";
-CM_ SG_ 338 UV_Fault_V24 "1 = V24 bus below UV trip threshold.";
-CM_ SG_ 338 UV_Fault_VCAP "1 = VCAP bus below UV trip threshold.";
-CM_ SG_ 338 UV_Fault_V12 "1 = V12 bus below UV trip threshold.";
-CM_ SG_ 338 Battery_SOC_Low_Flag "1 = filtered SOC strictly below configured low-SOC threshold (CMD_BAT_CFG; default 40 %).";
-CM_ SG_ 338 Battery_SOC_pct "6S Li-ion / Li-Po pack state-of-charge (0-100 %). Estimated from V24 + I_BAT with internal-resistance compensation, then smoothed by EMA + asymmetric hysteresis (drops 1 %/step when discharging, rises 1 %/step only when ≥3 % sustained recovery is seen).";
-CM_ BO_ 346 "BCAST 0x15A: static battery configuration (cutoff voltage, full voltage, internal resistance, cell count). Lets the host display the SOC reference points without hardcoding them. Defaults: 19.6 V cutoff, 25.2 V full, 200 mΩ R_int, 6S.";
-CM_ SG_ 346 Bat_Cutoff_mV "0 % SOC reference voltage (mV). Default 19600 (3.27 V/cell × 6).";
-CM_ SG_ 346 Bat_Full_mV "100 % SOC reference voltage (mV). Default 25200 (4.20 V/cell × 6).";
-CM_ SG_ 346 Bat_Rint_mOhm "Pack internal resistance (mΩ) used for IR compensation: V_OCV = V_meas + I_BAT × R_int. Tune for your specific pack.";
-CM_ SG_ 346 Bat_Cell_Count "Series cell count (6 for 6S Li-ion / Li-Po).";
-CM_ BO_ 339 "BCAST 0x153: periodic broadcast of fan mode, duty cycle and NTC temperature. Temp is int16 degCx10, scale 0.1 for degC.";
-CM_ SG_ 339 Fan_Mode_State "Current active fan mode.";
-CM_ SG_ 339 Fan_Duty_State "Current active PWM duty cycle 0-100%.";
-CM_ SG_ 339 Temperature_C "NTC temperature. int16 degCx10 big-endian. Scale 0.1 for degC. e.g. 253 = 25.3 degC.";
-CM_ BO_ 340 "BCAST 0x154: periodic echo of EEPROM-stored configuration defaults.";
-CM_ SG_ 340 Cfg_Fan_Def_Mode "EEPROM default fan mode applied at boot.";
-CM_ SG_ 340 Cfg_Fan_Def_Duty "EEPROM default fan duty cycle applied at boot.";
-CM_ SG_ 340 Cfg_Fan_Min_Duty "Minimum PWM duty before stall prevention kicks in.";
-CM_ SG_ 340 Cfg_Auto_On_Temp "AUTO mode: fan turns ON above this temperature (degC).";
-CM_ SG_ 340 Cfg_Auto_Off_Temp "AUTO mode: fan turns OFF below this temperature (degC, hysteresis).";
-CM_ SG_ 340 Cfg_HS_Def_AUX "Boot-default enable for RAIL_AUX.";
-CM_ SG_ 340 Cfg_HS_Def_LED "Boot-default enable for RAIL_LED.";
-CM_ SG_ 340 Cfg_HS_Def_DRIVE "Boot-default enable for RAIL_DRIVE.";
-CM_ SG_ 340 Cfg_HS_Def_CAP "Boot-default enable for RAIL_CAP.";
-CM_ SG_ 340 Cfg_HS_Def_SBC "Boot-default enable for RAIL_SBC (ignored — no MCU EN).";
-CM_ BO_ 341 "BCAST 0x155: periodic broadcast of AUX and LED rail currents. uint16 mA big-endian, scale 0.001 for A.";
-CM_ SG_ 341 I_AUX_mA "AUX rail current. uint16 mA big-endian. Scale 0.001 for A.";
-CM_ SG_ 341 I_LED_mA "LED rail current. uint16 mA big-endian.";
-CM_ BO_ 342 "BCAST 0x156: periodic broadcast of currently active UV thresholds.";
-CM_ SG_ 342 UV_Active_V24_mV "Active UV threshold for V24 bus in mV.";
-CM_ SG_ 342 UV_Active_VCAP_mV "Active UV threshold for VCAP bus in mV.";
-CM_ SG_ 342 UV_Active_V12_mV "Active UV threshold for V12 bus in mV.";
-CM_ BO_ 343 "BCAST 0x157: periodic broadcast of OC thresholds for AUX, LED, DRIVE, CAP rails (frame A of 2).";
-CM_ SG_ 343 OC_Thr_AUX_mA "Software OC threshold for AUX rail in mA.";
-CM_ SG_ 343 OC_Thr_LED_mA "Software OC threshold for LED rail in mA.";
-CM_ SG_ 343 OC_Thr_DRIVE_mA "Software OC threshold for DRIVE rail in mA.";
-CM_ SG_ 343 OC_Thr_CAP_mA "Software OC threshold for CAP rail in mA.";
-CM_ BO_ 344 "BCAST 0x158: periodic broadcast of OC threshold for SBC rail (frame B of 2).";
-CM_ SG_ 344 OC_Thr_SBC_mA "Always 0 — software OC for SBC is disabled on this board (no MCU-driven EN means a software trip cannot cut power). CMD_OC frames targeting bit 4 of OC_Rail_Mask are ignored. Hardware FLT pin is still read for telemetry.";
-CM_ BO_ 345 "BCAST 0x159: periodic broadcast of SW pin state, V_LED_PWR output state, and CAN relay enabled status.";
-CM_ SG_ 345 SW_Pin_State "Current state of SW pin (PC1). 0=LOW 1=HIGH.";
-CM_ SG_ 345 V_LED_PWR_State "Current output state of V_LED_PWR (PC0). 0=OFF 1=ON.";
-CM_ SG_ 345 CAN_Relay_State "Current state of CAN relay. 0=disabled 1=enabled.";
-BA_DEF_ BO_  "GenMsgCycleTime" INT 0 10000;
-BA_DEF_ BO_  "GenMsgSendType" STRING ;
-BA_DEF_ SG_  "GenSigSendType" STRING ;
-BA_DEF_DEF_  "GenMsgCycleTime" 0;
-BA_DEF_DEF_  "GenMsgSendType" "Cyclic";
-BA_DEF_DEF_  "GenSigSendType" "Cyclic";
-BA_ "GenMsgSendType" BO_ 304 "Event";
-BA_ "GenMsgSendType" BO_ 320 "Event";
-BA_ "GenMsgSendType" BO_ 321 "Event";
-BA_ "GenMsgSendType" BO_ 322 "Event";
-BA_ "GenMsgSendType" BO_ 323 "Event";
-BA_ "GenMsgSendType" BO_ 324 "Event";
-BA_ "GenMsgSendType" BO_ 325 "Event";
-BA_ "GenMsgSendType" BO_ 326 "Event";
-BA_ "GenMsgSendType" BO_ 327 "Event";
-BA_ "GenMsgSendType" BO_ 336 "Cyclic";
-BA_ "GenMsgCycleTime" BO_ 336 500;
-BA_ "GenMsgSendType" BO_ 337 "Cyclic";
-BA_ "GenMsgCycleTime" BO_ 337 500;
-BA_ "GenMsgSendType" BO_ 338 "Cyclic";
-BA_ "GenMsgCycleTime" BO_ 338 500;
-BA_ "GenMsgSendType" BO_ 339 "Cyclic";
-BA_ "GenMsgCycleTime" BO_ 339 500;
-BA_ "GenMsgSendType" BO_ 340 "Cyclic";
-BA_ "GenMsgCycleTime" BO_ 340 500;
-BA_ "GenMsgSendType" BO_ 341 "Cyclic";
-BA_ "GenMsgCycleTime" BO_ 341 500;
-BA_ "GenMsgSendType" BO_ 342 "Cyclic";
-BA_ "GenMsgCycleTime" BO_ 342 500;
-BA_ "GenMsgSendType" BO_ 343 "Cyclic";
-BA_ "GenMsgCycleTime" BO_ 343 500;
-BA_ "GenMsgSendType" BO_ 344 "Cyclic";
-BA_ "GenMsgCycleTime" BO_ 344 500;
-BA_ "GenMsgSendType" BO_ 345 "Cyclic";
-BA_ "GenMsgSendType" BO_ 346 "Cyclic";
-BA_ "GenMsgCycleTime" BO_ 345 500;
-BA_ "GenMsgCycleTime" BO_ 346 500;
-VAL_ 304 Device_Command 255 "RESET_BOOTLOADER" ;
-VAL_ 320 Fan_Mode 0 "OFF" 1 "ON_MANUAL" 2 "AUTO" ;
-VAL_ 321 HS_Cmd_AUX 0 "DISABLE" 1 "ENABLE" ;
-VAL_ 321 HS_Cmd_LED 0 "DISABLE" 1 "ENABLE" ;
-VAL_ 321 HS_Cmd_DRIVE 0 "DISABLE" 1 "ENABLE" ;
-VAL_ 321 HS_Cmd_CAP 0 "DISABLE" 1 "ENABLE" ;
-VAL_ 321 HS_Cmd_SBC 0 "IGNORED" 1 "IGNORED" ;
-VAL_ 322 OC_Cmd 1 "SET_THRESHOLD" 2 "RESET_FAULT" ;
-VAL_ 323 EEPROM_Cmd 1 "SAVE_CONFIG" 2 "LOAD_DEFAULT" ;
-VAL_ 325 V_LED_PWR_Cmd 0 "OFF" 1 "ON" ;
-VAL_ 325 CAN_Relay_Enable 0 "DISABLE" 1 "ENABLE" ;
-VAL_ 339 Fan_Mode_State 0 "OFF" 1 "ON_MANUAL" 2 "AUTO" ;
-VAL_ 340 Cfg_Fan_Def_Mode 0 "OFF" 1 "ON_MANUAL" 2 "AUTO" ;
-VAL_ 322 OC_Target_AUX 0 "SKIP" 1 "APPLY" ;
-VAL_ 322 OC_Target_LED 0 "SKIP" 1 "APPLY" ;
-VAL_ 322 OC_Target_DRIVE 0 "SKIP" 1 "APPLY" ;
-VAL_ 322 OC_Target_CAP 0 "SKIP" 1 "APPLY" ;
-VAL_ 322 OC_Target_SBC 0 "SKIP" 1 "APPLY" ;
-VAL_ 338 UV_Fault_V24 0 "OK" 1 "UV_FAULT" ;
-VAL_ 338 UV_Fault_VCAP 0 "OK" 1 "UV_FAULT" ;
-VAL_ 338 UV_Fault_V12 0 "OK" 1 "UV_FAULT" ;
-VAL_ 338 Battery_SOC_Low_Flag 0 "OK" 1 "SOC_LOW" ;
+
+CM_ BO_ 1634 "Periodic HS rail status. Bitmask bit order: bit0=AUX bit1=LED bit2=DRIVE bit3=CAP bit4=SBC. Sent on both CAN1+CAN2.";
+CM_ BO_ 1635 "Periodic broadcast of BAT, CAP, SBC, DRIVE rail currents. uint16 mA big-endian, scale 0.001 for A.";
+CM_ BO_ 1636 "Periodic broadcast of V24, VCAP, V12 voltages in mV and UV fault bitmask. Scale 0.001 for V.";
+CM_ BO_ 1637 "Command: set fan mode and manual duty cycle. Accepted from both CAN buses.";
+CM_ BO_ 1638 "Command: individually enable or disable each of the 5 HS rails. Accepted from both CAN buses.";
+CM_ BO_ 1639 "Command: system-level control. 0xFF triggers reset and re-enters OpenBLT bootloader. Accepted from both CAN buses.";
+CM_ BO_ 1640 "Command: configure per-rail software OC threshold or clear latched OC faults. OC_Rail_Mask 0xFF = all rails.";
+CM_ BO_ 1641 "Command: EEPROM operations. 0x01 saves live config; 0x02 restores factory defaults.";
+CM_ BO_ 1642 "Periodic broadcast of fan mode, duty cycle and NTC temperature. Temp is int16 degCx10, scale 0.1 for degC.";
+CM_ BO_ 1643 "Periodic echo of EEPROM-stored configuration defaults.";
+CM_ BO_ 1644 "Periodic broadcast of AUX and LED rail currents. uint16 mA big-endian, scale 0.001 for A.";
+CM_ BO_ 1645 "Command: update UV trip thresholds for V24, VCAP, V12 in mV big-endian.";
+CM_ BO_ 1646 "Periodic broadcast of currently active UV thresholds.";
+CM_ BO_ 1647 "Periodic broadcast of OC thresholds for AUX, LED, DRIVE, CAP rails (frame A of 2).";
+CM_ BO_ 1648 "Periodic broadcast of OC threshold for SBC rail (frame B of 2).";
+CM_ BO_ 1649 "Command: control V_LED_PWR output and CAN relay enable/disable. Accepted from both CAN buses.";
+CM_ BO_ 1650 "Periodic broadcast of SW pin state, V_LED_PWR output state, and CAN relay enabled status.";
+
+CM_ SG_ 1634 HS_Enable_Mask   "1=rail EN GPIO asserted. bit0=AUX bit1=LED bit2=DRIVE bit3=CAP bit4=SBC.";
+CM_ SG_ 1634 HS_Fault_Mask    "1=TPS2493 hardware FLT pin asserted (latched fault).";
+CM_ SG_ 1634 HS_PGood_Mask    "1=TPS2493 PGOOD pin asserted (rail healthy).";
+CM_ SG_ 1634 HS_OC_Warn_Mask  "1=software OC warning threshold exceeded for this rail.";
+CM_ SG_ 1634 HS_OC_Fault_Mask "1=hardware OC fault latched (TPS2493 FLT triggered by OC).";
+CM_ SG_ 1635 I_BAT_mA         "Battery input current. uint16 mA big-endian. Scale 0.001 for A.";
+CM_ SG_ 1635 I_CAP_mA         "Capacitor rail current. uint16 mA big-endian.";
+CM_ SG_ 1635 I_SBC_mA         "SBC rail current. uint16 mA big-endian.";
+CM_ SG_ 1635 I_DRIVE_mA       "Drive rail current. uint16 mA big-endian.";
+CM_ SG_ 1636 V24_mV           "24V bus voltage in mV big-endian. Scale 0.001 for V.";
+CM_ SG_ 1636 VCAP_mV          "Capacitor bus voltage in mV big-endian.";
+CM_ SG_ 1636 V12_mV           "12V bus voltage in mV big-endian.";
+CM_ SG_ 1636 UV_Fault_Mask    "UV fault bitmask. bit0=V24 UV, bit1=VCAP UV, bit2=V12 UV.";
+CM_ SG_ 1637 Fan_Mode         "0=OFF 1=ON_MANUAL 2=AUTO. In AUTO mode Fan_Duty is ignored.";
+CM_ SG_ 1637 Fan_Duty         "Manual duty cycle 0-100%. Applied only when Fan_Mode=1.";
+CM_ SG_ 1638 HS_Cmd_AUX       "0=disable RAIL_AUX 1=enable.";
+CM_ SG_ 1638 HS_Cmd_LED       "0=disable RAIL_LED 1=enable.";
+CM_ SG_ 1638 HS_Cmd_DRIVE     "0=disable RAIL_DRIVE 1=enable.";
+CM_ SG_ 1638 HS_Cmd_CAP       "0=disable RAIL_CAP 1=enable.";
+CM_ SG_ 1638 HS_Cmd_SBC       "0=disable RAIL_SBC 1=enable. Note: SBC has no EN GPIO, field reserved.";
+CM_ SG_ 1639 Device_Command   "0xFF = software reset and re-enter OpenBLT bootloader.";
+CM_ SG_ 1640 OC_Rail_Mask     "Target rail bitmask. 0xFF applies command to all rails.";
+CM_ SG_ 1640 OC_Cmd           "0x01=SET_THRESHOLD (apply OC_Threshold_mA). 0x02=RESET_FAULT (clear masks).";
+CM_ SG_ 1640 OC_Threshold_mA  "New software OC warning threshold in mA big-endian. Applied to rails in OC_Rail_Mask when Cmd=0x01.";
+CM_ SG_ 1641 EEPROM_Cmd       "0x01=save live config to EEPROM. 0x02=load factory defaults and overwrite EEPROM.";
+CM_ SG_ 1642 Fan_Mode_State   "Current active fan mode.";
+CM_ SG_ 1642 Fan_Duty_State   "Current active PWM duty cycle 0-100%.";
+CM_ SG_ 1642 Temperature_C    "NTC temperature. int16 degCx10 big-endian. Scale 0.1 for degC. e.g. 253 = 25.3 degC.";
+CM_ SG_ 1643 Cfg_Fan_Def_Mode "EEPROM default fan mode applied at boot.";
+CM_ SG_ 1643 Cfg_Fan_Def_Duty "EEPROM default fan duty cycle applied at boot.";
+CM_ SG_ 1643 Cfg_Fan_Min_Duty "Minimum PWM duty before stall prevention kicks in.";
+CM_ SG_ 1643 Cfg_Auto_On_Temp "AUTO mode: fan turns ON above this temperature (degC).";
+CM_ SG_ 1643 Cfg_Auto_Off_Temp "AUTO mode: fan turns OFF below this temperature (degC, hysteresis).";
+CM_ SG_ 1643 Cfg_HS_Def_State "HS rail bitmask applied at boot. bit0=AUX bit1=LED bit2=DRIVE bit3=CAP bit4=SBC.";
+CM_ SG_ 1644 I_AUX_mA        "AUX rail current. uint16 mA big-endian. Scale 0.001 for A.";
+CM_ SG_ 1644 I_LED_mA        "LED rail current. uint16 mA big-endian.";
+CM_ SG_ 1645 UV_V24_mV       "New UV trip threshold for V24 bus in mV big-endian.";
+CM_ SG_ 1645 UV_VCAP_mV      "New UV trip threshold for VCAP bus in mV big-endian.";
+CM_ SG_ 1645 UV_V12_mV       "New UV trip threshold for V12 bus in mV big-endian.";
+CM_ SG_ 1646 UV_Active_V24_mV  "Active UV threshold for V24 bus in mV.";
+CM_ SG_ 1646 UV_Active_VCAP_mV "Active UV threshold for VCAP bus in mV.";
+CM_ SG_ 1646 UV_Active_V12_mV  "Active UV threshold for V12 bus in mV.";
+CM_ SG_ 1647 OC_Thr_AUX_mA    "Software OC threshold for AUX rail in mA.";
+CM_ SG_ 1647 OC_Thr_LED_mA    "Software OC threshold for LED rail in mA.";
+CM_ SG_ 1647 OC_Thr_DRIVE_mA  "Software OC threshold for DRIVE rail in mA.";
+CM_ SG_ 1647 OC_Thr_CAP_mA    "Software OC threshold for CAP rail in mA.";
+CM_ SG_ 1648 OC_Thr_SBC_mA    "Software OC threshold for SBC rail in mA.";
+CM_ SG_ 1649 V_LED_PWR_Cmd    "0=OFF 1=ON. Controls V_LED_PWR output (PC0).";
+CM_ SG_ 1649 CAN_Relay_Enable "0=disable relay 1=enable relay. Controls CAN1<->CAN2 frame forwarding.";
+CM_ SG_ 1650 SW_Pin_State     "Current state of SW pin (PC1). 0=LOW 1=HIGH.";
+CM_ SG_ 1650 V_LED_PWR_State  "Current output state of V_LED_PWR (PC0). 0=OFF 1=ON.";
+CM_ SG_ 1650 CAN_Relay_State  "Current state of CAN relay. 0=disabled 1=enabled.";
+
+BA_DEF_ BO_ "GenMsgCycleTime" INT 0 10000;
+BA_DEF_ BO_ "GenMsgSendType"  STRING;
+BA_DEF_ SG_ "GenSigSendType"  STRING;
+
+BA_DEF_DEF_ "GenMsgCycleTime" 0;
+BA_DEF_DEF_ "GenMsgSendType"  "Cyclic";
+BA_DEF_DEF_ "GenSigSendType"  "Cyclic";
+
+BA_ "GenMsgCycleTime" BO_ 1634 500;
+BA_ "GenMsgCycleTime" BO_ 1635 500;
+BA_ "GenMsgCycleTime" BO_ 1636 500;
+BA_ "GenMsgCycleTime" BO_ 1642 500;
+BA_ "GenMsgCycleTime" BO_ 1643 500;
+BA_ "GenMsgCycleTime" BO_ 1644 500;
+BA_ "GenMsgCycleTime" BO_ 1646 500;
+BA_ "GenMsgCycleTime" BO_ 1647 500;
+BA_ "GenMsgCycleTime" BO_ 1648 500;
+BA_ "GenMsgCycleTime" BO_ 1650 500;
+BA_ "GenMsgSendType"  BO_ 1634 "Cyclic";
+BA_ "GenMsgSendType"  BO_ 1635 "Cyclic";
+BA_ "GenMsgSendType"  BO_ 1636 "Cyclic";
+BA_ "GenMsgSendType"  BO_ 1637 "Event";
+BA_ "GenMsgSendType"  BO_ 1638 "Event";
+BA_ "GenMsgSendType"  BO_ 1639 "Event";
+BA_ "GenMsgSendType"  BO_ 1640 "Event";
+BA_ "GenMsgSendType"  BO_ 1641 "Event";
+BA_ "GenMsgSendType"  BO_ 1642 "Cyclic";
+BA_ "GenMsgSendType"  BO_ 1643 "Cyclic";
+BA_ "GenMsgSendType"  BO_ 1644 "Cyclic";
+BA_ "GenMsgSendType"  BO_ 1645 "Event";
+BA_ "GenMsgSendType"  BO_ 1646 "Cyclic";
+BA_ "GenMsgSendType"  BO_ 1647 "Cyclic";
+BA_ "GenMsgSendType"  BO_ 1648 "Cyclic";
+BA_ "GenMsgSendType"  BO_ 1649 "Event";
+BA_ "GenMsgSendType"  BO_ 1650 "Cyclic";
+
+VAL_ 1637 Fan_Mode        0 "OFF" 1 "ON_MANUAL" 2 "AUTO" ;
+VAL_ 1638 HS_Cmd_AUX      0 "DISABLE" 1 "ENABLE" ;
+VAL_ 1638 HS_Cmd_LED      0 "DISABLE" 1 "ENABLE" ;
+VAL_ 1638 HS_Cmd_DRIVE    0 "DISABLE" 1 "ENABLE" ;
+VAL_ 1638 HS_Cmd_CAP      0 "DISABLE" 1 "ENABLE" ;
+VAL_ 1638 HS_Cmd_SBC      0 "DISABLE" 1 "ENABLE" ;
+VAL_ 1639 Device_Command  255 "RESET_BOOTLOADER" ;
+VAL_ 1640 OC_Cmd          1 "SET_THRESHOLD" 2 "RESET_FAULT" ;
+VAL_ 1641 EEPROM_Cmd      1 "SAVE_CONFIG" 2 "LOAD_DEFAULT" ;
+VAL_ 1642 Fan_Mode_State  0 "OFF" 1 "ON_MANUAL" 2 "AUTO" ;
+VAL_ 1643 Cfg_Fan_Def_Mode 0 "OFF" 1 "ON_MANUAL" 2 "AUTO" ;
+VAL_ 1649 V_LED_PWR_Cmd    0 "OFF" 1 "ON" ;
+VAL_ 1649 CAN_Relay_Enable 0 "DISABLE" 1 "ENABLE" ;
 

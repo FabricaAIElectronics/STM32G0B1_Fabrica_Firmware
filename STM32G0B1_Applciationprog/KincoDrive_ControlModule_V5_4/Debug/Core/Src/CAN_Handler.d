@@ -1,5 +1,5 @@
 Core/Src/CAN_Handler.o: ../Core/Src/CAN_Handler.c \
- ../Core/Inc/CAN_Handler.h ../Core/Inc/applogic.h ../Core/Inc/main.h \
+ ../Core/Inc/CAN_Handler.h ../Core/Inc/main.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal.h \
  ../Core/Inc/stm32g0xx_hal_conf.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_rcc.h \
@@ -36,12 +36,10 @@ Core/Src/CAN_Handler.o: ../Core/Src/CAN_Handler.c \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr_ex.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h \
- ../Core/Inc/Fan_PWM.h ../Core/Inc/adc_driver.h ../Core/Inc/hs_switch.h \
- ../Core/Inc/power_monitor.h ../Core/Inc/hs_switch.h \
- ../Core/Inc/thermistor.h ../Core/Inc/adc_driver.h \
- ../Core/Inc/eeprom_driver.h ../Core/Inc/applogic.h
+ ../Core/Inc/fdcan.h ../Core/Inc/main.h ../Core/Inc/AppLogic.h \
+ ../Core/Inc/Fan_PWM.h ../Core/Inc/Power_Electronic.h \
+ ../Core/Inc/Endstop.h ../Core/Inc/ESTOP.h
 ../Core/Inc/CAN_Handler.h:
-../Core/Inc/applogic.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal.h:
 ../Core/Inc/stm32g0xx_hal_conf.h:
@@ -79,12 +77,10 @@ Core/Src/CAN_Handler.o: ../Core/Src/CAN_Handler.c \
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr_ex.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h:
+../Core/Inc/fdcan.h:
+../Core/Inc/main.h:
+../Core/Inc/AppLogic.h:
 ../Core/Inc/Fan_PWM.h:
-../Core/Inc/adc_driver.h:
-../Core/Inc/hs_switch.h:
-../Core/Inc/power_monitor.h:
-../Core/Inc/hs_switch.h:
-../Core/Inc/thermistor.h:
-../Core/Inc/adc_driver.h:
-../Core/Inc/eeprom_driver.h:
-../Core/Inc/applogic.h:
+../Core/Inc/Power_Electronic.h:
+../Core/Inc/Endstop.h:
+../Core/Inc/ESTOP.h:

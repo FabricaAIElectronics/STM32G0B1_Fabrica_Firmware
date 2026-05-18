@@ -19,14 +19,6 @@ static void ProcessCANCommands(AppStateMachine *sm);
 static void ProcessEEPROMCommands(AppStateMachine *sm);
 static ErrorCode CheckUndervoltage(AppStateMachine *sm);
 static void BroadcastDeviceStatusEx(AppState state, ErrorCode errCode);
-static void ApplyBuckMode(AppStateMachine *sm);
-static void BroadcastTick(AppStateMachine *sm);
-
-/* ---- Phased broadcast scheduler ---- */
-/* Each phase fires every BCAST_PHASE_INTERVAL_MS and emits ONE frame, so the
- * 3-slot FDCAN TX FIFO has plenty of time to drain between sends. With 3
- * phases at 100 ms each, every broadcast goes out at ~3.3 Hz. */
-#define BCAST_PHASE_INTERVAL_MS  100U
 
 /*=========================================================================
  *  AppLogic_Init
@@ -67,33 +59,24 @@ void AppLogic_Run(AppStateMachine *sm)
             sm->state = STATE_INIT;
             break;
     }
-
-    /* Run telemetry every loop iteration regardless of state. The phased
-     * scheduler inside BroadcastTick keeps TX traffic light enough that the
-     * FIFO never fills; EEPROM data is therefore broadcast continuously,
-     * including in STATE_ERROR / STATE_RECOVERY. */
-    BroadcastTick(sm);
 }
 
 /*=========================================================================
  *  STATE_INIT
- *  - Trigger first ADC measurement (so V24 is available when LOAD_CONFIG
- *    runs ApplyBuckMode for the first time).
- *  - Initialize tick timers.
- *  - Transition to LOAD_CONFIG.
- *
- *  Buck is NOT touched here — ApplyBuckMode in State_Running takes care of
- *  it according to the loaded config (default BUCK_AUTO).
+ *  - Enable buck converter
+ *  - Trigger first ADC measurement
+ *  - Initialize tick timers
+ *  - Transition to LOAD_CONFIG
  *=========================================================================*/
 static void State_Init(AppStateMachine *sm)
 {
+    SET_BUCK(ENABLE_BUCK);
     TrigerADCMEasurement();
 
     /* Seed all tick timers to current tick */
     uint32_t now = HAL_GetTick();
     sm->lastAdcTick       = now;
     sm->lastCanStatusTick = now;
-    sm->lastEEPROMTick    = now;
 
     sm->state = STATE_LOAD_CONFIG;
 }
@@ -117,13 +100,13 @@ static void State_LoadConfig(AppStateMachine *sm)
         EEPROM_Write_Config(EEPROM_CONFIG_PAGE, EEPROM_CONFIG_OFFSET, &sm->config);
     }
 
-    /* Apply config to CAN runtime defaults (until VOLTAGESET/LIGHTSET overrides). */
+    /* Apply config to CAN thresholds (used as runtime defaults
+       until a VOLTAGESET or LIGHTSET CAN message overrides them) */
     can_rxMessage.under_voltage_24   = sm->config.under_voltage_24;
     can_rxMessage.under_voltage_17_5 = sm->config.under_voltage_17_5;
-    can_rxMessage.pwm[0]             = (uint16_t)sm->config.pwm0;
-    can_rxMessage.pwm[1]             = (uint16_t)sm->config.pwm1;
-    can_rxMessage.pwm[2]             = (uint16_t)sm->config.pwm2;
-    can_rxMessage.buck_mode          = sm->config.buck_mode;
+    can_rxMessage.pwm[0] = (uint16_t)sm->config.pwm0;
+    can_rxMessage.pwm[1] = (uint16_t)sm->config.pwm1;
+    can_rxMessage.pwm[2] = (uint16_t)sm->config.pwm2;
 
     /* Apply initial PWM from config */
     sm->ledCtrl.pwm[0] = (uint8_t)can_rxMessage.pwm[0];
@@ -131,35 +114,31 @@ static void State_LoadConfig(AppStateMachine *sm)
     sm->ledCtrl.pwm[2] = (uint8_t)can_rxMessage.pwm[2];
     apply_pwm(&sm->ledCtrl);
 
-    /* Read voltages so AUTO buck logic has a real V24 to compare on first call. */
-    sm->ledStatus.voltage_24   = READADC(V24_CHANNEL);
-    sm->ledStatus.voltage_17_5 = READADC(V17_5_CHANNEL);
-    ApplyBuckMode(sm);
-
     sm->state = STATE_RUNNING;
 }
 
 /*=========================================================================
  *  STATE_RUNNING
- *  Tick-driven, non-blocking. Every TICK_ADC_INTERVAL_MS the device:
- *    - Reads V24 and V17.5 from the most recent DMA transfer
- *    - Re-triggers DMA for next cycle
- *    - Re-evaluates the buck control mode (AUTO follows V24 vs threshold)
- *    - Runs the UV debounce; on persistent UV → STATE_ERROR
+ *  Non-blocking tick-driven main operation:
  *
- *  Telemetry broadcasts are handled by BroadcastTick() (called from
- *  AppLogic_Run after the state dispatch).
+ *  Every 100ms:
+ *    - Read ADC voltage values (from previous DMA transfer)
+ *    - Check undervoltage thresholds
+ *    - Trigger next ADC measurement
+ *
+ *  Every 500ms:
+ *    - Broadcast LED status over CAN
+ *    - Broadcast device status over CAN
+ *
+ *  Continuously (every loop iteration):
+ *    - Apply latest CAN RX PWM values
+ *    - Handle EEPROM commands (write/reset flags)
  *=========================================================================*/
 static void State_Running(AppStateMachine *sm)
-{
-    if (can_rxMessage.flashdetected) {
-        FOCdetection();
-        return;
-    }
-
+{	if(can_rxMessage.flashdetected==0){
     uint32_t now = HAL_GetTick();
 
-    /* ---- 100 ms: ADC + buck control + UV check ---- */
+    /* ---- 100ms: ADC + undervoltage check ---- */
     if (now - sm->lastAdcTick >= TICK_ADC_INTERVAL_MS) {
         sm->lastAdcTick = now;
 
@@ -169,9 +148,6 @@ static void State_Running(AppStateMachine *sm)
 
         /* Trigger next ADC measurement for the next cycle */
         TrigerADCMEasurement();
-
-        /* Apply buck control (AUTO follows the V24 threshold). */
-        ApplyBuckMode(sm);
 
         /* Check undervoltage with debounce */
         ErrorCode err = CheckUndervoltage(sm);
@@ -188,18 +164,39 @@ static void State_Running(AppStateMachine *sm)
         }
     }
 
-    /* Continuous: apply CAN RX commands + EEPROM save/reset. */
+    /* ---- 500ms: CAN status broadcasts ---- */
+    if (now - sm->lastCanStatusTick >= TICK_CAN_STATUS_INTERVAL_MS) {
+        sm->lastCanStatusTick = now;
+
+        /* Update PWM values in status before broadcast */
+        sm->ledStatus.pwm[0] = can_rxMessage.pwm[0];
+        sm->ledStatus.pwm[1] = can_rxMessage.pwm[1];
+        sm->ledStatus.pwm[2] = can_rxMessage.pwm[2];
+
+        braodcastLEDStatus(sm->ledStatus);
+        BroadcastDeviceStatusEx(sm->state, sm->errorCode);
+    }
+
+    if(now - sm->lastEEPROMTick >= TICK_EEPROM_DATA_MS){
+    	sm->lastEEPROMTick = now;
+    	broadcastEEPROMData(&sm->config);
+    }
+
+    /* ---- Continuous: process CAN RX + EEPROM commands ---- */
     ProcessCANCommands(sm);
     ProcessEEPROMCommands(sm);
+}
+else{
+	FOCdetection();
+}
 }
 
 /*=========================================================================
  *  STATE_ERROR
- *  - Buck disable is conditional: BUCK_MANUAL_ON keeps the buck on (user
- *    override for bench testing); the other two modes disable it.
- *  - All LEDs off.
- *  - ADC continues so we can detect recovery.
- *  - Telemetry broadcasts continue via BroadcastTick().
+ *  - Disable buck converter (protect hardware)
+ *  - Set all PWM to 0
+ *  - Broadcast error status over CAN every 500ms
+ *  - Continue ADC reads every 100ms to detect recovery
  *=========================================================================*/
 static void State_Error(AppStateMachine *sm)
 {
@@ -208,9 +205,7 @@ static void State_Error(AppStateMachine *sm)
 
     /* One-time entry actions */
     if (!enteredError) {
-        if (can_rxMessage.buck_mode != BUCK_MANUAL_ON) {
-            SET_BUCK(DISABLE_BUCK);
-        }
+        SET_BUCK(DISABLE_BUCK);
 
         /* Turn off all LEDs */
         sm->ledCtrl.pwm[0] = 0;
@@ -229,9 +224,7 @@ static void State_Error(AppStateMachine *sm)
         sm->ledStatus.voltage_17_5 = READADC(V17_5_CHANNEL);
         TrigerADCMEasurement();
 
-        /* Buck control still applies — user can change mode mid-error via CAN. */
-        ApplyBuckMode(sm);
-
+        /* Check if voltage has recovered */
         ErrorCode err = CheckUndervoltage(sm);
         if (err == ERR_NONE) {
             enteredError = 0;
@@ -241,10 +234,12 @@ static void State_Error(AppStateMachine *sm)
         }
     }
 
-    /* CAN command processing remains active in error state so the host can
-     * change UV thresholds, change buck mode, save EEPROM, etc. */
-    ProcessCANCommands(sm);
-    ProcessEEPROMCommands(sm);
+    /* ---- 500ms: broadcast error status ---- */
+    if (now - sm->lastCanStatusTick >= TICK_CAN_STATUS_INTERVAL_MS) {
+        sm->lastCanStatusTick = now;
+        braodcastLEDStatus(sm->ledStatus);
+        BroadcastDeviceStatusEx(sm->state, sm->errorCode);
+    }
 }
 
 /*=========================================================================
@@ -260,10 +255,9 @@ static void State_Recovery(AppStateMachine *sm)
     static uint8_t buckReenabled = 0;
     uint32_t now = HAL_GetTick();
 
-    /* One-time entry: re-evaluate buck per current mode (don't blindly enable
-     * if the host has set BUCK_MANUAL_OFF). */
+    /* One-time entry: re-enable buck */
     if (!buckReenabled) {
-        ApplyBuckMode(sm);
+        SET_BUCK(ENABLE_BUCK);
         TrigerADCMEasurement();
         buckReenabled = 1;
     }
@@ -277,11 +271,11 @@ static void State_Recovery(AppStateMachine *sm)
         ErrorCode err = CheckUndervoltage(sm);
         if (err == ERR_NONE) {
             /* Recovered successfully -- restore last commanded PWM */
-            sm->errorCode         = ERR_NONE;
+            sm->errorCode = ERR_NONE;
             sm->lastAdcTick       = now;
             sm->lastCanStatusTick = now;
             sm->uvDebounceCount   = 0;
-            buckReenabled         = 0;
+            buckReenabled = 0;
 
             /* Re-apply PWM from last CAN values so LEDs turn back on */
             sm->ledCtrl.pwm[0] = (uint8_t)can_rxMessage.pwm[0];
@@ -294,13 +288,9 @@ static void State_Recovery(AppStateMachine *sm)
             /* Still bad -- back to error */
             sm->errorCode = err;
             buckReenabled = 0;
-            sm->state     = STATE_ERROR;
+            sm->state = STATE_ERROR;
         }
     }
-
-    /* Keep handling CAN commands during the recovery wait. */
-    ProcessCANCommands(sm);
-    ProcessEEPROMCommands(sm);
 }
 
 /*=========================================================================
@@ -328,14 +318,12 @@ static void ProcessEEPROMCommands(AppStateMachine *sm)
         eeprom_cmd.write_eeprom_flag = 0;
 
         /* Build config from current running values */
-        sm->config.magic              = EEPROM_CFG_MAGIC;
+        sm->config.magic              = 0x3584;
         sm->config.under_voltage_24   = can_rxMessage.under_voltage_24;
         sm->config.under_voltage_17_5 = can_rxMessage.under_voltage_17_5;
         sm->config.pwm0               = can_rxMessage.pwm[0];
         sm->config.pwm1               = can_rxMessage.pwm[1];
         sm->config.pwm2               = can_rxMessage.pwm[2];
-        sm->config.buck_mode          = can_rxMessage.buck_mode;
-        sm->config.reserved           = 0;
 
         EEPROM_Write_Config(EEPROM_CONFIG_PAGE, EEPROM_CONFIG_OFFSET, &sm->config);
         broadcastEEPROMData(&sm->config);
@@ -347,14 +335,13 @@ static void ProcessEEPROMCommands(AppStateMachine *sm)
 
         LoadDefault(&sm->config);
         EEPROM_Write_Config(EEPROM_CONFIG_PAGE, EEPROM_CONFIG_OFFSET, &sm->config);
-
+        State_LoadConfig(sm);
         /* Apply defaults to running state */
         can_rxMessage.under_voltage_24   = sm->config.under_voltage_24;
         can_rxMessage.under_voltage_17_5 = sm->config.under_voltage_17_5;
-        can_rxMessage.pwm[0]             = (uint16_t)sm->config.pwm0;
-        can_rxMessage.pwm[1]             = (uint16_t)sm->config.pwm1;
-        can_rxMessage.pwm[2]             = (uint16_t)sm->config.pwm2;
-        can_rxMessage.buck_mode          = sm->config.buck_mode;
+        can_rxMessage.pwm[0] = (uint16_t)sm->config.pwm0;
+        can_rxMessage.pwm[1] = (uint16_t)sm->config.pwm1;
+        can_rxMessage.pwm[2] = (uint16_t)sm->config.pwm2;
 
         broadcastEEPROMData(&sm->config);
     }
@@ -412,80 +399,4 @@ static void BroadcastDeviceStatusEx(AppState state, ErrorCode errCode)
 //    data[1] = (uint8_t)errCode;
     broadcastDeviceStatus(state,errCode);
 //    CAN_Send(DEVSTATUS, data, 2);
-}
-
-/*=========================================================================
- *  HELPER: ApplyBuckMode
- *  Maps the current buck mode (set via VOLTAGESET) to the BUCK_EN GPIO.
- *
- *    BUCK_MANUAL_OFF — buck off
- *    BUCK_MANUAL_ON  — buck on regardless of voltage
- *    BUCK_AUTO       — buck on iff V24 >= under_voltage_24
- *                      (a threshold of 0 disables the check entirely → on)
- *=========================================================================*/
-static void ApplyBuckMode(AppStateMachine *sm)
-{
-    switch (can_rxMessage.buck_mode) {
-        case BUCK_MANUAL_OFF:
-            SET_BUCK(DISABLE_BUCK);
-            break;
-
-        case BUCK_MANUAL_ON:
-            SET_BUCK(ENABLE_BUCK);
-            break;
-
-        case BUCK_AUTO:
-        default:
-            if (can_rxMessage.under_voltage_24 == 0 ||
-                sm->ledStatus.voltage_24 >= can_rxMessage.under_voltage_24) {
-                SET_BUCK(ENABLE_BUCK);
-            } else {
-                SET_BUCK(DISABLE_BUCK);
-            }
-            break;
-    }
-}
-
-/*=========================================================================
- *  HELPER: BroadcastTick
- *  Phased CAN telemetry — one frame per 100 ms tick. With three rotating
- *  phases (LIGHTSTATUS / DEVSTATUS / EEPROMDATA), each broadcast emits at
- *  ~3.3 Hz and the FDCAN TX FIFO never sees more than one fresh frame per
- *  ~100 ms (plenty of time for the previous frame to ACK and drain).
- *
- *  Runs in every state EXCEPT during a flash-in-progress window, so the
- *  host always sees a heartbeat of EEPROM contents to confirm reads/writes.
- *=========================================================================*/
-static void BroadcastTick(AppStateMachine *sm)
-{
-    /* Suppress TX while OpenBLT is flashing (XCP polling pings detected). */
-    if (can_rxMessage.flashdetected) return;
-
-    static uint32_t last_tick = 0;
-    static uint8_t  phase     = 0;
-
-    uint32_t now = HAL_GetTick();
-    if ((now - last_tick) < BCAST_PHASE_INTERVAL_MS) return;
-    last_tick = now;
-
-    /* Refresh status payload from latest CAN-set values before emitting. */
-    sm->ledStatus.pwm[0] = (uint16_t)can_rxMessage.pwm[0];
-    sm->ledStatus.pwm[1] = (uint16_t)can_rxMessage.pwm[1];
-    sm->ledStatus.pwm[2] = (uint16_t)can_rxMessage.pwm[2];
-
-    switch (phase) {
-        case 0:
-            braodcastLEDStatus(sm->ledStatus);
-            break;
-        case 1:
-            BroadcastDeviceStatusEx(sm->state, sm->errorCode);
-            break;
-        case 2:
-            broadcastEEPROMData(&sm->config);
-            break;
-        default:
-            break;
-    }
-
-    if (++phase > 2U) phase = 0U;
 }

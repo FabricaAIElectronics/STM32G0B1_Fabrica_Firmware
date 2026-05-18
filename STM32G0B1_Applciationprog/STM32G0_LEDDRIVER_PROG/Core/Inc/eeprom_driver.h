@@ -11,10 +11,6 @@
 #include "stm32g0xx_hal.h"
 #include <stdbool.h>
 
-/* magic bumped 0x3584 → 0x3585 when buck_mode field was added — old EEPROM
- * contents are rejected by checkcfg() and fall back to LoadDefault(). */
-#define EEPROM_CFG_MAGIC   0x3585
-
 typedef struct __attribute__((packed)) {
 	uint16_t 	magic;
     uint16_t 	under_voltage_24;
@@ -22,8 +18,6 @@ typedef struct __attribute__((packed)) {
     uint16_t 	pwm0;
     uint16_t 	pwm1;
     uint16_t    pwm2;
-    uint8_t     buck_mode;     /* BUCK_MODE_t enum value (peripheral.h) */
-    uint8_t     reserved;      /* alignment / future use */
 } Config;
 
 

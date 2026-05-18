@@ -35,9 +35,8 @@ Core/Src/ui_display.o: ../Core/Src/ui_display.c ../Core/Inc/ui_display.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr_ex.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h \
- ../Core/Inc/io_module.h ../Core/Inc/fan_ctrl.h ../Core/Inc/battery.h \
- ../Core/Inc/ssd1306.h ../Core/Inc/fonts.h ../Core/Inc/fonts.h \
- ../Core/Inc/can_operation.h \
+ ../Core/Inc/io_module.h ../Core/Inc/fan_ctrl.h ../Core/Inc/ssd1306.h \
+ ../Core/Inc/fonts.h ../Core/Inc/fonts.h ../Core/Inc/can_operation.h \
  ../Drivers/CMSIS/Device/ST/STM32G0xx/Include/stm32g0b1xx.h \
  ../Core/Inc/eeprom_driver.h ../Core/Inc/io_module.h \
  ../Core/Inc/display_scheduler.h
@@ -81,7 +80,6 @@ Core/Src/ui_display.o: ../Core/Src/ui_display.c ../Core/Inc/ui_display.h \
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h:
 ../Core/Inc/io_module.h:
 ../Core/Inc/fan_ctrl.h:
-../Core/Inc/battery.h:
 ../Core/Inc/ssd1306.h:
 ../Core/Inc/fonts.h:
 ../Core/Inc/fonts.h:

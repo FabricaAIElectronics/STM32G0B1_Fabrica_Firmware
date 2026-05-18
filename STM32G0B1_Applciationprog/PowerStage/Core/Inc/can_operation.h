@@ -16,109 +16,75 @@
 #include <stdbool.h>
 
 /* ============================================================
- * CAN IDs — PowerStage sub-block 0x130..0x15F (CANopen-safe gap)
- *
- * 0x130 / 0x131 reserved for OpenBLT bootloader RX/TX. The bootloader
- * RX (DEVICE_ADDR, 0x130) doubles as the application's "enter bootloader"
- * trigger: a single XCP CONNECT (byte[0]=0xFF, dlc=2) on 0x130 resets
- * the running app and is then re-handled by the bootloader on the same ID.
- * Must match STM32G0B1_Bootloader/G0B1_PowerStage_Boot/App/blt_conf.h.
+ * CAN IDs — Commands (RX — this device receives)
  * ============================================================
  *
- *  CMD_FAN     [0x140] DLC=2
+ *  CMD_FAN     [0x665] DLC=2
  *    Byte[0] : Fan mode      (0=OFF, 1=ON_MANUAL, 2=AUTO)
  *    Byte[1] : Duty cycle    (0–100 %)
  *
- *  CMD_HS      [0x141] DLC=5
+ *  CMD_HS      [0x666] DLC=5
  *    Byte[0] : RAIL_AUX      (0=disable, 1=enable)
  *    Byte[1] : RAIL_LED      (0=disable, 1=enable)
  *    Byte[2] : RAIL_DRIVE    (0=disable, 1=enable)
  *    Byte[3] : RAIL_CAP      (0=disable, 1=enable)
- *    Byte[4] : RAIL_SBC      (IGNORED — no MCU-controlled EN line on
- *                             this PowerStage board; SBC is permanently
- *                             enabled by hardware. The byte is reserved
- *                             for backward compatibility.)
+ *    Byte[4] : RAIL_SBC      (0=disable, 1=enable)
  *
- *  DEVICE_ADDR [0x130] DLC=2
- *    Byte[0] : 0xFF → system reset into bootloader
+ *  DEVICE_ADDR [0x667] DLC=2
+ *    Byte[0] : 0xFF → system reset / bootloader trigger
  *
- *  CMD_OC      [0x142] DLC=4
- *    Byte[0] : Rail bitmask  (bit0=AUX, bit1=LED, bit2=DRIVE, bit3=CAP,
- *                             0xFF=all controllable rails). Bit 4 (SBC)
- *                             is IGNORED on this board because the SBC
- *                             rail has no MCU-driven EN line — a software
- *                             OC trip would have nothing to cut.
+ *  CMD_OC      [0x668] DLC=4
+ *    Byte[0] : Rail bitmask  (bit0=AUX … bit4=SBC | 0xFF=all rails)
  *    Byte[1] : Command       (0x01=set warning threshold, 0x02=reset fault)
  *    Byte[2] : Threshold high byte (mA, uint16_t big-endian)
  *    Byte[3] : Threshold low  byte (mA)
  *
- *  CMD_EEPROM  [0x143] DLC=1
+ *  CMD_EEPROM  [0x669] DLC=1
  *    Byte[0] : 0x01=save config to EEPROM, 0x02=load default
  *
- *  CMD_UV      [0x144] DLC=6
+ *  CMD_UV      [0x66D] DLC=6
  *    Byte[0-1] : V24  UV threshold (uint16_t mV, big-endian)
  *    Byte[2-3] : VCAP UV threshold (uint16_t mV)
  *    Byte[4-5] : V12  UV threshold (uint16_t mV)
- *
- *  CMD_CTRL    [0x145] DLC=2
- *    Byte[0] : V_LED_PWR     (0=OFF, 1=ON)
- *    Byte[1] : CAN relay     (0=disable, 1=enable)
- *
- *  CMD_PAGE_DWELL [0x146] DLC=3
- *    Byte[0] : Page 0 (OVERVIEW)     dwell in 500 ms ticks. 0=default.
- *    Byte[1] : Page 1 (RAIL_STATUS)  dwell in 500 ms ticks. 0=default.
- *    Byte[2] : Page 2 (FAULT_DETAIL) dwell in 500 ms ticks. 0=default.
- *    Range 1..255 → 0.5 s .. 127.5 s per page. Send CMD_EEPROM 0x01
- *    afterward to persist across reboots.
- *
- *  CMD_BAT_CFG [0x147] DLC=1
- *    Byte[0] : Battery SOC-low warning threshold in % (0..100).
- *              0    = warning disabled.
- *              1-100 = trip when filtered SOC < threshold.
- *              When tripped, UV_Fault_Mask bit 3 (UV_FAULT_SOC_LOW) is set
- *              in BCAST_VOLTAGE and the OLED V24/SOC row blinks at 1 Hz.
- *              Send CMD_EEPROM 0x01 afterward to persist.
  * ============================================================ */
-#define DEVICE_ADDR         0x130
-#define CMD_FAN             0x140
-#define CMD_HS              0x141
-#define CMD_OC              0x142
-#define CMD_EEPROM          0x143
-#define CMD_UV              0x144
-#define CMD_CTRL            0x145
-#define CMD_PAGE_DWELL      0x146
-#define CMD_BAT_CFG         0x147
+#define CMD_FAN             0x665
+#define CMD_HS              0x666
+#define DEVICE_ADDR         0x667
+#define CMD_OC              0x668
+#define CMD_EEPROM          0x669
+#define CMD_UV              0x66D
+#define CMD_CTRL            0x671
 
 /* ============================================================
- * CAN IDs — Broadcast (TX — this device transmits, 0x150..0x15F)
+ * CAN IDs — Broadcast (TX — this device transmits)
  * ============================================================
  *
- *  BCAST_HS_STATE   [0x150] DLC=5
+ *  BCAST_HS_STATE   [0x662] DLC=5
  *    Byte[0] : Enable bitmask     (1 bit per rail, LSB = RAIL_AUX)
  *    Byte[1] : Fault bitmask      (TPS2493 FLT pin asserted)
  *    Byte[2] : PGood bitmask      (TPS2493 PG  pin asserted)
  *    Byte[3] : OC Warning mask    (software threshold exceeded)
  *    Byte[4] : OC Triggered mask  (hardware FLT latched)
  *
- *  BCAST_HS_CURR_A  [0x151] DLC=8
+ *  BCAST_HS_CURR_A  [0x663] DLC=8
  *    Byte[0-1] : BAT   current (uint16_t mA, big-endian)
  *    Byte[2-3] : CAP   current (uint16_t mA)
  *    Byte[4-5] : SBC   current (uint16_t mA)
  *    Byte[6-7] : DRIVE current (uint16_t mA)
  *
- *  BCAST_VOLTAGE    [0x152] DLC=8
+ *  BCAST_VOLTAGE    [0x664] DLC=8
  *    Byte[0-1] : V24  (uint16_t mV)
  *    Byte[2-3] : VCAP (uint16_t mV)
  *    Byte[4-5] : V12  (uint16_t mV)
  *    Byte[6]   : UV fault mask  (bit0=V24, bit1=VCAP, bit2=V12)
  *    Byte[7]   : Reserved
  *
- *  BCAST_FAN        [0x153] DLC=4
+ *  BCAST_FAN        [0x66A] DLC=4
  *    Byte[0]   : Fan mode     (0=OFF, 1=ON, 2=AUTO)
  *    Byte[1]   : Duty cycle   (0–100 %)
  *    Byte[2-3] : Temperature  (int16_t, °C × 10, e.g. 253 = 25.3 °C)
  *
- *  BCAST_EEPROM     [0x154] DLC=8
+ *  BCAST_EEPROM     [0x66B] DLC=8
  *    Byte[0]   : fan_default_mode
  *    Byte[1]   : fan_default_duty
  *    Byte[2]   : fan_min_duty
@@ -127,47 +93,34 @@
  *    Byte[5]   : hs_default_state  (bitmask)
  *    Byte[6-7] : Reserved
  *
- *  BCAST_HS_CURR_B  [0x155] DLC=4
+ *  BCAST_HS_CURR_B  [0x66C] DLC=4
  *    Byte[0-1] : AUX current (uint16_t mA)
  *    Byte[2-3] : LED current (uint16_t mA)
  *
- *  BCAST_UV         [0x156] DLC=6
+ *  BCAST_UV         [0x66E] DLC=6
  *    Byte[0-1] : V24  UV threshold (uint16_t mV)
  *    Byte[2-3] : VCAP UV threshold (uint16_t mV)
  *    Byte[4-5] : V12  UV threshold (uint16_t mV)
  *
- *  BCAST_OC_CFG_A   [0x157] DLC=8   (OC threshold config echo)
+ *  BCAST_OC_CFG_A   [0x66F] DLC=8   (OC threshold config echo)
  *    Byte[0-1] : OC threshold RAIL_AUX   (uint16_t mA)
  *    Byte[2-3] : OC threshold RAIL_LED   (uint16_t mA)
  *    Byte[4-5] : OC threshold RAIL_DRIVE (uint16_t mA)
  *    Byte[6-7] : OC threshold RAIL_CAP   (uint16_t mA)
  *
- *  BCAST_OC_CFG_B   [0x158] DLC=2   (OC threshold config echo cont.)
+ *  BCAST_OC_CFG_B   [0x670] DLC=2   (OC threshold config echo cont.)
  *    Byte[0-1] : OC threshold RAIL_SBC   (uint16_t mA)
- *
- *  BCAST_IO_STATUS  [0x159] DLC=3
- *    Byte[0]   : SW pin       (0/1)
- *    Byte[1]   : V_LED_PWR    (0/1)
- *    Byte[2]   : CAN relay    (0=disabled, 1=enabled)
- *
- *  BCAST_BATTERY_CFG[0x15A] DLC=8   (battery static config — for host UI)
- *    Byte[0-1] : V_cutoff_mV  (uint16_t mV, big-endian)  — 0% SOC reference
- *    Byte[2-3] : V_full_mV    (uint16_t mV, big-endian)  — 100% SOC reference
- *    Byte[4-5] : R_int_mOhm   (uint16_t mΩ, big-endian)  — pack internal resistance used for IR comp
- *    Byte[6]   : Cell_Count   (uint8_t)                  — series count (6 for 6S)
- *    Byte[7]   : Reserved
  * ============================================================ */
-#define BCAST_HS_STATE      0x150
-#define BCAST_HS_CURR_A     0x151
-#define BCAST_VOLTAGE       0x152
-#define BCAST_FAN           0x153
-#define BCAST_EEPROM        0x154
-#define BCAST_HS_CURR_B     0x155
-#define BCAST_UV            0x156
-#define BCAST_OC_CFG_A      0x157
-#define BCAST_OC_CFG_B      0x158
-#define BCAST_IO_STATUS     0x159
-#define BCAST_BATTERY_CFG   0x15A
+#define BCAST_HS_STATE      0x662
+#define BCAST_HS_CURR_A     0x663
+#define BCAST_VOLTAGE       0x664
+#define BCAST_FAN           0x66A
+#define BCAST_EEPROM        0x66B
+#define BCAST_HS_CURR_B     0x66C
+#define BCAST_UV            0x66E
+#define BCAST_OC_CFG_A      0x66F
+#define BCAST_OC_CFG_B      0x670
+#define BCAST_IO_STATUS     0x672
 
 /* ============================================================
  * Sub-command codes
@@ -185,7 +138,6 @@
 #define UV_FAULT_V24            (1 << 0)
 #define UV_FAULT_VCAP           (1 << 1)
 #define UV_FAULT_V12            (1 << 2)
-#define UV_FAULT_SOC_LOW        (1 << 3)   /* Battery SOC < BATTERY_LOW_SOC_PCT — see battery.h */
 
 /* ============================================================
  * Structs
@@ -218,14 +170,6 @@ typedef struct {
     uint8_t     led_pwr_state;         // 0=OFF, 1=ON
     uint8_t     relay_state;           // 0=disable, 1=enable
     uint8_t     ctrl_cmd_received;
-
-    /* --- OLED per-page dwell (in 500 ms scheduler ticks) --- */
-    uint8_t     page_dwell[CONFIG_PAGE_COUNT];
-    uint8_t     page_dwell_cmd_received;
-
-    /* --- Battery SOC-low warning threshold (% SOC, 0 = disabled) --- */
-    uint8_t     bat_low_soc_pct;
-    uint8_t     bat_cfg_cmd_received;
 
     /* --- EEPROM --- */
     uint8_t     flash_detected;
@@ -330,34 +274,31 @@ void FOCdetection(void);
 
 /* ---- Broadcast functions (all dual-send on CAN1 + CAN2) ---- */
 
-/* [0x150] enable / fault / pgood / OC-warn / OC-fault bitmasks */
+/* [0x662] enable / fault / pgood / OC-warn / OC-fault bitmasks */
 void CAN_Broadcast_HS_State(void);
 
-/* [0x151] BAT, CAP, SBC, DRIVE current (uint16_t mA) */
+/* [0x663] BAT, CAP, SBC, DRIVE current (uint16_t mA) */
 void CAN_Broadcast_HS_Current_A(SystemMeasurement_t *ms);
 
-/* [0x155] AUX, LED current (uint16_t mA) */
+/* [0x66C] AUX, LED current (uint16_t mA) */
 void CAN_Broadcast_HS_Current_B(SystemMeasurement_t *ms);
 
-/* [0x152] V24, VCAP, V12 in mV + UV fault bitmask */
+/* [0x664] V24, VCAP, V12 in mV + UV fault bitmask */
 void CAN_Broadcast_Voltage(SystemMeasurement_t *ms);
 
-/* [0x153] fan mode, duty %, temperature (int16_t °C×10) */
+/* [0x66A] fan mode, duty %, temperature (int16_t °C×10) */
 void CAN_Broadcast_Fan(FanCTRL_t *fan, float temp_C);
 
-/* [0x154] fan defaults + hs_default_state from Config */
+/* [0x66B] fan defaults + hs_default_state from Config */
 void CAN_Broadcast_EEPROM(Config *cfg);
 
-/* [0x156] UV thresholds from active uv_status */
+/* [0x66E] UV thresholds from active uv_status */
 void CAN_Broadcast_UV(void);
 
-/* [0x157 + 0x158] OC thresholds per rail from oc_status */
+/* [0x66F + 0x670] OC thresholds per rail from oc_status */
 void CAN_Broadcast_OC_Config(void);
 
-/* [0x159] SW pin state, V_LED_PWR state, relay status */
+/* [0x672] SW pin state, V_LED_PWR state, relay status */
 void CAN_Broadcast_IO_Status(void);
-
-/* [0x15A] static battery config (V_cutoff, V_full, R_int, cell count) */
-void CAN_Broadcast_Battery_Cfg(void);
 
 #endif /* INC_CAN_OPERATION_H_ */

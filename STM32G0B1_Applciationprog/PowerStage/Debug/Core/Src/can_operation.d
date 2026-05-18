@@ -39,7 +39,7 @@ Core/Src/can_operation.o: ../Core/Src/can_operation.c \
  ../Drivers/CMSIS/Device/ST/STM32G0xx/Include/stm32g0b1xx.h \
  ../Core/Inc/io_module.h ../Core/Inc/fan_ctrl.h \
  ../Core/Inc/eeprom_driver.h ../Core/Inc/main.h ../Core/Inc/io_module.h \
- ../Core/Inc/fan_ctrl.h ../Core/Inc/eeprom_driver.h ../Core/Inc/battery.h
+ ../Core/Inc/fan_ctrl.h ../Core/Inc/eeprom_driver.h
 ../Core/Inc/can_operation.h:
 ../Core/Inc/main.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal.h:
@@ -86,4 +86,3 @@ Core/Src/can_operation.o: ../Core/Src/can_operation.c \
 ../Core/Inc/io_module.h:
 ../Core/Inc/fan_ctrl.h:
 ../Core/Inc/eeprom_driver.h:
-../Core/Inc/battery.h:

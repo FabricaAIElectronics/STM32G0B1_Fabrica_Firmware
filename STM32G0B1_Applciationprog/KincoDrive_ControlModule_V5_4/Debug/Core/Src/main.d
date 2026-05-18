@@ -35,9 +35,10 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr_ex.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h \
  ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h \
- ../Core/Inc/applogic.h ../Core/Inc/CAN_Handler.h ../Core/Inc/applogic.h \
- ../Core/Inc/Fan_PWM.h ../Core/Inc/adc_driver.h ../Core/Inc/hs_switch.h \
- ../Core/Inc/eeprom_driver.h
+ ../Core/Inc/AppLogic.h ../Core/Inc/CAN_Handler.h ../Core/Inc/Fan_PWM.h \
+ ../Core/Inc/Power_Electronic.h ../Core/Inc/main.h \
+ ../Core/Inc/eeprom_driver.h ../Core/Inc/AppLogic.h ../Core/Inc/ESTOP.h \
+ ../Core/Inc/Endstop.h
 ../Core/Inc/main.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal.h:
 ../Core/Inc/stm32g0xx_hal_conf.h:
@@ -75,10 +76,12 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_pwr_ex.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim.h:
 ../Drivers/STM32G0xx_HAL_Driver/Inc/stm32g0xx_hal_tim_ex.h:
-../Core/Inc/applogic.h:
+../Core/Inc/AppLogic.h:
 ../Core/Inc/CAN_Handler.h:
-../Core/Inc/applogic.h:
 ../Core/Inc/Fan_PWM.h:
-../Core/Inc/adc_driver.h:
-../Core/Inc/hs_switch.h:
+../Core/Inc/Power_Electronic.h:
+../Core/Inc/main.h:
 ../Core/Inc/eeprom_driver.h:
+../Core/Inc/AppLogic.h:
+../Core/Inc/ESTOP.h:
+../Core/Inc/Endstop.h:

@@ -25,29 +25,6 @@
 #define K_SCALE     1.250e-2f
 #define RSENSE      0.003f      /* 3 mΩ  — all rails except LED  */
 #define RSENSELED   0.020f      /* 20 mΩ — LED rail              */
-
-/* ------------------------------------------------------------------
- * Bus-voltage scale factors (mV per ADC count).
- *
- * Theoretical for a divider of ratio N (= (R_top + R_bot)/R_bot) with
- * 12-bit ADC and Vref = 3.3 V:
- *
- *     mV / count = (3300 / 4095) * N ≈ 0.806 * N
- *
- * Calibration procedure (per rail):
- *   1. Power the rail to a known voltage (multimeter at the device pad).
- *   2. Read displayed value on the OLED or BCAST_VOLTAGE.
- *   3. K_NEW = K_OLD × (V_actual / V_reported)
- *
- * Calibration log:
- *   V24:  reported 22.20 V at actual 23.62 V (multimeter)
- *           → K = 6.286 × (22.5 / 22.9) = 6.689
- *   VCAP: not yet calibrated — start with 6.286, tune from a multimeter read.
- *   V12:  not yet calibrated — same, lower nominal voltage so easier to verify.
- * ------------------------------------------------------------------ */
-#define K_V24_MV_PER_COUNT      6.571f
-#define K_VCAP_MV_PER_COUNT     6.289f
-#define K_V12_MV_PER_COUNT      6.289f
 typedef struct {
     GPIO_TypeDef* port;
     uint16_t pin;
@@ -67,7 +44,6 @@ typedef struct {
     GPIO_Pin_t fault;
     GPIO_Pin_t pgood;
 } HS_CTRL_;
-
 
 #define ADC_CHANNELS 10
 /* DMA is configured for WORD (32-bit) transfers in CubeMX —
@@ -105,12 +81,7 @@ typedef struct {
 		uint16_t V12;
 	}voltage_mV;
 
-	float   NTCTemperature_C;
-
-	/* 6S Li-ion / Li-Po pack state-of-charge in percent (0..100).
-	 * Populated by Battery_EstimateSOC_pct() at the end of Run_Measurements().
-	 * See battery.h for the OCV lookup + IR-compensation algorithm. */
-	uint8_t battery_soc_pct;
+	float NTCTemperature_C;
 }SystemMeasurement_t;
 
 extern SystemMeasurement_t measurements;

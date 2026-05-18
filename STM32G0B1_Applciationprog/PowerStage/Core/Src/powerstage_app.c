@@ -37,7 +37,6 @@
 #include "display_scheduler.h"
 #include "ssd1306.h"
 #include "fonts.h"
-#include "battery.h"
 #include <string.h>
 
 /* ============================================================
@@ -103,23 +102,6 @@ static void Apply_Config(void)
         fan_ctrl_off();
         fan.dutycycle_pct = g_config.fan_default_duty;
     }
-
-    for (uint8_t i = 0; i < RAIL_COUNT; i++){
-    	if((g_config.hs_default_state>>i)&0x01){
-    		HS_Enable(&hotswap[i]);
-    	}
-    	else{
-    		HS_Disable(&hotswap[i]);
-    	}
-    }
-
-    /* OLED per-page dwell (Config.page_dwell[] = ticks per page; 0 = default). */
-    for (uint8_t i = 0; i < CONFIG_PAGE_COUNT; i++) {
-        UI_Display_SetPageDwell(i, g_config.page_dwell[i]);
-    }
-
-    /* SOC-low warning threshold (0 disables the warning). */
-    Battery_SetLowSocThreshold_pct(g_config.bat_low_soc_pct);
 }
 
 /* Run all ADC-based measurements into the global `measurements` struct */
@@ -135,15 +117,6 @@ static void Run_Measurements(void)
     VCAP_volt_measurement(&measurements);
     V12_volt_measurement(&measurements);
     NTC_Temp_measurement(&measurements);
-
-    /* SOC last — uses V24 + I_BAT computed above. The raw SOC is noisy
-     * (V24/I sensor noise + transient load steps), so we feed it through
-     * a smoothing filter with asymmetric hysteresis before broadcasting.
-     * See Battery_FilterSOC_pct() in battery.c. */
-    uint8_t raw_soc = Battery_EstimateSOC_pct(
-        measurements.voltage_mV.V24,
-        measurements.current_mA._currbat);
-    measurements.battery_soc_pct = Battery_FilterSOC_pct(raw_soc);
 }
 
 /* Update OC fault / warning masks from live currents and HW FLT pins.
@@ -205,14 +178,10 @@ static void Handle_CAN_Commands(void)
         }
     }
 
-    /* ── HS switch enable/disable ────────────────────────── *
-     * RAIL_SBC has no MCU-driven enable line on the PowerStage board —
-     * its hot-swap is permanently configured by hardware. We skip it
-     * here so the host can't accidentally believe it has control. */
+    /* ── HS switch enable/disable ────────────────────────── */
     if (can_rxMessage.hs_cmd_received) {
         can_rxMessage.hs_cmd_received = 0;
         for (uint8_t i = 0; i < RAIL_COUNT; i++) {
-            if (i == RAIL_SBC) continue;
             if (can_rxMessage.hs_state[i])
                 HS_Enable(&hotswap[i]);
             else
@@ -220,16 +189,11 @@ static void Handle_CAN_Commands(void)
         }
     }
 
-    /* ── Overcurrent threshold / fault reset ─────────────── *
-     * RAIL_SBC's software OC limit cannot be set from CAN: the rail
-     * isn't controllable, so a software trip wouldn't have anywhere to
-     * cut power. Threshold for SBC stays at 0 (= disabled) — see
-     * LoadDefault() in eeprom_driver.c. */
+    /* ── Overcurrent threshold / fault reset ─────────────── */
     if (can_rxMessage.oc_cmd_received) {
         can_rxMessage.oc_cmd_received = 0;
         if (can_rxMessage.oc_cmd == OC_CMD_SET_THRESHOLD) {
             for (uint8_t i = 0; i < RAIL_COUNT; i++) {
-                if (i == RAIL_SBC) continue;
                 if ((can_rxMessage.oc_rail_mask == 0xFF) ||
                     (can_rxMessage.oc_rail_mask & (1u << i))) {
                     oc_status.oc_threshold_mA[i] = can_rxMessage.oc_threshold_mA;
@@ -276,14 +240,6 @@ static void Handle_CAN_Commands(void)
         g_config.uv_V24_mV  = uv_status.uv_V24_mV;
         g_config.uv_VCAP_mV = uv_status.uv_VCAP_mV;
         g_config.uv_V12_mV  = uv_status.uv_V12_mV;
-
-        /* Snapshot live OLED page-dwell values */
-        for (uint8_t i = 0; i < CONFIG_PAGE_COUNT; i++)
-            g_config.page_dwell[i] = UI_Display_GetPageDwell(i);
-
-        /* Snapshot live battery low-SOC warning threshold */
-        g_config.bat_low_soc_pct = Battery_GetLowSocThreshold_pct();
-
         if (g_eeprom_present)
             EEPROM_Write_Config(1, 0, &g_config);
     }
@@ -303,20 +259,6 @@ static void Handle_CAN_Commands(void)
         HAL_GPIO_WritePin(V_LED_PWR_GPIO_Port, V_LED_PWR_Pin,
                           can_rxMessage.led_pwr_state ? GPIO_PIN_SET : GPIO_PIN_RESET);
         canstat.relay_enabled = (can_rxMessage.relay_state != 0);
-    }
-
-    /* ── OLED per-page dwell ─────────────────────────────── */
-    if (can_rxMessage.page_dwell_cmd_received) {
-        can_rxMessage.page_dwell_cmd_received = 0;
-        for (uint8_t i = 0; i < CONFIG_PAGE_COUNT; i++) {
-            UI_Display_SetPageDwell(i, can_rxMessage.page_dwell[i]);
-        }
-    }
-
-    /* ── Battery SOC-low warning threshold ───────────────── */
-    if (can_rxMessage.bat_cfg_cmd_received) {
-        can_rxMessage.bat_cfg_cmd_received = 0;
-        Battery_SetLowSocThreshold_pct(can_rxMessage.bat_low_soc_pct);
     }
 }
 
@@ -373,7 +315,6 @@ static void Common_Task(void)
         CAN_Broadcast_UV();
         CAN_Broadcast_OC_Config();
         CAN_Broadcast_IO_Status();
-        CAN_Broadcast_Battery_Cfg();
     }
 
     /* ── Display scheduler ─────────────────────────────────────────── */

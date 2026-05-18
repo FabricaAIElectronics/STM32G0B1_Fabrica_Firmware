@@ -1,113 +1,174 @@
 /**
- * @file    applogic.c
- * @brief   KincoDrive low-level driver state machine.
+ * @file    AppLogic.c
+ * @brief   Top-level state machine and config dispatcher.
+ *
+ * @details See AppLogic.h for dataflow overview.
  *
  * @author  jordan
- * @date    2026-05-06
+ * @date    2026-04-21
  */
 
-#include "applogic.h"
-#include "main.h"
-#include "adc_driver.h"
-#include "Fan_PWM.h"
+#include "AppLogic.h"
 #include "CAN_Handler.h"
 #include "eeprom_driver.h"
-#include "power_monitor.h"
+#include "Power_Electronic.h"
+#include "Fan_PWM.h"
+#include "main.h"
 
 #include <string.h>
 
-/* Tick periods */
-#define PROTECTION_PERIOD_MS    50U
-#define BROADCAST_PERIOD_MS     500U
+/* ═══════════════════════════════════════════════════════════════════════
+ *  Private state
+ * ═══════════════════════════════════════════════════════════════════════ */
 
-extern FDCAN_HandleTypeDef hfdcan1;
+static Config_t   app_cfg;
+static AppState_t app_state = APP_INIT;
 
-/* ────────── Private state handlers ────────── */
+/* ═══════════════════════════════════════════════════════════════════════
+ *  Defaults  (used when EEPROM is blank/corrupt or on "load defaults" cmd)
+ * ═══════════════════════════════════════════════════════════════════════ */
 
-static void state_init(AppStateMachine *sm)
+static void app_defaults(Config_t *c)
 {
-
-
-    /* ADC: calibrate then start continuous DMA */
-    Calibrate_ADC1();
-    Start_ADC1_DMA();
-
-    /* Fan PWM + tachometer DMA */
-    start_all_Fan_PWM();
-    start_Fan_Tacho_DMA();
-
-    /* FDCAN start + filter */
-    HAL_FDCAN_Start(&hfdcan1);
-    CAN_Handler_Init();
-
-
-    uint32_t now = HAL_GetTick();
-    sm->last_protection_tick = now;
-    sm->last_broadcast_tick  = now;
-
-    sm->state = APP_STATE_LOAD_CONFIG;
+    c->hs_state = 0U;    /* all HS OFF, buck OFF */
+    c->fan_dr   = 0U;
+    c->fan_ep   = 0U;
+    c->fan_eh   = 0U;
+    c->fan_st   = 0U;
+    c->fan_sf   = 0U;
 }
 
-static void state_load_config(AppStateMachine *sm)
+/* ═══════════════════════════════════════════════════════════════════════
+ *  Hardware actuation  (only place that writes GPIOs / PWMs)
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+static void apply_hs(uint8_t hs)
 {
-    /* Read config from EEPROM into RAM cache (or fall back to safe defaults). */
-    EEPROM_Init();
+    if (hs & CFG_HS_DR)    Enable_HighSide_Power_Module(HS_MODULE_DRIVE);
+    else                   Disable_HighSide_Power_Module(HS_MODULE_DRIVE);
 
-    /* Apply boot HS state + fan defaults + OC/UV thresholds.
-     * Per user requirement #4: maintain bootHS state from EEPROM so that
-     * the EEPROM round-trip is exercised on every boot. */
-    EEPROM_ApplyStartupConfig();
+    if (hs & CFG_HS_E)     Enable_HighSide_Power_Module(HS_MODULE_EXTRUDER);
+    else                   Disable_HighSide_Power_Module(HS_MODULE_EXTRUDER);
 
-    sm->state = APP_STATE_RUNNING;
+    if (hs & CFG_HS_SC)    Enable_HighSide_Power_Module(HS_MODULE_SCRUBBING);
+    else                   Disable_HighSide_Power_Module(HS_MODULE_SCRUBBING);
+
+    if (hs & CFG_HS_VBUCK) Enable_12V_Buck_Converter();
+    else                   Disable_12V_Buck_Converter();
 }
 
-static void state_running(AppStateMachine *sm)
+static void apply_fans(const Config_t *c)
 {
-    uint32_t now = HAL_GetTick();
+    set_Fan_PWM(FAN_DR, c->fan_dr);
+    set_Fan_PWM(FAN_EP, c->fan_ep);
+    set_Fan_PWM(FAN_EH, c->fan_eh);
+    set_Fan_PWM(FAN_ST, c->fan_st);
+    set_Fan_PWM(FAN_SF, c->fan_sf);
+}
 
-    /* ── Continuous: handle pending CAN commands ── */
-    CAN_Process();
+static void apply_all(const Config_t *c)
+{
+    apply_hs(c->hs_state);
+    apply_fans(c);
+}
 
-    /* ── 50 ms: protection (OC trip + UV detect) ── */
-    if ((now - sm->last_protection_tick) >= PROTECTION_PERIOD_MS) {
-        sm->last_protection_tick = now;
-        (void)PM_RunProtection();
+/* ═══════════════════════════════════════════════════════════════════════
+ *  CAN command dispatch
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+static void handle_can(void)
+{
+    CAN_RxFrame_t f;
+    if (!CAN_TryGetFrame(&f))
+        return;
+
+    switch (f.id) {
+
+    case MSG_CMD_HS_POWER:
+        /* DLC=1.  data[0] = HS/buck bitmask (see Config_t.hs_state). */
+        if (f.dlc >= 1U) {
+            app_cfg.hs_state = f.data[0] & 0x0FU;
+            apply_hs(app_cfg.hs_state);
+        }
+        break;
+
+    case MSG_CMD_FAN_PWM:
+        /* DLC=5.  data[0..4] = DR / EP / EH / ST / SF (0–100 %). */
+        if (f.dlc >= 5U) {
+            app_cfg.fan_dr = f.data[0];
+            app_cfg.fan_ep = f.data[1];
+            app_cfg.fan_eh = f.data[2];
+            app_cfg.fan_st = f.data[3];
+            app_cfg.fan_sf = f.data[4];
+            apply_fans(&app_cfg);
+        }
+        break;
+
+    case MSG_CMD_EEPROM:
+        /* DLC=1.  0 = load hard-coded defaults and apply.
+         *         1 = save current live state to EEPROM. */
+        if (f.dlc >= 1U) {
+            if (f.data[0] == 1U) {
+                EEPROM_Save(&app_cfg);
+            } else {
+                app_defaults(&app_cfg);
+                apply_all(&app_cfg);
+            }
+        }
+        break;
+
+    default:
+        /* unknown ID — ignore */
+        break;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ *  Public API
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+void App_Init(void)
+{
+    /* Pull persisted config from EEPROM (or safe defaults if corrupt). */
+    if (!EEPROM_Load(&app_cfg)) {
+        app_defaults(&app_cfg);
     }
 
-    /* ── 500 ms (staggered internally over 3 phases): telemetry ── */
-    if ((now - sm->last_broadcast_tick) >= BROADCAST_PERIOD_MS) {
-        sm->last_broadcast_tick = now;
-        HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
+    /* Push live state to hardware. */
+    apply_all(&app_cfg);
+
+    app_state = APP_RUN;
+}
+
+void App_Run(void)
+{
+    switch (app_state) {
+
+    case APP_INIT:
+        App_Init();
+        break;
+
+    case APP_RUN:
+        handle_can();
+        CAN_Broadcast(500U);
+        break;
+
+    case APP_ERROR:
+    default:
+        /* Skeleton: outputs off, slow LED blink.  No auto-recovery. */
+        {
+            static uint32_t err_tick = 0;
+            uint32_t now = HAL_GetTick();
+            if ((now - err_tick) >= 250U) {
+                err_tick = now;
+                HAL_GPIO_TogglePin(LED_OUT_GPIO_Port, LED_OUT_Pin);
+            }
+        }
+        break;
     }
-    /* CAN_Broadcast handles its own internal 3-phase scheduling; call every loop. */
-    CAN_Broadcast(BROADCAST_PERIOD_MS);
 }
 
-/* ────────── Public API ────────── */
-
-void AppLogic_Init(AppStateMachine *sm)
+const Config_t *App_GetConfig(void)
 {
-    memset(sm, 0, sizeof(*sm));
-    sm->state = APP_STATE_INIT;
-
-    /* Run INIT and LOAD_CONFIG synchronously here so that AppLogic_Run() in
-     * the main loop only sees STATE_RUNNING. This matches how main.c is
-     * structured (single AppLogic_Init call before the loop). */
-    state_init(sm);
-    state_load_config(sm);
-}
-
-void AppLogic_Run(AppStateMachine *sm)
-{
-    switch (sm->state) {
-    case APP_STATE_INIT:        state_init(sm);        break;
-    case APP_STATE_LOAD_CONFIG: state_load_config(sm); break;
-    case APP_STATE_RUNNING:     state_running(sm);     break;
-    default:                    sm->state = APP_STATE_INIT; break;
-    }
-}
-
-AppState_t AppLogic_GetState(const AppStateMachine *sm)
-{
-    return sm->state;
+    return &app_cfg;
 }

@@ -1,51 +1,70 @@
 /**
- * @file    applogic.h
- * @brief   Top-level state machine for KincoDrive low-level driver.
+ * @file    AppLogic.h
+ * @brief   Top-level application state machine and master configuration.
  *
- * @details Simple linear state machine focused on hardware bring-up:
+ * @details AppLogic owns the single source of truth for live hardware state
+ *          (high-side switches, fan setpoints).  CAN_Handler and eeprom_driver
+ *          are dumb data layers — they never touch GPIOs or PWMs directly.
  *
- *            STATE_INIT         (one-shot peripheral init)
- *               │
- *               ▼
- *            STATE_LOAD_CONFIG  (read EEPROM, apply boot HS state + thresholds)
- *               │
- *               ▼
- *            STATE_RUNNING      (periodic protection, broadcasts, command processing)
- *
- *          There is NO ERROR/RECOVERY state — protection events update an
- *          error mask in power_monitor that is broadcast every cycle. The
- *          system continues to run; the host is the policy decider.
+ *          Dataflow:
+ *            boot         EEPROM ──► app_cfg ──► HW
+ *            CAN command  CAN_RxFrame ──► app_cfg ──► HW
+ *            save         app_cfg ──► EEPROM
+ *            load default defaults ──► app_cfg ──► HW
  *
  * @author  jordan
- * @date    2026-05-06
+ * @date    2026-04-21
  */
 
-#ifndef APPLOGIC_H
-#define APPLOGIC_H
+#ifndef APP_LOGIC_H
+#define APP_LOGIC_H
 
 #include <stdint.h>
 
+/* ═══════════════════════════════════════════════════════════════════════
+ *  Shared configuration type
+ *
+ *  Instances:
+ *    - AppLogic   : live state (master)
+ *    - eeprom_drv : persisted startup copy
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+typedef struct __attribute__((packed)) {
+    uint8_t hs_state;   /* bit0=DR  bit1=E  bit2=SC  bit3=VBUCK   (1=ON) */
+    uint8_t fan_dr;     /* 0–100 %                                        */
+    uint8_t fan_ep;     /* 0–100 %                                        */
+    uint8_t fan_eh;     /* 0–100 %                                        */
+    uint8_t fan_st;     /* 0–100 %                                        */
+    uint8_t fan_sf;     /* 0–100 %                                        */
+} Config_t;
+
+/* hs_state bitmask helpers */
+#define CFG_HS_DR       (1U << 0)
+#define CFG_HS_E        (1U << 1)
+#define CFG_HS_SC       (1U << 2)
+#define CFG_HS_VBUCK    (1U << 3)
+
+/* ═══════════════════════════════════════════════════════════════════════
+ *  State machine
+ * ═══════════════════════════════════════════════════════════════════════ */
+
 typedef enum {
-    APP_STATE_INIT = 0,
-    APP_STATE_LOAD_CONFIG,
-    APP_STATE_RUNNING
+    APP_INIT = 0,
+    APP_RUN,
+    APP_ERROR
 } AppState_t;
 
-typedef struct {
-    AppState_t state;
+/* ═══════════════════════════════════════════════════════════════════════
+ *  Public API
+ * ═══════════════════════════════════════════════════════════════════════ */
 
-    /* Non-blocking tick timestamps */
-    uint32_t   last_protection_tick;
-    uint32_t   last_broadcast_tick;
-} AppStateMachine;
+/** One-shot init: load EEPROM → app_cfg → apply to HW → enter RUN. */
+void App_Init(void);
 
-/** Initialize state machine struct and set initial state to APP_STATE_INIT. */
-void AppLogic_Init(AppStateMachine *sm);
+/** Tick once per main-loop iteration: service CAN + broadcast telemetry. */
+void App_Run(void);
 
-/** Run one iteration. Call from main while(1). */
-void AppLogic_Run(AppStateMachine *sm);
+/** Read-only access to the live config (for broadcasts / debug). */
+const Config_t *App_GetConfig(void);
 
-/** Return current state (used by CAN status broadcast). */
-AppState_t AppLogic_GetState(const AppStateMachine *sm);
-
-#endif /* APPLOGIC_H */
+#endif /* APP_LOGIC_H */

@@ -34,6 +34,7 @@
 "./Loader/ARMCM0_STM32G0/nvm.o"
 "./Loader/ARMCM0_STM32G0/rs232.o"
 "./Loader/ARMCM0_STM32G0/timer.o"
+"./Loader/ARMCM0_STM32G0/usb.o"
 "./Loader/asserts.o"
 "./Loader/backdoor.o"
 "./Loader/boot.o"

@@ -166,3 +166,13 @@ PA5 (LED2) toggles every ~1 second through the normal broadcast cycle (visible b
 5. Send Cmd_HS_Power 0x01 again → channel re-enables; if short still present, it re-trips on the next 50 ms cycle.
 6. Drop the 24 V supply below 20 V → Bcast_Status byte 7 shows `0x08` (ERR_UV_24V); raise above 20.5 V → bit clears.
 7. Send Cmd_OC_Threshold (0x113) with new mA values → Bcast_Config_A reflects the change immediately; Cmd_EEPROM 0x01 → power cycle → values persist.
+
+---
+
+## Kinco FD1X4S Servo Drive — CANopen
+
+See [`Kinco_CANopen_User_Manual.md`](Kinco_CANopen_User_Manual.md) for the full CANopen integration guide including wiring, COB-ID map, NMT startup, SDO/PDO layouts, CAN command examples, unit conversions, and fault codes.
+
+DBC file: [`kinco_fd1x4s_canopen.dbc`](kinco_fd1x4s_canopen.dbc) (Vector CANdb++ format)
+
+The STM32G0B1 acts as the CANopen NMT master. The Kinco FD1X4S dual-axis servo drive runs two independent slave nodes on the same physical CAN bus. Default Node IDs: Axis 1 = 1, Axis 2 = 2. Default baud rate: 500 kbit/s.

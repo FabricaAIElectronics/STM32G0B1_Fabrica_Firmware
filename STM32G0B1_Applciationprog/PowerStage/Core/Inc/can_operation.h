@@ -42,15 +42,14 @@
  *  DEVICE_ADDR [0x130] DLC=2
  *    Byte[0] : 0xFF → system reset into bootloader
  *
- *  CMD_OC      [0x142] DLC=4
- *    Byte[0] : Rail bitmask  (bit0=AUX, bit1=LED, bit2=DRIVE, bit3=CAP,
- *                             0xFF=all controllable rails). Bit 4 (SBC)
- *                             is IGNORED on this board because the SBC
- *                             rail has no MCU-driven EN line — a software
- *                             OC trip would have nothing to cut.
- *    Byte[1] : Command       (0x01=set warning threshold, 0x02=reset fault)
- *    Byte[2] : Threshold high byte (mA, uint16_t big-endian)
- *    Byte[3] : Threshold low  byte (mA)
+ *  CMD_OC      [0x142] DLC=8   (mirrors BCAST_OC_CFG_A byte-for-byte)
+ *    Byte[0-1] : RAIL_AUX   OC warning threshold (uint16_t mA, big-endian)
+ *    Byte[2-3] : RAIL_LED   OC warning threshold (uint16_t mA)
+ *    Byte[4-5] : RAIL_DRIVE OC warning threshold (uint16_t mA)
+ *    Byte[6-7] : RAIL_CAP   OC warning threshold (uint16_t mA)
+ *    RAIL_SBC has no MCU-driven EN line — no software OC, not in this frame.
+ *    Set a rail's threshold to 0 to disable software OC on that rail.
+ *    Persist with CMD_EEPROM 0x01.
  *
  *  CMD_EEPROM  [0x143] DLC=1
  *    Byte[0] : 0x01=save config to EEPROM, 0x02=load default
@@ -78,6 +77,11 @@
  *              When tripped, UV_Fault_Mask bit 3 (UV_FAULT_SOC_LOW) is set
  *              in BCAST_VOLTAGE and the OLED V24/SOC row blinks at 1 Hz.
  *              Send CMD_EEPROM 0x01 afterward to persist.
+ *
+ *  CMD_OC_RESET [0x148] DLC=1
+ *    Byte[0] : Rail bitmask (bit0=AUX, bit1=LED, bit2=DRIVE, bit3=CAP).
+ *              For each set bit, clear the latched software OC warn flag
+ *              and re-enable the rail. 0x0F = all controllable rails.
  * ============================================================ */
 #define DEVICE_ADDR         0x130
 #define CMD_FAN             0x140
@@ -88,6 +92,7 @@
 #define CMD_CTRL            0x145
 #define CMD_PAGE_DWELL      0x146
 #define CMD_BAT_CFG         0x147
+#define CMD_OC_RESET        0x148
 
 /* ============================================================
  * CAN IDs — Broadcast (TX — this device transmits, 0x150..0x15F)
@@ -136,14 +141,11 @@
  *    Byte[2-3] : VCAP UV threshold (uint16_t mV)
  *    Byte[4-5] : V12  UV threshold (uint16_t mV)
  *
- *  BCAST_OC_CFG_A   [0x157] DLC=8   (OC threshold config echo)
+ *  BCAST_OC_CFG_A   [0x157] DLC=8   (OC threshold config echo — mirrors CMD_OC)
  *    Byte[0-1] : OC threshold RAIL_AUX   (uint16_t mA)
  *    Byte[2-3] : OC threshold RAIL_LED   (uint16_t mA)
  *    Byte[4-5] : OC threshold RAIL_DRIVE (uint16_t mA)
  *    Byte[6-7] : OC threshold RAIL_CAP   (uint16_t mA)
- *
- *  BCAST_OC_CFG_B   [0x158] DLC=2   (OC threshold config echo cont.)
- *    Byte[0-1] : OC threshold RAIL_SBC   (uint16_t mA)
  *
  *  BCAST_IO_STATUS  [0x159] DLC=3
  *    Byte[0]   : SW pin       (0/1)
@@ -165,17 +167,12 @@
 #define BCAST_HS_CURR_B     0x155
 #define BCAST_UV            0x156
 #define BCAST_OC_CFG_A      0x157
-#define BCAST_OC_CFG_B      0x158
 #define BCAST_IO_STATUS     0x159
 #define BCAST_BATTERY_CFG   0x15A
 
 /* ============================================================
  * Sub-command codes
  * ============================================================ */
-
-/* CMD_OC Byte[1] */
-#define OC_CMD_SET_THRESHOLD    0x01    // set per-rail software warning threshold
-#define OC_CMD_RESET_FAULT      0x02    // clear latched hardware fault flags
 
 /* CMD_EEPROM Byte[0] */
 #define EEPROM_CMD_SAVE         0x01    // save current config to EEPROM
@@ -202,11 +199,13 @@ typedef struct {
     uint8_t     hs_state[RAIL_COUNT];   // per-rail: 0=disable, 1=enable
     uint8_t     hs_cmd_received;
 
-    /* --- Overcurrent --- */
-    uint8_t     oc_rail_mask;           // rail bitmask target (0xFF = all)
-    uint8_t     oc_cmd;                 // OC_CMD_SET_THRESHOLD / OC_CMD_RESET_FAULT
-    uint16_t    oc_threshold_mA;        // warning threshold in mA
+    /* --- Overcurrent thresholds (CMD_OC) --- */
+    uint16_t    oc_threshold_mA[RAIL_COUNT];  // received thresholds; SBC slot unused
     uint8_t     oc_cmd_received;
+
+    /* --- Overcurrent fault reset (CMD_OC_RESET) --- */
+    uint8_t     oc_reset_mask;          // rail bitmask to clear (bit0=AUX..bit3=CAP)
+    uint8_t     oc_reset_received;
 
     /* --- Undervoltage thresholds --- */
     uint16_t    uv_V24_mV;             // new V24  UV threshold

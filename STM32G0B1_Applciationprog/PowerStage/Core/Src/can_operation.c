@@ -223,12 +223,19 @@ static void Parse_RX_Commands(uint32_t id, uint8_t *data, uint32_t dlc)
         can_rxMessage.hs_cmd_received = 1;
     }
 
-    /* ---- Overcurrent threshold / fault reset ---- */
+    /* ---- Overcurrent thresholds (mirrors BCAST_OC_CFG_A) ---- */
     if (id == CMD_OC) {
-        can_rxMessage.oc_rail_mask     = data[0];
-        can_rxMessage.oc_cmd          = data[1];
-        can_rxMessage.oc_threshold_mA = ((uint16_t)data[2] << 8) | data[3];
+        can_rxMessage.oc_threshold_mA[RAIL_AUX]   = ((uint16_t)data[0] << 8) | data[1];
+        can_rxMessage.oc_threshold_mA[RAIL_LED]   = ((uint16_t)data[2] << 8) | data[3];
+        can_rxMessage.oc_threshold_mA[RAIL_DRIVE] = ((uint16_t)data[4] << 8) | data[5];
+        can_rxMessage.oc_threshold_mA[RAIL_CAP]   = ((uint16_t)data[6] << 8) | data[7];
         can_rxMessage.oc_cmd_received = 1;
+    }
+
+    /* ---- Overcurrent fault reset ---- */
+    if (id == CMD_OC_RESET) {
+        can_rxMessage.oc_reset_mask     = data[0];
+        can_rxMessage.oc_reset_received = 1;
     }
 
     /* ---- EEPROM save / load default ---- */
@@ -600,38 +607,29 @@ void CAN_Broadcast_UV(void)
 /* ============================================================
  * CAN_Broadcast_OC_Config
  *
- * [0x157] DLC=8 — OC thresholds RAIL_AUX … RAIL_CAP
+ * [0x157] DLC=8 — OC thresholds RAIL_AUX … RAIL_CAP (mirrors CMD_OC)
  *   Byte[0-1]: RAIL_AUX   (uint16_t mA)
  *   Byte[2-3]: RAIL_LED   (uint16_t mA)
  *   Byte[4-5]: RAIL_DRIVE (uint16_t mA)
  *   Byte[6-7]: RAIL_CAP   (uint16_t mA)
  *
- * [0x158] DLC=2 — OC threshold RAIL_SBC
- *   Byte[0-1]: RAIL_SBC   (uint16_t mA)
+ * RAIL_SBC has no MCU-driven EN — software OC disabled, not broadcast.
  * ============================================================ */
 void CAN_Broadcast_OC_Config(void)
 {
     if (!canstat.system_transmit_stat) return;
 
-    /* Frame A: RAIL_AUX, RAIL_LED, RAIL_DRIVE, RAIL_CAP */
-    uint8_t dataA[8];
-    dataA[0] = (oc_status.oc_threshold_mA[RAIL_AUX]   >> 8) & 0xFF;
-    dataA[1] =  oc_status.oc_threshold_mA[RAIL_AUX]         & 0xFF;
-    dataA[2] = (oc_status.oc_threshold_mA[RAIL_LED]   >> 8) & 0xFF;
-    dataA[3] =  oc_status.oc_threshold_mA[RAIL_LED]         & 0xFF;
-    dataA[4] = (oc_status.oc_threshold_mA[RAIL_DRIVE] >> 8) & 0xFF;
-    dataA[5] =  oc_status.oc_threshold_mA[RAIL_DRIVE]       & 0xFF;
-    dataA[6] = (oc_status.oc_threshold_mA[RAIL_CAP]   >> 8) & 0xFF;
-    dataA[7] =  oc_status.oc_threshold_mA[RAIL_CAP]         & 0xFF;
+    uint8_t data[8];
+    data[0] = (oc_status.oc_threshold_mA[RAIL_AUX]   >> 8) & 0xFF;
+    data[1] =  oc_status.oc_threshold_mA[RAIL_AUX]         & 0xFF;
+    data[2] = (oc_status.oc_threshold_mA[RAIL_LED]   >> 8) & 0xFF;
+    data[3] =  oc_status.oc_threshold_mA[RAIL_LED]         & 0xFF;
+    data[4] = (oc_status.oc_threshold_mA[RAIL_DRIVE] >> 8) & 0xFF;
+    data[5] =  oc_status.oc_threshold_mA[RAIL_DRIVE]       & 0xFF;
+    data[6] = (oc_status.oc_threshold_mA[RAIL_CAP]   >> 8) & 0xFF;
+    data[7] =  oc_status.oc_threshold_mA[RAIL_CAP]         & 0xFF;
 
-    CAN_SendAll(BCAST_OC_CFG_A, FDCAN_DLC_BYTES_8, dataA);
-
-    /* Frame B: RAIL_SBC */
-    uint8_t dataB[2];
-    dataB[0] = (oc_status.oc_threshold_mA[RAIL_SBC] >> 8) & 0xFF;
-    dataB[1] =  oc_status.oc_threshold_mA[RAIL_SBC]       & 0xFF;
-
-    CAN_SendAll(BCAST_OC_CFG_B, FDCAN_DLC_BYTES_2, dataB);
+    CAN_SendAll(BCAST_OC_CFG_A, FDCAN_DLC_BYTES_8, data);
 }
 
 /* ============================================================

@@ -170,14 +170,11 @@ BO_ 321 PS_CMD_HS: 1 Host
  SG_ PS_HS_Cmd_CAP : 3|1@1+ (1,0) [0|1] "" PowerStage
  SG_ PS_HS_Cmd_SBC : 4|1@1+ (1,0) [0|1] "" PowerStage
 
-BO_ 322 PS_CMD_OC: 4 Host
- SG_ PS_OC_Target_AUX : 0|1@1+ (1,0) [0|1] "" PowerStage
- SG_ PS_OC_Target_LED : 1|1@1+ (1,0) [0|1] "" PowerStage
- SG_ PS_OC_Target_DRIVE : 2|1@1+ (1,0) [0|1] "" PowerStage
- SG_ PS_OC_Target_CAP : 3|1@1+ (1,0) [0|1] "" PowerStage
- SG_ PS_OC_Target_SBC : 4|1@1+ (1,0) [0|1] "" PowerStage
- SG_ PS_OC_Cmd : 8|8@1+ (1,0) [0|255] "" PowerStage
- SG_ PS_OC_Threshold_mA : 23|16@0+ (1,0) [0|50000] "mA" PowerStage
+BO_ 322 PS_CMD_OC: 8 Host
+ SG_ PS_OC_Thr_AUX_mA : 7|16@0+ (1,0) [0|50000] "mA" PowerStage
+ SG_ PS_OC_Thr_LED_mA : 23|16@0+ (1,0) [0|50000] "mA" PowerStage
+ SG_ PS_OC_Thr_DRIVE_mA : 39|16@0+ (1,0) [0|50000] "mA" PowerStage
+ SG_ PS_OC_Thr_CAP_mA : 55|16@0+ (1,0) [0|50000] "mA" PowerStage
 
 BO_ 323 PS_CMD_EEPROM: 1 Host
  SG_ PS_EEPROM_Cmd : 0|8@1+ (1,0) [0|255] "" PowerStage
@@ -198,6 +195,12 @@ BO_ 326 PS_CMD_PAGE_DWELL: 3 Host
 
 BO_ 327 PS_CMD_BAT_CFG: 1 Host
  SG_ PS_Bat_Low_SOC_Threshold_pct : 0|8@1+ (1,0) [0|100] "%" PowerStage
+
+BO_ 328 PS_CMD_OC_RESET: 1 Host
+ SG_ PS_OC_Reset_AUX : 0|1@1+ (1,0) [0|1] "" PowerStage
+ SG_ PS_OC_Reset_LED : 1|1@1+ (1,0) [0|1] "" PowerStage
+ SG_ PS_OC_Reset_DRIVE : 2|1@1+ (1,0) [0|1] "" PowerStage
+ SG_ PS_OC_Reset_CAP : 3|1@1+ (1,0) [0|1] "" PowerStage
 
 BO_ 336 PS_BCAST_HS_STATE: 5 PowerStage
  SG_ PS_HS_Enable_AUX : 0|1@1+ (1,0) [0|1] "" Host
@@ -274,9 +277,6 @@ BO_ 343 PS_BCAST_OC_CFG_A: 8 PowerStage
  SG_ PS_OC_Thr_LED_mA : 23|16@0+ (1,0) [0|50000] "mA" Host
  SG_ PS_OC_Thr_DRIVE_mA : 39|16@0+ (1,0) [0|50000] "mA" Host
  SG_ PS_OC_Thr_CAP_mA : 55|16@0+ (1,0) [0|50000] "mA" Host
-
-BO_ 344 PS_BCAST_OC_CFG_B: 2 PowerStage
- SG_ PS_OC_Thr_SBC_mA : 7|16@0+ (1,0) [0|50000] "mA" Host
 
 BO_ 345 PS_BCAST_IO_STATUS: 3 PowerStage
  SG_ PS_SW_Pin_State : 0|8@1+ (1,0) [0|1] "" Host
@@ -379,9 +379,16 @@ CM_ SG_ 321 PS_HS_Cmd_LED "0=disable RAIL_LED 1=enable.";
 CM_ SG_ 321 PS_HS_Cmd_DRIVE "0=disable RAIL_DRIVE 1=enable.";
 CM_ SG_ 321 PS_HS_Cmd_CAP "0=disable RAIL_CAP 1=enable.";
 CM_ SG_ 321 PS_HS_Cmd_SBC "IGNORED. SBC rail has no MCU-driven EN line (permanently enabled by hardware). Bit reserved.";
-CM_ BO_ 322 "0x142 PowerStage CMD_OC: configure per-rail software OC threshold or clear latched OC faults. Target bits select rails (set all 5 to apply to all). OC_Cmd: 0x01=SET, 0x02=RESET_FAULT.";
-CM_ SG_ 322 PS_OC_Cmd "0x01=SET_THRESHOLD (apply OC_Threshold_mA). 0x02=RESET_FAULT (clear masks).";
-CM_ SG_ 322 PS_OC_Threshold_mA "New software OC warning threshold in mA big-endian.";
+CM_ BO_ 322 "0x142 PowerStage CMD_OC: set per-rail software OC warning thresholds (mA, big-endian). Frame is byte-for-byte symmetric with PS_BCAST_OC_CFG_A. 0 disables software OC on a given rail. RAIL_SBC has no MCU EN and is not in this frame. Use CMD_OC_RESET (0x148) to clear latched faults. Persist with CMD_EEPROM 0x01.";
+CM_ SG_ 322 PS_OC_Thr_AUX_mA "RAIL_AUX software OC warning threshold in mA, big-endian. 0 = disabled.";
+CM_ SG_ 322 PS_OC_Thr_LED_mA "RAIL_LED software OC warning threshold in mA, big-endian. 0 = disabled.";
+CM_ SG_ 322 PS_OC_Thr_DRIVE_mA "RAIL_DRIVE software OC warning threshold in mA, big-endian. 0 = disabled.";
+CM_ SG_ 322 PS_OC_Thr_CAP_mA "RAIL_CAP software OC warning threshold in mA, big-endian. 0 = disabled.";
+CM_ BO_ 328 "0x148 PowerStage CMD_OC_RESET: clear latched software OC warn flags. For each set bit, the rail is re-enabled and its warn/fault flag cleared.";
+CM_ SG_ 328 PS_OC_Reset_AUX "1 = clear latched OC warn for RAIL_AUX and re-enable.";
+CM_ SG_ 328 PS_OC_Reset_LED "1 = clear latched OC warn for RAIL_LED and re-enable.";
+CM_ SG_ 328 PS_OC_Reset_DRIVE "1 = clear latched OC warn for RAIL_DRIVE and re-enable.";
+CM_ SG_ 328 PS_OC_Reset_CAP "1 = clear latched OC warn for RAIL_CAP and re-enable.";
 CM_ BO_ 323 "0x143 PowerStage CMD_EEPROM: 0x01 saves live config; 0x02 restores factory defaults.";
 CM_ SG_ 323 PS_EEPROM_Cmd "0x01=save live config to EEPROM. 0x02=load factory defaults and overwrite EEPROM.";
 CM_ BO_ 324 "0x144 PowerStage CMD_UV: update UV trip thresholds for V24, VCAP, V12 in mV big-endian.";
@@ -424,9 +431,7 @@ CM_ SG_ 340 PS_Cfg_HS_Def_CAP "Boot-default enable state for RAIL_CAP.";
 CM_ SG_ 340 PS_Cfg_HS_Def_SBC "Boot-default enable state for RAIL_SBC (ignored on this board, no MCU EN).";
 CM_ BO_ 341 "0x155 PowerStage BCAST_HS_CURR_B: AUX, LED rail currents (uint16 mA BE).";
 CM_ BO_ 342 "0x156 PowerStage BCAST_UV: currently active UV thresholds.";
-CM_ BO_ 343 "0x157 PowerStage BCAST_OC_CFG_A: AUX, LED, DRIVE, CAP OC thresholds (mA).";
-CM_ BO_ 344 "0x158 PowerStage BCAST_OC_CFG_B: SBC OC threshold (always 0; software OC disabled — SBC has no MCU EN).";
-CM_ SG_ 344 PS_OC_Thr_SBC_mA "Always 0 — software OC disabled on this board (no MCU-driven EN).";
+CM_ BO_ 343 "0x157 PowerStage BCAST_OC_CFG_A: AUX, LED, DRIVE, CAP OC thresholds (mA, big-endian). Byte-for-byte equal to CMD_OC — use this echo to confirm what was applied. RAIL_SBC is uncontrollable and not broadcast.";
 CM_ BO_ 345 "0x159 PowerStage BCAST_IO_STATUS: SW pin / V_LED_PWR / CAN relay state.";
 CM_ BO_ 346 "0x15A PowerStage BCAST_BATTERY_CFG: static 6S battery refs (cutoff, full, R_int, cell count). Defaults: 19.6 V / 25.2 V / 200 mΩ / 6S.";
 CM_ SG_ 346 PS_Bat_Cutoff_mV "0 % SOC reference voltage (mV). Default 19600 (3.27 V/cell × 6).";
@@ -479,6 +484,7 @@ BA_ "GenMsgSendType" BO_ 324 "Event";
 BA_ "GenMsgSendType" BO_ 325 "Event";
 BA_ "GenMsgSendType" BO_ 326 "Event";
 BA_ "GenMsgSendType" BO_ 327 "Event";
+BA_ "GenMsgSendType" BO_ 328 "Event";
 BA_ "GenMsgSendType" BO_ 336 "Cyclic";
 BA_ "GenMsgSendType" BO_ 337 "Cyclic";
 BA_ "GenMsgSendType" BO_ 338 "Cyclic";
@@ -487,7 +493,6 @@ BA_ "GenMsgSendType" BO_ 340 "Cyclic";
 BA_ "GenMsgSendType" BO_ 341 "Cyclic";
 BA_ "GenMsgSendType" BO_ 342 "Cyclic";
 BA_ "GenMsgSendType" BO_ 343 "Cyclic";
-BA_ "GenMsgSendType" BO_ 344 "Cyclic";
 BA_ "GenMsgSendType" BO_ 345 "Cyclic";
 BA_ "GenMsgSendType" BO_ 346 "Cyclic";
 BA_ "GenMsgSendType" BO_ 352 "Event";
@@ -514,7 +519,6 @@ BA_ "GenMsgCycleTime" BO_ 340 500;
 BA_ "GenMsgCycleTime" BO_ 341 500;
 BA_ "GenMsgCycleTime" BO_ 342 500;
 BA_ "GenMsgCycleTime" BO_ 343 500;
-BA_ "GenMsgCycleTime" BO_ 344 500;
 BA_ "GenMsgCycleTime" BO_ 345 500;
 BA_ "GenMsgCycleTime" BO_ 346 500;
 BA_ "GenMsgCycleTime" BO_ 376 1000;
@@ -536,8 +540,11 @@ VAL_ 321 PS_HS_Cmd_LED 0 "DISABLE" 1 "ENABLE" ;
 VAL_ 321 PS_HS_Cmd_DRIVE 0 "DISABLE" 1 "ENABLE" ;
 VAL_ 321 PS_HS_Cmd_CAP 0 "DISABLE" 1 "ENABLE" ;
 VAL_ 321 PS_HS_Cmd_SBC 0 "IGNORED" 1 "IGNORED" ;
-VAL_ 322 PS_OC_Cmd 1 "SET_THRESHOLD" 2 "RESET_FAULT" ;
 VAL_ 323 PS_EEPROM_Cmd 1 "SAVE_CONFIG" 2 "LOAD_DEFAULT" ;
+VAL_ 328 PS_OC_Reset_AUX 0 "NO_OP" 1 "RESET" ;
+VAL_ 328 PS_OC_Reset_LED 0 "NO_OP" 1 "RESET" ;
+VAL_ 328 PS_OC_Reset_DRIVE 0 "NO_OP" 1 "RESET" ;
+VAL_ 328 PS_OC_Reset_CAP 0 "NO_OP" 1 "RESET" ;
 VAL_ 325 PS_V_LED_PWR_Cmd 0 "OFF" 1 "ON" ;
 VAL_ 325 PS_CAN_Relay_Enable 0 "DISABLE" 1 "ENABLE" ;
 VAL_ 338 PS_UV_Fault_V24 0 "OK" 1 "UV_FAULT" ;

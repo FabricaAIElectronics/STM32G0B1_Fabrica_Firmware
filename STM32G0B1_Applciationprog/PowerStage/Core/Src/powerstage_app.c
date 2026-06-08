@@ -148,7 +148,7 @@ static void Run_Measurements(void)
 
 /* Update OC fault / warning masks from live currents and HW FLT pins.
  * When a software OC threshold is exceeded the offending rail is
- * disabled immediately (latched until an OC_CMD_RESET_FAULT clears it). */
+ * disabled immediately (latched until a CMD_OC_RESET clears it). */
 static void Check_OC(void)
 {
     const uint16_t currents[RAIL_COUNT] = {
@@ -166,7 +166,7 @@ static void Check_OC(void)
             oc_status.oc_fault_mask |= (1u << i);
     }
 
-    /* Software OC — latched: once set, stays until OC_CMD_RESET_FAULT */
+    /* Software OC — latched: once set, stays until CMD_OC_RESET */
     for (uint8_t i = 0; i < RAIL_COUNT; i++) {
         if ((oc_status.oc_threshold_mA[i] > 0) &&
             (currents[i] > oc_status.oc_threshold_mA[i])) {
@@ -220,29 +220,28 @@ static void Handle_CAN_Commands(void)
         }
     }
 
-    /* ── Overcurrent threshold / fault reset ─────────────── *
-     * RAIL_SBC's software OC limit cannot be set from CAN: the rail
-     * isn't controllable, so a software trip wouldn't have anywhere to
-     * cut power. Threshold for SBC stays at 0 (= disabled) — see
-     * LoadDefault() in eeprom_driver.c. */
+    /* ── Overcurrent thresholds (CMD_OC) ─────────────────── *
+     * RAIL_SBC has no MCU-driven EN — software OC stays disabled (=0). */
     if (can_rxMessage.oc_cmd_received) {
         can_rxMessage.oc_cmd_received = 0;
-        if (can_rxMessage.oc_cmd == OC_CMD_SET_THRESHOLD) {
-            for (uint8_t i = 0; i < RAIL_COUNT; i++) {
-                if (i == RAIL_SBC) continue;
-                if ((can_rxMessage.oc_rail_mask == 0xFF) ||
-                    (can_rxMessage.oc_rail_mask & (1u << i))) {
-                    oc_status.oc_threshold_mA[i] = can_rxMessage.oc_threshold_mA;
-                }
-            }
-        } else if (can_rxMessage.oc_cmd == OC_CMD_RESET_FAULT) {
-            /* Re-enable rails that were shut down by software OC */
-            for (uint8_t i = 0; i < RAIL_COUNT; i++) {
+        oc_status.oc_threshold_mA[RAIL_AUX]   = can_rxMessage.oc_threshold_mA[RAIL_AUX];
+        oc_status.oc_threshold_mA[RAIL_LED]   = can_rxMessage.oc_threshold_mA[RAIL_LED];
+        oc_status.oc_threshold_mA[RAIL_DRIVE] = can_rxMessage.oc_threshold_mA[RAIL_DRIVE];
+        oc_status.oc_threshold_mA[RAIL_CAP]   = can_rxMessage.oc_threshold_mA[RAIL_CAP];
+    }
+
+    /* ── Overcurrent fault reset (CMD_OC_RESET) ──────────── */
+    if (can_rxMessage.oc_reset_received) {
+        can_rxMessage.oc_reset_received = 0;
+        uint8_t mask = can_rxMessage.oc_reset_mask & 0x0F;   /* AUX..CAP only */
+        for (uint8_t i = 0; i < RAIL_COUNT; i++) {
+            if (i == RAIL_SBC) continue;
+            if (mask & (1u << i)) {
                 if (oc_status.oc_warn_mask & (1u << i))
                     HS_Enable(&hotswap[i]);
+                oc_status.oc_warn_mask  &= ~(1u << i);
+                oc_status.oc_fault_mask &= ~(1u << i);
             }
-            oc_status.oc_fault_mask = 0;
-            oc_status.oc_warn_mask  = 0;
         }
     }
 

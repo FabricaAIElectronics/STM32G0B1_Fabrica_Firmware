@@ -1,3 +1,0 @@
-../App/hooks.c:80:10:CpuUserProgramStartHook	8	static
-../App/hooks.c:113:6:CopInitHook	8	static
-../App/hooks.c:130:6:CopServiceHook	8	static

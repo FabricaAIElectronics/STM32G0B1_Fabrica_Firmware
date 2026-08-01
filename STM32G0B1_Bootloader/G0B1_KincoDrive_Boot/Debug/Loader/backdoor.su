@@ -1,5 +1,0 @@
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/backdoor.c:124:6:BackDoorCheck	8	static
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/backdoor.c:182:6:BackDoorSetExtension	0	static
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/backdoor.c:195:12:BackDoorGetExtension	0	static
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/backdoor.c:210:6:BackDoorRestartTimer	8	static
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/backdoor.c:85:6:BackDoorInit	8	static

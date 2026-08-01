@@ -1,5 +1,0 @@
-../Core/Src/battery.c:21:6:Battery_SetLowSocThreshold_pct	2
-../Core/Src/battery.c:26:9:Battery_GetLowSocThreshold_pct	1
-../Core/Src/battery.c:31:6:Battery_IsLow	3
-../Core/Src/battery.c:78:9:Battery_EstimateSOC_pct	7
-../Core/Src/battery.c:128:9:Battery_FilterSOC_pct	6

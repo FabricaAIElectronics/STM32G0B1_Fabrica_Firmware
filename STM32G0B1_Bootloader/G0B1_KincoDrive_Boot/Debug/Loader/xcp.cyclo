@@ -1,6 +1,0 @@
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/xcp.c:151:6:XcpInit	1
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/xcp.c:168:10:XcpIsConnected	1
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/xcp.c:184:6:XcpPacketTransmitted	1
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/xcp.c:502:12:XcpGetOrderedLong	1
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/xcp.c:529:6:XcpSetOrderedLong	1
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/xcp.c:198:6:XcpPacketReceived	33

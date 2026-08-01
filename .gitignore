@@ -1,0 +1,32 @@
+# ---------------------------------------------------------------------------
+# Build output.
+#
+# Every project regenerates these. They were tracked until now, which meant an
+# ordinary rebuild produced a 500+ file diff and made merges between the board
+# branches conflict on object files. Rebuild instead:
+#
+#   stm32cubeidec.exe --launcher.suppressErrors -nosplash \
+#     -application org.eclipse.cdt.managedbuilder.core.headlessbuild \
+#     -data <scratch-workspace> -importAll <project-dir> -cleanBuild "<Name>/Debug"
+# ---------------------------------------------------------------------------
+Debug/
+Release/
+build/
+
+# ---------------------------------------------------------------------------
+# Eclipse / STM32CubeIDE workspace state.
+#
+# .metadata/ is per-workspace scratch, not source. It also contains paths deep
+# enough to break `git clone` on Windows' 260-character path limit.
+# ---------------------------------------------------------------------------
+.metadata/
+RemoteSystemsTempFiles/
+mx.scratch
+*.bak
+*~
+
+# ---------------------------------------------------------------------------
+# OS cruft
+# ---------------------------------------------------------------------------
+.DS_Store
+Thumbs.db

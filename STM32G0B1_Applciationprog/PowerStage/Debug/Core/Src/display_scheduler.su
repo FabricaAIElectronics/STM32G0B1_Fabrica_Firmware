@@ -1,5 +1,0 @@
-../Core/Src/display_scheduler.c:16:6:DisplayScheduler_Init	8	static
-../Core/Src/display_scheduler.c:24:6:DisplayScheduler_ShouldUpdate	16	static
-../Core/Src/display_scheduler.c:38:6:DisplayScheduler_MarkUpdated	8	static
-../Core/Src/display_scheduler.c:45:10:DisplayScheduler_GetUpdateCount	8	static
-../Core/Src/display_scheduler.c:51:6:DisplayScheduler_Task	8	static

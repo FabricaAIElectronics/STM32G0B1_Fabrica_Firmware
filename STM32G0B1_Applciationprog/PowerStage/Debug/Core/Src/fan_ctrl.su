@@ -1,5 +1,0 @@
-../Core/Src/fan_ctrl.c:20:6:fan_init	8	static
-../Core/Src/fan_ctrl.c:27:6:fan_ctrl_on	8	static
-../Core/Src/fan_ctrl.c:31:6:fan_ctrl_off	8	static
-../Core/Src/fan_ctrl.c:35:6:fan_ctrl_speed	24	static
-../Core/Src/fan_ctrl.c:57:6:FAN_AutoControl	16	static

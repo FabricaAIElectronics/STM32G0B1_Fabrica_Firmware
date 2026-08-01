@@ -1,6 +1,0 @@
-../Core/Src/applogic.c:27:13:state_init	1
-../Core/Src/applogic.c:51:13:state_load_config	1
-../Core/Src/applogic.c:64:13:state_running	3
-../Core/Src/applogic.c:88:6:AppLogic_Init	1
-../Core/Src/applogic.c:100:6:AppLogic_Run	5
-../Core/Src/applogic.c:110:12:AppLogic_GetState	1

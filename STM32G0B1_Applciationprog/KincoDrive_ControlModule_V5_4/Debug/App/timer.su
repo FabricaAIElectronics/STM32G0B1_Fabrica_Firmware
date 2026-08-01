@@ -1,2 +1,0 @@
-../App/timer.c:40:6:TimerInit	8	static
-../App/timer.c:53:15:TimerGet	8	static

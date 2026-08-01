@@ -98,8 +98,19 @@ def load_dbc(path: Path | str):
         raise DbcError(f"could not parse {p}: {exc}") from exc
 
 
-def find_dbc(name: str | None, search_root: Path | str) -> Path | None:
+#: Tools/fabrica/fabrica/canbus.py -> the repository root, where the per-board
+#: .dbc files live alongside their firmware projects.
+DEFAULT_DBC_SEARCH_ROOT = Path(__file__).resolve().parents[3]
+
+
+def find_dbc(name: str | None,
+             search_root: Path | str | None = None) -> Path | None:
     """Resolve a manifest ``dbc`` file name to a path under ``search_root``.
+
+    ``search_root`` defaults to the repository root. It used to be required,
+    which meant both real callers -- the monitor command and the TUI -- raised
+    TypeError the moment a board actually had a DBC. Every test passed because
+    every test supplied the argument; only running the CLI caught it.
 
     ``None`` in, ``None`` out: a board with no DBC (the knob board) is a normal
     case, not an error. ``None`` is also returned when the named file simply is
@@ -107,7 +118,7 @@ def find_dbc(name: str | None, search_root: Path | str) -> Path | None:
     """
     if not name:
         return None
-    root = Path(search_root)
+    root = Path(search_root) if search_root is not None else DEFAULT_DBC_SEARCH_ROOT
     if not root.is_dir():
         return None
     direct = root / name

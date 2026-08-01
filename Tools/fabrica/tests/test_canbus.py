@@ -488,3 +488,22 @@ def test_encode_command_rejects_an_out_of_range_signal(db):
 
 def test_message_names_is_empty_without_a_dbc():
     assert message_names(None) == []
+
+
+def test_find_dbc_works_the_way_the_cli_actually_calls_it():
+    """Regression: search_root used to be required.
+
+    Both real callers -- cmd_monitor and the TUI -- call find_dbc(board.dbc)
+    with one argument, so the first board that had a DBC raised TypeError. Every
+    unit test passed because every unit test supplied the second argument. This
+    test calls it exactly as the application does.
+    """
+    assert find_dbc("PowerStage.dbc") is not None
+    assert find_dbc(None) is None
+    assert find_dbc("DefinitelyNotThere.dbc") is None
+
+
+def test_every_manifest_dbc_name_resolves():
+    """The names the manifest uses must actually be findable from a default call."""
+    for name in ("PowerStage.dbc", "KincoDrive_ControlModule.dbc", "LEDDriver.dbc"):
+        assert find_dbc(name) is not None, f"{name} not resolvable"

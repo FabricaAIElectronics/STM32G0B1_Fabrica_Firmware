@@ -12,7 +12,7 @@ bench machine.
 ## Read this first
 
 **This tool has never touched hardware.** It was written on a Windows box with
-no ST-Link, no CAN interface, and no `_curses`. 165 unit tests pass, but they
+no ST-Link, no CAN interface, and no `_curses`. 177 unit tests pass, but they
 prove the *logic* — command construction, checksum enforcement, DBC decoding,
 error handling. They prove nothing about whether ST-Link enumerates or whether
 BootCommander likes our arguments.
@@ -34,14 +34,37 @@ Specifically untested, in rough order of risk:
 
 ## Install on the bench machine
 
+The tool works out what this host needs and how to install it:
+
 ```bash
-sudo apt install python3-pip can-utils stlink-tools
-pip3 install python-can cantools
-sudo ./CANBusSetup.sh can0 500000          # from Linux-bash-and-python-script
-sudo ./install_openblt.sh                   # builds and symlinks BootCommander
+./fabrica_cli.py setup             # detect host, list what is missing
+./fabrica_cli.py setup --install   # run the install commands
 ```
 
-STM32CubeProgrammer is preferred over openocd — see the `.srec` risk above.
+It detects **Ubuntu**, **Jetson** and **Raspberry Pi** and adapts, because the
+part that actually differs is how a CAN interface comes into existence:
+
+| Host | CAN comes from | What `setup` tells you |
+|---|---|---|
+| Jetson | Native controller (mttcan) | `modprobe can can_raw mttcan`, plus carrier-board pinmux — the CAN pins are usually shared on the 40-pin header |
+| Raspberry Pi | MCP2515 SPI HAT | The `dtoverlay=mcp2515-can0` line and which `config.txt` to put it in (`/boot/firmware/` on Bookworm+), and a warning that a wrong `oscillator=` gives a link that comes up but never receives a frame |
+| Ubuntu | Usually PEAK USB | In-tree `peak_usb` should create `can0` on plug-in |
+
+Two things `setup` reports but deliberately does **not** install:
+
+- **BootCommander** is built from source, not apt — run `install_openblt.sh`.
+- **STM32CubeProgrammer** is a manual download from ST. `stlink-tools` is the
+  apt fallback, but prefer CubeProgrammer given the openocd `.srec` risk above.
+
+Then bring up the bus and verify:
+
+```bash
+sudo ./CANBusSetup.sh can0 500000   # from Linux-bash-and-python-script
+./fabrica_cli.py doctor
+```
+
+`doctor` prints the detected host, and if the CAN checks fail it repeats that
+host's specific CAN guidance rather than a generic message.
 
 ---
 
@@ -49,10 +72,17 @@ STM32CubeProgrammer is preferred over openocd — see the `.srec` risk above.
 
 Work down this list. Stop at the first failure and fix it before continuing.
 
-**1. Prove the environment.**
+**0. Install what this host needs.**
 
 ```bash
 cd Tools/fabrica
+./fabrica_cli.py setup            # review
+./fabrica_cli.py setup --install  # then install
+```
+
+**1. Prove the environment.**
+
+```bash
 ./fabrica_cli.py doctor
 ```
 
@@ -124,6 +154,7 @@ same frame is the XCP CONNECT and is handled there — so this is safe either wa
 ## Commands
 
 ```
+setup [--install]             detect host, check/install dependencies
 doctor                        check tools, CAN link, firmware checksums
 list                          boards, CAN ids, image sizes, provenance
 flash <board> boot|app        flash via ST-Link (boot) or CAN (app)
@@ -176,7 +207,7 @@ deliberately not tracked in git — attach them to a tagged release instead.
 ## Tests
 
 ```bash
-python -m pytest Tools/fabrica/tests -q     # 165 tests, no hardware needed
+python -m pytest Tools/fabrica/tests -q     # 177 tests, no hardware needed
 ```
 
 ## Layout
@@ -188,6 +219,7 @@ fabrica/env.py        tool discovery and the doctor checks
 fabrica/stlink.py     ST-Link flashing (CubeProgrammer / openocd / st-flash)
 fabrica/canflash.py   BootCommander wrapper, bootloader trigger frame
 fabrica/canbus.py     SocketCAN + DBC decode, Monitor
+fabrica/host.py       host detection (Ubuntu/Jetson/RPi) and dependency plan
 fabrica/tui.py        curses interface
 firmware/             staged .srec files + manifest.json (not in git)
 ```

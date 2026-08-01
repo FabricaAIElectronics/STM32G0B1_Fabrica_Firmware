@@ -3,6 +3,49 @@
 Pre-release verification for the Fabrica firmware. Run it manually before a
 release. This is **not** CI — there are no hooks, no GitHub Actions, no runner.
 
+## Setting up on a new machine
+
+Clone, then just run it:
+
+    python vv/run_gate.py --continue
+
+Nothing is pinned to one machine. Stages whose tools are missing report **SKIP**
+rather than FAIL, so a fresh checkout gives you a useful partial result and a
+list of what to install, instead of a wall of red that looks like broken
+firmware. A typical first run on a bare machine:
+
+    preflight    WARN   1 present, missing: arm-none-eabi-gcc, gcc, make, stm32cubeidec
+    static       SKIP   arm-none-eabi-gcc not on PATH - nothing compiled
+    unit         SKIP   no host toolchain (make, gcc not on PATH)
+    build        SKIP   STM32CubeIDE not found - nothing was built
+    size         SKIP   STM32CubeIDE not found - no artifacts to measure
+    conformance  WARN   1 unchecked area(s)
+
+    VERDICT: PASS with 4 stage(s) SKIPPED
+
+Every skip carries the command that fixes it. Install, re-run, watch the skips
+turn into passes.
+
+**Before an actual release, use `--strict`**, which turns every skip into a
+failure — "we could not check it" must not pass a release gate. `--stage-artifacts`
+already refuses to stage from a partial run for the same reason.
+
+### What is and is not portable
+
+| Portable | How |
+|---|---|
+| STM32CubeIDE | Discovered by glob across Windows `C:\ST\`, Program Files, Linux `/opt/st/`, and macOS. Any version matches — nothing is pinned to 1.18.0. Override with `CUBEIDE=<path>` |
+| OpenBLT | Vendored in `ThirdParty/openblt`; no external clone needed |
+| Project files | `.cproject`/`.project` reference OpenBLT through `${ProjDirPath}` and `PARENT-2-PROJECT_LOC`, both repo-relative |
+| The warning baseline | Records which compiler produced it. On a different `arm-none-eabi-gcc` the gate reports "re-baseline needed" as a WARN instead of reporting phantom regressions |
+
+The genuinely machine-specific parts — STM32CubeIDE and the toolchains — cannot
+be vendored. They are **detected and reported**, never assumed.
+
+An explicit `CUBEIDE=` pointing at a file that does not exist is treated as an
+error rather than falling back to discovery, so a typo cannot silently build
+with a different CubeIDE than you asked for.
+
 ## Prerequisites
 
 - STM32CubeIDE 1.18.0, or set `CUBEIDE=<path to stm32cubeidec.exe>`

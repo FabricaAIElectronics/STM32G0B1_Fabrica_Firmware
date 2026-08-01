@@ -238,6 +238,13 @@ def check_board(board) -> list[dict]:
 
 
 def run() -> StageResult:
+    try:
+        import cantools  # noqa: F401
+    except ImportError:
+        return StageResult(
+            "conformance", "skip", "cantools not installed - DBCs not parsed",
+            [{"remedy": "pip install cantools"}])
+
     problems, notes = [], []
     for board in BOARDS:
         if board.dbc is None:

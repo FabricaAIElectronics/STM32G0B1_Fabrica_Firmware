@@ -1,5 +1,6 @@
 """Stage 2 - build and run the host unit tests via make."""
 import re
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -28,6 +29,17 @@ def run_make() -> tuple[int, str]:
 
 
 def run() -> StageResult:
+    missing = [t for t in ("make", "gcc") if shutil.which(t) is None]
+    if missing:
+        return StageResult(
+            "unit", "skip",
+            f"no host toolchain ({', '.join(missing)} not on PATH)",
+            [{"remedy": r"Windows: install MSYS2, `pacman -S "
+                        r"mingw-w64-x86_64-gcc make`, and put C:\msys64\mingw64\bin "
+                        r"and C:\msys64\usr\bin on PATH AHEAD of GnuWin32 "
+                        r"(its make 3.81 hands recipes to cmd.exe and breaks "
+                        r"mkdir -p). Linux: apt install build-essential"}])
+
     code, output = run_make()
     summary = parse_output(output)
     items = [{"passed": summary["passed"], "failed": summary["failed"]}]

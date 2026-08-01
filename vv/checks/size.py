@@ -6,6 +6,7 @@ currently the only thing that would.
 """
 from vv.boards import BOARDS
 from vv.checks.build import build_project
+from vv.checks.preflight import find_cubeide
 from vv.result import StageResult
 
 WARN_FRACTION = 0.80
@@ -43,6 +44,11 @@ def gather_sizes() -> list[dict]:
 
 
 def run() -> StageResult:
+    if find_cubeide() is None:
+        return StageResult(
+            "size", "skip", "STM32CubeIDE not found - no artifacts to measure",
+            [{"remedy": "install STM32CubeIDE, or set CUBEIDE=<path>"}])
+
     items = [check_artifact(a["artifact"], a["flash"], a["limit"])
              for a in gather_sizes()]
 

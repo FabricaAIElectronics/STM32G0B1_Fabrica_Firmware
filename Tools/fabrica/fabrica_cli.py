@@ -6,7 +6,9 @@ deliberate: this tool was written without access to the bench, so if the curses
 UI misbehaves on an unfamiliar terminal, the CLI is the fallback that still
 flashes boards.
 
-    ./fabrica_cli.py doctor                 # check the environment first
+    ./fabrica_cli.py setup                  # what does this host still need
+    ./fabrica_cli.py setup --install        # install it
+    ./fabrica_cli.py doctor                 # check the environment
     ./fabrica_cli.py list                   # what can I flash
     ./fabrica_cli.py flash powerstage boot  # bootloader, via ST-Link
     ./fabrica_cli.py flash powerstage app   # application, over CAN
@@ -40,8 +42,63 @@ def _no_colour():
         _MARK[k] = k.upper()
 
 
+# ---------------------------------------------------------------- setup ----
+def cmd_setup(args) -> int:
+    """Check dependencies for this host and optionally install them."""
+    from fabrica import host as hostmod
+
+    plan = hostmod.build_plan()
+    h = plan.host
+    print(f"host      {h.description}")
+    if h.model:
+        print(f"model     {h.model}")
+    print(f"detected  {h.kind}\n")
+
+    if plan.empty:
+        print(f"{GREEN}All package dependencies are already installed.{RESET}")
+    else:
+        if plan.apt:
+            print(f"missing apt packages : {', '.join(plan.apt)}")
+        if plan.pip:
+            print(f"missing pip packages : {', '.join(plan.pip)}")
+        print("\nCommands:")
+        for c in plan.commands:
+            print(f"  {c}")
+
+    for w in plan.warnings:
+        print(f"\n{YELLOW}note:{RESET} {w}")
+
+    if h.can_hint:
+        print(f"\n{DIM}CAN interface on this host:{RESET}\n    {h.can_hint}")
+    for n in h.notes:
+        print(f"\n{DIM}- {n}{RESET}")
+
+    if not args.install:
+        if not plan.empty:
+            print(f"\n{DIM}Re-run with --install to execute the commands "
+                  f"above.{RESET}")
+        return 0
+
+    if not h.is_linux:
+        print(f"\n{RED}--install only works on Linux.{RESET}")
+        return 1
+    import subprocess
+    for c in plan.commands:
+        print(f"\n$ {c}")
+        rc = subprocess.run(c, shell=True).returncode
+        if rc != 0:
+            print(f"{RED}failed (exit {rc}){RESET}")
+            return rc
+    print(f"\n{GREEN}Done. Run `doctor` next.{RESET}")
+    return 0
+
+
 # --------------------------------------------------------------- doctor ----
 def cmd_doctor(args) -> int:
+    from fabrica import host as hostmod
+    h = hostmod.detect_host()
+    print(f"{DIM}host: {h.description}{RESET}\n")
+
     e = env.doctor(args.firmware, iface=args.iface, bitrate=args.bitrate)
     width = max(len(c.name) for c in e.checks)
     for c in e.checks:
@@ -49,10 +106,15 @@ def cmd_doctor(args) -> int:
         if c.remedy and c.status != env.OK:
             print(f"  {'':>16}  {' ' * width}  {DIM}-> {c.remedy}{RESET}")
     print()
+    can_bad = any(c.name.startswith("can") and c.status == env.FAIL
+                  for c in e.checks)
+    if can_bad and h.can_hint:
+        print(f"{DIM}CAN on this host ({h.kind}):{RESET}\n    {h.can_hint}\n")
     if e.ok:
         print(f"{GREEN}Environment looks usable.{RESET}")
         return 0
-    print(f"{RED}Fix the FAIL rows above before flashing.{RESET}")
+    print(f"{RED}Fix the FAIL rows above before flashing.{RESET}  "
+          f"`setup` lists the install commands for this host.")
     return 1
 
 
@@ -215,6 +277,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--bitrate", type=int, default=500000)
     p.add_argument("--no-colour", action="store_true")
     sub = p.add_subparsers(dest="cmd", required=True)
+
+    s = sub.add_parser("setup", help="check/install dependencies for this host")
+    s.add_argument("--install", action="store_true",
+                   help="actually run the install commands (Linux only)")
+    s.set_defaults(func=cmd_setup)
 
     sub.add_parser("doctor", help="check tools, CAN link and firmware").set_defaults(
         func=cmd_doctor)

@@ -5,6 +5,7 @@ large number of pre-existing warnings in the OpenBLT-derived App/ files; a gate
 that is red on day one gets ignored, so those are recorded and excluded.
 """
 import re
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -101,6 +102,35 @@ def normalise(line: str) -> str:
     return f"{rel}:{m.group('line')}:{m.group('col')}: {m.group('msg')}"
 
 
+def compiler_id() -> str:
+    """A stable identity for the cross-compiler, e.g. 'arm-none-eabi-gcc 10.3.1'.
+
+    The warning set is compiler-version specific: a different gcc emits
+    different warnings for identical source. The baseline records which compiler
+    produced it so a mismatch can be reported as "re-baseline needed" rather
+    than as 37 phantom regressions on a new machine.
+    """
+    exe = shutil.which("arm-none-eabi-gcc")
+    if not exe:
+        return "unknown"
+    try:
+        out = subprocess.run([exe, "-dumpversion"], capture_output=True,
+                             text=True, timeout=30).stdout.strip()
+        return f"arm-none-eabi-gcc {out}" if out else "unknown"
+    except Exception:                                     # noqa: BLE001
+        return "unknown"
+
+
+def baseline_compiler() -> str:
+    """The compiler recorded in the baseline header, or '' if none."""
+    if not BASELINE_PATH.is_file():
+        return ""
+    for line in BASELINE_PATH.read_text(encoding="utf-8").splitlines():
+        if line.startswith("# compiler:"):
+            return line.split(":", 1)[1].strip()
+    return ""
+
+
 def load_baseline() -> set[str]:
     if not BASELINE_PATH.is_file():
         return set()
@@ -116,6 +146,11 @@ def update_baseline() -> int:
     BASELINE_PATH.write_text(
         "# Accepted pre-existing warnings. Regenerate with:\n"
         "#   python vv/run_gate.py --update-baseline\n"
+        f"# compiler: {compiler_id()}\n"
+        "# The warning set is compiler-version specific: a different gcc emits\n"
+        "# different warnings for identical source. On a compiler that does not\n"
+        "# match this line the gate reports a re-baseline is needed, rather than\n"
+        "# reporting phantom regressions.\n"
         + "\n".join(warnings) + "\n",
         encoding="utf-8",
     )
@@ -123,6 +158,15 @@ def update_baseline() -> int:
 
 
 def run() -> StageResult:
+    if shutil.which("arm-none-eabi-gcc") is None:
+        return StageResult(
+            "static", "skip", "arm-none-eabi-gcc not on PATH - nothing compiled",
+            [{"remedy": "install the GNU Arm Embedded Toolchain and put its bin "
+                        "directory on PATH"}])
+
+    recorded, actual = baseline_compiler(), compiler_id()
+    compiler_changed = bool(recorded) and recorded != actual
+
     current = set(collect_warnings())
     baseline = load_baseline()
     new = sorted(current - baseline)
@@ -130,6 +174,16 @@ def run() -> StageResult:
 
     items = [{"new": w} for w in new] + [{"stale": w} for w in stale]
 
+    if new and compiler_changed:
+        # A different compiler legitimately produces a different warning set.
+        # Failing here would tell a new machine its firmware is broken when the
+        # only thing that changed is gcc. Report loudly, do not block.
+        return StageResult(
+            "static", "warn",
+            f"{len(new)} warning(s) not in the baseline, but the baseline was "
+            f"recorded with {recorded!r} and this machine has {actual!r} - "
+            f"re-run with --update-baseline to adopt this compiler",
+            items + [{"baseline_compiler": recorded, "this_compiler": actual}])
     if new:
         return StageResult("static", "fail",
                            f"{len(new)} new warning(s)", items)

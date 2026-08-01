@@ -65,6 +65,9 @@ def main(argv=None) -> int:
                         help="rewrite vv/baseline.txt from the current warnings")
     parser.add_argument("--stage-artifacts", action="store_true",
                         help="on a green gate, copy .srec files and write the manifest")
+    parser.add_argument("--strict", action="store_true",
+                        help="treat a skipped stage as a failure. Use this for an "
+                             "actual release: 'we could not check it' must not pass")
     args = parser.parse_args(argv)
 
     if args.update_baseline:
@@ -73,22 +76,34 @@ def main(argv=None) -> int:
         print(f"baseline rewritten with {count} warnings")
         return 0
 
-    results = run_stages(build_stage_list(args.stage), continue_on_fail=args.cont)
-    print(format_summary(results))
+    # --strict implies --continue: if a skip is going to fail the run, you want
+    # to see every stage that could not run, not just the first one.
+    results = run_stages(build_stage_list(args.stage),
+                         continue_on_fail=args.cont or args.strict)
+    print(format_summary(results, strict=args.strict))
 
     if args.json_path:
         with open(args.json_path, "w", encoding="utf-8") as fh:
             json.dump([r.to_dict() for r in results], fh, indent=2)
 
     passed = all(r.ok for r in results)
+    if args.strict:
+        passed = passed and all(r.ran for r in results)
 
     if args.stage_artifacts:
-        if passed:
+        fully_ran = all(r.ran for r in results)
+        if passed and fully_ran:
             from vv.stage import stage_artifacts
             manifest = stage_artifacts(gate_passed=True)
             print(f"\nstaged {len(manifest['boards'])} boards to "
                   f"Tools/fabrica/firmware/ (git {manifest['git_sha'][:8]}"
                   f"{', DIRTY' if manifest['git_dirty'] else ''})")
+        elif not fully_ran:
+            skipped = [r.name for r in results if r.status == "skip"]
+            print(f"\nartifacts NOT staged: {len(skipped)} stage(s) could not "
+                  f"run here ({', '.join(skipped)}).")
+            print("Staging an image the gate never checked would defeat the "
+                  "point of the gate.")
         else:
             print("\ngate failed; artifacts not staged")
 

@@ -65,6 +65,14 @@ def build_project(project_dir: str, eclipse_name: str) -> dict:
 
 
 def run() -> StageResult:
+    # A machine without STM32CubeIDE cannot build; that is an environment gap,
+    # not a defect in the firmware. Skip so the rest of the gate still reports.
+    if find_cubeide() is None:
+        return StageResult(
+            "build", "skip", "STM32CubeIDE not found - nothing was built",
+            [{"remedy": "install STM32CubeIDE, or set CUBEIDE=<path to "
+                        "stm32cubeidec(.exe)>"}])
+
     items = []
     for board in BOARDS:
         items.append(build_project(board.boot_dir, board.boot_eclipse))

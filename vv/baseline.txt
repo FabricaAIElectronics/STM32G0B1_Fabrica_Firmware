@@ -1,5 +1,10 @@
 # Accepted pre-existing warnings. Regenerate with:
 #   python vv/run_gate.py --update-baseline
+# compiler: arm-none-eabi-gcc 10.3.1
+# The warning set is compiler-version specific: a different gcc emits
+# different warnings for identical source. On a compiler that does not
+# match this line the gate reports a re-baseline is needed, rather than
+# reporting phantom regressions.
 STM32F303_Applciationprog/Fabrica_STM32F3_Prog/App/boot.c:381:17: warning: variable 'rxFilterId' set but not used [-Wunused-but-set-variable]
 STM32F303_Applciationprog/Fabrica_STM32F3_Prog/App/boot.c:381:29: warning: variable 'rxFilterMask' set but not used [-Wunused-but-set-variable]
 STM32F303_Applciationprog/Fabrica_STM32F3_Prog/Core/Inc/can_operation.h:34:1: warning: function declaration isn't a prototype [-Wstrict-prototypes]

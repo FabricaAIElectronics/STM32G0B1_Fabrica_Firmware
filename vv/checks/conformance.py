@@ -24,16 +24,38 @@ SUB_BLOCKS = {
     "leddriver": (0x160, 0x17F),
 }
 
-_DEFINE_RE = re.compile(r"^\s*#define\s+([A-Za-z_][A-Za-z0-9_]*)\s+(0[xX][0-9A-Fa-f]+)\s*$",
-                        re.MULTILINE)
+# Tolerates the three forms that occur in the real headers:
+#   #define CAN_ID_BOOTLOADER   0x101U          <- integer suffix (KincoDrive)
+#   #define LED_DEVICEID        0x160  /* ... */ <- trailing comment (LEDDriver)
+#   #define DEVICE_ADDR         (0x130)          <- parenthesised
+# The original pattern anchored on \s*$ straight after the literal, so it parsed
+# ZERO ids from two of the four boards and every DBC message on those boards was
+# then reported missing from firmware.
+_DEFINE_RE = re.compile(
+    r"^\s*#define\s+([A-Za-z_][A-Za-z0-9_]*)\s+\(?\s*(0[xX][0-9A-Fa-f]+)[uUlL]*\s*\)?"
+    r"\s*(?:/[/*].*)?$",
+    re.MULTILINE,
+)
 _DOC_ROW_RE = re.compile(r"^\|\s*`0x([0-9A-Fa-f]{3})`\s*\|\s*([^|]+?)\s*\|"
                          r"\s*\w+\s*\|\s*([0-9-]+)\s*\|", re.MULTILINE)
 
+# A Fabrica CAN id is an 11-bit standard identifier at or above 0x100.
+# Docs/CAN_Bus.md section 2 reserves 0x000-0x0FF for CANopen NMT/SYNC/EMCY, so
+# nothing below 0x100 is one of ours. This keeps bitmask constants that happen to
+# be hex - EEPROM_CMD_SAVE 0x1, EEPROM_CMD_LOAD_DEFAULT 0x2 - out of the id set.
+CAN_ID_MIN = 0x100
+CAN_ID_MAX = 0x7FF
+
 
 def parse_defines(path: Path) -> dict[str, int]:
-    """Return {MACRO: value} for every #define naming a hex constant."""
+    """Return {MACRO: value} for every #define naming a plausible CAN id."""
     text = path.read_text(encoding="utf-8", errors="replace")
-    return {m.group(1): int(m.group(2), 16) for m in _DEFINE_RE.finditer(text)}
+    out = {}
+    for m in _DEFINE_RE.finditer(text):
+        value = int(m.group(2), 16)
+        if CAN_ID_MIN <= value <= CAN_ID_MAX:
+            out[m.group(1)] = value
+    return out
 
 
 def dbc_messages(path: Path) -> dict[int, dict]:
@@ -76,11 +98,26 @@ def load_layouts() -> dict:
     return json.loads(LAYOUTS_PATH.read_text(encoding="utf-8")).get("boards", {})
 
 
+# Sub-block boundary markers such as CAN_ID_RANGE_LOW / CAN_ID_RANGE_HIGH name a
+# range, not a message, so they are not expected to appear in a DBC.
+_RANGE_MARKER_RE = re.compile(r"_RANGE_(LOW|HIGH)$")
+
+
 def compare_defines_to_dbc(board_id: str, defines: dict[str, int],
-                           dbc: dict[int, dict]) -> list[dict]:
+                           dbc: dict[int, dict],
+                           extra_known_ids: set[int] | None = None) -> list[dict]:
+    """Compare a board's firmware ids against its DBC, both directions.
+
+    extra_known_ids covers ids the firmware declares somewhere other than the
+    scanned headers - specifically the bootloader RX/TX pair, which lives in the
+    bootloader's App/blt_conf.h rather than the application's header. Without it
+    every board's Bootloader_TX message looks missing from firmware.
+    """
     problems = []
-    define_ids = set(defines.values())
+    define_ids = set(defines.values()) | (extra_known_ids or set())
     for name, value in defines.items():
+        if _RANGE_MARKER_RE.search(name):
+            continue
         if value not in dbc:
             problems.append({"board": board_id, "kind": "define_not_in_dbc",
                              "id": value, "name": name})
@@ -108,6 +145,27 @@ def compare_layouts_to_dbc(board_id: str, layouts: list[dict],
                              "dbc_order": msg["byte_order"],
                              "test_order": entry["byte_order"]})
     return problems
+
+
+def compare_doc_to_dbc(board_id: str, dbc: dict[int, dict],
+                       doc: dict[int, dict]) -> list[dict]:
+    """Report ids documented for this board that no DBC message provides.
+
+    Every other comparison iterates the DBC, so an id that exists ONLY in
+    Docs/CAN_Bus.md is invisible to them. That is exactly the case of 0x158
+    Bcast_OC_Cfg_B: documented as a 500 ms broadcast, never implemented and not
+    in the DBC either. Attribution to a board is by sub-block, so this only runs
+    for boards that have one.
+    """
+    if board_id not in SUB_BLOCKS:
+        return []
+    lo, hi = SUB_BLOCKS[board_id]
+    return [
+        {"board": board_id, "kind": "doc_not_in_dbc", "id": fid,
+         "name": msg["name"]}
+        for fid, msg in doc.items()
+        if lo <= fid <= hi and fid not in dbc
+    ]
 
 
 def check_address_plan(board, defines: dict[str, int]) -> list[dict]:
@@ -145,11 +203,14 @@ def check_board(board) -> list[dict]:
     for header in board.headers:
         defines.update(parse_defines(REPO_ROOT / header))
 
-    problems = compare_defines_to_dbc(board.id, defines, dbc)
+    problems = compare_defines_to_dbc(board.id, defines, dbc,
+                                      extra_known_ids={board.blt_rx, board.blt_tx})
     problems += compare_layouts_to_dbc(board.id, load_layouts().get(board.id, []), dbc)
     problems += check_address_plan(board, defines)
     if board.in_bus_doc:
-        problems += compare_dbc_to_doc(board.id, dbc, doc_messages())
+        doc = doc_messages()
+        problems += compare_dbc_to_doc(board.id, dbc, doc)
+        problems += compare_doc_to_dbc(board.id, dbc, doc)
 
     # Bootloader ids must match blt_conf.h.
     blt_conf = REPO_ROOT / board.boot_dir / "App" / "blt_conf.h"

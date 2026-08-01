@@ -8,7 +8,18 @@ FIXTURES = Path(__file__).parent / "fixtures"
 
 def test_parse_defines_extracts_hex_ids():
     got = conformance.parse_defines(FIXTURES / "mini_header.h")
-    assert got == {"CMD_ALPHA": 0x140, "CMD_BETA": 0x141, "BCAST_GAMMA": 0x150}
+    assert got == {
+        "CMD_ALPHA": 0x140,
+        "CMD_BETA": 0x141,
+        "BCAST_GAMMA": 0x150,
+        "CMD_SUFFIXED": 0x142,
+        "CMD_COMMENTED": 0x143,
+        "CMD_PARENS": 0x144,
+        "CMD_RANGE_HIGH": 0x15F,
+    }
+    # a quoted string and a sub-0x100 bitmask are not CAN ids
+    assert "NOT_AN_ID" not in got
+    assert "NOT_AN_ID_MASK" not in got
 
 
 def test_dbc_messages_keyed_by_id():
@@ -72,3 +83,45 @@ def test_knob_produces_warning_not_failure(monkeypatch):
     result = conformance.run()
     assert result.status in ("pass", "warn")
     assert any("knob" in str(i) for i in result.items)
+
+
+def test_parse_defines_handles_suffix_comment_and_parens():
+    """The real headers use all three forms; the original regex parsed none of them."""
+    got = conformance.parse_defines(FIXTURES / "mini_header.h")
+    assert got["CMD_SUFFIXED"] == 0x142      # 0x142U
+    assert got["CMD_COMMENTED"] == 0x143     # trailing /* comment */
+    assert got["CMD_PARENS"] == 0x144        # (0x144)
+
+
+def test_parse_defines_rejects_values_below_the_can_id_floor():
+    """Bitmask constants like EEPROM_CMD_SAVE 0x1 are not CAN ids."""
+    got = conformance.parse_defines(FIXTURES / "mini_header.h")
+    assert "NOT_AN_ID_MASK" not in got
+
+
+def test_range_markers_are_not_expected_in_the_dbc():
+    defines = {"CMD_RANGE_HIGH": 0x15F, "CMD_REAL": 0x140}
+    dbc = {0x140: {"name": "Cmd_Real", "dlc": 1, "byte_order": None}}
+    problems = conformance.compare_defines_to_dbc("powerstage", defines, dbc)
+    assert [p["name"] for p in problems if p["kind"] == "define_not_in_dbc"] == []
+
+
+def test_bootloader_ids_count_as_known_firmware_ids():
+    """blt_rx/blt_tx live in blt_conf.h, not the application header."""
+    dbc = {0x131: {"name": "PS_Bootloader_TX", "dlc": 8, "byte_order": None}}
+    assert conformance.compare_defines_to_dbc(
+        "powerstage", {}, dbc, extra_known_ids={0x130, 0x131}) == []
+    assert conformance.compare_defines_to_dbc("powerstage", {}, dbc) != []
+
+
+def test_doc_only_id_is_reported():
+    """0x158 exists only in Docs/CAN_Bus.md; every other check iterates the DBC."""
+    dbc = {0x157: {"name": "Bcast_OC_Cfg_A", "dlc": 8, "byte_order": "big"}}
+    doc = {0x157: {"name": "BCAST_OC_CFG_A", "dlc": 8},
+           0x158: {"name": "BCAST_OC_CFG_B", "dlc": 2}}
+    problems = conformance.compare_doc_to_dbc("powerstage", dbc, doc)
+    assert [p["id"] for p in problems] == [0x158]
+
+
+def test_doc_only_check_skipped_for_boards_without_a_sub_block():
+    assert conformance.compare_doc_to_dbc("knob", {}, {0x661: {"name": "X", "dlc": 8}}) == []

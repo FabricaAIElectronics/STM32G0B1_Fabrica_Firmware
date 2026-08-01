@@ -3,8 +3,15 @@ import argparse
 import json
 import sys
 import traceback
+from pathlib import Path
 
-from vv.result import StageResult, format_summary
+# Allow both `python vv/run_gate.py` and `python -m vv.run_gate`. Run as a
+# script, sys.path[0] is vv/ rather than the repo root, so `import vv.*` would
+# fail; put the repo root on the path before importing anything from vv.
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from vv.result import StageResult, format_summary  # noqa: E402
 
 
 def run_stages(stages, continue_on_fail: bool) -> list[StageResult]:

@@ -26,6 +26,15 @@ mx.scratch
 *~
 
 # ---------------------------------------------------------------------------
+# STM32CubeIDE per-workspace language settings.
+#
+# These carry an env-hash fingerprint of the machine and workspace that last
+# built the project, so every headless build rewrites them. Tracking them
+# guarantees churn and cross-machine conflicts; they are regenerated on demand.
+# ---------------------------------------------------------------------------
+.settings/language.settings.xml
+
+# ---------------------------------------------------------------------------
 # Python bytecode from the V&V gate and its tests
 # ---------------------------------------------------------------------------
 __pycache__/

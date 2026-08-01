@@ -32,7 +32,7 @@ mx.scratch
 # built the project, so every headless build rewrites them. Tracking them
 # guarantees churn and cross-machine conflicts; they are regenerated on demand.
 # ---------------------------------------------------------------------------
-.settings/language.settings.xml
+**/.settings/language.settings.xml
 
 # ---------------------------------------------------------------------------
 # Python bytecode from the V&V gate and its tests

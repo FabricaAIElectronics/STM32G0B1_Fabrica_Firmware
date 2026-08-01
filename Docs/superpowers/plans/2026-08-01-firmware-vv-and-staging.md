@@ -381,8 +381,15 @@ import argparse
 import json
 import sys
 import traceback
+from pathlib import Path
 
-from vv.result import StageResult, format_summary
+# Allow both `python vv/run_gate.py` and `python -m vv.run_gate`. Run as a
+# script, sys.path[0] is vv/ rather than the repo root, so `import vv.*` would
+# fail; put the repo root on the path before importing anything from vv.
+if __package__ in (None, ""):
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from vv.result import StageResult, format_summary  # noqa: E402
 
 
 def run_stages(stages, continue_on_fail: bool) -> list[StageResult]:
@@ -874,7 +881,13 @@ python vv/run_gate.py --update-baseline
 python -c "from vv.checks import static; r=static.run(); print(r.status, r.detail)"
 ```
 
-Expected: baseline written with roughly 250-350 warnings across all projects, then `pass no new warnings (N baselined)`.
+Expected: 68 files compiled with zero errors, a baseline of **37** warnings, then
+`pass no new warnings (37 baselined)`. The mix is roughly 19 `-Wstrict-prototypes`,
+6 `-Wshadow`, 5 `-Wunused-parameter`, and single figures of the rest.
+
+If the count comes out far higher, suspect that `flash_layout.c` is no longer
+being skipped — it is `#include`-d into OpenBLT's `flash.c` and cascades dozens
+of spurious errors when compiled standalone.
 
 - [ ] **Step 6: Prove the gate catches a regression**
 

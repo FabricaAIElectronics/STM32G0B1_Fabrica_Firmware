@@ -63,6 +63,8 @@ def main(argv=None) -> int:
     parser.add_argument("--json", dest="json_path", help="write structured results here")
     parser.add_argument("--update-baseline", action="store_true",
                         help="rewrite vv/baseline.txt from the current warnings")
+    parser.add_argument("--stage-artifacts", action="store_true",
+                        help="on a green gate, copy .srec files and write the manifest")
     args = parser.parse_args(argv)
 
     if args.update_baseline:
@@ -78,7 +80,19 @@ def main(argv=None) -> int:
         with open(args.json_path, "w", encoding="utf-8") as fh:
             json.dump([r.to_dict() for r in results], fh, indent=2)
 
-    return 0 if all(r.ok for r in results) else 1
+    passed = all(r.ok for r in results)
+
+    if args.stage_artifacts:
+        if passed:
+            from vv.stage import stage_artifacts
+            manifest = stage_artifacts(gate_passed=True)
+            print(f"\nstaged {len(manifest['boards'])} boards to "
+                  f"Tools/fabrica/firmware/ (git {manifest['git_sha'][:8]}"
+                  f"{', DIRTY' if manifest['git_dirty'] else ''})")
+        else:
+            print("\ngate failed; artifacts not staged")
+
+    return 0 if passed else 1
 
 
 if __name__ == "__main__":

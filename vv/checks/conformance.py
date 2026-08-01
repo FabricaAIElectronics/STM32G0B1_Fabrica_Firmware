@@ -46,6 +46,10 @@ _DOC_ROW_RE = re.compile(r"^\|\s*`0x([0-9A-Fa-f]{3})`\s*\|\s*([^|]+?)\s*\|"
 CAN_ID_MIN = 0x100
 CAN_ID_MAX = 0x7FF
 
+# Signals that are padding rather than payload, and so must not determine a
+# message's byte order.
+_RESERVED_SIGNAL_RE = re.compile(r"reserved|padding|rsvd|spare", re.IGNORECASE)
+
 
 def parse_defines(path: Path) -> dict[str, int]:
     """Return {MACRO: value} for every #define naming a plausible CAN id."""
@@ -70,11 +74,18 @@ def dbc_messages(path: Path) -> dict[int, dict]:
     db = cantools.database.load_file(str(path), strict=False)
     out = {}
     for m in db.messages:
-        orders = {s.byte_order for s in m.signals if s.length > 8}
+        # Only real multi-byte payload determines byte order. Padding
+        # placeholders are excluded: BCAST_EEPROM's sole >8-bit signal is
+        # Cfg_Reserved, and letting a reserved field decide the message's
+        # endianness produced a mismatch about data that does not exist.
+        orders = {
+            s.byte_order for s in m.signals
+            if s.length > 8 and not _RESERVED_SIGNAL_RE.search(s.name)
+        }
         if len(orders) == 1:
             order = "big" if orders.pop() == "big_endian" else "little"
         else:
-            order = None  # none, or inconsistent within the message
+            order = None  # no real multi-byte signal, or inconsistent within one
         out[m.frame_id] = {"name": m.name, "dlc": m.length, "byte_order": order}
     return out
 

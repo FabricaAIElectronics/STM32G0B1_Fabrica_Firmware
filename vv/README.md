@@ -62,22 +62,27 @@ real. `thermistor.c` has its Beta equation restated because it reaches ADC/DMA
 state through `adc_driver.h`. `power_monitor.c`, `ssd1306.c`, `Fan_PWM.c` and
 `hs_switch.c` have no host tests at all — they need hardware.
 
-## Known findings
+## Current status
 
-The conformance stage currently fails on five real defects, all PowerStage:
+The gate exits 0. Two warnings stand, both understood:
 
-| ID | Finding |
-|---|---|
-| `0x141` Cmd_HS | DBC says DLC 1; firmware and docs say 5 — the DBC is wrong |
-| `0x154` Bcast_EEPROM | DBC says little-endian; the layout tests say big |
-| `0x148` Cmd_OC_Reset | in the DBC, absent from `Docs/CAN_Bus.md` |
-| `0x158` Bcast_OC_Cfg_B | in the docs, absent from the DBC and from firmware |
+- **Size:** the three G0B1 bootloaders sit at 82.8% of their 12 KB reservation.
+  Not a defect, but little headroom for new bootloader features.
+- **Conformance:** the knob board is unchecked (no DBC, absent from the docs).
 
-`0x141` matters most: anything generated from that DBC, including
-`can_decoder.py`, will decode a 5-byte command as 1 byte.
+### Findings the first real run produced, and how they were resolved
 
-The size stage warns that the three G0B1 bootloaders sit at ~82% of their 12 KB
-reservation.
+| ID | Finding | Resolution |
+|---|---|---|
+| `0x141` Cmd_HS | Docs said DLC 5; firmware reads byte[0] as a bitmask and the DBC says DLC 1 | Docs corrected to 1; `layouts.h` corrected to match |
+| `0x148` Cmd_OC_Reset | In firmware and DBC, undocumented | Added to `Docs/CAN_Bus.md` |
+| `0x158` Bcast_OC_Cfg_B | Documented but never implemented; would have carried the SBC rail's OC threshold | Deleted. `RAIL_SBC` has no MCU-driven EN line and no software OC, and all four protected rails fit in `0x157` |
+| `0x154` Bcast_EEPROM | Reported a byte-order mismatch | Not a firmware defect — the message's only multi-byte signal is `Cfg_Reserved`, padding. Reserved signals no longer set a message's byte order |
+
+Worth noting for anyone reading a future failure: on first run the stage
+reported 28 mismatches, of which 23 were its own parser bug and one more was
+this reserved-signal artifact. Investigate the stage before trusting a large
+finding count.
 
 ## Artifact staging
 

@@ -350,7 +350,7 @@ void CAN_Broadcast_EEPROM(Config *cfg);
 /* [0x156] UV thresholds from active uv_status */
 void CAN_Broadcast_UV(void);
 
-/* [0x157 + 0x158] OC thresholds per rail from oc_status */
+/* [0x157] OC thresholds per rail from oc_status */
 void CAN_Broadcast_OC_Config(void);
 
 /* [0x159] SW pin state, V_LED_PWR state, relay status */

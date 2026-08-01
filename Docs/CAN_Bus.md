@@ -104,13 +104,14 @@ Error mask bits (Bcast_Status byte 7): `0x01`=OC_DRIVE, `0x02`=OC_EXT, `0x04`=OC
 | `0x130` | DEVICE_ADDR / Bootloader RX | RX | 2 | Event | byte[0]=0xFF triggers reset; bootloader then re-handles XCP CONNECT |
 | `0x131` | Bootloader TX | TX | - | Event | OpenBLT XCP responses |
 | `0x140` | CMD_FAN | RX | 2 | Event | mode + duty |
-| `0x141` | CMD_HS | RX | 5 | Event | per-rail enable |
+| `0x141` | CMD_HS | RX | 1 | Event | Enable **bitmask** in byte[0], one bit per rail: bit0=AUX bit1=LED bit2=DRIVE bit3=CAP. RAIL_SBC has no MCU-driven EN line and is ignored |
 | `0x142` | CMD_OC | RX | 8 | Event | OC thresholds, uint16 **BE** × 4: AUX/LED/DRIVE/CAP in mA. Shorter DLCs apply a prefix of the fields (2=AUX, 4=+LED, 6=+DRIVE, 8=+CAP) |
 | `0x143` | CMD_EEPROM | RX | 1 | Event | save / load defaults |
 | `0x144` | CMD_UV | RX | 6 | Event | UV thresholds |
 | `0x145` | CMD_CTRL | RX | 2 | Event | V_LED_PWR + CAN relay |
 | `0x146` | CMD_PAGE_DWELL | RX | 3 | Event | OLED per-page dwell (500 ms ticks per page) |
 | `0x147` | CMD_BAT_CFG | RX | 1 | Event | SOC-low warning threshold (% SOC, 0 = disabled) |
+| `0x148` | CMD_OC_RESET | RX | 1 | Event | byte[0] = bitmask of rails whose latched OC fault to clear (same bit order as CMD_HS) |
 | `0x150` | BCAST_HS_STATE | TX | 5 | 500 ms | Enable / fault / pgood / OC bitmasks |
 | `0x151` | BCAST_HS_CURR_A | TX | 8 | 500 ms | BAT, CAP, SBC, DRIVE mA |
 | `0x152` | BCAST_VOLTAGE | TX | 8 | 500 ms | V24, VCAP, V12 mV + UV fault mask |
@@ -118,8 +119,7 @@ Error mask bits (Bcast_Status byte 7): `0x01`=OC_DRIVE, `0x02`=OC_EXT, `0x04`=OC
 | `0x154` | BCAST_EEPROM | TX | 8 | 500 ms | Config echo |
 | `0x155` | BCAST_HS_CURR_B | TX | 4 | 500 ms | AUX, LED mA |
 | `0x156` | BCAST_UV | TX | 6 | 500 ms | Active UV thresholds |
-| `0x157` | BCAST_OC_CFG_A | TX | 8 | 500 ms | OC thresholds AUX/LED/DRIVE/CAP |
-| `0x158` | BCAST_OC_CFG_B | TX | 2 | 500 ms | OC threshold SBC |
+| `0x157` | BCAST_OC_CFG_A | TX | 8 | 500 ms | OC thresholds, uint16 BE × 4: AUX/LED/DRIVE/CAP. All four software-protected rails fit in one frame |
 | `0x159` | BCAST_IO_STATUS | TX | 3 | 500 ms | SW pin / V_LED_PWR / relay |
 | `0x15A` | BCAST_BATTERY_CFG | TX | 8 | 500 ms | 6S battery static config: cutoff (19.6 V), full (25.2 V), R_int (200 mΩ), cell count |
 

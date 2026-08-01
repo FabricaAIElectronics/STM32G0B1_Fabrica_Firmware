@@ -125,3 +125,30 @@ def test_doc_only_id_is_reported():
 
 def test_doc_only_check_skipped_for_boards_without_a_sub_block():
     assert conformance.compare_doc_to_dbc("knob", {}, {0x661: {"name": "X", "dlc": 8}}) == []
+
+
+def test_reserved_signal_does_not_set_message_byte_order(tmp_path):
+    """A padding placeholder must not decide a message's endianness.
+
+    BCAST_EEPROM's only >8-bit signal is Cfg_Reserved. Letting it set the
+    message byte order produced a mismatch about data that does not exist.
+    """
+    dbc = tmp_path / "reserved.dbc"
+    dbc.write_text(
+        'VERSION ""\n\nBS_:\n\nBU_: Tester Device\n\n'
+        'BO_ 340 BCAST_THING: 8 Device\n'
+        ' SG_ Real_Byte : 0|8@1+ (1,0) [0|255] "" Tester\n'
+        ' SG_ Cfg_Reserved : 8|16@1+ (1,0) [0|65535] "" Tester\n',
+        encoding="utf-8")
+    got = conformance.dbc_messages(dbc)
+    assert got[340]["byte_order"] is None, "reserved padding must not set byte order"
+
+
+def test_real_multibyte_signal_still_sets_byte_order(tmp_path):
+    dbc = tmp_path / "real.dbc"
+    dbc.write_text(
+        'VERSION ""\n\nBS_:\n\nBU_: Tester Device\n\n'
+        'BO_ 341 BCAST_OTHER: 8 Device\n'
+        ' SG_ Threshold_mA : 0|16@0+ (1,0) [0|65535] "mA" Tester\n',
+        encoding="utf-8")
+    assert conformance.dbc_messages(dbc)[341]["byte_order"] == "big"

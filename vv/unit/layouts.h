@@ -36,7 +36,7 @@ static const vv_layout_t VV_LAYOUTS[] = {
     /* PowerStage - big endian uint16 */
     {"powerstage", 0x130, "Device_Addr",       2, "big"},
     {"powerstage", 0x140, "Cmd_Fan",           2, "big"},
-    {"powerstage", 0x141, "Cmd_HS",            5, "big"},
+    {"powerstage", 0x141, "Cmd_HS",            1, "big"},
     {"powerstage", 0x142, "Cmd_OC",            8, "big"},
     {"powerstage", 0x143, "Cmd_EEPROM",        1, "big"},
     {"powerstage", 0x144, "Cmd_UV",            6, "big"},

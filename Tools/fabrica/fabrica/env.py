@@ -110,7 +110,18 @@ def doctor(firmware_dir: Path | str | None = None, iface: str = "can0",
     # --- ST-Link ---------------------------------------------------------
     backend, path = find_stlink()
     env.stlink_backend, env.stlink_path = backend, path
-    if backend:
+    if backend == "st-flash":
+        # Every image we ship is a .srec, and st-flash has no S-record parser.
+        # Reporting OK here would give a green doctor followed by a failure on
+        # the very first flash, which is the worst possible order to find out.
+        env.checks.append(Check(
+            "stlink", FAIL,
+            f"only st-flash found ({path}); it cannot program the .srec images "
+            f"this project builds",
+            "install STM32CubeProgrammer (STM32_Programmer_CLI) - preferred - "
+            "or openocd. st-flash would need every image converted to .bin "
+            "first with arm-none-eabi-objcopy"))
+    elif backend:
         env.checks.append(Check("stlink", OK, f"{backend} at {path}"))
     else:
         env.checks.append(Check(

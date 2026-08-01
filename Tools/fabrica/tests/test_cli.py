@@ -192,3 +192,42 @@ def test_wrong_schema_is_rejected(tmp_path):
     (fw / "manifest.json").write_text('{"schema": 99, "boards": []}', encoding="utf-8")
     with pytest.raises(mf.ManifestError, match="schema"):
         mf.load_manifest(fw)
+
+
+def test_doctor_fails_when_only_st_flash_is_available(fake_firmware, monkeypatch):
+    """A green doctor followed by a first-flash failure is the worst order.
+
+    Every image this project ships is a .srec and st-flash has no S-record
+    parser, so st-flash alone is not a usable backend.
+    """
+    monkeypatch.setattr(env, "find_stlink", lambda: ("st-flash", "/usr/bin/st-flash"))
+    monkeypatch.setattr(env, "find_bootcommander", lambda: "/usr/local/bin/BootCommander")
+    monkeypatch.setattr(env, "can_interfaces", lambda: ["can0"])
+    monkeypatch.setattr(env, "can_link_state",
+                        lambda i: {"present": True, "up": True, "bitrate": "500000"})
+    rc, out = run(fake_firmware, "doctor")
+    assert rc == 1
+    assert "st-flash" in out
+    assert "STM32CubeProgrammer" in out
+
+
+def test_doctor_accepts_cubeprogrammer(fake_firmware, monkeypatch):
+    monkeypatch.setattr(env, "find_stlink",
+                        lambda: ("STM32_Programmer_CLI", "/usr/bin/STM32_Programmer_CLI"))
+    monkeypatch.setattr(env, "find_bootcommander", lambda: "/usr/local/bin/BootCommander")
+    monkeypatch.setattr(env, "can_interfaces", lambda: ["can0"])
+    monkeypatch.setattr(env, "can_link_state",
+                        lambda i: {"present": True, "up": True, "bitrate": "500000"})
+    rc, _ = run(fake_firmware, "doctor")
+    assert rc == 0
+
+
+def test_backend_capability_error_is_reported_cleanly(fake_firmware, monkeypatch, capsys):
+    """A ValueError from build_command must not surface as a traceback."""
+    monkeypatch.setattr(env, "find_stlink", lambda: ("st-flash", "/usr/bin/st-flash"))
+    rc = cli.main(["--no-colour", "--firmware", str(fake_firmware),
+                   "flash", "powerstage", "boot", "--dry-run"])
+    assert rc == 2
+    err = capsys.readouterr().err
+    assert "cannot build the flash command" in err
+    assert "Traceback" not in err

@@ -25,6 +25,7 @@ Specifically untested, in rough order of risk:
 | Risk | Why | First thing to check |
 |---|---|---|
 | The whole TUI | Windows Python has no `_curses`, so `fabrica/tui.py` has never been executed | Run `./fabrica_cli.py tui`. If it misbehaves, every function is available as a plain CLI subcommand — use those and carry on |
+| **st-flash + `.srec`** | st-flash has no S-record parser at all. `doctor` now FAILS if st-flash is the only backend, rather than passing and letting the first flash blow up | Install STM32CubeProgrammer |
 | openocd + `.srec` | openocd picks its image parser from the file extension and knows `.s19`, not `.srec`. Given an unrecognised extension it falls back to **raw binary**, which would write the ASCII text of the S-record into flash — silent corruption, not an error. We therefore emit explicit `flash write_image ... s19` rather than the usual `program` helper | Only matters if `STM32_Programmer_CLI` is absent. Prefer installing STM32CubeProgrammer |
 | `open_bus("can0")` | A one-line wrapper around `can.Bus`, and the one line no test can reach — the tests use the `virtual` backend | `./fabrica_cli.py monitor --seconds 5` |
 | Extended 29-bit CAN | Encoded as `-xid=1` to match `flash_can.sh`. Never exercised by anyone | Nothing to check: all four boards are 11-bit standard |
@@ -53,8 +54,9 @@ part that actually differs is how a CAN interface comes into existence:
 Two things `setup` reports but deliberately does **not** install:
 
 - **BootCommander** is built from source, not apt — run `install_openblt.sh`.
-- **STM32CubeProgrammer** is a manual download from ST. `stlink-tools` is the
-  apt fallback, but prefer CubeProgrammer given the openocd `.srec` risk above.
+- **STM32CubeProgrammer** is a manual download from ST. `stlink-tools` installs easily but **cannot flash this project's images** -
+  every one is a `.srec` and st-flash has no S-record parser. `doctor` treats
+  st-flash-only as a failure. Install CubeProgrammer.
 
 Then bring up the bus and verify:
 

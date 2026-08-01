@@ -320,6 +320,12 @@ def main(argv=None) -> int:
     except KeyError as exc:
         print(f"{RED}{exc}{RESET}", file=sys.stderr)
         return 2
+    except (ValueError, FileNotFoundError) as exc:
+        # Backend capability problems (st-flash cannot take .srec, an MCU with no
+        # openocd target mapping) arrive as ValueError from build_command. The
+        # message is already actionable; a traceback on top of it is just noise.
+        print(f"{RED}cannot build the flash command:{RESET} {exc}", file=sys.stderr)
+        return 2
     except KeyboardInterrupt:
         print("\ninterrupted")
         return 130

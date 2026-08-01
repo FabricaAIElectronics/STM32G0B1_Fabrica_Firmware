@@ -1,0 +1,78 @@
+"""Entry point for the firmware V&V gate."""
+import argparse
+import json
+import sys
+import traceback
+
+from vv.result import StageResult, format_summary
+
+
+def run_stages(stages, continue_on_fail: bool) -> list[StageResult]:
+    """Run each stage in order. Stop after the first failure unless told not to."""
+    results: list[StageResult] = []
+    for stage in stages:
+        try:
+            result = stage()
+        except Exception as exc:  # a crashing stage is a failing stage
+            name = getattr(stage, "stage_name", getattr(stage, "__name__", "unknown"))
+            result = StageResult(
+                name=name,
+                status="fail",
+                detail=f"stage raised {type(exc).__name__}: {exc}",
+                items=[{"traceback": traceback.format_exc()}],
+            )
+        results.append(result)
+        if result.status == "fail" and not continue_on_fail:
+            break
+    return results
+
+
+def build_stage_list(only: str | None):
+    """Import stage callables lazily so a partial checkout can still run --help."""
+    from vv.checks import preflight, static, build, size, conformance
+    from vv.unit import runner as unit_runner
+
+    ordered = [
+        ("preflight", preflight.run),
+        ("static", static.run),
+        ("unit", unit_runner.run),
+        ("build", build.run),
+        ("size", size.run),
+        ("conformance", conformance.run),
+    ]
+    if only:
+        names = [n for n, _ in ordered]
+        if only not in names:
+            raise SystemExit(f"unknown stage {only!r}; choose from {', '.join(names)}")
+        ordered = [(n, f) for n, f in ordered if n == only]
+    return [f for _, f in ordered]
+
+
+def main(argv=None) -> int:
+    parser = argparse.ArgumentParser(description="Firmware pre-release V&V gate")
+    parser.add_argument("--continue", dest="cont", action="store_true",
+                        help="run every stage instead of stopping at the first failure")
+    parser.add_argument("--stage", help="run a single stage by name")
+    parser.add_argument("--json", dest="json_path", help="write structured results here")
+    parser.add_argument("--update-baseline", action="store_true",
+                        help="rewrite vv/baseline.txt from the current warnings")
+    args = parser.parse_args(argv)
+
+    if args.update_baseline:
+        from vv.checks import static
+        count = static.update_baseline()
+        print(f"baseline rewritten with {count} warnings")
+        return 0
+
+    results = run_stages(build_stage_list(args.stage), continue_on_fail=args.cont)
+    print(format_summary(results))
+
+    if args.json_path:
+        with open(args.json_path, "w", encoding="utf-8") as fh:
+            json.dump([r.to_dict() for r in results], fh, indent=2)
+
+    return 0 if all(r.ok for r in results) else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

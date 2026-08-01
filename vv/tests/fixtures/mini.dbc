@@ -1,0 +1,11 @@
+VERSION ""
+
+BS_:
+
+BU_: Tester Device
+
+BO_ 320 Cmd_Alpha: 2 Tester
+ SG_ mode : 0|8@0+ (1,0) [0|255] "" Device
+
+BO_ 321 Cmd_Beta: 1 Tester
+ SG_ flag : 0|8@0+ (1,0) [0|1] "" Device

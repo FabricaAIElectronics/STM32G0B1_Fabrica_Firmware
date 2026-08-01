@@ -33,7 +33,7 @@
 		<link>
 			<name>Loader</name>
 			<type>2</type>
-			<location>C:/Users/jorda/Documents/GitHub/openblt/Target/Source</location>
+			<locationURI>PARENT-2-PROJECT_LOC/ThirdParty/openblt/Target/Source</locationURI>
 		</link>
 	</linkedResources>
 	<filteredResources>
@@ -56,10 +56,4 @@
 			</matcher>
 		</filter>
 	</filteredResources>
-	<variableList>
-		<variable>
-			<name>OPENBLT_ROOT</name>
-			<value>file:/C:/Users/jorda/Documents/GitHub/openblt/Target/Source</value>
-		</variable>
-	</variableList>
 </projectDescription>

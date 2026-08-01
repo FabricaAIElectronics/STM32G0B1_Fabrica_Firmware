@@ -50,9 +50,9 @@
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Device/ST/STM32G0xx/Include"/>
 									<listOptionValue builtIn="false" value="../Drivers/CMSIS/Include"/>
 									<listOptionValue builtIn="false" value="../App"/>
-									<listOptionValue builtIn="false" value="&quot;C:\Users\jorda\Documents\GitHub\openblt\Target\Source\ARMCM0_STM32G0\GCC&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;C:\Users\jorda\Documents\GitHub\openblt\Target\Source&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;C:\Users\jorda\Documents\GitHub\openblt\Target\Source\ARMCM0_STM32G0&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../../ThirdParty/openblt/Target/Source/ARMCM0_STM32G0/GCC&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../../ThirdParty/openblt/Target/Source&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${ProjDirPath}/../../ThirdParty/openblt/Target/Source/ARMCM0_STM32G0&quot;"/>
 								</option>
 								<inputType id="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c.366945451" superClass="com.st.stm32cube.ide.mcu.gnu.managedbuild.tool.c.compiler.input.c"/>
 							</tool>

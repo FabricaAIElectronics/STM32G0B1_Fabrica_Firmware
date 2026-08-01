@@ -1,0 +1,2 @@
+C:/repo/STM32G0B1_Applciationprog/PowerStage/Core/Src/ui_display.c:378:22: warning: duplicated 'if' condition [-Wduplicated-cond]
+C:/repo/STM32G0B1_Applciationprog/PowerStage/Core/Src/ui_display.c:436:71: warning: declaration of 'fan' shadows a global declaration [-Wshadow]

@@ -37,14 +37,32 @@ def git_info() -> tuple[str, bool]:
 
 def _copy_srec(board, project_dir: str, eclipse_name: str, load_addr: int,
                kind: str) -> dict:
+    """Build, then copy, then hash - in that order.
+
+    The build must come first. Copying first and building afterwards let the
+    build regenerate Debug/<name>.srec, so the staged bytes and their sha256
+    described the PREVIOUS build while flash_bytes in the same entry described
+    the new one. The hash stayed self-consistent with the staged file, which is
+    exactly what makes that kind of skew hard to notice later.
+
+    flash_bytes is `size`'s text+data rather than the S-record payload. The two
+    genuinely differ (8916 vs 10180 bytes for the G0B1 bootloader), and this
+    must agree with the size stage, which gates the reserved-region limit.
+    """
+    built = build_project(project_dir, eclipse_name)
+    if not built["ok"]:
+        raise RuntimeError(
+            f"{kind} build failed for {eclipse_name}: {'; '.join(built['errors'][:3])}")
+
     src = REPO_ROOT / project_dir / "Debug" / f"{eclipse_name}.srec"
     if not src.is_file():
-        raise FileNotFoundError(f"{kind} artifact missing: {src}")
+        raise FileNotFoundError(f"{kind} artifact missing after build: {src}")
+
     dest_dir = FIRMWARE_DIR / board.id
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest = dest_dir / src.name
     shutil.copy2(src, dest)
-    built = build_project(project_dir, eclipse_name)
+
     return {
         "file": f"{board.id}/{src.name}",
         "sha256": sha256_of(dest),

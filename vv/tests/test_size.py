@@ -1,5 +1,15 @@
 """Tests for the flash size gate."""
+import pytest
+
 from vv.checks import size
+
+
+@pytest.fixture(autouse=True)
+def _cubeide_present(monkeypatch):
+    """size.run() skips without CubeIDE; these tests exercise the
+    logic, so they must not depend on it being installed."""
+    monkeypatch.setattr(size, "find_cubeide",
+                        lambda: "/opt/st/stm32cubeide/stm32cubeide")
 
 
 def test_over_limit_fails():

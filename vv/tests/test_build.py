@@ -1,5 +1,15 @@
 """Tests for the firmware build stage."""
+import pytest
+
 from vv.checks import build
+
+
+@pytest.fixture(autouse=True)
+def _cubeide_present(monkeypatch):
+    """build.run() skips without CubeIDE; these tests exercise the
+    logic, so they must not depend on it being installed."""
+    monkeypatch.setattr(build, "find_cubeide",
+                        lambda: "/opt/st/stm32cubeide/stm32cubeide")
 
 SIZE_LOG = """
 arm-none-eabi-size  --format=berkeley "PowerStage.elf"

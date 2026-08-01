@@ -1107,8 +1107,22 @@ def test_above_eighty_percent_warns():
 
 
 def test_comfortably_under_passes():
-    got = size.check_artifact("boot", flash_bytes=10136, limit=12288)
+    # Real measured F303 bootloader: 7376 B in its 14 KB reservation = 51.4%.
+    got = size.check_artifact("boot", flash_bytes=7376, limit=14336)
     assert got["status"] == "pass"
+    assert got["pct"] < 80
+
+
+def test_real_g0b1_bootloader_size_warns():
+    """The G0B1 bootloaders really are at ~82% of their 12 KB reservation.
+
+    This is not a hypothetical: 10136 B of 12288 B is 82.5%, so the gate warns
+    on every run today. Kept as a test so that if someone later shrinks the
+    bootloader or enlarges the reservation, this fails and prompts an update.
+    """
+    got = size.check_artifact("boot", flash_bytes=10136, limit=12288)
+    assert got["status"] == "warn"
+    assert 82 <= got["pct"] < 83
 
 
 def test_exactly_at_limit_warns_rather_than_passing_silently():
@@ -1200,7 +1214,7 @@ run.stage_name = "size"
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `python -m pytest vv/tests/test_size.py -v`
-Expected: PASS, 5 tests.
+Expected: PASS, 6 tests.
 
 - [ ] **Step 5: Commit**
 

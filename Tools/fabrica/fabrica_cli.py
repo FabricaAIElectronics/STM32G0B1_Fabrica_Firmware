@@ -14,6 +14,7 @@ flashes boards.
     ./fabrica_cli.py flash powerstage app   # application, over CAN
     ./fabrica_cli.py reset powerstage       # trigger the bootloader
     ./fabrica_cli.py monitor --seconds 10   # live decode
+    ./fabrica_cli.py verify powerstage --allow-transmit   # HIL checks
     ./fabrica_cli.py tui                    # full screen interface
 
 Add --dry-run to any flash to see the exact command without touching hardware.
@@ -261,6 +262,55 @@ def cmd_monitor(args) -> int:
     return 0
 
 
+# --------------------------------------------------------------- verify ----
+def cmd_verify(args) -> int:
+    """Hardware-in-the-loop check of the three behavioural properties."""
+    from fabrica import canbus, verify
+
+    man = mf.load_manifest(args.firmware)
+    board = man.board(args.board)
+
+    if not args.allow_transmit:
+        print(f"{YELLOW}verify TRANSMITS on {args.iface}.{RESET}")
+        print("  It sends a configuration command, and with --include-reset a")
+        print("  bootloader trigger that stops the application.")
+        print("  Other equipment may share this bus. Re-run with --allow-transmit.")
+        return 1
+
+    db = None
+    if board.dbc:
+        path = canbus.find_dbc(board.dbc)
+        if path:
+            db = canbus.load_dbc(path)
+    expected = verify.expected_broadcast_ids(db, board.blt_tx)
+    if not expected:
+        print(f"{YELLOW}no DBC for {board.id}; cannot tell which broadcasts to "
+              f"expect.{RESET}")
+        return 1
+
+    print(f"verifying {board.name} on {args.iface} "
+          f"({len(expected)} expected broadcasts)\n")
+    bus = canbus.open_bus(args.iface)
+    try:
+        results = verify.run_all(bus, board, db, expected,
+                                 include_reset=args.include_reset,
+                                 seconds=args.seconds)
+    finally:
+        bus.shutdown()
+
+    mark = {verify.PASS: f"{GREEN}PASS{RESET}", verify.FAIL: f"{RED}FAIL{RESET}",
+            verify.SKIP: f"{DIM}SKIP{RESET}"}
+    for r in results:
+        print(f"  {mark[r.status]}  {r.name:12} {r.detail}")
+    failed = [r for r in results if r.status == verify.FAIL]
+    print()
+    if failed:
+        print(f"{RED}{len(failed)} property/properties failed.{RESET}")
+        return 1
+    print(f"{GREEN}All checked properties hold.{RESET}")
+    return 0
+
+
 # ------------------------------------------------------------------ tui ----
 def cmd_tui(args) -> int:
     from fabrica.tui import run_tui
@@ -303,6 +353,15 @@ def build_parser() -> argparse.ArgumentParser:
     m.add_argument("--board", help="use this board's DBC to decode")
     m.add_argument("--seconds", type=float, default=10.0)
     m.set_defaults(func=cmd_monitor)
+
+    v = sub.add_parser("verify", help="HIL check: broadcasts, causality, reset")
+    v.add_argument("board")
+    v.add_argument("--allow-transmit", action="store_true",
+                   help="required: this sends frames on a possibly shared bus")
+    v.add_argument("--include-reset", action="store_true",
+                   help="also send the bootloader trigger, stopping the board")
+    v.add_argument("--seconds", type=float, default=3.0)
+    v.set_defaults(func=cmd_verify)
 
     sub.add_parser("tui", help="full-screen interface").set_defaults(func=cmd_tui)
     return p

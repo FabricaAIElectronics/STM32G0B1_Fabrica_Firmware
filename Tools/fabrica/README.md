@@ -145,6 +145,31 @@ same frame is the XCP CONNECT and is handled there — so this is safe either wa
 ./fabrica_cli.py monitor --board powerstage --seconds 10
 ```
 
+**7b. Verify the board actually behaves.**
+
+```bash
+./fabrica_cli.py verify powerstage --allow-transmit
+./fabrica_cli.py verify powerstage --allow-transmit --include-reset
+```
+
+Three properties, in order:
+
+| Check | Asserts |
+|---|---|
+| `unsolicited` | every broadcast the DBC says the board sends arrives **without the host asking**, and more than once so it is demonstrably periodic |
+| `causal` | a command visibly changes the telemetry it governs - PowerStage `CMD_FAN` duty must come back in `BCAST_FAN` |
+| `reset` | `FF 00` stops the application broadcasts, i.e. the board restarted into its bootloader |
+
+`verify` transmits, so it refuses to run without `--allow-transmit`. The reset
+check is separately opt-in because it stops the board. **Your CAN bus is shared
+with the Kinco drives**, so run this deliberately rather than by habit.
+
+Note on the causal check: KincoDrive deliberately uses its OC-threshold echo
+(`Cmd_OC_Threshold` -> `Bcast_Config_A`) rather than its fan command. Its
+`Bcast_Fans` carries fan **tachometer** percent, a measured value - a real fan
+takes time to spin up and never reports exactly the commanded duty, so asserting
+equality against it would fail on correct hardware.
+
 **8. Only now repeat for the other boards**, and consider the TUI:
 
 ```bash
@@ -162,6 +187,8 @@ list                          boards, CAN ids, image sizes, provenance
 flash <board> boot|app        flash via ST-Link (boot) or CAN (app)
 reset <board>                 send the bootloader trigger frame
 monitor [--board B]           listen and decode, --seconds N
+verify <board>                HIL check of the three behavioural properties
+                              (needs --allow-transmit; --include-reset opt-in)
 tui                           full-screen interface
 ```
 

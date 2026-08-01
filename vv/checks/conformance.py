@@ -86,7 +86,12 @@ def dbc_messages(path: Path) -> dict[int, dict]:
             order = "big" if orders.pop() == "big_endian" else "little"
         else:
             order = None  # no real multi-byte signal, or inconsistent within one
-        out[m.frame_id] = {"name": m.name, "dlc": m.length, "byte_order": order}
+        # The DBC's sender is authoritative for direction: a message sent by
+        # the board is telemetry the firmware must transmit; one sent by
+        # Master/Host is a command it receives.
+        senders = set(m.senders or ())
+        out[m.frame_id] = {"name": m.name, "dlc": m.length, "byte_order": order,
+                           "from_board": bool(senders - {"Master", "Host", "Tester"})}
     return out
 
 
@@ -158,6 +163,83 @@ def compare_layouts_to_dbc(board_id: str, layouts: list[dict],
     return problems
 
 
+_ALIAS_RE = re.compile(
+    r"^\s*#define\s+([A-Za-z_][A-Za-z0-9_]*)\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?:/[/*].*)?$",
+    re.MULTILINE)
+
+#: A line that puts a frame on the bus. Each board names its helper differently:
+#: PowerStage CAN_SendAll, KincoDrive fdcan_send_std, LEDDriver CAN_Send.
+_SEND_CALL_RE = re.compile(r"(send|transmit|AddMessageToTxFifo)", re.IGNORECASE)
+
+
+def resolve_aliases(path: Path, values: dict[str, int]) -> dict[str, int]:
+    """Extend {MACRO: value} with `#define ALIAS OTHER_MACRO` indirection.
+
+    LEDDriver defines LED_BCAST_LIGHTSTATUS = 0x179 and then
+    `#define LIGHTSTATUS LED_BCAST_LIGHTSTATUS`, and its .c files use the alias.
+    Checking names alone would report the real macro as never transmitted.
+    """
+    out = dict(values)
+    text = path.read_text(encoding="utf-8", errors="replace")
+    for _ in range(4):                       # resolve chains, bounded
+        changed = False
+        for m in _ALIAS_RE.finditer(text):
+            alias, target = m.group(1), m.group(2)
+            if alias not in out and target in out:
+                out[alias] = out[target]
+                changed = True
+        if not changed:
+            break
+    return out
+
+
+def check_broadcasts_transmitted(board, defines: dict[str, int],
+                                 dbc: dict[int, dict]) -> list[dict]:
+    """Every broadcast id must actually be handed to a send call somewhere.
+
+    A broadcast that is defined, documented and in the DBC but never transmitted
+    looks identical to a dead board from the host side. 0x158 was exactly that,
+    and it survived until a tool went looking. Matching is by VALUE, so a macro
+    reached only through an alias still counts.
+    """
+    names_by_value: dict[int, set[str]] = {}
+    for header in board.headers:
+        resolved = resolve_aliases(REPO_ROOT / header, defines)
+        for name, value in resolved.items():
+            names_by_value.setdefault(value, set()).add(name)
+
+    sources = []
+    for proj in (board.app_dir,):
+        for sub in ("Core/Src",):
+            d = REPO_ROOT / proj / sub
+            if d.is_dir():
+                sources.extend(sorted(d.glob("*.c")))
+    send_lines = []
+    for src in sources:
+        for line in src.read_text(encoding="utf-8", errors="replace").splitlines():
+            if _SEND_CALL_RE.search(line):
+                send_lines.append(line)
+    blob = "\n".join(send_lines)
+
+    problems = []
+    for value, names in sorted(names_by_value.items()):
+        # Only messages the DBC says the BOARD sends. Commands are received, not
+        # transmitted, so requiring a send call for them would be nonsense - an
+        # earlier range-based guess did exactly that and flagged every command.
+        msg = dbc.get(value)
+        if not msg or not msg["from_board"]:
+            continue
+        if value in (board.blt_tx,):
+            continue          # bootloader TX comes from the bootloader, not the app
+        if not any(re.search(rf"\b{re.escape(n)}\b", blob) for n in names):
+            problems.append({
+                "board": board.id, "kind": "broadcast_never_transmitted",
+                "id": value, "name": sorted(names)[0],
+                "detail": "defined but never passed to a send call - a host "
+                          "would wait for it forever"})
+    return problems
+
+
 def compare_doc_to_dbc(board_id: str, dbc: dict[int, dict],
                        doc: dict[int, dict]) -> list[dict]:
     """Report ids documented for this board that no DBC message provides.
@@ -218,6 +300,7 @@ def check_board(board) -> list[dict]:
                                       extra_known_ids={board.blt_rx, board.blt_tx})
     problems += compare_layouts_to_dbc(board.id, load_layouts().get(board.id, []), dbc)
     problems += check_address_plan(board, defines)
+    problems += check_broadcasts_transmitted(board, defines, dbc)
     if board.in_bus_doc:
         doc = doc_messages()
         problems += compare_dbc_to_doc(board.id, dbc, doc)

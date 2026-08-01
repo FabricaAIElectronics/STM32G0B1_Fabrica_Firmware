@@ -22,11 +22,24 @@ from pathlib import Path
 # directly, clearest diagnostics), then openocd, then stlink-tools.
 STLINK_BACKENDS = ("STM32_Programmer_CLI", "openocd", "st-flash")
 
-BOOTCOMMANDER_CANDIDATES = (
+def _home_candidate() -> str | None:
+    """~/openblt/Host/BootCommander, if a home directory can be resolved.
+
+    Path.home() raises RuntimeError when neither HOME nor USERPROFILE is set -
+    service accounts, containers, some cron environments. Calling it at import
+    time made the whole module unimportable there, taking the CLI with it.
+    """
+    try:
+        return str(Path.home() / "openblt" / "Host" / "BootCommander")
+    except RuntimeError:
+        return None
+
+
+BOOTCOMMANDER_CANDIDATES = tuple(c for c in (
     "BootCommander",                                  # on PATH via /usr/local/bin
     "/opt/openblt/Host/BootCommander",
-    str(Path.home() / "openblt" / "Host" / "BootCommander"),
-)
+    _home_candidate(),
+) if c)
 
 OK, WARN, FAIL = "ok", "warn", "fail"
 

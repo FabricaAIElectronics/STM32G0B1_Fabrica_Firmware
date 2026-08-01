@@ -105,7 +105,7 @@ Error mask bits (Bcast_Status byte 7): `0x01`=OC_DRIVE, `0x02`=OC_EXT, `0x04`=OC
 | `0x131` | Bootloader TX | TX | - | Event | OpenBLT XCP responses |
 | `0x140` | CMD_FAN | RX | 2 | Event | mode + duty |
 | `0x141` | CMD_HS | RX | 5 | Event | per-rail enable |
-| `0x142` | CMD_OC | RX | 4 | Event | OC threshold / fault reset |
+| `0x142` | CMD_OC | RX | 8 | Event | OC thresholds, uint16 **BE** × 4: AUX/LED/DRIVE/CAP in mA. Shorter DLCs apply a prefix of the fields (2=AUX, 4=+LED, 6=+DRIVE, 8=+CAP) |
 | `0x143` | CMD_EEPROM | RX | 1 | Event | save / load defaults |
 | `0x144` | CMD_UV | RX | 6 | Event | UV thresholds |
 | `0x145` | CMD_CTRL | RX | 2 | Event | V_LED_PWR + CAN relay |

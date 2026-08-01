@@ -16,6 +16,10 @@
 #define ERROR_COUNT_STATE 0x664
 #define KNOBCOMMAND 0x665
 
+/* Bootloader RX / XCP CONNECT id. Must match BOOT_COM_CAN_RX_MSG_ID in the
+ * matching bootloader's App/blt_conf.h (Fabrica_STM32F3RE_Boot). */
+#define BOOTLOADER_RX_ID 0x667
+
 extern CAN_HandleTypeDef canHandle;
 extern CAN_TxHeaderTypeDef TxHeader;
 extern CAN_RxHeaderTypeDef RxHeader;

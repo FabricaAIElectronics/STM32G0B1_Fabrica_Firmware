@@ -155,11 +155,31 @@ void CAN_Process(void)
 {
     if (!rx_pending) return;
 
+    /* Snapshot the shared RX slot with interrupts masked.
+     *
+     * HAL_FDCAN_RxFifo0Callback() preempts this function. Without the mask, a
+     * frame arriving between reading rx_id and copying rx_data yields a torn
+     * read -- the id of frame N paired with the payload of frame N+1, so a
+     * command executes with another command's data -- and the subsequent
+     * `rx_pending = false` then discards frame N+1 entirely.
+     *
+     * PRIMASK is saved and restored rather than calling __enable_irq()
+     * unconditionally, so this stays correct if a caller ever invokes
+     * CAN_Process() from inside an existing critical section.
+     *
+     * Note: this closes the torn-read window but the slot is still single-
+     * entry, so a burst arriving faster than the main loop drains it will
+     * still overwrite. A ring buffer is the fix if that becomes a problem. */
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+
     uint32_t id = rx_id;
     uint8_t  len = rx_len;
     uint8_t  data[8];
     memcpy(data, (void *)rx_data, 8);
     rx_pending = false;
+
+    __set_PRIMASK(primask);
 
     switch (id) {
 

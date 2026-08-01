@@ -223,13 +223,19 @@ static void Parse_RX_Commands(uint32_t id, uint8_t *data, uint32_t dlc)
         can_rxMessage.hs_cmd_received = 1;
     }
 
-    /* ---- Overcurrent thresholds (mirrors BCAST_OC_CFG_A) ---- */
+    /* ---- Overcurrent thresholds (mirrors BCAST_OC_CFG_A) ----
+     * Four big-endian uint16 values = 8 bytes. Each field is only applied if
+     * the frame is actually long enough to carry it; a short frame used to
+     * read past the received data and silently zero the remaining thresholds,
+     * which disables overcurrent protection on those rails. Partial updates
+     * (e.g. dlc=4 to set AUX+LED only) are therefore supported and safe. */
     if (id == CMD_OC) {
-        can_rxMessage.oc_threshold_mA[RAIL_AUX]   = ((uint16_t)data[0] << 8) | data[1];
-        can_rxMessage.oc_threshold_mA[RAIL_LED]   = ((uint16_t)data[2] << 8) | data[3];
-        can_rxMessage.oc_threshold_mA[RAIL_DRIVE] = ((uint16_t)data[4] << 8) | data[5];
-        can_rxMessage.oc_threshold_mA[RAIL_CAP]   = ((uint16_t)data[6] << 8) | data[7];
-        can_rxMessage.oc_cmd_received = 1;
+        const uint8_t n = (uint8_t)(dlc & 0x0FU);
+        if (n >= 2U) can_rxMessage.oc_threshold_mA[RAIL_AUX]   = ((uint16_t)data[0] << 8) | data[1];
+        if (n >= 4U) can_rxMessage.oc_threshold_mA[RAIL_LED]   = ((uint16_t)data[2] << 8) | data[3];
+        if (n >= 6U) can_rxMessage.oc_threshold_mA[RAIL_DRIVE] = ((uint16_t)data[4] << 8) | data[5];
+        if (n >= 8U) can_rxMessage.oc_threshold_mA[RAIL_CAP]   = ((uint16_t)data[6] << 8) | data[7];
+        if (n >= 2U) can_rxMessage.oc_cmd_received = 1;
     }
 
     /* ---- Overcurrent fault reset ---- */

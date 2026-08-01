@@ -47,14 +47,24 @@ HAL_StatusTypeDef CAN_Send(uint16_t canid, uint8_t dlc, uint8_t *data)
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan){
 
-	HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0,&RxHeader, CAN_Rxdata);
-	if(RxHeader.StdId==0x667){
+	/* Zero the buffer before every receive. HAL_CAN_GetRxMessage() only writes
+	 * DLC bytes, and CAN_Rxdata is a file-scope global, so without this a short
+	 * frame leaves stale bytes from the PREVIOUS frame visible below. */
+	memset(CAN_Rxdata, 0, sizeof(CAN_Rxdata));
+
+	if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &RxHeader, CAN_Rxdata) != HAL_OK) {
+		return;
+	}
+	if(RxHeader.StdId==BOOTLOADER_RX_ID){
 	if((CAN_Rxdata[0]==0xFF)&&(RxHeader.DLC==2)){
 //		BootComCheckActivationRequest();
 		NVIC_SystemReset();
 	}
 	}
-	  if(RxHeader.StdId==KNOBCOMMAND){
+	  /* KNOBCOMMAND carries the encoder-com bitmask in byte 7, so the frame must
+	   * actually be 8 bytes long. A shorter frame is malformed - ignore it
+	   * rather than acting on a zero/stale byte. */
+	  if((RxHeader.StdId==KNOBCOMMAND) && (RxHeader.DLC >= 8U)){
 		   gpio_status = CAN_Rxdata[7];
 		   gpio_command_update = 1;
 //		  SetEncoderCom(encoders[0], (gpio_status>>0) & 0x01);

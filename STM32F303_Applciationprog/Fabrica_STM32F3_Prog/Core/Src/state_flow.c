@@ -133,7 +133,14 @@ void Operation_run(){
 				}
 		if((timer_count-last_timer_running_error_check)>=ERROR_CHECK_DURATION){
 
-			if(~gpio_flag_check()){
+			/* Skip encoder drift checking while a host GPIO command is still
+			 * pending. Was `~gpio_flag_check()`: gpio_flag_check() returns 0 or
+			 * 1, and bitwise-complement promotes to int, so ~0 == -1 and
+			 * ~1 == -2 -- both non-zero. The guard was ALWAYS true, so drift
+			 * checking ran during com-line changes, which is exactly when
+			 * spurious position deltas appear, producing false error_state
+			 * bits. Logical negation is what was meant. */
+			if(!gpio_flag_check()){
 			uint8_t delta[3] = {0,0,0};
 			for(int i =0; i<3; i++){
 			delta[i] = abs(pre_pos[i]-readEncoderPos(encoders[i]));

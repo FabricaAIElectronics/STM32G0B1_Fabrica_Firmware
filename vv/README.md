@@ -82,7 +82,8 @@ CubeIDE builds.
 | static | no compiler warnings beyond `vv/baseline.txt` |
 | unit | host-compiled logic and CAN layout assertions |
 | build | all 8 projects build headless, Debug config |
-| size | every artifact fits its flash region |
+| size | every artifact fits its flash region (coarse - see below) |
+| memmap | the .srec files do not overlap and stay inside their regions |
 | conformance | DBC, firmware `#define`s, `Docs/CAN_Bus.md` and the unit-test layouts agree |
 
 Run the gate's own tests with `python -m pytest vv/tests -q`, and the C
@@ -109,8 +110,9 @@ state through `adc_driver.h`. `power_monitor.c`, `ssd1306.c`, `Fan_PWM.c` and
 
 The gate exits 0. Two warnings stand, both understood:
 
-- **Size:** the three G0B1 bootloaders sit at 82.8% of their 12 KB reservation.
-  Not a defect, but little headroom for new bootloader features.
+- **Size:** reports the three G0B1 bootloaders at 82.8% of their 12 KB
+  reservation. **That figure is pessimistic** - see below. The memmap stage
+  measures the artifacts directly and puts them at 72.6%.
 - **Conformance:** the knob board is unchecked (no DBC, absent from the docs).
 
 ### Findings the first real run produced, and how they were resolved
@@ -146,3 +148,28 @@ target.
 changes at staging time. A dirty manifest is still written — the gate gets run
 during development — but the TUI should surface it, because "which source
 produced this binary" has no answer for a dirty tree.
+
+
+## Two ways of measuring flash, and which to believe
+
+`size` and `memmap` disagree about the bootloaders, and memmap is right.
+
+`arm-none-eabi-size` in berkeley format counts *read-only allocated* sections as
+text. The OpenBLT-derived linker script marks `.bss` as `ALLOC, READONLY` and
+`.data` as `READONLY, CODE`, so `size` folds `.bss` (1264 B) into text and
+reports `data=0`:
+
+    size:  text 10180  data 0  bss 1536      -> 82.8% of the 12 KB reservation
+    srec:  0x08000000-0x080022D7, 8916 B     -> 72.6%
+
+The S-records contain exactly the bytes that reach the device, so the memmap
+figure is the one to plan against. `size` also *under*-reports RAM for the same
+reason: real RAM use is `.data` 72 + `.bss` 1264 + heap/stack 1536 = 2872 B, not
+the 1536 it prints.
+
+The size stage is kept as a coarse early warning that needs nothing but the
+build. memmap needs only the `.srec` files, so it runs even on machines where
+the build stage has to skip.
+
+Fixing the linker-script section flags would make both agree; that is upstream
+OpenBLT territory and has not been attempted.

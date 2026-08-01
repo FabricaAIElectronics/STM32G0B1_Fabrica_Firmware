@@ -11,6 +11,13 @@ from vv.result import StageResult
 
 WARN_FRACTION = 0.80
 
+# NOTE: flash figures here come from arm-none-eabi-size, which over-reports for
+# the OpenBLT bootloaders: their linker script marks .bss ALLOC,READONLY, and
+# berkeley format counts read-only allocated sections as text. `size` says 10180
+# where the .srec writes 8916. The memmap stage measures the .srec directly and
+# is the authority on what actually reaches flash; this stage is a coarser
+# early warning that needs no artifacts beyond the build.
+
 
 def check_artifact(name: str, flash_bytes: int, limit: int) -> dict:
     pct = (flash_bytes / limit) * 100 if limit else 0.0

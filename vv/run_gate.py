@@ -36,7 +36,7 @@ def run_stages(stages, continue_on_fail: bool) -> list[StageResult]:
 
 def build_stage_list(only: str | None):
     """Import stage callables lazily so a partial checkout can still run --help."""
-    from vv.checks import preflight, static, build, size, conformance
+    from vv.checks import preflight, static, build, size, memmap, conformance
     from vv.unit import runner as unit_runner
 
     ordered = [
@@ -45,6 +45,7 @@ def build_stage_list(only: str | None):
         ("unit", unit_runner.run),
         ("build", build.run),
         ("size", size.run),
+        ("memmap", memmap.run),
         ("conformance", conformance.run),
     ]
     if only:

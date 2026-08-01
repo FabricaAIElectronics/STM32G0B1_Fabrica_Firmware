@@ -19,6 +19,24 @@ import fabrica_cli as cli  # noqa: E402
 from fabrica import env, manifest as mf  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def _pinned_stlink_backend(monkeypatch):
+    """Pin the ST-Link backend for every test in this module.
+
+    Without this, these tests inherit whatever the machine happens to have
+    installed: a box with no ST-Link falls back to STM32_Programmer_CLI and
+    passes, while a box with stlink-tools picks st-flash, which cannot program
+    a .srec, and the same test fails. That is an environment-dependent test,
+    which is the exact failure mode this tool exists to prevent.
+
+    Tests that care about a specific backend monkeypatch it themselves; a
+    monkeypatch inside the test runs after this fixture and wins.
+    """
+    monkeypatch.setattr(env, "find_stlink",
+                        lambda: ("STM32_Programmer_CLI",
+                                 "/usr/bin/STM32_Programmer_CLI"))
+
+
 @pytest.fixture
 def fake_firmware(tmp_path):
     """A complete two-board firmware directory with correct checksums."""

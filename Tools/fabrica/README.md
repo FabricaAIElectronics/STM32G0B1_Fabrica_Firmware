@@ -12,7 +12,7 @@ bench machine.
 ## Read this first
 
 **This tool has never touched hardware.** It was written on a Windows box with
-no ST-Link, no CAN interface, and no `_curses`. 177 unit tests pass, but they
+no ST-Link, no CAN interface, and no `_curses`. 227 unit tests pass, but they
 prove the *logic* — command construction, checksum enforcement, DBC decoding,
 error handling. They prove nothing about whether ST-Link enumerates or whether
 BootCommander likes our arguments.
@@ -182,6 +182,7 @@ equality against it would fail on correct hardware.
 
 ```
 setup [--install]             detect host, check/install dependencies
+sources [--root DIR]          list selectable firmware folders, newest first
 doctor                        check tools, CAN link, firmware checksums
 list                          boards, CAN ids, image sizes, provenance
 flash <board> boot|app        flash via ST-Link (boot) or CAN (app)
@@ -203,7 +204,10 @@ Board ids: `kincodrive`, `powerstage`, `leddriver`, `knob`.
 j / k    select board          b   flash bootloader (ST-Link)
 m        start/stop monitor    a   flash application (CAN)
 d        run doctor            r   send bootloader trigger
-q        quit
+f        choose firmware folder    q   quit
+
+Pressing `f` opens a picker listing firmware folders under the parent of the
+current one, newest first. Enter selects, Esc cancels.
 ```
 
 Flashing runs on a worker thread, so the interface keeps redrawing and output
@@ -224,6 +228,32 @@ streams into the log pane.
 - **`--dry-run` executes nothing** and is asserted in tests to have executed
   nothing, not merely to have returned early.
 
+## Selecting which firmware to flash
+
+`--firmware <dir>` accepts either kind of folder, and the TUI's `f` key picks
+one interactively:
+
+| Folder contains | Behaviour |
+|---|---|
+| `manifest.json` | Staged by the V&V gate. Carries CAN ids, load addresses and **checksums**, so every image is verified before flashing |
+| loose `.srec` files | An unverified drop. Board and image kind are inferred from file names, CAN ids come from a config file if present, else built-in defaults |
+
+Folders are listed **newest first by modification time, then by name** - the one
+you want is nearly always the one you just built.
+
+A loose folder cannot be checked against any source of truth, so it loads with
+`gate=unverified` and `git_dirty=true`. Everything downstream already surfaces
+those, and the TUI says so explicitly on selection. Checksums are still computed
+so a file that changes *after* selection is caught, but they prove nothing about
+provenance.
+
+An optional config file (`fabrica.json`, `config.json` or `boards.json`)
+overrides the built-in CAN ids and bitrate per board:
+
+```json
+{ "powerstage": { "blt_rx": "0x230", "blt_tx": "0x231", "bitrate": 250000 } }
+```
+
 ## Regenerating firmware
 
 ```bash
@@ -236,7 +266,7 @@ deliberately not tracked in git — attach them to a tagged release instead.
 ## Tests
 
 ```bash
-python -m pytest Tools/fabrica/tests -q     # 177 tests, no hardware needed
+python -m pytest Tools/fabrica/tests -q     # 227 tests, no hardware needed
 ```
 
 ## Layout

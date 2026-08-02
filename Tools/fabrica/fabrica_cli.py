@@ -9,6 +9,7 @@ flashes boards.
     ./fabrica_cli.py setup                  # what does this host still need
     ./fabrica_cli.py setup --install        # install it
     ./fabrica_cli.py doctor                 # check the environment
+    ./fabrica_cli.py sources                # which firmware folders exist
     ./fabrica_cli.py list                   # what can I flash
     ./fabrica_cli.py flash powerstage boot  # bootloader, via ST-Link
     ./fabrica_cli.py flash powerstage app   # application, over CAN
@@ -41,6 +42,45 @@ def _no_colour():
     GREEN = YELLOW = RED = DIM = RESET = ""
     for k in _MARK:
         _MARK[k] = k.upper()
+
+
+# -------------------------------------------------------------- sources ----
+def _fmt_source(s, index=None) -> str:
+    import datetime
+    when = datetime.datetime.fromtimestamp(s.mtime).strftime("%Y-%m-%d %H:%M")
+    tag = "verified" if s.trusted else f"{YELLOW}UNVERIFIED{RESET}"
+    prefix = f"  [{index}] " if index is not None else "  "
+    return (f"{prefix}{when}  {s.path.name:<28} {s.srec_count} srec "
+            f"{s.dbc_count} dbc  {tag}")
+
+
+def cmd_sources(args) -> int:
+    """List selectable firmware folders, newest first."""
+    from fabrica import sources
+    root = args.root or (args.firmware or str(mf.DEFAULT_FIRMWARE_DIR.parent))
+    found = sources.discover(root)
+    if not found:
+        print(f"no firmware folders under {root}")
+        return 1
+    print(f"firmware folders under {root}  (newest first)\n")
+    for i, s in enumerate(found):
+        print(_fmt_source(s, i))
+        print(f"        boards: {', '.join(s.boards) or '?'}"
+              + (f"   config: {s.config.name}" if s.config else ""))
+        for n in s.notes:
+            print(f"        {DIM}note: {n}{RESET}")
+    print(f"\n{DIM}Use --firmware <path> to select one.{RESET}")
+    return 0
+
+
+def _resolve_firmware(args):
+    """Load the manifest for --firmware, accepting a loose folder too."""
+    from fabrica import sources
+    if args.firmware:
+        found = sources.discover(args.firmware, max_depth=0)
+        if found:
+            return sources.load(found[0])
+    return mf.load_manifest(args.firmware)
 
 
 # ---------------------------------------------------------------- setup ----
@@ -121,7 +161,7 @@ def cmd_doctor(args) -> int:
 
 # ----------------------------------------------------------------- list ----
 def cmd_list(args) -> int:
-    man = mf.load_manifest(args.firmware)
+    man = _resolve_firmware(args)
     print(f"manifest  git {man.git_sha[:8]}"
           f"{'  (DIRTY)' if man.git_dirty else ''}  gate={man.gate}")
     print(f"          generated {man.generated}\n")
@@ -148,7 +188,7 @@ def _verified_image(man: mf.Manifest, board: mf.BoardImages, kind: str) -> Path:
 
 
 def cmd_flash(args) -> int:
-    man = mf.load_manifest(args.firmware)
+    man = _resolve_firmware(args)
     board = man.board(args.board)
     path = _verified_image(man, board, args.kind)
     print(f"{DIM}checksum verified: {board.image(args.kind).sha256[:16]}...{RESET}")
@@ -200,7 +240,7 @@ def cmd_flash(args) -> int:
 # ---------------------------------------------------------------- reset ----
 def cmd_reset(args) -> int:
     from fabrica import canbus
-    man = mf.load_manifest(args.firmware)
+    man = _resolve_firmware(args)
     board = man.board(args.board)
     arb_id, payload = canflash.build_reset_frame(board.blt_rx)
     if args.dry_run:
@@ -220,7 +260,7 @@ def cmd_reset(args) -> int:
 # -------------------------------------------------------------- monitor ----
 def cmd_monitor(args) -> int:
     from fabrica import canbus
-    man = mf.load_manifest(args.firmware)
+    man = _resolve_firmware(args)
     db = None
     if args.board:
         board = man.board(args.board)
@@ -267,7 +307,7 @@ def cmd_verify(args) -> int:
     """Hardware-in-the-loop check of the three behavioural properties."""
     from fabrica import canbus, verify
 
-    man = mf.load_manifest(args.firmware)
+    man = _resolve_firmware(args)
     board = man.board(args.board)
 
     if not args.allow_transmit:
@@ -337,6 +377,10 @@ def build_parser() -> argparse.ArgumentParser:
         func=cmd_doctor)
     sub.add_parser("list", help="list boards in the manifest").set_defaults(
         func=cmd_list)
+
+    sc = sub.add_parser("sources", help="list selectable firmware folders")
+    sc.add_argument("--root", help="directory to search (default: alongside firmware/)")
+    sc.set_defaults(func=cmd_sources)
 
     f = sub.add_parser("flash", help="flash a board")
     f.add_argument("board")

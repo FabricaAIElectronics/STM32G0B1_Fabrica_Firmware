@@ -103,9 +103,21 @@ def load_manifest(firmware_dir: Path | str | None = None) -> Manifest:
     except json.JSONDecodeError as exc:
         raise ManifestError(f"{path} is not valid JSON: {exc}") from exc
 
+    return manifest_from_dict(raw, root, describe=str(path))
+
+
+def manifest_from_dict(raw: dict, root: Path,
+                       describe: str = "manifest") -> Manifest:
+    """Build a Manifest from an already-parsed dict rooted at `root`.
+
+    Split out so a synthesised manifest - one inferred from a folder of loose
+    .srec files - goes through exactly the same validation as a staged one,
+    rather than a parallel code path that could drift.
+    """
     if raw.get("schema") != SCHEMA:
         raise ManifestError(
-            f"{path} has schema {raw.get('schema')!r}, this tool expects {SCHEMA}")
+            f"{describe} has schema {raw.get('schema')!r}, "
+            f"this tool expects {SCHEMA}")
 
     boards = []
     for entry in raw.get("boards", []):
@@ -124,7 +136,7 @@ def load_manifest(firmware_dir: Path | str | None = None) -> Manifest:
             address_plan_exempt=bool(entry.get("address_plan_exempt", False)),
         ))
     if not boards:
-        raise ManifestError(f"{path} lists no boards")
+        raise ManifestError(f"{describe} lists no boards")
 
     return Manifest(
         git_sha=raw.get("git_sha", "unknown"),

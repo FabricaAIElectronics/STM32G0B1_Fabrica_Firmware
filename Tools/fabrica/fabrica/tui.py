@@ -25,14 +25,24 @@ import threading
 import time
 from pathlib import Path
 
-from . import canbus, canflash, env, manifest as mf, stlink
+from . import canbus, canflash, env, manifest as mf, sources, stlink
 
-HELP = "j/k select  b=flash boot  a=flash app  r=reset  m=monitor  d=doctor  q=quit"
+HELP = ("j/k select  b=boot  a=app  r=reset  m=monitor  f=firmware  d=doctor  "
+        "q=quit")
 
 
 class App:
     def __init__(self, firmware_dir, iface: str, bitrate: int):
-        self.manifest = mf.load_manifest(firmware_dir)
+        self.firmware_dir = Path(firmware_dir) if firmware_dir \
+            else mf.DEFAULT_FIRMWARE_DIR
+        self.manifest = self._load(self.firmware_dir)
+        # Folder picker state. search_root is the directory scanned for
+        # selectable firmware sets; by default the parent of the current one,
+        # so sibling builds show up.
+        self.search_root = self.firmware_dir.parent
+        self.picking = False
+        self.sources: list = []
+        self.pick_sel = 0
         self.iface = iface
         self.bitrate = bitrate
         self.sel = 0
@@ -49,9 +59,44 @@ class App:
                              "provenance is not reproducible")
 
     # ------------------------------------------------------------ state --
+    @staticmethod
+    def _load(directory: Path) -> mf.Manifest:
+        """Load a folder, accepting a loose .srec drop as well as a staged set."""
+        found = sources.discover(directory, max_depth=0)
+        if found:
+            return sources.load(found[0])
+        return mf.load_manifest(directory)
+
     @property
     def board(self) -> mf.BoardImages:
         return self.manifest.boards[self.sel]
+
+    # ----------------------------------------------------- folder picker --
+    def open_picker(self) -> None:
+        self.sources = sources.discover(self.search_root)
+        self.pick_sel = 0
+        if not self.sources:
+            self.say("warn", f"no firmware folders under {self.search_root}")
+            return
+        self.picking = True
+
+    def choose_source(self) -> None:
+        src = self.sources[self.pick_sel]
+        try:
+            self.manifest = self._load(src.path)
+        except mf.ManifestError as exc:
+            self.say("err", f"{src.path.name}: {str(exc).splitlines()[0]}")
+            return
+        self.firmware_dir = src.path
+        self.sel = 0
+        self.picking = False
+        self.say("ok", f"firmware: {src.path.name} "
+                       f"({len(self.manifest.boards)} boards)")
+        if not src.trusted:
+            self.say("warn", "no manifest in that folder - images cannot be "
+                             "checksum-verified against a source of truth")
+        for n in src.notes:
+            self.say("warn", n)
 
     def say(self, level: str, text: str) -> None:
         self.log.append((level, text))
@@ -187,9 +232,39 @@ def _colour(level: str) -> int:
             "out": curses.A_DIM}.get(level, curses.A_NORMAL)
 
 
+def _draw_picker(stdscr, app: App, h: int, w: int) -> None:
+    """Full-window folder picker. Newest first, as sources.discover orders."""
+    import datetime
+    stdscr.addnstr(0, 0, f" SELECT FIRMWARE - {app.search_root} ".ljust(w - 1),
+                   w - 1, curses.A_REVERSE)
+    stdscr.addnstr(1, 0, "  newest first; Enter=select  Esc/f=cancel", w - 1,
+                   curses.A_DIM)
+    for i, s in enumerate(app.sources):
+        row = 3 + i * 2
+        if row + 1 >= h - 1:
+            break
+        attr = curses.A_REVERSE if i == app.pick_sel else curses.A_NORMAL
+        when = datetime.datetime.fromtimestamp(s.mtime).strftime("%Y-%m-%d %H:%M")
+        tag = "verified" if s.trusted else "UNVERIFIED"
+        stdscr.addnstr(row, 0,
+                       f" {when}  {s.path.name:<26} {s.srec_count} srec  {tag}",
+                       w - 1, attr)
+        detail = f"      {', '.join(s.boards) or '?'}"
+        if s.config:
+            detail += f"   config: {s.config.name}"
+        if s.notes:
+            detail += f"   ({s.notes[0]})"
+        stdscr.addnstr(row + 1, 0, detail, w - 1,
+                       curses.A_DIM if s.trusted else curses.color_pair(2))
+    stdscr.refresh()
+
+
 def _draw(stdscr, app: App) -> None:
     stdscr.erase()
     h, w = stdscr.getmaxyx()
+    if app.picking:
+        _draw_picker(stdscr, app, h, w)
+        return
     if h < 12 or w < 60:
         stdscr.addnstr(0, 0, "terminal too small (need 60x12)", w - 1)
         stdscr.refresh()
@@ -253,7 +328,7 @@ def _draw(stdscr, app: App) -> None:
         stdscr.addnstr(split + 1 + i, 0, text[:w - 1], w - 1, _colour(level))
 
     man = app.manifest
-    status = (f" {app.iface} | git {man.git_sha[:8]}"
+    status = (f" {app.iface} | {app.firmware_dir.name} | git {man.git_sha[:8]}"
               f"{' DIRTY' if man.git_dirty else ''} | "
               f"{'BUSY' if app.busy else 'idle'} | {HELP}")
     stdscr.addnstr(h - 1, 0, status.ljust(w - 1)[:w - 1], w - 1, curses.A_REVERSE)
@@ -279,6 +354,18 @@ def _loop(stdscr, app: App) -> int:
             time.sleep(0.05)
             continue
         key = chr(ch) if 0 <= ch < 256 else ""
+
+        if app.picking:
+            if ch in (27,) or key == "f":            # Esc or f cancels
+                app.picking = False
+            elif ch in (curses.KEY_DOWN,) or key == "j":
+                app.pick_sel = (app.pick_sel + 1) % len(app.sources)
+            elif ch in (curses.KEY_UP,) or key == "k":
+                app.pick_sel = (app.pick_sel - 1) % len(app.sources)
+            elif ch in (curses.KEY_ENTER, 10, 13):
+                app.choose_source()
+            continue
+
         if key in ("q", "Q"):
             if app.bus:
                 app.bus.shutdown()
@@ -299,6 +386,8 @@ def _loop(stdscr, app: App) -> int:
             app.toggle_monitor()
         elif key == "d":
             app.run_doctor()
+        elif key == "f":
+            app.open_picker()
 
 
 def run_tui(firmware_dir: Path | str | None, iface: str, bitrate: int) -> int:

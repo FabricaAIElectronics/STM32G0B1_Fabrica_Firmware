@@ -58,6 +58,20 @@ Two things `setup` reports but deliberately does **not** install:
   every one is a `.srec` and st-flash has no S-record parser. `doctor` treats
   st-flash-only as a failure. Install CubeProgrammer.
 
+Python dependencies are also pinned in a requirements file, if you prefer that
+to `setup --install`:
+
+```bash
+pip3 install -r requirements.txt          # python-can, cantools
+pip3 install -r requirements-dev.txt      # + pytest, to run the test suite
+```
+
+On **Windows** the TUI additionally needs `windows-curses` (the standard library
+ships no `_curses` there). It is already in `requirements.txt` behind a
+`sys_platform == "win32"` marker, so it installs only where it is needed and is
+ignored on Linux. Every CLI subcommand works on Windows without it - only the
+full-screen interface needs it.
+
 Then bring up the bus and verify:
 
 ```bash

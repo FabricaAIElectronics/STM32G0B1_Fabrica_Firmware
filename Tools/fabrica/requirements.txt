@@ -1,0 +1,16 @@
+# Runtime dependencies for the Fabrica bench tool.
+#
+#   pip install -r requirements.txt
+#
+# `fabrica_cli.py setup` installs these for you and also reports the things pip
+# cannot provide: BootCommander (built from source via install_openblt.sh) and
+# STM32CubeProgrammer (a manual download from ST).
+
+python-can>=4.0
+cantools>=39.0
+
+# curses is in the Python standard library on Linux and macOS, which is what
+# this tool targets. Windows ships no _curses, so the TUI - and only the TUI -
+# needs this shim there. Everything else, including every CLI subcommand, works
+# on Windows without it.
+windows-curses>=2.3 ; sys_platform == "win32"

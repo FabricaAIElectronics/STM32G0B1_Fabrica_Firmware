@@ -172,11 +172,18 @@ def build_command(
 #: well under a minute including erase.
 DEFAULT_FLASH_TIMEOUT_S = 180.0
 
+#: Sentinel so the timeout is read from DEFAULT_FLASH_TIMEOUT_S at CALL time.
+#: Binding it as a default argument freezes it at import, which makes it
+#: impossible to override the constant - a test that lowered it to 0.05s still
+#: waited the full 180 and hung the suite.
+_USE_DEFAULT_TIMEOUT = object()
+
 
 def run_subprocess(
     cmd: list[str],
     on_output: Callable[[str], None] | None = None,
-    timeout_s: float | None = DEFAULT_FLASH_TIMEOUT_S,
+    timeout_s: float | None = _USE_DEFAULT_TIMEOUT,
+    on_start: Callable[[subprocess.Popen], None] | None = None,
 ) -> tuple[int, str]:
     """Default runner: stream BootCommander's output line by line.
 
@@ -188,6 +195,8 @@ def run_subprocess(
     Killed after ``timeout_s`` - see DEFAULT_FLASH_TIMEOUT_S for why that
     matters more than it looks.
     """
+    if timeout_s is _USE_DEFAULT_TIMEOUT:
+        timeout_s = DEFAULT_FLASH_TIMEOUT_S
     lines: list[str] = []
     deadline = None if timeout_s is None else time.monotonic() + timeout_s
     try:
@@ -206,6 +215,15 @@ def run_subprocess(
         if on_output is not None:
             on_output(message)
         return 127, message
+
+    # Hand the caller the process so it can be stopped. Without this there is
+    # no way to abort a flash: the TUI runs it on a daemon thread, so quitting
+    # kills the thread and the interpreter while BootCommander - a separate OS
+    # process - carries on transmitting, orphaned. That is how a flash aimed at
+    # the wrong board survived for five minutes and corrupted an unrelated
+    # board's measurements.
+    if on_start is not None:
+        on_start(proc)
 
     timed_out = False
     if proc.stdout is not None:
@@ -250,6 +268,7 @@ def flash(
     dry_run: bool = False,
     on_output: Callable[[str], None] | None = None,
     runner: Callable | None = None,
+    on_start: Callable | None = None,
 ) -> FlashResult:
     """Flash ``srec`` to the board answering on ``tid``/``rid``.
 
@@ -274,7 +293,12 @@ def flash(
         return FlashResult(ok=True, returncode=0, output=line, command=command)
 
     run = runner if runner is not None else run_subprocess
-    returncode, output = run(command, on_output)
+    # Injected runners in tests take (cmd, on_output); only the real one knows
+    # about on_start, so pass it only when we are using it.
+    if runner is None:
+        returncode, output = run(command, on_output, on_start=on_start)
+    else:
+        returncode, output = run(command, on_output)
     return FlashResult(
         ok=(returncode == 0),
         returncode=returncode,

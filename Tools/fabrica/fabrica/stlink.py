@@ -352,7 +352,8 @@ def stream_output(proc, on_output: Callable[[str], None] | None = None) -> str:
 
 
 def _subprocess_runner(command: list[str],
-                       on_output: Callable[[str], None] | None = None
+                       on_output: Callable[[str], None] | None = None,
+                       on_start: Callable | None = None,
                        ) -> tuple[int, str]:
     """The one place in this module that starts a process."""
     try:
@@ -370,6 +371,9 @@ def _subprocess_runner(command: list[str],
         if on_output is not None:
             on_output(message)
         return 127, message
+    # Hand the process back so a caller can stop it; see canflash.run_subprocess.
+    if on_start is not None:
+        on_start(proc)
     output = stream_output(proc, on_output)
     returncode = proc.wait()
     return returncode, output
@@ -408,7 +412,11 @@ def release(backend_path: str, mcu: str,
     """Resume a halted target and detach. See build_release_command."""
     command = build_release_command(backend_path, mcu)
     run = runner if runner is not None else _subprocess_runner
-    returncode, output = run(command, on_output)
+    # Test runners take (cmd, on_output); only the real one knows about on_start.
+    if runner is None:
+        returncode, output = run(command, on_output, on_start=on_start)
+    else:
+        returncode, output = run(command, on_output)
     return FlashResult(ok=(returncode == 0), returncode=returncode,
                        output=output, command=list(command))
 
@@ -426,7 +434,8 @@ def flash(backend: str, backend_path: str, image: Path, load_addr: int,
           mcu: str, dry_run: bool = False,
           on_output: Callable[[str], None] | None = None,
           runner: Callable | None = None,
-          version_probe: Callable | None = None) -> FlashResult:
+          version_probe: Callable | None = None,
+          on_start: Callable | None = None) -> FlashResult:
     """Flash `image` to a board over ST-Link.
 
     `runner(command, on_output) -> (returncode, output)` is the only seam that
@@ -466,6 +475,10 @@ def flash(backend: str, backend_path: str, image: Path, load_addr: int,
                            command=list(command))
 
     run = runner if runner is not None else _subprocess_runner
-    returncode, output = run(command, on_output)
+    # Test runners take (cmd, on_output); only the real one knows about on_start.
+    if runner is None:
+        returncode, output = run(command, on_output, on_start=on_start)
+    else:
+        returncode, output = run(command, on_output)
     return FlashResult(ok=(returncode == 0), returncode=returncode,
                        output=output, command=list(command))

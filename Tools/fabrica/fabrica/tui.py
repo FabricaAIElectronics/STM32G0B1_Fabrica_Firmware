@@ -29,7 +29,7 @@ from pathlib import Path
 from . import canbus, canflash, env, manifest as mf, sources, stlink
 
 HELP = ("j/k select  b=boot  a=app  r=reset  m=monitor  f=firmware  d=doctor  "
-        "q=quit")
+        "x=CANCEL  q=quit")
 
 
 class App:
@@ -50,6 +50,11 @@ class App:
         self.log: list[tuple[str, str]] = []
         self.events: queue.Queue = queue.Queue()
         self.busy = False
+        # The subprocess of a running flash, so it can be stopped. Selecting
+        # the wrong board and starting a flash was previously unstoppable:
+        # quitting killed the interpreter while BootCommander carried on
+        # transmitting as an orphan.
+        self.child = None
         self.monitor: canbus.Monitor | None = None
         self.bus = None
         self.monitoring = False
@@ -132,6 +137,7 @@ class App:
     def _worker(self, fn) -> None:
         """Run a blocking action off the UI thread, funnelling output to the queue."""
         self.busy = True
+        self.cancelled = False
 
         def run():
             try:
@@ -139,9 +145,48 @@ class App:
             except Exception as exc:                     # noqa: BLE001
                 self.events.put(("err", f"{type(exc).__name__}: {exc}"))
             finally:
+                self.child = None
                 self.events.put(("done", ""))
 
         threading.Thread(target=run, daemon=True).start()
+
+    def cancel(self) -> None:
+        """Stop a running flash.
+
+        Killing mid-write leaves a partial image, which is recoverable: only
+        the application region is being written, the bootloader is untouched,
+        and re-flashing fixes it. Continuing to write the WRONG image to a
+        board is not recoverable in the same easy way, so stopping wins.
+        """
+        proc = self.child
+        if proc is None:
+            self.say("warn", "nothing running to cancel")
+            return
+        self.cancelled = True
+        try:
+            proc.kill()
+            self.say("warn", "CANCELLED - the image on the board is now "
+                             "incomplete; re-flash the correct one")
+        except Exception as exc:                          # noqa: BLE001
+            self.say("err", f"could not stop it: {exc}")
+
+    def kill_child(self) -> None:
+        """Stop any running subprocess. Called on the way out.
+
+        Without this, quitting orphaned BootCommander: the worker is a daemon
+        thread, so the interpreter exits, but the flasher is a separate OS
+        process and kept polling - transmitting an XCP CONNECT ~17 times a
+        second onto a bus other boards are using.
+        """
+        proc = self.child
+        if proc is None:
+            return
+        try:
+            proc.kill()
+            proc.wait(timeout=2)
+        except Exception:                                 # noqa: BLE001
+            pass
+        self.child = None
 
     def flash_boot(self) -> None:
         board = self.board
@@ -158,7 +203,7 @@ class App:
         self.say("info", f"flashing {board.name} bootloader via {backend}")
         self._worker(lambda cb: stlink.flash(
             backend, exe, path, board.boot.load_addr_int, board.mcu,
-            on_output=cb))
+            on_output=cb, on_start=self._adopt))
 
     def flash_app(self) -> None:
         board = self.board
@@ -176,7 +221,11 @@ class App:
                          f"tid=0x{board.blt_rx:03X} rid=0x{board.blt_tx:03X}")
         self._worker(lambda cb: canflash.flash(
             exe, self.iface, board.bitrate, board.blt_rx, board.blt_tx, path,
-            extended=board.extended, on_output=cb))
+            extended=board.extended, on_output=cb, on_start=self._adopt))
+
+    def _adopt(self, proc) -> None:
+        """Remember the child so cancel() and kill_child() can reach it."""
+        self.child = proc
 
     def send_reset(self) -> None:
         board = self.board
@@ -400,9 +449,16 @@ def _loop(stdscr, app: App) -> int:
             continue
 
         if key in ("q", "Q"):
+            # Kill first, then close the bus: leaving a flasher running is the
+            # one thing that outlives this process and corrupts the next
+            # session's measurements.
+            app.kill_child()
             if app.bus:
                 app.bus.shutdown()
             return 0
+        if key in ("x", "X") or ch == 3:            # x or Ctrl-C
+            app.cancel()
+            continue
         if ch in (curses.KEY_DOWN,) or key == "j":
             app.sel = (app.sel + 1) % len(app.manifest.boards)
         elif ch in (curses.KEY_UP,) or key == "k":

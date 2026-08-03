@@ -271,7 +271,8 @@ def cmd_flash(args) -> int:
                   f"for {backend}{RESET}")
         print(f"Flashing {board.name} bootloader via {backend} ...")
         res = stlink.flash(backend, exe, path, board.boot.load_addr_int,
-                           board.mcu, dry_run=args.dry_run, on_output=echo)
+                           board.mcu, dry_run=args.dry_run, on_output=echo,
+                           on_start=_adopt_child)
     else:
         exe = env.find_bootcommander()
         if not exe:
@@ -285,7 +286,8 @@ def cmd_flash(args) -> int:
               f"(tid 0x{board.blt_rx:03X} / rid 0x{board.blt_tx:03X}) ...")
         res = canflash.flash(exe, args.iface, board.bitrate, board.blt_rx,
                              board.blt_tx, path, extended=board.extended,
-                             dry_run=args.dry_run, on_output=echo)
+                             dry_run=args.dry_run, on_output=echo,
+                             on_start=_adopt_child)
 
     if args.dry_run:
         print(f"\n{YELLOW}DRY RUN - nothing was executed.{RESET}")
@@ -521,6 +523,13 @@ def build_parser() -> argparse.ArgumentParser:
 SUBCOMMANDS = ("setup", "doctor", "list", "sources", "flash", "reset",
                "release", "monitor", "verify", "tui")
 
+#: Subprocesses this run has started, so they can be killed on the way out.
+_LIVE_CHILDREN: list = []
+
+
+def _adopt_child(proc) -> None:
+    _LIVE_CHILDREN.append(proc)
+
 
 def _autodetect_iface() -> str:
     """First CAN interface that is actually up, else 'can0'.
@@ -556,6 +565,24 @@ def main(argv=None) -> int:
             argv.append("tui")
 
     args = build_parser().parse_args(argv)
+
+    # Kill any flasher we started if this process is interrupted or exits.
+    # BootCommander is a separate OS process: without this, Ctrl-C at the wrong
+    # moment - or simply quitting - leaves it polling and transmitting onto a
+    # bus other boards are using.
+    import atexit
+    import subprocess as _sp
+
+    def _reap():
+        for proc in list(_LIVE_CHILDREN):
+            if proc.poll() is None:
+                try:
+                    proc.kill()
+                    proc.wait(timeout=2)
+                except (OSError, _sp.SubprocessError):
+                    pass
+    atexit.register(_reap)
+
     if args.iface is None:
         args.iface = _autodetect_iface()
     if not args.firmware:

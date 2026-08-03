@@ -19,9 +19,11 @@ from fabrica.stlink import (
     build_command,
     flash,
     format_command,
+    build_release_command,
     openocd_supports_mcu,
     openocd_target_cfg,
     parse_openocd_version,
+    release,
     stream_output,
 )
 
@@ -507,3 +509,35 @@ def test_format_command_is_paste_able():
     assert rendered.startswith(CUBE_PATH)
     assert "-c port=SWD mode=UR" in rendered
     assert rendered.endswith("-v -rst")
+
+
+# --- release ---------------------------------------------------------------
+
+def test_release_uses_shutdown_not_exit():
+    """`exit` terminates openocd without de-initialising the adapter.
+
+    The ST-Link can then keep the target in debug state after openocd is gone,
+    which is the exact failure this command exists to undo - so it must not
+    reintroduce it.
+    """
+    cmd = build_release_command(OPENOCD_PATH, G0B1)
+    script = cmd[-1]
+    assert "shutdown" in script
+    assert "exit" not in script
+
+
+def test_release_resumes_the_core():
+    script = build_release_command(OPENOCD_PATH, G0B1)[-1]
+    assert "reset run" in script
+    # A hiccup resuming must not skip the detach that does the real releasing.
+    assert script.index("reset run") < script.index("shutdown")
+
+
+def test_release_targets_the_right_mcu_config():
+    assert "target/stm32g0x.cfg" in build_release_command(OPENOCD_PATH, G0B1)
+    assert "target/stm32f3x.cfg" in build_release_command(OPENOCD_PATH, F303)
+
+
+def test_release_reports_failure_rather_than_raising():
+    result = release(OPENOCD_PATH, G0B1, runner=lambda c, o=None: (1, "no probe"))
+    assert result.ok is False

@@ -31,6 +31,28 @@ Specifically untested, in rough order of risk:
 | Extended 29-bit CAN | Encoded as `-xid=1` to match `flash_can.sh`. Never exercised by anyone | Nothing to check: all four boards are 11-bit standard |
 | `-s=xcp` and `-t1` | `-s=xcp` matches your working script. `-t1` is **not** passed by default, so the argv is byte-for-byte the invocation already proven on the bench | If BootCommander rejects an option, `-s=xcp` is the only non-script flag |
 
+### A board that "looks dead" may just be held by the debugger
+
+A halted STM32 is silent on CAN, draws normal current, and **cannot be flashed
+over CAN** — the application that would answer XCP is not executing. It is
+indistinguishable from a dead board, and the instinctive response, a power
+cycle, destroys the evidence.
+
+The usual cause is an openocd invocation ending in `-c "exit"` instead of
+`-c "shutdown"`. `exit` terminates the process without de-initialising the
+adapter, so the ST-Link can keep the target in debug state after openocd is
+gone. **Always end an openocd script with `shutdown`.**
+
+To recover without power-cycling:
+
+```bash
+./fabrica_cli.py release <board>
+```
+
+`flash` already resumes the core on every path, including failures. `release`
+is for targets left held by something else — an interrupted debug session, a
+killed openocd, or a hand-written probe.
+
 ### openocd must be ≥ 0.12 to flash a G0B1
 
 Ubuntu 22.04 ships openocd **0.11.0** (jammy/universe, no backport). Its

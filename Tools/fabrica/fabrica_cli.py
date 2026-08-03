@@ -257,6 +257,33 @@ def cmd_reset(args) -> int:
     return 0
 
 
+# -------------------------------------------------------------- release ----
+def cmd_release(args) -> int:
+    """Free a target a debugger is still holding.
+
+    Needed because a held core is indistinguishable from a dead board: silent
+    on CAN, normal current draw, and un-flashable over CAN because the
+    application that would answer XCP is not running. The documented escape used
+    to be a power cycle.
+    """
+    backend, path = stlink.find_stlink()
+    if backend != "openocd":
+        print(f"{RED}release needs openocd{RESET}; found "
+              f"{backend or 'no ST-Link backend'}. Power-cycle the board "
+              f"instead.")
+        return 1
+
+    man = _resolve_firmware(args)
+    board = man.board(args.board)
+    print(f"releasing {board.name} ({board.mcu}) ...")
+    result = stlink.release(path, board.mcu, on_output=lambda l: print("  " + l))
+    if result.ok:
+        print(f"{GREEN}OK{RESET}  target resumed and probe detached.")
+        return 0
+    print(f"{RED}FAILED{RESET} (exit {result.returncode}) - power-cycle the board.")
+    return 1
+
+
 # -------------------------------------------------------------- monitor ----
 def cmd_monitor(args) -> int:
     from fabrica import canbus
@@ -395,6 +422,12 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("board")
     r.add_argument("--dry-run", action="store_true")
     r.set_defaults(func=cmd_reset)
+
+    rel = sub.add_parser(
+        "release",
+        help="resume a target a debugger left halted (instead of power-cycling)")
+    rel.add_argument("board")
+    rel.set_defaults(func=cmd_release)
 
     m = sub.add_parser("monitor", help="listen and decode")
     m.add_argument("--board", help="use this board's DBC to decode")

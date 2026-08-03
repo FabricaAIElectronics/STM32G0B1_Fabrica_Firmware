@@ -37,6 +37,8 @@ __all__ = [
     "stream_output",
     "format_command",
     "openocd_target_cfg",
+    "build_release_command",
+    "release",
     "parse_openocd_version",
     "openocd_supports_mcu",
     "OPENOCD_MIN_VERSION",
@@ -350,6 +352,43 @@ def _subprocess_runner(command: list[str],
     output = stream_output(proc, on_output)
     returncode = proc.wait()
     return returncode, output
+
+
+def build_release_command(backend_path: str, mcu: str) -> list[str]:
+    """argv that resumes the target and detaches the probe cleanly.
+
+    For when a debugger is left holding the core. The symptom is a board that
+    looks dead - silent on CAN, normal current draw - and, critically, one that
+    cannot be flashed over CAN either, because the application that would answer
+    XCP is not executing. Without this the only known escape was a power cycle.
+
+    `shutdown`, NOT `exit`. openocd's `exit` terminates the process without
+    de-initialising the adapter, so the ST-Link can keep the target in debug
+    state after openocd is gone; `shutdown` runs the clean teardown. This bit us
+    on the bench: a hand-written `-c "init; halt; mdw ...; reset run; exit"`
+    probe left an LEDDriver held, and the CAN flash that followed had nothing
+    running to talk to.
+    """
+    return [
+        backend_path,
+        "-f", OPENOCD_INTERFACE_CFG,
+        "-f", openocd_target_cfg(mcu),
+        # Tolerate a target that is already running: `reset run` on a
+        # non-halted core is harmless, and catch keeps a probe-level hiccup
+        # from skipping the shutdown that does the actual releasing.
+        "-c", "init\ncatch {reset run}\nshutdown",
+    ]
+
+
+def release(backend_path: str, mcu: str,
+            on_output: Callable[[str], None] | None = None,
+            runner: Callable | None = None) -> FlashResult:
+    """Resume a halted target and detach. See build_release_command."""
+    command = build_release_command(backend_path, mcu)
+    run = runner if runner is not None else _subprocess_runner
+    returncode, output = run(command, on_output)
+    return FlashResult(ok=(returncode == 0), returncode=returncode,
+                       output=output, command=list(command))
 
 
 def _probe_openocd_version(backend_path: str) -> tuple[int, int] | None:

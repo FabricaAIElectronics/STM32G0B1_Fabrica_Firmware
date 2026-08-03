@@ -105,14 +105,45 @@ def test_plan_is_empty_when_everything_is_present(monkeypatch):
     assert plan.commands == []
 
 
-def test_plan_warns_that_bootcommander_is_not_apt_installable(monkeypatch):
+def test_missing_bootcommander_yields_a_runnable_command(monkeypatch):
+    """Not a warning - a command, pointing at a script that exists.
+
+    This used to say "run install_openblt.sh from the Linux Script/can
+    directory". No such script exists in this repository, and the folder that
+    text is read from does not contain the OpenBLT host sources either, so an
+    operator on a fresh bench had nothing to run. `doctor` reported
+    BootCommander missing and `setup` offered no way to fix it.
+    """
     as_host(monkeypatch, files={"/etc/os-release": 'PRETTY_NAME="Ubuntu 22.04"'})
     monkeypatch.setattr(host, "_apt_missing", lambda pkgs: [])
     monkeypatch.setattr(host, "_pip_missing", lambda: [])
     monkeypatch.setattr(host.shutil, "which", lambda n: None)
+
     plan = host.build_plan()
-    assert any("install_openblt" in w for w in plan.warnings)
+
+    assert any("install_bootcommander.sh" in c for c in plan.commands)
+    assert not any("install_openblt.sh" in c for c in plan.commands)
+    assert not any("install_openblt.sh" in w for w in plan.warnings)
+    # The script it names must actually be there.
+    script = next(c for c in plan.commands if "install_bootcommander" in c)
+    assert Path(script).is_file(), f"{script} does not exist"
     assert any("STM32CubeProgrammer" in w for w in plan.warnings)
+
+
+def test_a_host_needing_only_native_tools_is_not_reported_as_complete(monkeypatch):
+    """apt and pip satisfied, BootCommander absent -> still work to do.
+
+    Plan.empty keyed on apt/pip alone printed "All package dependencies are
+    already installed" on exactly the bench that could not flash anything.
+    """
+    as_host(monkeypatch, files={"/etc/os-release": 'PRETTY_NAME="Ubuntu 22.04"'})
+    monkeypatch.setattr(host, "_apt_missing", lambda pkgs: [])
+    monkeypatch.setattr(host, "_pip_missing", lambda: [])
+    monkeypatch.setattr(host.shutil, "which", lambda n: None)
+
+    plan = host.build_plan()
+    assert not plan.empty
+    assert plan.commands
 
 
 def test_apt_missing_is_empty_without_dpkg(monkeypatch):

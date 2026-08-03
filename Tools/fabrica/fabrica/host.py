@@ -147,7 +147,15 @@ class Plan:
 
     @property
     def empty(self) -> bool:
-        return not self.apt and not self.pip
+        """Nothing left to run.
+
+        Keyed on commands, not on apt/pip. BootCommander and openocd are built
+        from source, so a host can need both of them while apt and pip are
+        satisfied - reporting "all package dependencies are already installed"
+        there is true and useless, and it hides the two commands that would
+        actually make the bench work.
+        """
+        return not self.commands
 
 
 def build_plan(include_stlink: bool = True) -> Plan:
@@ -168,12 +176,40 @@ def build_plan(include_stlink: bool = True) -> Plan:
     if pip:
         commands.append("pip3 install --user " + " ".join(pip))
 
+    # Native tools that apt cannot supply. These are COMMANDS, not warnings:
+    # a note saying "it is built from source" leaves the operator with nothing
+    # to run, and the previous text pointed at an install_openblt.sh that does
+    # not exist in this repository at all - unfollowable from a deployed folder,
+    # which is exactly where it gets read.
+    here = Path(__file__).resolve().parent.parent
     warnings = []
+
     if shutil.which("BootCommander") is None and not Path(
             "/opt/openblt/Host/BootCommander").exists():
-        warnings.append(
-            "BootCommander is not installed. It is built from source, not apt: "
-            "run install_openblt.sh from the Linux Script/can directory.")
+        commands.append(f"{here / 'install_bootcommander.sh'}")
+
+    # openocd < 0.12 cannot flash a G0B1 at all, so "present" is not enough.
+    openocd = shutil.which("openocd")
+    if openocd is None:
+        commands.append(f"{here / 'install_openocd012.sh'}")
+    else:
+        from . import stlink
+        import subprocess as _sp
+        try:
+            out = _sp.run([openocd, "--version"], capture_output=True,
+                          text=True, timeout=10)
+            version = stlink.parse_openocd_version((out.stdout or "") +
+                                                   (out.stderr or ""))
+        except (OSError, _sp.SubprocessError):
+            version = None
+        if version is not None and version < (0, 12):
+            have = ".".join(str(n) for n in version)
+            commands.append(f"{here / 'install_openocd012.sh'}")
+            warnings.append(
+                f"openocd {have} is installed but cannot SWD-flash an "
+                f"STM32G0B1: its flash driver has no entry for device id "
+                f"0x467. It attaches, reads memory, then fails at auto_probe "
+                f"after halting the target.")
     if shutil.which("STM32_Programmer_CLI") is None:
         warnings.append(
             "STM32_Programmer_CLI not found. STM32CubeProgrammer is a manual "

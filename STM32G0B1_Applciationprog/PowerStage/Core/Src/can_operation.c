@@ -212,6 +212,35 @@ static void Parse_RX_Commands(uint32_t id, uint8_t *data, uint32_t dlc)
 
         can_rxMessage.fan_mode         = mode;
         can_rxMessage.fan_duty         = duty;
+
+        /* DLC=5 form additionally carries the AUTO tuning that was previously
+         * reachable only by reflashing the EEPROM defaults:
+         *   byte[2] min_duty  byte[3] auto_on_temp  byte[4] auto_off_temp
+         * The DLC=2 form is unchanged, so existing hosts are unaffected.
+         *
+         * HAL note: HAL_FDCAN_GetRxMessage() reports the RAW 4-bit DLC code in
+         * the low nibble of DataLength, not the FDCAN_DLC_BYTES_x macro value,
+         * so this compares against the integer byte count. Same convention as
+         * the LEDDriver's VOLTAGESET handler. */
+        can_rxMessage.fan_cfg_valid = 0;
+        if ((dlc & 0x0FU) >= 5U) {
+            uint8_t min_duty = data[2];
+            uint8_t on_temp  = data[3];
+            uint8_t off_temp = data[4];
+            if (min_duty > 100) min_duty = 100;
+
+            /* Hysteresis needs on > off. An inverted or equal pair would make
+             * FAN_AutoControl latch on the first crossing and never release,
+             * leaving the fan stuck - so the whole tuning group is rejected
+             * rather than half-applied. */
+            if (on_temp > off_temp) {
+                can_rxMessage.fan_min_duty      = min_duty;
+                can_rxMessage.fan_auto_on_temp  = on_temp;
+                can_rxMessage.fan_auto_off_temp = off_temp;
+                can_rxMessage.fan_cfg_valid     = 1;
+            }
+        }
+
         can_rxMessage.fan_cmd_received = 1;
     }
 
@@ -538,24 +567,36 @@ void CAN_Broadcast_Voltage(SystemMeasurement_t *ms)
 /* ============================================================
  * CAN_Broadcast_Fan
  *
- * [0x153] DLC=4
+ * [0x153] DLC=7
  *   Byte[0]  : Fan mode  (0=OFF, 1=ON, 2=AUTO)
- *   Byte[1]  : Duty %    (0–100)
+ *   Byte[1]  : Duty %    (0–100)  -- APPLIED, not commanded
  *   Byte[2-3]: Temp      (int16_t °C × 10)
+ *   Byte[4]  : min_duty      %    -- live AUTO tuning, see CMD_FAN DLC=5
+ *   Byte[5]  : auto_on_temp  °C
+ *   Byte[6]  : auto_off_temp °C
+ *
+ * Bytes 4-6 are the values the fan is running with RIGHT NOW, which is not
+ * what BCAST_EEPROM (0x154) reports - that one echoes the saved Config, so a
+ * threshold set over CAN and not yet committed shows up here and not there.
+ * Reading tuning back from 0x154 would tell a host its command had been
+ * ignored. Bytes 0-3 are unchanged, so existing consumers are unaffected.
  * ============================================================ */
-void CAN_Broadcast_Fan(FanCTRL_t *fan, float temp_C)
+void CAN_Broadcast_Fan(FanCTRL_t *f, float temp_C)
 {
     if (!canstat.system_transmit_stat) return;
 
     int16_t temp_raw = (int16_t)(temp_C * 10.0f);  // 25.3 °C → 253
 
-    uint8_t data[4];
-    data[0] = (uint8_t)fan->Mode;
-    data[1] = fan->dutycycle_pct;
+    uint8_t data[7];
+    data[0] = (uint8_t)f->Mode;
+    data[1] = f->dutycycle_pct;
     data[2] = (uint8_t)((temp_raw >> 8) & 0xFF);
     data[3] = (uint8_t)( temp_raw       & 0xFF);
+    data[4] = f->min_dutycycle;
+    data[5] = f->auto_on_temp;
+    data[6] = f->auto_off_temp;
 
-    CAN_SendAll(BCAST_FAN, FDCAN_DLC_BYTES_4, data);
+    CAN_SendAll(BCAST_FAN, FDCAN_DLC_BYTES_7, data);
 }
 
 /* ============================================================

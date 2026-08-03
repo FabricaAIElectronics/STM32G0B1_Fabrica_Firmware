@@ -42,9 +42,12 @@ BO_ 304 DEVICE_ADDR: 2 Master
 BO_ 305 PS_Bootloader_TX: 8 PowerStage
  SG_ Boot_Resp : 0|8@1+ (1,0) [0|255] ""  Master
 
-BO_ 320 CMD_FAN: 2 Master
+BO_ 320 CMD_FAN: 5 Master
  SG_ Fan_Mode : 0|8@1+ (1,0) [0|2] ""  PowerStage
  SG_ Fan_Duty : 8|8@1+ (1,0) [0|100] "%"  PowerStage
+ SG_ Fan_Min_Duty : 16|8@1+ (1,0) [0|100] "%"  PowerStage
+ SG_ Fan_Auto_On_Temp : 24|8@1+ (1,0) [0|150] "degC"  PowerStage
+ SG_ Fan_Auto_Off_Temp : 32|8@1+ (1,0) [0|150] "degC"  PowerStage
 
 BO_ 321 CMD_HS: 1 Master
  SG_ HS_Cmd_AUX : 0|1@1+ (1,0) [0|1] ""  PowerStage
@@ -128,10 +131,13 @@ BO_ 338 BCAST_VOLTAGE: 8 PowerStage
  SG_ Battery_SOC_Low_Flag : 51|1@1+ (1,0) [0|1] ""  Master
  SG_ Battery_SOC_pct : 56|8@1+ (1,0) [0|100] "%"  Master
 
-BO_ 339 BCAST_FAN: 4 PowerStage
+BO_ 339 BCAST_FAN: 7 PowerStage
  SG_ Fan_Mode_State : 0|8@1+ (1,0) [0|2] ""  Master
  SG_ Fan_Duty_State : 8|8@1+ (1,0) [0|100] "%"  Master
  SG_ Temperature_C : 23|16@0- (0.1,0) [-40|150] "degC"  Master
+ SG_ Fan_Min_Duty_State : 32|8@1+ (1,0) [0|100] "%"  Master
+ SG_ Fan_Auto_On_Temp_State : 40|8@1+ (1,0) [0|150] "degC"  Master
+ SG_ Fan_Auto_Off_Temp_State : 48|8@1+ (1,0) [0|150] "degC"  Master
 
 BO_ 340 BCAST_EEPROM: 8 PowerStage
  SG_ Cfg_Fan_Def_Mode : 0|8@1+ (1,0) [0|2] ""  Master
@@ -179,7 +185,15 @@ CM_ BU_ Master "Supervisory host or gateway node that issues commands to PowerSt
 CM_ BO_ 304 "DEVICE_ADDR (0x130). Also OpenBLT bootloader RX. 0xFF (DLC=2) triggers reset and re-enters bootloader, which then re-handles XCP CONNECT on the same ID.";
 CM_ SG_ 304 Device_Command "0xFF (DLC=2) = software reset and re-enter OpenBLT bootloader.";
 CM_ BO_ 305 "OpenBLT bootloader TX (0x131). XCP responses target->host while in bootloader.";
-CM_ BO_ 320 "CMD 0x140: set fan mode and manual duty cycle. Accepted from both CAN buses.";
+CM_ BO_ 320 "CMD 0x140: set fan mode and manual duty cycle. Accepted from both
+CAN buses. Two forms: DLC=2 sets mode and duty only; DLC=5 additionally sets the
+AUTO tuning (min duty, on/off temperatures) that was previously reachable only
+by reflashing the EEPROM defaults. The tuning group is applied only when
+Fan_Auto_On_Temp > Fan_Auto_Off_Temp - an inverted or equal pair would make the
+hysteresis latch on first crossing and never release, so it is rejected whole
+rather than half-applied. Fan_Duty applies in mode 1 (ON) only; in mode 2 (AUTO)
+the duty is owned by the temperature controller. Values set here are live only:
+send CMD_EEPROM to persist them.";
 CM_ SG_ 320 Fan_Mode "0=OFF 1=ON_MANUAL 2=AUTO. In AUTO mode Fan_Duty is ignored.";
 CM_ SG_ 320 Fan_Duty "Manual duty cycle 0-100%. Applied only when Fan_Mode=1.";
 CM_ BO_ 321 "CMD 0x141: individually enable or disable each of the 5 HS rails. Accepted from both CAN buses.";
@@ -238,7 +252,13 @@ CM_ SG_ 346 Bat_Cutoff_mV "0 % SOC reference voltage (mV). Default 19600 (3.27 V
 CM_ SG_ 346 Bat_Full_mV "100 % SOC reference voltage (mV). Default 25200 (4.20 V/cell × 6).";
 CM_ SG_ 346 Bat_Rint_mOhm "Pack internal resistance (mΩ) used for IR compensation: V_OCV = V_meas + I_BAT × R_int. Tune for your specific pack.";
 CM_ SG_ 346 Bat_Cell_Count "Series cell count (6 for 6S Li-ion / Li-Po).";
-CM_ BO_ 339 "BCAST 0x153: periodic broadcast of fan mode, duty cycle and NTC temperature. Temp is int16 degCx10, scale 0.1 for degC.";
+CM_ BO_ 339 "BCAST 0x153: periodic broadcast of fan mode, APPLIED duty cycle,
+NTC temperature and the live AUTO tuning. Temp is int16 degCx10, scale 0.1 for
+degC. Fan_Duty_State is the duty actually programmed into the timer, not the
+last value commanded - in AUTO the controller sets it from temperature, and when
+the fan is off it reads 0. Bytes 4-6 report the tuning currently in force, which
+is NOT what BCAST_EEPROM (0x154) shows: that echoes the saved Config, so a
+threshold set over CAN but not yet committed appears here and not there.";
 CM_ SG_ 339 Fan_Mode_State "Current active fan mode.";
 CM_ SG_ 339 Fan_Duty_State "Current active PWM duty cycle 0-100%.";
 CM_ SG_ 339 Temperature_C "NTC temperature. int16 degCx10 big-endian. Scale 0.1 for degC. e.g. 253 = 25.3 degC.";

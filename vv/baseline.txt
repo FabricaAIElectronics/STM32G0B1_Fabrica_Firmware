@@ -21,7 +21,6 @@ STM32G0B1_Applciationprog/PowerStage/Core/Inc/io_module.h:125:1: warning: functi
 STM32G0B1_Applciationprog/PowerStage/Core/Inc/ssd1306.h:237:1: warning: function declaration isn't a prototype [-Wstrict-prototypes]
 STM32G0B1_Applciationprog/PowerStage/Core/Src/RunningHorseDisplay.c:27:6: warning: function declaration isn't a prototype [-Wstrict-prototypes]
 STM32G0B1_Applciationprog/PowerStage/Core/Src/RunningHorseDisplay.c:73:6: warning: function declaration isn't a prototype [-Wstrict-prototypes]
-STM32G0B1_Applciationprog/PowerStage/Core/Src/can_operation.c:546:35: warning: declaration of 'fan' shadows a global declaration [-Wshadow]
 STM32G0B1_Applciationprog/PowerStage/Core/Src/eeprom_driver.c:100:11: warning: declaration of 'i' shadows a previous local [-Wshadow]
 STM32G0B1_Applciationprog/PowerStage/Core/Src/fan_ctrl.c:27:6: warning: function declaration isn't a prototype [-Wstrict-prototypes]
 STM32G0B1_Applciationprog/PowerStage/Core/Src/fan_ctrl.c:31:6: warning: function declaration isn't a prototype [-Wstrict-prototypes]

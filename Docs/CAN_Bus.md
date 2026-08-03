@@ -103,7 +103,7 @@ Error mask bits (Bcast_Status byte 7): `0x01`=OC_DRIVE, `0x02`=OC_EXT, `0x04`=OC
 |---|---|---|---|---|---|
 | `0x130` | DEVICE_ADDR / Bootloader RX | RX | 2 | Event | byte[0]=0xFF triggers reset; bootloader then re-handles XCP CONNECT |
 | `0x131` | Bootloader TX | TX | - | Event | OpenBLT XCP responses |
-| `0x140` | CMD_FAN | RX | 2 | Event | mode + duty |
+| `0x140` | CMD_FAN | RX | 5 | Event | mode + duty + AUTO tuning (min duty, on/off temp); DLC=2 form still accepted |
 | `0x141` | CMD_HS | RX | 1 | Event | Enable **bitmask** in byte[0], one bit per rail: bit0=AUX bit1=LED bit2=DRIVE bit3=CAP. RAIL_SBC has no MCU-driven EN line and is ignored |
 | `0x142` | CMD_OC | RX | 8 | Event | OC thresholds, uint16 **BE** × 4: AUX/LED/DRIVE/CAP in mA. Shorter DLCs apply a prefix of the fields (2=AUX, 4=+LED, 6=+DRIVE, 8=+CAP) |
 | `0x143` | CMD_EEPROM | RX | 1 | Event | save / load defaults |
@@ -115,7 +115,7 @@ Error mask bits (Bcast_Status byte 7): `0x01`=OC_DRIVE, `0x02`=OC_EXT, `0x04`=OC
 | `0x150` | BCAST_HS_STATE | TX | 5 | 500 ms | Enable / fault / pgood / OC bitmasks |
 | `0x151` | BCAST_HS_CURR_A | TX | 8 | 500 ms | BAT, CAP, SBC, DRIVE mA |
 | `0x152` | BCAST_VOLTAGE | TX | 8 | 500 ms | V24, VCAP, V12 mV + UV fault mask |
-| `0x153` | BCAST_FAN | TX | 4 | 500 ms | mode + duty + temp |
+| `0x153` | BCAST_FAN | TX | 7 | 500 ms | mode + applied duty + temp + live AUTO tuning |
 | `0x154` | BCAST_EEPROM | TX | 8 | 500 ms | Config echo |
 | `0x155` | BCAST_HS_CURR_B | TX | 4 | 500 ms | AUX, LED mA |
 | `0x156` | BCAST_UV | TX | 6 | 500 ms | Active UV thresholds |

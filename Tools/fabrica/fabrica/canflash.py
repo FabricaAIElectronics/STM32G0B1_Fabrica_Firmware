@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import re
 import subprocess
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -154,9 +155,28 @@ def build_command(
     return cmd
 
 
+#: Give up on a flash after this long. BootCommander polls for the target
+#: bootloader indefinitely, so a flash aimed at a board that is not on the bus
+#: never returns on its own.
+#:
+#: That is not merely a hung command. Its backdoor-entry poll transmits the
+#: XCP CONNECT frame continuously - about 17 a second - so a forgotten attempt
+#: floods the bus for as long as it lives. One left over from a KincoDrive
+#: flash ran for five minutes and made an unrelated knob board miss its 0x667
+#: reset trigger, which `verify` then reported as
+#:     no restart seen ... The board appears to have ignored FF 00
+#: against firmware that was working perfectly. A bench tool that quietly
+#: poisons the bus for every later measurement is worse than one that fails.
+#:
+#: Generous enough for a real flash: the largest image here is ~54 kB and takes
+#: well under a minute including erase.
+DEFAULT_FLASH_TIMEOUT_S = 180.0
+
+
 def run_subprocess(
     cmd: list[str],
     on_output: Callable[[str], None] | None = None,
+    timeout_s: float | None = DEFAULT_FLASH_TIMEOUT_S,
 ) -> tuple[int, str]:
     """Default runner: stream BootCommander's output line by line.
 
@@ -164,8 +184,12 @@ def run_subprocess(
     operator would have seen it. Universal-newline translation turns
     BootCommander's carriage-return progress redraws into separate lines, which
     is what lets ``parse_progress`` see each update.
+
+    Killed after ``timeout_s`` - see DEFAULT_FLASH_TIMEOUT_S for why that
+    matters more than it looks.
     """
     lines: list[str] = []
+    deadline = None if timeout_s is None else time.monotonic() + timeout_s
     try:
         proc = subprocess.Popen(
             cmd,
@@ -183,13 +207,34 @@ def run_subprocess(
             on_output(message)
         return 127, message
 
+    timed_out = False
     if proc.stdout is not None:
         for raw in iter(proc.stdout.readline, ""):
             line = raw.rstrip("\r\n")
             lines.append(line)
             if on_output is not None:
                 on_output(line)
+            if deadline is not None and time.monotonic() > deadline:
+                timed_out = True
+                break
         proc.stdout.close()
+
+    if timed_out:
+        # kill(), not terminate(): the point is to stop it transmitting now.
+        proc.kill()
+        proc.wait()
+        message = (
+            f"timed out after {timeout_s:.0f}s and was killed. BootCommander "
+            f"polls for the bootloader forever, and every poll puts a frame on "
+            f"the bus - leaving it running would corrupt later measurements. "
+            f"Check the board is powered, on this interface, and that its "
+            f"bootloader ids match."
+        )
+        lines.append(message)
+        if on_output is not None:
+            on_output(message)
+        return 124, "\n".join(lines)        # 124 = timeout(1)'s convention
+
     return proc.wait(), "\n".join(lines)
 
 

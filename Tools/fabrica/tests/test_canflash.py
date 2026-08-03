@@ -315,3 +315,76 @@ def test_parse_progress_extracts_percentage(line, expected):
 ])
 def test_parse_progress_returns_none_without_a_percentage(line):
     assert parse_progress(line) is None
+
+
+# --- flash timeout ---------------------------------------------------------
+
+class _NeverEndingProc:
+    """A BootCommander that polls forever, like the real one does.
+
+    Stands in for a flash aimed at a board that is not on the bus. Uses the
+    module's fake-process seam rather than spawning anything, so the autouse
+    no_real_subprocess guard above stays honest.
+    """
+
+    def __init__(self):
+        self.killed = False
+        self.stdout = self
+
+    def readline(self):
+        return "  Connecting to target bootloader...\n"
+
+    def close(self):
+        pass
+
+    def kill(self):
+        self.killed = True
+
+    def wait(self):
+        return -9
+
+
+def test_run_subprocess_kills_a_flash_that_never_finishes(monkeypatch):
+    """BootCommander polls for the bootloader forever, transmitting each time.
+
+    A leftover attempt aimed at a board that was not on the bus ran for five
+    minutes at ~17 frames/s and made an unrelated knob miss its 0x667 reset
+    trigger, which verify then reported as "the board appears to have ignored
+    FF 00" against firmware that was fine. The process must not outlive the
+    command that started it.
+    """
+    proc = _NeverEndingProc()
+    monkeypatch.setattr(canflash.subprocess, "Popen", lambda *a, **k: proc)
+
+    rc, out = canflash.run_subprocess(["BootCommander", "..."], timeout_s=0.05)
+
+    assert rc == 124                      # timeout(1)'s convention
+    assert proc.killed, "the poller must be killed, not just abandoned"
+    assert "timed out" in out
+    assert "corrupt later measurements" in out
+
+
+def test_a_flash_that_finishes_is_not_killed(monkeypatch):
+    class _Finishes(_NeverEndingProc):
+        def __init__(self):
+            super().__init__()
+            self._lines = iter(["  Programming...\n", "  OK\n", ""])
+
+        def readline(self):
+            return next(self._lines)
+
+        def wait(self):
+            return 0
+
+    proc = _Finishes()
+    monkeypatch.setattr(canflash.subprocess, "Popen", lambda *a, **k: proc)
+
+    rc, out = canflash.run_subprocess(["BootCommander", "..."], timeout_s=30)
+    assert rc == 0
+    assert not proc.killed
+    assert "OK" in out
+
+
+def test_default_timeout_leaves_room_for_a_real_flash():
+    """The largest image here is ~54 kB and flashes in well under a minute."""
+    assert canflash.DEFAULT_FLASH_TIMEOUT_S >= 120

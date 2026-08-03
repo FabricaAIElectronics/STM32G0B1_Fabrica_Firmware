@@ -19,7 +19,9 @@ from fabrica.stlink import (
     build_command,
     flash,
     format_command,
+    openocd_supports_mcu,
     openocd_target_cfg,
+    parse_openocd_version,
     stream_output,
 )
 
@@ -117,22 +119,84 @@ def test_openocd_srec_names_the_format_explicitly():
     Left to `program`, it would fall back to raw-binary and write the file's
     ASCII text to flash, so the s19 parser is selected by name.
     """
-    assert build_command("openocd", OPENOCD_PATH, SREC, APP_ADDR, G0B1) == [
+    cmd = build_command("openocd", OPENOCD_PATH, SREC, APP_ADDR, G0B1)
+    assert cmd[:5] == [
         OPENOCD_PATH,
         "-f", "interface/stlink.cfg",
         "-f", "target/stm32g0x.cfg",
-        "-c", "init",
-        "-c", "reset init",
-        "-c", f"flash write_image erase {SREC} 0 s19",
-        "-c", f"verify_image {SREC} 0 s19",
-        "-c", "reset run",
-        "-c", "shutdown",
     ]
+    script = cmd[6]
+    assert f"flash write_image erase {{{SREC}}} 0 s19" in script
+    assert f"verify_image {{{SREC}}} 0 s19" in script
 
 
 def test_openocd_srec_never_uses_bare_program():
     cmd = build_command("openocd", OPENOCD_PATH, SREC, APP_ADDR, G0B1)
     assert not any(arg.startswith("program ") for arg in cmd)
+
+
+def test_openocd_srec_resumes_the_core_even_when_the_write_fails():
+    """A failed flash must not leave the target halted.
+
+    openocd abandons the remaining -c commands after the first failure, so a
+    naive write/verify/reset-run chain hands back a halted MCU: silent on CAN,
+    normal current draw, indistinguishable from a dead board. Both risky steps
+    are wrapped so `reset run` is unconditional.
+    """
+    script = build_command("openocd", OPENOCD_PATH, SREC, APP_ADDR, G0B1)[6]
+    assert "catch {reset run}" in script
+    # The resume must come after the write and verify, not before them.
+    assert script.index("write_image") < script.index("catch {reset run}")
+    assert script.index("verify_image") < script.index("catch {reset run}")
+    # ...and the failure must still surface as a non-zero exit.
+    assert "error $fabrica_err" in script
+
+
+def test_openocd_srec_braces_the_image_path_for_spaces():
+    spaced = Path("/opt/fabrica bench/firmware/app.srec")
+    script = build_command("openocd", OPENOCD_PATH, spaced, APP_ADDR, G0B1)[6]
+    assert f"{{{spaced}}}" in script
+
+
+# --- openocd version gate -------------------------------------------------
+
+@pytest.mark.parametrize("banner,expected", [
+    ("Open On-Chip Debugger 0.11.0\nLicensed under GNU GPL v2", (0, 11)),
+    ("Open On-Chip Debugger 0.12.0", (0, 12)),
+    # Self-built openocd carries a git suffix straight after the version.
+    ("Open On-Chip Debugger 0.12.0+dev-00600-g1a2b3c4 (2026-01-01)", (0, 12)),
+    ("Open On-Chip Debugger 1.0.0-rc2", (1, 0)),
+    ("something else entirely", None),
+    ("", None),
+])
+def test_parse_openocd_version(banner, expected):
+    assert parse_openocd_version(banner) == expected
+
+
+def test_openocd_011_cannot_flash_g0b1():
+    """The bench finding: 0.11's flash driver has no entry for device id 0x467.
+
+    It attaches, reads memory and identifies the core, then fails at
+    `auto_probe` - after halting the target.
+    """
+    ok, reason = openocd_supports_mcu(G0B1, (0, 11))
+    assert ok is False
+    assert "0.12" in reason
+
+
+def test_openocd_012_can_flash_g0b1():
+    assert openocd_supports_mcu(G0B1, (0, 12)) == (True, None)
+    assert openocd_supports_mcu(G0B1, (1, 0)) == (True, None)
+
+
+def test_openocd_011_can_still_flash_f303():
+    """F303 goes through stm32f1x, supported long before 0.11 - no false alarm."""
+    assert openocd_supports_mcu(F303, (0, 11)) == (True, None)
+
+
+def test_unparseable_openocd_version_does_not_block_flashing():
+    """Better to let openocd speak for itself than to refuse on a parse failure."""
+    assert openocd_supports_mcu(G0B1, None) == (True, None)
 
 
 def test_openocd_hex_uses_program_without_address():

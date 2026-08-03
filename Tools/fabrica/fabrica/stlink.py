@@ -37,6 +37,9 @@ __all__ = [
     "stream_output",
     "format_command",
     "openocd_target_cfg",
+    "parse_openocd_version",
+    "openocd_supports_mcu",
+    "OPENOCD_MIN_VERSION",
     "STLINK_BACKENDS",
     "find_stlink",
 ]
@@ -66,6 +69,23 @@ OPENOCD_TARGET_CFGS: dict[str, str] = {
 # `program` helper cannot be told a format, so for S-records we drive
 # flash write_image / verify_image directly and name the format explicitly.
 OPENOCD_SRECORD_TYPE = "s19"
+
+# Minimum openocd version that can program each MCU family, as (major, minor).
+#
+# Learned on the bench, not from the docs: openocd 0.11.0 -- the newest in
+# Ubuntu 22.04 (jammy/universe) -- attaches to an STM32G0B1 perfectly well and
+# can read its memory, but its stm32l4x flash driver (which covers G0) has no
+# entry for device id 0x467. Flashing dies at
+#
+#   Warn : Cannot identify target as an STM32G0/G4/L4/L4+/L5/WB/WL family device.
+#   Error: auto_probe failed
+#
+# after the core has already been halted, which looks exactly like a dead
+# board. 0x467 support landed in 0.12.0. The F303 goes through stm32f1x and
+# has worked since long before 0.11, hence no entry for it.
+OPENOCD_MIN_VERSION: dict[str, tuple[int, int]] = {
+    "STM32G0B1": (0, 12),
+}
 
 
 @dataclass
@@ -116,6 +136,54 @@ def openocd_target_cfg(mcu: str) -> str:
     )
 
 
+def parse_openocd_version(text: str) -> tuple[int, int] | None:
+    """Pull (major, minor) out of `openocd --version` output.
+
+    The banner looks like `Open On-Chip Debugger 0.11.0` on a release build and
+    `Open On-Chip Debugger 0.12.0+dev-00600-g[...]` on a self-built one, so the
+    minor number has to be taken as digits-until-non-digit rather than by
+    splitting the whole string on dots.
+    """
+    marker = "Open On-Chip Debugger"
+    for line in (text or "").splitlines():
+        if marker not in line:
+            continue
+        tail = line.split(marker, 1)[1].strip()
+        number = ""
+        for ch in tail:
+            if ch.isdigit() or ch == ".":
+                number += ch
+            else:
+                break
+        parts = number.split(".")
+        if len(parts) >= 2 and parts[0].isdigit() and parts[1].isdigit():
+            return int(parts[0]), int(parts[1])
+    return None
+
+
+def openocd_supports_mcu(mcu: str, version: tuple[int, int] | None
+                         ) -> tuple[bool, str | None]:
+    """Can this openocd program this MCU? Returns (ok, reason-if-not).
+
+    An unknown version is treated as usable: refusing to flash because we could
+    not parse a banner would be worse than letting openocd speak for itself.
+    """
+    part = (mcu or "").strip().upper()
+    for prefix, minimum in OPENOCD_MIN_VERSION.items():
+        if not part.startswith(prefix):
+            continue
+        if version is None or version >= minimum:
+            return True, None
+        have = ".".join(str(n) for n in version)
+        need = ".".join(str(n) for n in minimum)
+        return False, (
+            f"openocd {have} cannot program {prefix} (needs >= {need}); its "
+            f"flash driver has no entry for this device id and fails with "
+            f"'auto_probe failed' after halting the core"
+        )
+    return True, None
+
+
 def _cube_command(backend_path: str, image: Path, load_addr: int) -> list[str]:
     """STM32CubeProgrammer CLI.
 
@@ -132,6 +200,46 @@ def _cube_command(backend_path: str, image: Path, load_addr: int) -> list[str]:
     return cmd
 
 
+def _openocd_srec_script(image: Path) -> str:
+    """Tcl that programs an S-record and ALWAYS leaves the core running.
+
+    openocd stops executing further -c commands the moment one fails, so the
+    obvious `init; reset init; write; verify; reset run` chain leaves the target
+    halted whenever the write fails. A halted STM32 is silent on CAN and draws
+    the same current as a running one, so the bench symptom of a failed flash is
+    a board that looks bricked -- and the natural next move, power-cycling it,
+    destroys the evidence.
+
+    Catching both steps and resuming unconditionally means a failed flash leaves
+    the board doing exactly what it was doing before, with the reason on stdout.
+    The final `error` re-raises so openocd still exits non-zero and FlashResult
+    still reports ok=False.
+    """
+    fmt = OPENOCD_SRECORD_TYPE
+    # Braces make the path a single Tcl word without substitution, so spaces in
+    # the firmware directory are safe.
+    return "\n".join([
+        "init",
+        "reset init",
+        "set fabrica_err {}",
+        f"if {{[catch {{flash write_image erase {{{image}}} 0 {fmt}}} msg]}} {{",
+        '    set fabrica_err "write failed: $msg"',
+        "}",
+        "if {$fabrica_err eq {}} {",
+        f"    if {{[catch {{verify_image {{{image}}} 0 {fmt}}} msg]}} {{",
+        '        set fabrica_err "verify failed: $msg"',
+        "    }",
+        "}",
+        "# Unconditional: never hand back a halted board.",
+        "catch {reset run}",
+        "if {$fabrica_err ne {}} {",
+        '    echo "fabrica: $fabrica_err (core resumed)"',
+        "    error $fabrica_err",
+        "}",
+        "shutdown",
+    ])
+
+
 def _openocd_command(backend_path: str, image: Path, load_addr: int,
                      mcu: str) -> list[str]:
     target_cfg = openocd_target_cfg(mcu)
@@ -141,14 +249,7 @@ def _openocd_command(backend_path: str, image: Path, load_addr: int,
         # Explicit format; see OPENOCD_SRECORD_TYPE. Offset 0 means "use the
         # addresses recorded in the image", matching what `program` does for a
         # file with absolute addresses.
-        cmd += [
-            "-c", "init",
-            "-c", "reset init",
-            "-c", f"flash write_image erase {image} 0 {OPENOCD_SRECORD_TYPE}",
-            "-c", f"verify_image {image} 0 {OPENOCD_SRECORD_TYPE}",
-            "-c", "reset run",
-            "-c", "shutdown",
-        ]
+        cmd += ["-c", _openocd_srec_script(image)]
         return cmd
 
     program = f"program {image}"

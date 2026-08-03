@@ -115,6 +115,44 @@ def can_link_state(iface: str) -> dict:
     return info
 
 
+def _openocd_version_checks(path: str) -> list[Check]:
+    """Flag MCU families this openocd build is too old to program.
+
+    Worth a dedicated check because the failure it predicts is expensive to
+    diagnose live: openocd 0.11 (the newest in Ubuntu 22.04) connects to a
+    G0B1, reads its memory, reports the right core -- and only then refuses to
+    flash, having already halted the target. Everything looks healthy until the
+    one operation that matters. See OPENOCD_MIN_VERSION in stlink.py.
+    """
+    from . import stlink  # local: stlink imports from this module
+
+    rc, out = _run([path, "--version"])
+    version = stlink.parse_openocd_version(out)
+    if version is None:
+        return [Check("openocd version", WARN,
+                      "could not parse `openocd --version`",
+                      "check manually that it supports your MCU")]
+
+    have = ".".join(str(n) for n in version)
+    blocked: list[str] = []
+    for family, minimum in stlink.OPENOCD_MIN_VERSION.items():
+        if version < minimum:
+            need = ".".join(str(n) for n in minimum)
+            blocked.append(f"{family} (needs >= {need})")
+
+    if not blocked:
+        return [Check("openocd version", OK, have)]
+
+    # Not a hard FAIL: openocd is still the right backend for any other board
+    # on the bench, and flashing over CAN does not involve it at all.
+    return [Check(
+        "openocd version", WARN,
+        f"openocd {have} cannot SWD-flash: {', '.join(blocked)}",
+        "install STM32CubeProgrammer, or build openocd >= 0.12. "
+        "Flashing the application over CAN is unaffected; only writing the "
+        "bootloader through SWD needs this")]
+
+
 def doctor(firmware_dir: Path | str | None = None, iface: str = "can0",
            bitrate: int = 500000) -> Environment:
     """Run every pre-flight check. Never raises; every problem becomes a Check."""
@@ -134,6 +172,9 @@ def doctor(firmware_dir: Path | str | None = None, iface: str = "can0",
             "install STM32CubeProgrammer (STM32_Programmer_CLI) - preferred - "
             "or openocd. st-flash would need every image converted to .bin "
             "first with arm-none-eabi-objcopy"))
+    elif backend == "openocd":
+        env.checks.append(Check("stlink", OK, f"{backend} at {path}"))
+        env.checks.extend(_openocd_version_checks(path))
     elif backend:
         env.checks.append(Check("stlink", OK, f"{backend} at {path}"))
     else:

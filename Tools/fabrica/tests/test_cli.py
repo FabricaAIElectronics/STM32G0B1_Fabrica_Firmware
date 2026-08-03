@@ -249,3 +249,27 @@ def test_backend_capability_error_is_reported_cleanly(fake_firmware, monkeypatch
     err = capsys.readouterr().err
     assert "cannot build the flash command" in err
     assert "Traceback" not in err
+
+
+def test_monitor_without_a_board_needs_no_manifest(tmp_path, monkeypatch):
+    """Watching the bus is the first thing you do on a fresh bench.
+
+    Requiring a manifest for plain listening made `monitor` fail on a machine
+    where no firmware had been staged yet - which is exactly when you most want
+    to see whether the board is saying anything.
+    """
+    import types
+    from fabrica import canbus
+
+    class FakeBus:
+        def recv(self, timeout=0.0):
+            return None
+
+        def shutdown(self):
+            pass
+
+    monkeypatch.setattr(canbus, "open_bus", lambda iface: FakeBus())
+    # tmp_path holds no manifest.json at all
+    rc = cli.main(["--no-colour", "--firmware", str(tmp_path),
+                   "monitor", "--seconds", "0.2"])
+    assert rc == 1          # "no traffic seen", not a manifest error

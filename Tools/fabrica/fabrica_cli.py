@@ -260,10 +260,12 @@ def cmd_reset(args) -> int:
 # -------------------------------------------------------------- monitor ----
 def cmd_monitor(args) -> int:
     from fabrica import canbus
-    man = _resolve_firmware(args)
     db = None
     if args.board:
-        board = man.board(args.board)
+        # Only now is a manifest needed - it is what maps a board to its DBC.
+        # Plain listening must not require one: watching the bus is the first
+        # thing you do on a fresh bench, before any firmware has been staged.
+        board = _resolve_firmware(args).board(args.board)
         dbc = canbus.find_dbc(board.dbc) if board.dbc else None
         if dbc:
             db = canbus.load_dbc(dbc)

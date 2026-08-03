@@ -33,7 +33,7 @@ HAL_StatusTypeDef CAN_Send(uint16_t canid, uint8_t dlc, uint8_t *data);
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan);
 void CAN_Update_KnobState(uint8_t *comState, uint8_t *State);
 void CAN_Update_ErrorState(uint8_t *error);
-uint8_t gpio_flag_check();
+uint8_t gpio_flag_check(void);
 void gpio_flag_reset(void);
 void CAN_Update_ErrorCount(uint8_t *error_Count, uint8_t size);
 #endif /* INC_CAN_OPERATION_H_ */

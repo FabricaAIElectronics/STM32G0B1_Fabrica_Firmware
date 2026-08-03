@@ -7,13 +7,11 @@
 # reporting phantom regressions.
 STM32F303_Applciationprog/Fabrica_STM32F3_Prog/App/boot.c:381:17: warning: variable 'rxFilterId' set but not used [-Wunused-but-set-variable]
 STM32F303_Applciationprog/Fabrica_STM32F3_Prog/App/boot.c:381:29: warning: variable 'rxFilterMask' set but not used [-Wunused-but-set-variable]
-STM32F303_Applciationprog/Fabrica_STM32F3_Prog/Core/Inc/can_operation.h:34:1: warning: function declaration isn't a prototype [-Wstrict-prototypes]
 STM32F303_Applciationprog/Fabrica_STM32F3_Prog/Core/Src/I2C_Slave.c:22:52: warning: unused parameter 'hi2c' [-Wunused-parameter]
 STM32F303_Applciationprog/Fabrica_STM32F3_Prog/Core/Src/I2C_Slave.c:26:6: warning: function declaration isn't a prototype [-Wstrict-prototypes]
 STM32F303_Applciationprog/Fabrica_STM32F3_Prog/Core/Src/I2C_Slave.c:54:46: warning: unused parameter 'hi2c' [-Wunused-parameter]
 STM32F303_Applciationprog/Fabrica_STM32F3_Prog/Core/Src/I2C_Slave.c:54:88: warning: unused parameter 'AddrMatchCode' [-Wunused-parameter]
 STM32F303_Applciationprog/Fabrica_STM32F3_Prog/Core/Src/I2C_Slave.c:67:47: warning: unused parameter 'hi2c' [-Wunused-parameter]
-STM32F303_Applciationprog/Fabrica_STM32F3_Prog/Core/Src/can_operation.c:109:9: warning: function declaration isn't a prototype [-Wstrict-prototypes]
 STM32G0B1_Applciationprog/KincoDrive_ControlModule_V5_4/Core/Src/thermistor.c:30:17: warning: comparison is always false due to limited range of data type [-Wtype-limits]
 STM32G0B1_Applciationprog/PowerStage/Core/Inc/fan_ctrl.h:34:1: warning: function declaration isn't a prototype [-Wstrict-prototypes]
 STM32G0B1_Applciationprog/PowerStage/Core/Inc/fan_ctrl.h:35:1: warning: function declaration isn't a prototype [-Wstrict-prototypes]

@@ -105,7 +105,7 @@ void CAN_Update_ErrorState(uint8_t *error){
 	CAN_Send(ERRORSTATE, 1, &CAN_Txdata);
 }
 
-uint8_t gpio_flag_check(){
+uint8_t gpio_flag_check(void){
 	return gpio_command_update;
 }
 

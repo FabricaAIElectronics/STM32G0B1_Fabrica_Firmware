@@ -294,3 +294,24 @@ def test_doctor_accepts_a_loose_firmware_folder(tmp_path, monkeypatch):
     e = env.doctor(d, iface="can0", bitrate=500000)
     firmware = [c for c in e.checks if c.name == "firmware"][0]
     assert firmware.status == env.OK, firmware.detail
+
+
+def test_tui_refuses_without_a_terminal_instead_of_a_curses_traceback(capsys, monkeypatch):
+    """Over a pipe, curses.wrapper dies with 'cbreak() returned ERR' and then
+    raises 'nocbreak() returned ERR' on top, so the traceback names neither the
+    cause nor the fix. Every other subcommand works without a tty, which makes
+    that read as a bug in the tool rather than a missing -t."""
+    from fabrica import tui
+
+    monkeypatch.setattr(tui.sys.stdin, "isatty", lambda: False, raising=False)
+
+    def exploding_wrapper(*a, **k):
+        raise AssertionError("curses must not be entered without a terminal")
+
+    monkeypatch.setattr(tui.curses, "wrapper", exploding_wrapper)
+
+    rc = tui.run_tui(None, "can0", 500000)
+    assert rc == 2
+    err = capsys.readouterr().err
+    assert "interactive terminal" in err
+    assert "ssh -t" in err

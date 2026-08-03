@@ -208,7 +208,7 @@ def _synthesise_manifest(src: FirmwareSource) -> dict:
         entry[kind] = {
             "file": str(f.relative_to(src.path)).replace("\\", "/"),
             "sha256": mf.sha256_of(f),          # computed now, so it is self-consistent
-            "flash_bytes": f.stat().st_size,
+            "flash_bytes": srec_payload_bytes(f),
             "load_addr": "0x08000000" if kind == "boot" else d["app_origin"],
         }
 
@@ -219,6 +219,52 @@ def _synthesise_manifest(src: FirmwareSource) -> dict:
             src.notes.append(f"{b['id']}: no {missing} image, board omitted")
     return {"schema": mf.SCHEMA, "generated": "", "git_sha": "", "git_dirty": True,
             "gate": "unverified", "boards": complete}
+
+
+#: Address field width in bytes for each S-record data type.
+_SREC_ADDR_BYTES = {"1": 2, "2": 3, "3": 4}
+
+
+def srec_payload_bytes(path: Path) -> int:
+    """Bytes an S-record actually programs into flash.
+
+    NOT the size of the file. S-records are ASCII hex with a type, byte count,
+    address and checksum per line, so the file is about 3x the payload - the
+    PowerStage application is a 163,210-byte file carrying 54,368 bytes of
+    image. Reporting the file size made the TUI show `app 163210 B` against a
+    512 KB part, which is wrong by enough to matter when judging headroom.
+
+    Each data line is S<type><count><address><data><checksum>, where count
+    covers everything after itself, so the data length is
+    count - address width - 1 for the checksum. Non-data records (S0 header,
+    S5/S6 counts, S7/S8/S9 start address) carry no image bytes and are skipped.
+
+    Slightly smaller than the manifest's flash_bytes for the same image (8,916
+    vs 10,180 for the G0B1 bootloader): the gate uses `size`'s text+data from
+    the ELF, which is the figure the reserved-region limit is written against.
+    A loose folder has no ELF, so the payload is the closest honest answer -
+    do not "reconcile" the two by going back to the file size.
+    """
+    total = 0
+    try:
+        text = path.read_text(encoding="ascii", errors="replace")
+    except OSError:
+        return 0
+    for line in text.splitlines():
+        line = line.strip()
+        if len(line) < 4 or line[0] not in "sS":
+            continue
+        addr_bytes = _SREC_ADDR_BYTES.get(line[1])
+        if addr_bytes is None:          # S0/S5/S6/S7/S8/S9 carry no image data
+            continue
+        try:
+            count = int(line[2:4], 16)
+        except ValueError:
+            continue
+        data_len = count - addr_bytes - 1
+        if data_len > 0:
+            total += data_len
+    return total
 
 
 def load(src: FirmwareSource) -> mf.Manifest:

@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import curses
 import queue
+import sys
 import threading
 import time
 from pathlib import Path
@@ -52,11 +53,23 @@ class App:
         self.monitor: canbus.Monitor | None = None
         self.bus = None
         self.monitoring = False
-        self.say("info", f"loaded manifest: git {self.manifest.git_sha[:8]}"
-                         f"{' DIRTY' if self.manifest.git_dirty else ''}")
-        if self.manifest.git_dirty:
-            self.say("warn", "images were staged from a dirty tree - "
-                             "provenance is not reproducible")
+        # An empty git_sha means the manifest was SYNTHESISED from a loose
+        # folder of .srec files, not that a staged build had a dirty tree.
+        # Both are untrusted, but saying "staged from a dirty tree" about a
+        # folder that was never staged sends you looking for uncommitted
+        # changes that do not exist. Reported on the bench as
+        # "loaded manifest: git  DIRTY" - a blank sha and a DIRTY that came
+        # from the synthesiser hard-coding git_dirty=True.
+        if not self.manifest.git_sha:
+            self.say("info", "loaded loose folder: no manifest, no provenance")
+            self.say("warn", "images are unverified - no checksums to check "
+                             "against and no build they can be traced to")
+        else:
+            self.say("info", f"loaded manifest: git {self.manifest.git_sha[:8]}"
+                             f"{' DIRTY' if self.manifest.git_dirty else ''}")
+            if self.manifest.git_dirty:
+                self.say("warn", "images were staged from a dirty tree - "
+                                 "provenance is not reproducible")
 
     # ------------------------------------------------------------ state --
     @staticmethod
@@ -328,8 +341,15 @@ def _draw(stdscr, app: App) -> None:
         stdscr.addnstr(split + 1 + i, 0, text[:w - 1], w - 1, _colour(level))
 
     man = app.manifest
-    status = (f" {app.iface} | {app.firmware_dir.name} | git {man.git_sha[:8]}"
-              f"{' DIRTY' if man.git_dirty else ''} | "
+    # Same distinction as the startup banner: no sha means a synthesised
+    # manifest (loose folder), not a dirty build tree. Rendering "git  DIRTY"
+    # with an empty sha is how this looked on the bench, and it reads as a
+    # staged build gone wrong rather than an unstaged folder.
+    if man.git_sha:
+        prov = f"git {man.git_sha[:8]}{' DIRTY' if man.git_dirty else ''}"
+    else:
+        prov = "UNVERIFIED"
+    status = (f" {app.iface} | {app.firmware_dir.name} | {prov} | "
               f"{'BUSY' if app.busy else 'idle'} | {HELP}")
     stdscr.addnstr(h - 1, 0, status.ljust(w - 1)[:w - 1], w - 1, curses.A_REVERSE)
     stdscr.refresh()
@@ -391,5 +411,22 @@ def _loop(stdscr, app: App) -> int:
 
 
 def run_tui(firmware_dir: Path | str | None, iface: str, bitrate: int) -> int:
+    # curses needs a real terminal on stdin. Without this check, running the
+    # TUI over a pipe or a non-interactive ssh dies inside curses.wrapper with
+    #     _curses.error: cbreak() returned ERR
+    # and then the cleanup path raises `nocbreak() returned ERR` on top, so the
+    # traceback the operator sees names neither the cause nor the fix. Every
+    # other subcommand works fine without a tty, which makes the TUI's failure
+    # look like a bug in the tool rather than a missing `-t`.
+    if not (sys.stdin.isatty() and sys.stdout.isatty()):
+        print("the TUI needs an interactive terminal, and stdin/stdout is not "
+              "one.\n"
+              "  over ssh:   ssh -t <host> '<command>'\n"
+              "  in scripts: use the plain subcommands instead - flash, "
+              "verify, monitor, doctor,\n"
+              "              reset and release all work without a terminal.",
+              file=sys.stderr)
+        return 2
+
     app = App(firmware_dir, iface, bitrate)
     return curses.wrapper(_loop, app)

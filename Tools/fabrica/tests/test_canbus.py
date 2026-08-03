@@ -203,7 +203,7 @@ def test_decode_real_bcast_voltage_message(db):
 def test_decode_applies_dbc_scaling(db):
     # BCAST_FAN.Temperature_C is signed 16-bit big-endian with factor 0.1.
     # 0x00FA = 250 -> 25.0 degC.
-    frame = decode_frame(db, 339, bytes([0x02, 0x4B, 0x00, 0xFA]))
+    frame = decode_frame(db, 339, bytes([0x02, 0x4B, 0x00, 0xFA, 0x0A, 0x23, 0x1E]))
     assert frame.name == "BCAST_FAN"
     assert frame.signals["Fan_Duty_State"] == 75
     assert frame.signals["Temperature_C"] == pytest.approx(25.0)
@@ -212,7 +212,7 @@ def test_decode_applies_dbc_scaling(db):
 def test_decoded_values_are_plain_numbers_not_named_choices(db):
     # BCAST_FAN.Fan_Mode_State has a VAL_ table; we want 2, not 'AUTO', so the
     # snapshot stays JSON-serialisable.
-    frame = decode_frame(db, 339, bytes([0x02, 0x4B, 0x00, 0xFA]))
+    frame = decode_frame(db, 339, bytes([0x02, 0x4B, 0x00, 0xFA, 0x0A, 0x23, 0x1E]))
     assert type(frame.signals["Fan_Mode_State"]) is int
 
 
@@ -284,7 +284,7 @@ def test_decode_handles_none_data(db):
 
 def test_monitor_snapshot_is_latest_per_id_sorted_by_id(db):
     mon = Monitor(db)
-    mon.observe(339, bytes([0x02, 0x4B, 0x00, 0xFA]), 0.0)
+    mon.observe(339, bytes([0x02, 0x4B, 0x00, 0xFA, 0x0A, 0x23, 0x1E]), 0.0)
     mon.observe(BCAST_VOLTAGE_ID, BCAST_VOLTAGE_DATA, 0.1)
     mon.observe(304, b"\xff\x00", 0.2)
     # Second BCAST_VOLTAGE: SOC drops from 87 to 42. Latest must win.
@@ -303,7 +303,7 @@ def test_monitor_counts_increment_per_id(db):
     mon = Monitor(db)
     for i in range(5):
         mon.observe(BCAST_VOLTAGE_ID, BCAST_VOLTAGE_DATA, i * 0.1)
-    mon.observe(339, bytes([0x00, 0x00, 0x00, 0x00]), 1.0)
+    mon.observe(339, bytes([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]), 1.0)
 
     assert mon.counts() == {338: 5, 339: 1}
     assert mon.ids == [338, 339]
@@ -376,7 +376,7 @@ def test_monitor_consumes_frames_off_a_virtual_bus(bus_pair, db):
     mon = Monitor(db)
 
     send_frame(tx, BCAST_VOLTAGE_ID, BCAST_VOLTAGE_DATA)
-    send_frame(tx, 339, bytes([0x02, 0x4B, 0x00, 0xFA]))
+    send_frame(tx, 339, bytes([0x02, 0x4B, 0x00, 0xFA, 0x0A, 0x23, 0x1E]))
 
     for _ in range(2):
         msg = rx.recv(timeout=1.0)
@@ -429,13 +429,19 @@ def test_send_reset_rejects_a_bad_id(bus_pair):
 
 
 def test_encode_command_round_trips_through_decode_frame(db):
-    arb_id, data = encode_command(db, "CMD_FAN", {"Fan_Mode": 2, "Fan_Duty": 75})
+    # CMD_FAN is DLC=5 since the AUTO thresholds became settable over CAN.
+    # cantools encodes every signal a message declares, so all five are given
+    # here. The firmware still accepts the legacy DLC=2 form, but a host
+    # driving it from the DBC will always emit the long one.
+    fields = {"Fan_Mode": 2, "Fan_Duty": 75, "Fan_Min_Duty": 10,
+              "Fan_Auto_On_Temp": 35, "Fan_Auto_Off_Temp": 30}
+    arb_id, data = encode_command(db, "CMD_FAN", fields)
     assert arb_id == 320                   # 0x140
-    assert data == b"\x02\x4b"
+    assert data == b"\x02\x4b\x0a\x23\x1e"
 
     frame = decode_frame(db, arb_id, data)
     assert frame.name == "CMD_FAN"
-    assert frame.signals == {"Fan_Mode": 2, "Fan_Duty": 75}
+    assert frame.signals == fields
 
 
 def test_encode_command_round_trips_a_multibyte_big_endian_message(db):

@@ -190,3 +190,46 @@ def test_board_with_only_one_image_is_omitted_and_explained(tmp_path):
     with pytest.raises(mf.ManifestError, match="no complete board"):
         sources.load(src)
     assert any("no app image" in n for n in src.notes)
+
+
+# --- S-record payload size -------------------------------------------------
+
+def test_srec_payload_is_not_the_file_size(tmp_path):
+    """S-records are ASCII hex, so the file is ~3x the image it carries.
+
+    Reporting the file size made the TUI show `app 163210 B` for a PowerStage
+    application that programs 54,368 bytes - wrong by enough to matter when
+    judging headroom on a 512 KB part.
+    """
+    # S1 record: count=0x07, addr=0x0000 (2 bytes), 4 data bytes, 1 checksum.
+    srec = tmp_path / "x.srec"
+    srec.write_text("S00600004844521B\n"
+                    "S107000001020304F1\n"
+                    "S9030000FC\n", encoding="ascii")
+    assert sources.srec_payload_bytes(srec) == 4
+    assert srec.stat().st_size > 4
+
+
+@pytest.mark.parametrize("line,expected", [
+    ("S107000001020304F1", 4),                    # S1: 2-byte address
+    ("S2080000000102030496", 4),                  # S2: 3-byte address
+    ("S3090000000001020304EF", 4),                # S3: 4-byte address
+    ("S00600004844521B", 0),                      # S0 header carries no image
+    ("S9030000FC", 0),                            # S9 start address
+    ("S5030001FB", 0),                            # S5 record count
+])
+def test_srec_address_widths_and_non_data_records(tmp_path, line, expected):
+    srec = tmp_path / "x.srec"
+    srec.write_text(line + "\n", encoding="ascii")
+    assert sources.srec_payload_bytes(srec) == expected
+
+
+def test_srec_payload_ignores_junk_lines(tmp_path):
+    srec = tmp_path / "x.srec"
+    srec.write_text("not an s-record\n\nS107000001020304F1\nSZZZ\n",
+                    encoding="ascii")
+    assert sources.srec_payload_bytes(srec) == 4
+
+
+def test_srec_payload_of_missing_file_is_zero(tmp_path):
+    assert sources.srec_payload_bytes(tmp_path / "nope.srec") == 0

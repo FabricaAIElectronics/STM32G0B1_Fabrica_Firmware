@@ -468,10 +468,24 @@ static void BroadcastTick(AppStateMachine *sm)
     if ((now - last_tick) < BCAST_PHASE_INTERVAL_MS) return;
     last_tick = now;
 
-    /* Refresh status payload from latest CAN-set values before emitting. */
-    sm->ledStatus.pwm[0] = (uint16_t)can_rxMessage.pwm[0];
-    sm->ledStatus.pwm[1] = (uint16_t)can_rxMessage.pwm[1];
-    sm->ledStatus.pwm[2] = (uint16_t)can_rxMessage.pwm[2];
+    /* Report the APPLIED duty, not the commanded one.
+     *
+     * ledCtrl.pwm[] is the array apply_pwm() converts into the TIM1 compare
+     * registers, so it is by definition what the outputs are doing; every path
+     * that drives the LEDs writes it and then calls apply_pwm() - init,
+     * ProcessCANCommands(), the State_Error shutdown, and the State_Recovery
+     * restore. can_rxMessage.pwm[] is only ever the last value the host asked
+     * for, which the firmware is free not to honour.
+     *
+     * These diverge exactly when it matters most. State_Error forces the duty
+     * to 0 on entry to shed load during an undervoltage, while
+     * can_rxMessage.pwm[] still holds the commanded value - so 0x179 used to
+     * report 70% with the outputs at zero, and a host had no way to tell from
+     * this frame alone. Sourcing the payload from ledCtrl makes the broadcast
+     * describe the hardware instead of the request. */
+    sm->ledStatus.pwm[0] = (uint16_t)sm->ledCtrl.pwm[0];
+    sm->ledStatus.pwm[1] = (uint16_t)sm->ledCtrl.pwm[1];
+    sm->ledStatus.pwm[2] = (uint16_t)sm->ledCtrl.pwm[2];
 
     switch (phase) {
         case 0:

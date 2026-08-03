@@ -372,6 +372,12 @@ def _draw(stdscr, app: App) -> None:
     if app.monitoring and app.monitor:
         frames = app.monitor.snapshot()
         counts = app.monitor.counts()
+        # Rows left after each frame's own header line, divided between them.
+        # PowerStage puts ten broadcasts on the bus with up to eight signals
+        # each, which cannot all fit; the knob's three fit comfortably. Floor of
+        # 1 so every frame still shows something on a short terminal.
+        budget = max(0, split - 1 - len(frames))
+        per_frame = max(1, budget // max(1, len(frames)))
         r = 1
         for f in frames:
             if r >= split:
@@ -383,11 +389,28 @@ def _draw(stdscr, app: App) -> None:
                            f"{(f'{rate:4.1f}Hz' if rate else '   -  ')} "
                            f"{f.raw.hex(' ')}", w - left - 2)
             r += 1
-            for k, v in list(f.signals.items())[:3]:
-                if r >= split:
+            # Share the pane between the frames on the bus instead of showing
+            # a fixed three signals each. A hard cap of 3 hid two thirds of
+            # KNOBSTATE: it has nine signals, so the pane showed Enc0_Pos,
+            # Enc0_Button and Enc1_Pos - the board looked like it had two
+            # encoders when it has three, and nothing said anything was
+            # missing.
+            shown = 0
+            for k, v in f.signals.items():
+                if r >= split or shown >= per_frame:
                     break
                 stdscr.addnstr(r, left + 3, f"{k} = {v}", w - left - 4,
                                curses.A_DIM)
+                r += 1
+                shown += 1
+            hidden = len(f.signals) - shown
+            if hidden > 0 and r < split:
+                # Never drop signals silently - say how many, so a missing
+                # value reads as "no room" rather than "the board did not
+                # send it".
+                stdscr.addnstr(r, left + 3, f"... +{hidden} more "
+                                            f"(widen/enlarge the terminal)",
+                               w - left - 4, curses.A_DIM)
                 r += 1
         if not frames:
             stdscr.addnstr(1, left + 1, "waiting for traffic...", w - left - 2,

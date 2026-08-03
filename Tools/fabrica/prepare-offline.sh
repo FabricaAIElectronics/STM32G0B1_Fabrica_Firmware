@@ -53,6 +53,28 @@ if [ "$copied" -eq 0 ]; then
     echo "  ./install_openocd012.sh"
 fi
 
+# The openocd binary alone is useless: `-f interface/stlink.cfg` resolves
+# against a search path compiled in at build time. Copying only the executable
+# gives a bench that passes `doctor` and then exits 1 on the first flash.
+# stlink.py adds `-s <this dir>` whenever it finds it beside the binary.
+if [ -x "tools/$platform/openocd" ]; then
+    echo
+    echo "=== copying openocd scripts (the binary cannot find configs without them) ==="
+    found_scripts=""
+    for d in /usr/local/share/openocd/scripts /usr/share/openocd/scripts; do
+        if [ -d "$d" ]; then found_scripts=$d; break; fi
+    done
+    if [ -n "$found_scripts" ]; then
+        rm -rf "tools/$platform/openocd-scripts"
+        cp -r "$found_scripts" "tools/$platform/openocd-scripts"
+        echo "  <- $found_scripts  ($(du -sh "tools/$platform/openocd-scripts" | cut -f1))"
+    else
+        echo "  NOT FOUND. Flashing over SWD will fail on a machine with no"
+        echo "  openocd installed. Looked in /usr/local/share/openocd/scripts"
+        echo "  and /usr/share/openocd/scripts."
+    fi
+fi
+
 cat <<EOF
 
 === done ===
@@ -60,7 +82,6 @@ This folder can now be copied to a bench of the same architecture:
 
     scp -r "$here" user@bench:~/
 
-Note: openocd still needs its scripts directory (interface/*.cfg,
-target/*.cfg). Either install openocd on the bench as well, or copy
-/usr/local/share/openocd/scripts across and set OPENOCD_SCRIPTS to it.
+Everything the tool needs is inside it: firmware, DBCs, python packages and
+native binaries. Run \`./fab doctor\` there to confirm which copies it resolved.
 EOF

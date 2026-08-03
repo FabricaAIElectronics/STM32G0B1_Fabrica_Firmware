@@ -242,10 +242,31 @@ def _openocd_srec_script(image: Path) -> str:
     ])
 
 
+#: Scripts directory shipped beside a bundled openocd, if present.
+OPENOCD_SCRIPTS_DIRNAME = "openocd-scripts"
+
+
+def openocd_search_args(backend_path: str) -> list[str]:
+    """`-s <dir>` when a scripts directory sits beside the binary, else nothing.
+
+    The openocd executable is useless on its own: `-f interface/stlink.cfg`
+    resolves against a search path compiled in at build time, normally
+    /usr/local/share/openocd/scripts. Copying just the binary into tools/ gives
+    a bench that passes `doctor` - the file is there and runs - and then exits 1
+    on the first flash. Verified by hiding the system scripts directory.
+
+    So prepare-offline.sh copies the scripts next to the binary, and this points
+    openocd at them. Returns nothing for a system openocd, which finds its own.
+    """
+    scripts = Path(backend_path).resolve().parent / OPENOCD_SCRIPTS_DIRNAME
+    return ["-s", str(scripts)] if scripts.is_dir() else []
+
+
 def _openocd_command(backend_path: str, image: Path, load_addr: int,
                      mcu: str) -> list[str]:
     target_cfg = openocd_target_cfg(mcu)
-    cmd = [backend_path, "-f", OPENOCD_INTERFACE_CFG, "-f", target_cfg]
+    cmd = [backend_path, *openocd_search_args(backend_path),
+           "-f", OPENOCD_INTERFACE_CFG, "-f", target_cfg]
 
     if is_srec(image):
         # Explicit format; see OPENOCD_SRECORD_TYPE. Offset 0 means "use the
@@ -371,6 +392,7 @@ def build_release_command(backend_path: str, mcu: str) -> list[str]:
     """
     return [
         backend_path,
+        *openocd_search_args(backend_path),
         "-f", OPENOCD_INTERFACE_CFG,
         "-f", openocd_target_cfg(mcu),
         # Tolerate a target that is already running: `reset run` on a

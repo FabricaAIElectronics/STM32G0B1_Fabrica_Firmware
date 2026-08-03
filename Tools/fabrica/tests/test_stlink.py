@@ -541,3 +541,40 @@ def test_release_targets_the_right_mcu_config():
 def test_release_reports_failure_rather_than_raising():
     result = release(OPENOCD_PATH, G0B1, runner=lambda c, o=None: (1, "no probe"))
     assert result.ok is False
+
+
+# --- bundled openocd scripts ----------------------------------------------
+
+def test_bundled_openocd_gets_its_scripts_directory(tmp_path):
+    """The binary alone cannot resolve `interface/stlink.cfg`.
+
+    openocd searches a path compiled in at build time, so copying only the
+    executable into tools/ produces a bench that passes `doctor` - the file is
+    present and runs - and then exits 1 on the first flash. Proven by hiding
+    /usr/local/share/openocd/scripts on the Orin.
+    """
+    exe = tmp_path / "openocd"
+    exe.write_text("", encoding="utf-8")
+    (tmp_path / "openocd-scripts").mkdir()
+
+    cmd = build_command("openocd", str(exe), SREC, BOOT_ADDR, G0B1)
+    assert "-s" in cmd
+    assert str(tmp_path / "openocd-scripts") in cmd
+    # The search path must precede the -f arguments it is there to resolve.
+    assert cmd.index("-s") < cmd.index("-f")
+
+
+def test_system_openocd_is_left_alone(tmp_path):
+    """A system openocd finds its own scripts; passing -s would be noise."""
+    exe = tmp_path / "openocd"
+    exe.write_text("", encoding="utf-8")
+    cmd = build_command("openocd", str(exe), SREC, BOOT_ADDR, G0B1)
+    assert "-s" not in cmd
+
+
+def test_release_also_gets_the_scripts_directory(tmp_path):
+    exe = tmp_path / "openocd"
+    exe.write_text("", encoding="utf-8")
+    (tmp_path / "openocd-scripts").mkdir()
+    cmd = build_release_command(str(exe), G0B1)
+    assert "-s" in cmd

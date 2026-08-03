@@ -38,10 +38,12 @@ On the machine itself:
 cp /usr/local/bin/openocd tools/$(python3 -c 'import platform;print(f"{platform.system().lower()}-{platform.machine().lower()}")')/
 ```
 
-**openocd needs its scripts directory too.** The binary alone cannot find
-`interface/stlink.cfg` or `target/stm32g0x.cfg`. Either leave the system
-install in place, or set `OPENOCD_SCRIPTS` to a copy of
-`/usr/local/share/openocd/scripts` (4.1 MB).
+**openocd needs its scripts directory too**, so `prepare-offline.sh` copies it
+to `tools/<platform>/openocd-scripts/` (4.0 MB) and the tool passes `-s` at that
+directory automatically. The binary alone cannot resolve `interface/stlink.cfg`
+or `target/stm32g0x.cfg`: it searches a path compiled in at build time. Copying
+only the executable gives a bench that passes `doctor` — the file is there and
+runs — and then exits 1 on the first flash.
 
 ## Why ≥ 0.12 matters
 

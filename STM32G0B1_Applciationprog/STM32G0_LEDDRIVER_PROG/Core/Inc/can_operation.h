@@ -35,13 +35,19 @@ extern FDCAN_HandleTypeDef hfdcan1;
 #define EEPROMDATA  LED_BCAST_EEPROMDATA
 #define LIGHTSTATUS LED_BCAST_LIGHTSTATUS
 #define DEVSTATUS   LED_BCAST_DEVSTATUS
+/* Every field here is written by the FDCAN RX ISR and read by the main loop,
+ * so each one is volatile: without it the compiler is entitled to cache a
+ * value in a register across the loop and never observe the interrupt's
+ * update. `newcommandreceived` and `flashdetected` are the dangerous ones -
+ * they are polled in tight paths where a hoisted load turns into a flag that
+ * never appears to be set. */
 typedef struct {
-    uint16_t 	under_voltage_24;
-    uint16_t    under_voltage_17_5;
-    uint16_t	pwm[3];
-    uint8_t 	newcommandreceived;
-    uint8_t		flashdetected;
-    uint8_t		buck_mode;       /* BUCK_MODE_t enum, set by VOLTAGESET byte 4  */
+    volatile uint16_t 	under_voltage_24;
+    volatile uint16_t   under_voltage_17_5;
+    volatile uint16_t	pwm[3];
+    volatile uint8_t 	newcommandreceived;
+    volatile uint8_t	flashdetected;
+    volatile uint8_t	buck_mode;   /* BUCK_MODE_t enum, set by VOLTAGESET byte 4  */
 } CAN_RXMessage;
 
 extern CAN_RXMessage can_rxMessage;

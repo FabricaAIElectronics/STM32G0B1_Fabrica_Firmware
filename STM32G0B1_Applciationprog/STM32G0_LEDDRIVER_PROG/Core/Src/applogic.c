@@ -308,13 +308,45 @@ static void State_Recovery(AppStateMachine *sm)
  *  Apply PWM values from can_rxMessage (set by FDCAN RX ISR) to hardware.
  *=========================================================================*/
 static void ProcessCANCommands(AppStateMachine *sm)
-{	if(can_rxMessage.newcommandreceived==1){
-    sm->ledCtrl.pwm[0] = (uint8_t)can_rxMessage.pwm[0];
-    sm->ledCtrl.pwm[1] = (uint8_t)can_rxMessage.pwm[1];
-    sm->ledCtrl.pwm[2] = (uint8_t)can_rxMessage.pwm[2];
+{
+    uint8_t pwm[3];
+    uint8_t pending;
+
+    /* Take the flag and the payload together, with the RX interrupt masked.
+     *
+     * The clear used to sit OUTSIDE the `if`, which loses commands: when the
+     * FDCAN RX ISR ran between the test reading 0 and the unconditional
+     * `newcommandreceived = 0`, that command's flag was wiped without the
+     * payload ever being applied. The LEDs kept the previous duty and nothing
+     * anywhere reported a problem - BCAST_LIGHTSTATUS used to echo
+     * can_rxMessage.pwm[], which the ISR always writes, so the telemetry
+     * claimed the new value while the hardware sat at the old one. Two
+     * back-to-back HIL runs caught it once the broadcast started reporting the
+     * applied duty instead.
+     *
+     * Clearing inside the guard fixes the loss; masking the interrupt across
+     * the copy also stops a command that lands mid-copy from being applied as
+     * a mix of old and new channels. Anything arriving after the unmask simply
+     * re-arms the flag and is handled on the next pass. */
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    pending = can_rxMessage.newcommandreceived;
+    if (pending) {
+        pwm[0] = (uint8_t)can_rxMessage.pwm[0];
+        pwm[1] = (uint8_t)can_rxMessage.pwm[1];
+        pwm[2] = (uint8_t)can_rxMessage.pwm[2];
+        can_rxMessage.newcommandreceived = 0U;
+    }
+    __set_PRIMASK(primask);
+
+    if (!pending) {
+        return;
+    }
+
+    sm->ledCtrl.pwm[0] = pwm[0];
+    sm->ledCtrl.pwm[1] = pwm[1];
+    sm->ledCtrl.pwm[2] = pwm[2];
     apply_pwm(&sm->ledCtrl);
-}
-can_rxMessage.newcommandreceived = 0;
 }
 
 /*=========================================================================

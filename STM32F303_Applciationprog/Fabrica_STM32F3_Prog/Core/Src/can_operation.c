@@ -8,7 +8,6 @@
 #include "can_operation.h"
 #include "8421_ENC.h"
 #include "header.h"
-#include "info_table.h"
 #include <string.h>
 extern CAN_HandleTypeDef canHandle;
 CAN_TxHeaderTypeDef TxHeader;
@@ -113,17 +112,6 @@ uint8_t gpio_flag_check(){
 void gpio_flag_reset(void){
 	gpio_command_update=0;
 }
-
-//void CAN_Update_Firmware_Ver(){
-//		uint8_t CAN_TxData[4];
-//	    uint32_t fw = firmwareInfoTable.firmwareVersion;
-//
-//	    CAN_TxData[0] = (fw >> 0) & 0xFF;
-//	    CAN_TxData[1] = (fw >> 8) & 0xFF;
-//	    CAN_TxData[2] = (fw >> 16) & 0xFF;
-//	    CAN_TxData[3] = (fw >> 24) & 0xFF;
-//	CAN_Send(FIRMWARE_VER, 4, CAN_TxData);
-//}
 
 void CAN_Update_ErrorCount(uint8_t *error_Count, uint8_t size){
 	int array_size = size;

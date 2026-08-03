@@ -223,6 +223,14 @@
  * priveleges.
  */
 /** \brief Enable (1) or disable (0) the info table feature. */
+/* DELIBERATELY OFF. The firmware-version / info-table feature is not required
+ * for this product. The application-side table that fed it has been removed
+ * from App/app.c, and no linker script ever placed a .infoTable section at
+ * BOOT_INFO_TABLE_ADDR, so the data was never where this would have looked.
+ * The BOOT_INFO_TABLE_LEN and _ADDR values below are therefore unused; they
+ * are left at their OpenBLT defaults so the file still matches upstream.
+ * Turning this on requires restoring all three pieces - see the note in
+ * Fabrica_STM32F3_Prog/App/app.c. */
 #define BOOT_INFO_TABLE_ENABLE         (0)
 
 /** \brief Configure the length of your firmware's info table in bytes. */

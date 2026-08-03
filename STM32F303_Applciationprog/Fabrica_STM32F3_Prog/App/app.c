@@ -29,7 +29,6 @@
 /****************************************************************************************
 * Include files
 ****************************************************************************************/
-#include "info_table.h"
 #include "header.h"                                    /* generic header               */
 
 
@@ -82,12 +81,15 @@
  *             info regarding the Improved Checksum add-on module can be found here:
  *             - https://www.feaser.com/en/addons.php#checksum
  */
-const tFirmwareInfoTable firmwareInfoTable __attribute__ ((section (".infoTable"))) =
-{
-  .tableId = 0x9A4B8107UL,
-  .productId = 1234UL,
-  .firmwareVersion = 10431UL
-};
+/* The OpenBLT firmware info table used to live here, carrying tableId,
+ * productId and firmwareVersion. It is removed: the firmware-version
+ * feature is not required, BOOT_INFO_TABLE_ENABLE is 0 in both blt_conf.h
+ * files, and no linker script ever placed the .infoTable section, so the
+ * data was never where the bootloader would have looked for it.
+ *
+ * To restore it: re-add the struct here, set BOOT_INFO_TABLE_ENABLE to 1 in
+ * BOTH blt_conf.h files, and add a .infoTable output section at
+ * BOOT_INFO_TABLE_ADDR in the application linker script. */
 
 
 

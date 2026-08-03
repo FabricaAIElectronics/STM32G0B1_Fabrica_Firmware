@@ -10,9 +10,11 @@
 #include "main.h"
 #include "stm32f3xx.h"
 
+/* 0x663 was FIRMWARE_VER. The firmware-version broadcast is not required,
+ * which is why it was never enabled; the dead declaration, the commented-out
+ * sender and the OpenBLT info table it read from have all been removed. */
 #define KNOBSTATE 0x661
 #define ERRORSTATE 0x662
-#define FIRMWARE_VER 0x663
 #define ERROR_COUNT_STATE 0x664
 #define KNOBCOMMAND 0x665
 
@@ -33,6 +35,5 @@ void CAN_Update_KnobState(uint8_t *comState, uint8_t *State);
 void CAN_Update_ErrorState(uint8_t *error);
 uint8_t gpio_flag_check();
 void gpio_flag_reset(void);
-void CAN_Update_Firmware_Ver(void);
 void CAN_Update_ErrorCount(uint8_t *error_Count, uint8_t size);
 #endif /* INC_CAN_OPERATION_H_ */

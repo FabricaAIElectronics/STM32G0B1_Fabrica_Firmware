@@ -73,14 +73,50 @@ def cmd_sources(args) -> int:
     return 0
 
 
+#: Where to look for firmware when --firmware is not given, best first.
+#: The bench keeps its images outside the checkout (so a git clean cannot
+#: delete the thing it is about to flash), which is why the tool's own
+#: ./firmware is not enough on its own.
+def _firmware_candidates() -> list[Path]:
+    here = Path(__file__).resolve().parent
+    return [
+        here / "firmware",                 # staged by the V&V gate
+        Path.cwd() / "firmware",           # run from a bench directory
+        Path.home() / "fabrica-bench" / "firmware",
+    ]
+
+
+def find_firmware_dir() -> Path | None:
+    """First candidate directory that actually holds images, or None.
+
+    Resolved once in main() and written back into args.firmware, so every
+    subcommand - including doctor, which does its own manifest check - sees the
+    same directory. Resolving it per-command is how doctor ended up reporting
+    "no manifest" against the tool's own ./firmware while flash and verify were
+    happily using the bench's.
+    """
+    from fabrica import sources
+    for candidate in _firmware_candidates():
+        if candidate.is_dir() and sources.discover(candidate, max_depth=1):
+            return candidate
+    return None
+
+
 def _resolve_firmware(args):
     """Load the manifest for --firmware, accepting a loose folder too."""
     from fabrica import sources
+
     if args.firmware:
         found = sources.discover(args.firmware, max_depth=0)
         if found:
             return sources.load(found[0])
-    return mf.load_manifest(args.firmware)
+        return mf.load_manifest(args.firmware)
+
+    tried = "\n  ".join(str(c) for c in _firmware_candidates())
+    raise mf.ManifestError(
+        "no firmware found. Looked in:\n  " + tried +
+        "\n\nStage a build with:  python vv/run_gate.py --stage-artifacts"
+        "\nor point at a folder: --firmware <dir>")
 
 
 # ---------------------------------------------------------------- setup ----
@@ -392,8 +428,9 @@ def build_parser() -> argparse.ArgumentParser:
         prog="fabrica", description="Fabrica firmware bench tool",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__.split("\n\n", 1)[1])
-    p.add_argument("--firmware", help="firmware directory (default: ./firmware)")
-    p.add_argument("--iface", default="can0", help="CAN interface (default: can0)")
+    p.add_argument("--firmware", help="firmware directory (default: auto-detect)")
+    p.add_argument("--iface", default=None,
+                   help="CAN interface (default: the first one that is up)")
     p.add_argument("--bitrate", type=int, default=500000)
     p.add_argument("--no-colour", action="store_true")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -450,8 +487,54 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
+#: Every subcommand name. Used to decide whether a bare invocation should open
+#: the TUI. A test pins this against the parser's real choices so the two
+#: cannot drift - a subcommand missing from here would make `fab <that name>`
+#: silently launch the TUI instead.
+SUBCOMMANDS = ("setup", "doctor", "list", "sources", "flash", "reset",
+               "release", "monitor", "verify", "tui")
+
+
+def _autodetect_iface() -> str:
+    """First CAN interface that is actually up, else 'can0'.
+
+    A bench with can0 (SocketCAN) and can1 (PeakCAN) should not need the
+    operator to remember which is which, and a machine with only vcan0 should
+    not be told to use a can0 that does not exist. Falling back to 'can0' keeps
+    the old behaviour when nothing can be detected, so the error message still
+    names a real interface rather than 'None'.
+    """
+    try:
+        from fabrica import env
+        for name in env.can_interfaces():
+            if env.can_link_state(name).get("up"):
+                return name
+    except Exception:                                     # noqa: BLE001
+        pass
+    return "can0"
+
+
 def main(argv=None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+
+    # Bare `fab` opens the TUI. It is the interface meant for humans, and
+    # making them type a subcommand to reach it is backwards - scripts always
+    # name one explicitly, so nothing else changes.
+    #
+    # The test is "did they name a subcommand", not "does every argument look
+    # like a flag": `fab --iface can1` has a bare `can1` in argv and must still
+    # reach the TUI rather than an argparse error about a missing command.
+    if not any(a in SUBCOMMANDS for a in argv):
+        if not any(a in ("-h", "--help") for a in argv):
+            argv.append("tui")
+
     args = build_parser().parse_args(argv)
+    if args.iface is None:
+        args.iface = _autodetect_iface()
+    if not args.firmware:
+        found = find_firmware_dir()
+        if found is not None:
+            args.firmware = str(found)
     if args.no_colour or not sys.stdout.isatty():
         _no_colour()
     try:

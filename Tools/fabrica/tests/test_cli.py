@@ -315,3 +315,74 @@ def test_tui_refuses_without_a_terminal_instead_of_a_curses_traceback(capsys, mo
     err = capsys.readouterr().err
     assert "interactive terminal" in err
     assert "ssh -t" in err
+
+
+# --- ergonomics: bare invocation and auto-detection ------------------------
+
+def test_bare_invocation_opens_the_tui(monkeypatch):
+    """`fab` with no arguments is the human entry point.
+
+    Making an operator type a subcommand to reach the interface built for them
+    is backwards; scripts always name one explicitly, so nothing else regresses.
+    """
+    seen = {}
+    monkeypatch.setattr(cli, "cmd_tui", lambda a: seen.setdefault("tui", a) and 0
+                        or seen.setdefault("called", True) or 0)
+    cli.main([])
+    assert "tui" in seen
+
+
+def test_global_flags_alone_still_open_the_tui(monkeypatch):
+    """`fab --iface can1` must not be an argparse error."""
+    seen = {}
+    monkeypatch.setattr(cli, "cmd_tui", lambda a: seen.setdefault("iface", a.iface) and 0 or 0)
+    cli.main(["--iface", "can1"])
+    assert seen.get("iface") == "can1"
+
+
+def test_help_alone_does_not_launch_the_tui():
+    """-h must print help, not open a full-screen interface."""
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["--help"])
+    assert exc.value.code == 0
+
+
+def test_iface_autodetects_the_interface_that_is_up(monkeypatch):
+    from fabrica import env
+    monkeypatch.setattr(env, "can_interfaces", lambda: ["can0", "can1"])
+    monkeypatch.setattr(env, "can_link_state",
+                        lambda n: {"up": n == "can1"})
+    assert cli._autodetect_iface() == "can1"
+
+
+def test_iface_falls_back_to_can0_when_nothing_is_up(monkeypatch):
+    from fabrica import env
+    monkeypatch.setattr(env, "can_interfaces", lambda: [])
+    # Naming a real interface beats reporting None in the error message.
+    assert cli._autodetect_iface() == "can0"
+
+
+def test_missing_firmware_names_every_directory_it_tried(tmp_path, monkeypatch):
+    # Point the search at directories that do not exist, so the test does not
+    # depend on whether this machine happens to have staged firmware.
+    monkeypatch.setattr(cli, "_firmware_candidates",
+                        lambda: [tmp_path / "a", tmp_path / "b"])
+
+    class Args:
+        firmware = None
+    with pytest.raises(mf.ManifestError) as exc:
+        cli._resolve_firmware(Args())
+    msg = str(exc.value)
+    assert "Looked in" in msg
+    assert "run_gate.py --stage-artifacts" in msg
+
+
+def test_subcommand_list_matches_the_parser():
+    """SUBCOMMANDS drives the bare-invocation check, so drift would make a real
+    subcommand silently open the TUI instead of running."""
+    parser = cli.build_parser()
+    choices = set()
+    for action in parser._actions:
+        if getattr(action, "choices", None) and hasattr(action, "_name_parser_map"):
+            choices = set(action.choices)
+    assert choices == set(cli.SUBCOMMANDS)

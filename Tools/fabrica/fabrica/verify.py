@@ -180,44 +180,77 @@ def check_command_changes_telemetry(bus, board, db, timeout: float = 3.0
         observations)
 
 
-def check_reset_enters_bootloader(bus, board, quiet_for: float = 2.0,
-                                  settle: float = 0.5) -> VerifyResult:
-    """Property 3: FF 00 restarts the board into its bootloader.
+def _max_gap(bus, seconds: float) -> tuple[float, int]:
+    """Largest silence between consecutive frames in a window, and the count."""
+    end = time.time() + seconds
+    last = None
+    biggest = 0.0
+    seen = 0
+    while time.time() < end:
+        msg = bus.recv(timeout=max(0.0, end - time.time()))
+        now = time.time()
+        if msg is None:
+            continue
+        seen += 1
+        if last is not None:
+            biggest = max(biggest, now - last)
+        last = now
+    return biggest, seen
 
-    Evidence that it worked is the application's broadcasts STOPPING. A
-    bootloader that is merely waiting says nothing until spoken to in XCP, so
-    silence on the application ids is the observable, not a reply.
+
+def check_reset_enters_bootloader(bus, board, quiet_for: float = 4.0,
+                                  gap_factor: float = 4.0) -> VerifyResult:
+    """Property 3: FF 00 makes the board restart through its bootloader.
+
+    The observable is a GAP in the broadcasts, not permanent silence.
+
+    An earlier version asserted the application stopped and stayed stopped.
+    That is wrong for OpenBLT: the bootloader only remains resident if a host
+    connects during its backdoor window, which is a few hundred milliseconds.
+    With nothing connecting, it starts the application again, so a correctly
+    resetting board is broadcasting again within about a second - and the check
+    called that a failure on hardware that was behaving perfectly.
+
+    What a reset really looks like from the bus is a pause: the application
+    stops, the MCU reboots, the bootloader waits out its backdoor, then the
+    application starts and resumes. That pause is far longer than the normal
+    broadcast interval, so comparing the largest inter-frame gap before and
+    after the trigger detects it without assuming the bootloader stays put.
     """
-    before = canbus.Monitor()
-    _drain(bus, 1.0, before)
-    if not before.counts():
+    baseline_gap, baseline_seen = _max_gap(bus, 1.5)
+    if baseline_seen < 2:
         return VerifyResult(
             "reset", SKIP,
-            "board was already silent before the reset, so a stop cannot be "
-            "observed", [])
+            "board was not broadcasting before the reset, so a restart cannot "
+            "be observed", [])
 
     canbus.send_reset(bus, board.blt_rx)
-    time.sleep(settle)
+    after_gap, after_seen = _max_gap(bus, quiet_for)
 
-    after = canbus.Monitor()
-    _drain(bus, quiet_for, after)
+    evidence = [{"baseline_max_gap_s": round(baseline_gap, 3),
+                 "baseline_frames": baseline_seen,
+                 "after_max_gap_s": round(after_gap, 3),
+                 "after_frames": after_seen,
+                 "threshold_s": round(baseline_gap * gap_factor, 3)}]
 
-    app_ids_before = set(before.counts())
-    still_talking = {i: n for i, n in after.counts().items()
-                     if i in app_ids_before}
-    evidence = [{"before": {hex(k): v for k, v in before.counts().items()},
-                 "after": {hex(k): v for k, v in after.counts().items()}}]
-
-    if still_talking:
+    if after_seen == 0:
         return VerifyResult(
-            "reset", FAIL,
-            f"application still broadcasting {quiet_for:.0f}s after the reset "
-            f"trigger: {', '.join(hex(i) for i in sorted(still_talking))}",
-            evidence)
+            "reset", PASS,
+            f"application went silent after FF 00 on 0x{board.blt_rx:03X} and "
+            f"had not returned after {quiet_for:.0f}s - board is sitting in its "
+            f"bootloader", evidence)
+    if after_gap >= baseline_gap * gap_factor:
+        return VerifyResult(
+            "reset", PASS,
+            f"broadcasts paused for {after_gap:.2f}s after FF 00 (normal gap "
+            f"{baseline_gap:.3f}s) - the board restarted through its bootloader "
+            f"and the application came back", evidence)
     return VerifyResult(
-        "reset", PASS,
-        f"application stopped after FF 00 on 0x{board.blt_rx:03X} - board is in "
-        f"its bootloader", evidence)
+        "reset", FAIL,
+        f"no restart seen: largest gap after the trigger was {after_gap:.3f}s, "
+        f"barely different from the normal {baseline_gap:.3f}s between frames. "
+        f"The board appears to have ignored FF 00 on 0x{board.blt_rx:03X}",
+        evidence)
 
 
 def run_all(bus, board, db, expected_ids: set[int], *,

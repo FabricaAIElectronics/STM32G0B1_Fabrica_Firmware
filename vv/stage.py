@@ -71,11 +71,36 @@ def _copy_srec(board, project_dir: str, eclipse_name: str, load_addr: int,
     }
 
 
+def _copy_dbc(board) -> None:
+    """Stage the board's DBC beside its images.
+
+    Without this the staged tree is not self-contained: the DBCs live in the
+    firmware project directories, and canbus.find_dbc falls back to the repo
+    root, so copying Tools/fabrica to a bench on its own produced
+
+        no DBC for knob; cannot tell which broadcasts to expect
+
+    and monitor/verify silently degraded to raw ids. The manifest already names
+    the file, so shipping it with the images is what makes that name resolvable
+    away from the checkout.
+    """
+    if not board.dbc:
+        return
+    src = REPO_ROOT / board.dbc
+    if not src.is_file():
+        return
+    dest_dir = FIRMWARE_DIR / board.id
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(src, dest_dir / src.name)
+
+
 def collect_board_artifacts(board) -> dict:
-    return {
+    artifacts = {
         "boot": _copy_srec(board, board.boot_dir, board.boot_eclipse, 0x08000000, "boot"),
         "app": _copy_srec(board, board.app_dir, board.app_eclipse, board.app_origin, "app"),
     }
+    _copy_dbc(board)
+    return artifacts
 
 
 def build_manifest(board_entries: list[dict], gate_passed: bool) -> dict:

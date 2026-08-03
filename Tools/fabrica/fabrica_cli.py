@@ -328,8 +328,9 @@ def cmd_monitor(args) -> int:
         # Only now is a manifest needed - it is what maps a board to its DBC.
         # Plain listening must not require one: watching the bus is the first
         # thing you do on a fresh bench, before any firmware has been staged.
-        board = _resolve_firmware(args).board(args.board)
-        dbc = canbus.find_dbc(board.dbc) if board.dbc else None
+        man = _resolve_firmware(args)
+        board = man.board(args.board)
+        dbc = canbus.find_dbc(board.dbc, man.root) if board.dbc else None
         if dbc:
             db = canbus.load_dbc(dbc)
             print(f"{DIM}decoding with {dbc.name}{RESET}")
@@ -384,7 +385,7 @@ def cmd_verify(args) -> int:
 
     db = None
     if board.dbc:
-        path = canbus.find_dbc(board.dbc)
+        path = canbus.find_dbc(board.dbc, man.root)
         if path:
             db = canbus.load_dbc(path)
     expected = verify.expected_broadcast_ids(db, board.blt_tx)

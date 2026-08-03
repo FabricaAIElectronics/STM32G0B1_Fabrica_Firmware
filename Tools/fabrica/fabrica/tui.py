@@ -188,7 +188,7 @@ class App:
         board = self.board
         db = None
         if board.dbc:
-            path = canbus.find_dbc(board.dbc)
+            path = canbus.find_dbc(board.dbc, self.manifest.root)
             if path:
                 try:
                     db = canbus.load_dbc(path)

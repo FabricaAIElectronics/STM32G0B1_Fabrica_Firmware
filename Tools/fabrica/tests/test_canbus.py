@@ -513,3 +513,28 @@ def test_every_manifest_dbc_name_resolves():
     """The names the manifest uses must actually be findable from a default call."""
     for name in ("PowerStage.dbc", "KincoDrive_ControlModule.dbc", "LEDDriver.dbc"):
         assert find_dbc(name) is not None, f"{name} not resolvable"
+
+
+def test_find_dbc_prefers_the_staged_firmware_directory(tmp_path):
+    """The gate stages each board's DBC beside its images.
+
+    Without searching there, copying Tools/fabrica to a bench on its own left
+    verify reporting "no DBC for knob; cannot tell which broadcasts to expect"
+    - the DBCs live in the firmware project directories, which a copied tool
+    does not have.
+    """
+    staged = tmp_path / "firmware" / "knob"
+    staged.mkdir(parents=True)
+    (staged / "Knob.dbc").write_text("VERSION \"\"\n", encoding="utf-8")
+
+    found = find_dbc("Knob.dbc", tmp_path / "firmware")
+    assert found is not None
+    assert found.parent.name == "knob"
+
+
+def test_find_dbc_falls_back_when_not_staged(tmp_path):
+    """An empty staged dir must not stop the repo-root fallback from running."""
+    empty = tmp_path / "firmware"
+    empty.mkdir()
+    # Nothing staged and nothing named this in the repo either.
+    assert find_dbc("DefinitelyNotAReal.dbc", empty) is None

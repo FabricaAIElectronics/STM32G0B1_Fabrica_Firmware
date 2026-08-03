@@ -118,15 +118,27 @@ def find_dbc(name: str | None,
     """
     if not name:
         return None
-    root = Path(search_root) if search_root is not None else DEFAULT_DBC_SEARCH_ROOT
-    if not root.is_dir():
-        return None
-    direct = root / name
-    if direct.is_file():
-        return direct
-    for found in sorted(root.rglob(name)):
-        if found.is_file():
-            return found
+
+    # search_root first when given (the staged firmware directory, where the
+    # gate now copies each board's DBC beside its images), then the repo root.
+    # Trying both is what lets the same call work from a full checkout and from
+    # a bench that only ever received Tools/fabrica - previously only the
+    # checkout resolved, and a copied tool degraded to raw ids with a message
+    # that read like a missing file rather than a missing repo.
+    roots = []
+    if search_root is not None:
+        roots.append(Path(search_root))
+    roots.append(DEFAULT_DBC_SEARCH_ROOT)
+
+    for root in roots:
+        if not root.is_dir():
+            continue
+        direct = root / name
+        if direct.is_file():
+            return direct
+        for found in sorted(root.rglob(name)):
+            if found.is_file():
+                return found
     return None
 
 

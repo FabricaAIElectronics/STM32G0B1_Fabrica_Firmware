@@ -273,3 +273,24 @@ def test_monitor_without_a_board_needs_no_manifest(tmp_path, monkeypatch):
     rc = cli.main(["--no-colour", "--firmware", str(tmp_path),
                    "monitor", "--seconds", "0.2"])
     assert rc == 1          # "no traffic seen", not a manifest error
+
+
+def test_doctor_accepts_a_loose_firmware_folder(tmp_path, monkeypatch):
+    """A folder of .srec images with no manifest is still usable firmware.
+
+    doctor used to report FAIL on it while flash, list and the TUI all accepted
+    it - so the documented "get doctor green before flashing" workflow could
+    never be satisfied with a loose drop.
+    """
+    d = tmp_path / "knob"
+    d.mkdir()
+    (d / "knob_boot.srec").write_bytes(b"S0 boot\n")
+    (d / "knob_app.srec").write_bytes(b"S0 app\n")
+    monkeypatch.setattr(env, "find_stlink", lambda: ("openocd", "/usr/bin/openocd"))
+    monkeypatch.setattr(env, "find_bootcommander", lambda: "/usr/local/bin/BootCommander")
+    monkeypatch.setattr(env, "can_interfaces", lambda: ["can0"])
+    monkeypatch.setattr(env, "can_link_state",
+                        lambda i: {"present": True, "up": True, "bitrate": "500000"})
+    e = env.doctor(d, iface="can0", bitrate=500000)
+    firmware = [c for c in e.checks if c.name == "firmware"][0]
+    assert firmware.status == env.OK, firmware.detail

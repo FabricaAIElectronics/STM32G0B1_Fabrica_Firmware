@@ -195,7 +195,12 @@ def doctor(firmware_dir: Path | str | None = None, iface: str = "can0",
     # --- firmware manifest ----------------------------------------------
     from .manifest import ManifestError, load_manifest, verify_all
     try:
-        man = load_manifest(firmware_dir)
+        # Accept a loose .srec drop as well as a staged set, exactly as the
+        # flash and list commands do. Without this, doctor reported FAIL on a
+        # perfectly usable folder of images just because it had no manifest.
+        from . import sources
+        found = sources.discover(firmware_dir or "", max_depth=0)
+        man = sources.load(found[0]) if found else load_manifest(firmware_dir)
         problems = verify_all(man)
         if problems:
             env.checks.append(Check(

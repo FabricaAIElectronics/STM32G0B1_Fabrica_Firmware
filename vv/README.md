@@ -48,10 +48,26 @@ with a different CubeIDE than you asked for.
 
 ## Prerequisites
 
+Install the three ST tools first. They are large, licence-gated GUI installers
+that cannot be scripted or vendored, so the gate does not try — it detects them
+and tells you which is missing.
+
+| Tool | Needed for | Without it |
+|---|---|---|
+| **STM32CubeIDE** | headless builds — the `build` and `size` stages | those stages SKIP; nothing is compiled |
+| **STM32CubeProgrammer** | `STM32_Programmer_CLI`, the preferred ST-Link backend | falls back to openocd, which must be **≥ 0.12** for the G0B1 boards (see `Tools/fabrica/README.md`) |
+| **STM32CubeMX** | regenerating peripheral init from the `.ioc` files | only needed when changing pin/clock configuration, not to build or flash |
+
+Then:
+
 - STM32CubeIDE 1.18.0, or set `CUBEIDE=<path to stm32cubeidec.exe>`
 - GNU Arm Embedded Toolchain on `PATH`
 - A native C compiler and `make` — MSYS2: `pacman -S mingw-w64-x86_64-gcc make`
 - `pip install cantools pytest`
+
+Installing **STM32CubeProgrammer on the bench machine** is worth doing even on
+Linux: it is the one backend that handles every board here without a version
+caveat, and it removes the need to build openocd 0.12 for G0B1 SWD flashing.
 
 On Windows, put `C:\msys64\mingw64\bin` and `C:\msys64\usr\bin` on `PATH`
 **ahead of** `C:\Program Files (x86)\GnuWin32\bin`. GnuWin32's `make` 3.81 hands

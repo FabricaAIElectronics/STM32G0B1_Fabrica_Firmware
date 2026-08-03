@@ -96,13 +96,22 @@ static void Apply_Config(void)
         fan_ctrl_on();
         fan_ctrl_speed(&fan, g_config.fan_default_duty);
     } else if (fan.Mode == FAN_ON_AUTO) {
-        /* AUTO will be handled by FAN_AutoControl() each cycle;
-         * just load the duty, don't force the fan on yet. */
-        fan.dutycycle_pct = g_config.fan_default_duty;
+        /* AUTO will be handled by FAN_AutoControl() each cycle. Start from a
+         * reported 0 rather than loading fan_default_duty: the fan is not
+         * running yet, and FAN_AutoControl() decides the duty from temperature
+         * on its first pass - immediately, if the board is already above
+         * auto_on_temp. */
+        fan_ctrl_speed(&fan, 0);
     } else {
         fan_ctrl_off();
-        fan.dutycycle_pct = g_config.fan_default_duty;
+        fan_ctrl_speed(&fan, 0);
     }
+    /* Both non-ON branches used to assign fan.dutycycle_pct directly from the
+     * config default, so the first BCAST_FAN after every boot reported that
+     * duty with the fan switched off - observed on the bench as 0x153 byte 1 =
+     * 20 while byte 0 said OFF. Same defect as the CMD_FAN path, and it has to
+     * be fixed in both places or the broadcast is honest only after the host
+     * has sent a command. */
 
     for (uint8_t i = 0; i < RAIL_COUNT; i++){
     	if((g_config.hs_default_state>>i)&0x01){
@@ -195,14 +204,34 @@ static void Handle_CAN_Commands(void)
     /* ── Fan ─────────────────────────────────────────────── */
     if (can_rxMessage.fan_cmd_received) {
         can_rxMessage.fan_cmd_received = 0;
-        fan.Mode          = (fanMode_t)can_rxMessage.fan_mode;
-        fan.dutycycle_pct = can_rxMessage.fan_duty;
+        fan.Mode = (fanMode_t)can_rxMessage.fan_mode;
+
+        /* Optional tuning fields, present only on the longer CMD_FAN forms.
+         * Applied before the mode is acted on so a single frame can set a
+         * threshold and select AUTO at the same time. */
+        if (can_rxMessage.fan_cfg_valid) {
+            fan.min_dutycycle = can_rxMessage.fan_min_duty;
+            /* Hysteresis is only meaningful with on > off; a pair that does not
+             * satisfy that would either chatter or latch, so it is rejected in
+             * can_operation.c and never reaches here. */
+            fan.auto_on_temp  = can_rxMessage.fan_auto_on_temp;
+            fan.auto_off_temp = can_rxMessage.fan_auto_off_temp;
+        }
+
+        /* dutycycle_pct is what BCAST_FAN reports, and fan_ctrl_speed() is the
+         * only thing that writes the timer compare - so it must never be
+         * assigned directly. It used to be set unconditionally here, which made
+         * FAN_OFF and FAN_ON_AUTO report a duty that had not been applied to
+         * the hardware, and bypassed the min_dutycycle clamp on the way. */
         if (fan.Mode == FAN_ON) {
             fan_ctrl_on();
-            fan_ctrl_speed(&fan, fan.dutycycle_pct);
+            fan_ctrl_speed(&fan, can_rxMessage.fan_duty);
         } else if (fan.Mode == FAN_OFF) {
             fan_ctrl_off();
+            fan_ctrl_speed(&fan, 0);
         }
+        /* FAN_ON_AUTO deliberately does nothing else: FAN_AutoControl() owns
+         * the duty in that mode and sets it from temperature every cycle. */
     }
 
     /* ── HS switch enable/disable ────────────────────────── *

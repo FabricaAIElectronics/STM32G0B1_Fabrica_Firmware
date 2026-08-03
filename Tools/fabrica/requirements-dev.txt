@@ -1,0 +1,11 @@
+# Development / test dependencies, on top of requirements.txt.
+#
+#   pip install -r requirements.txt -r requirements-dev.txt
+#   python -m pytest Tools/fabrica/tests -q
+#
+# The suite needs no hardware: subprocess calls sit behind an injectable seam
+# and the CAN tests use python-can's virtual backend.
+
+-r requirements.txt
+
+pytest>=8.0

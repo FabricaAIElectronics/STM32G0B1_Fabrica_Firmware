@@ -1,0 +1,12 @@
+# STM32CubeIDE build outputs — rebuild from source, do not commit
+Debug/
+Release/
+build/
+
+# Eclipse / CubeIDE scratch
+.metadata/
+mx.scratch
+
+# OS files
+.DS_Store
+Thumbs.db

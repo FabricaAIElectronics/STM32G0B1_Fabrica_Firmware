@@ -308,13 +308,69 @@ static void State_Recovery(AppStateMachine *sm)
  *  Apply PWM values from can_rxMessage (set by FDCAN RX ISR) to hardware.
  *=========================================================================*/
 static void ProcessCANCommands(AppStateMachine *sm)
-{	if(can_rxMessage.newcommandreceived==1){
-    sm->ledCtrl.pwm[0] = (uint8_t)can_rxMessage.pwm[0];
-    sm->ledCtrl.pwm[1] = (uint8_t)can_rxMessage.pwm[1];
-    sm->ledCtrl.pwm[2] = (uint8_t)can_rxMessage.pwm[2];
+{
+    uint8_t pwm[3];
+    uint8_t pending;
+
+    /* Take the flag and the payload together, with the RX interrupt masked.
+     *
+     * The clear used to sit OUTSIDE the `if`, which loses commands: when the
+     * FDCAN RX ISR ran between the test reading 0 and the unconditional
+     * `newcommandreceived = 0`, that command's flag was wiped without the
+     * payload ever being applied. The LEDs kept the previous duty and nothing
+     * anywhere reported a problem - BCAST_LIGHTSTATUS used to echo
+     * can_rxMessage.pwm[], which the ISR always writes, so the telemetry
+     * claimed the new value while the hardware sat at the old one. Two
+     * back-to-back HIL runs caught it once the broadcast started reporting the
+     * applied duty instead.
+     *
+     * Clearing inside the guard fixes the loss; masking the interrupt across
+     * the copy also stops a command that lands mid-copy from being applied as
+     * a mix of old and new channels. Anything arriving after the unmask simply
+     * re-arms the flag and is handled on the next pass. */
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    pending = can_rxMessage.newcommandreceived;
+    if (pending) {
+        pwm[0] = (uint8_t)can_rxMessage.pwm[0];
+        pwm[1] = (uint8_t)can_rxMessage.pwm[1];
+        pwm[2] = (uint8_t)can_rxMessage.pwm[2];
+        can_rxMessage.newcommandreceived = 0U;
+    }
+    __set_PRIMASK(primask);
+
+    if (!pending) {
+        return;
+    }
+
+    /* Do not drive the LEDs while the undervoltage shutdown is in force.
+     *
+     * State_Error turns the outputs off once, on entry, to shed load - but this
+     * function is called from State_Error every pass (so the host can still
+     * change UV thresholds, buck mode and EEPROM), and applying PWM here put
+     * them straight back on. A single LIGHTSET during a brownout therefore
+     * defeated the protection, and because the entry action is one-shot
+     * (`enteredError`), nothing turned them off again for as long as the error
+     * persisted.
+     *
+     * The command is not lost by being ignored here: the ISR has already stored
+     * it in can_rxMessage.pwm[], and State_Recovery's success path re-applies
+     * from exactly that buffer when the rails come back. Consuming the flag
+     * without acting on it is therefore the correct behaviour, not a dropped
+     * command.
+     *
+     * ledCtrl is deliberately left untouched as well. It is what
+     * BCAST_LIGHTSTATUS reports, and writing the commanded duty into it while
+     * the outputs are off would reintroduce exactly the telemetry-versus-reality
+     * gap that reporting the applied value was meant to close. */
+    if (sm->state == STATE_ERROR) {
+        return;
+    }
+
+    sm->ledCtrl.pwm[0] = pwm[0];
+    sm->ledCtrl.pwm[1] = pwm[1];
+    sm->ledCtrl.pwm[2] = pwm[2];
     apply_pwm(&sm->ledCtrl);
-}
-can_rxMessage.newcommandreceived = 0;
 }
 
 /*=========================================================================
@@ -468,10 +524,24 @@ static void BroadcastTick(AppStateMachine *sm)
     if ((now - last_tick) < BCAST_PHASE_INTERVAL_MS) return;
     last_tick = now;
 
-    /* Refresh status payload from latest CAN-set values before emitting. */
-    sm->ledStatus.pwm[0] = (uint16_t)can_rxMessage.pwm[0];
-    sm->ledStatus.pwm[1] = (uint16_t)can_rxMessage.pwm[1];
-    sm->ledStatus.pwm[2] = (uint16_t)can_rxMessage.pwm[2];
+    /* Report the APPLIED duty, not the commanded one.
+     *
+     * ledCtrl.pwm[] is the array apply_pwm() converts into the TIM1 compare
+     * registers, so it is by definition what the outputs are doing; every path
+     * that drives the LEDs writes it and then calls apply_pwm() - init,
+     * ProcessCANCommands(), the State_Error shutdown, and the State_Recovery
+     * restore. can_rxMessage.pwm[] is only ever the last value the host asked
+     * for, which the firmware is free not to honour.
+     *
+     * These diverge exactly when it matters most. State_Error forces the duty
+     * to 0 on entry to shed load during an undervoltage, while
+     * can_rxMessage.pwm[] still holds the commanded value - so 0x179 used to
+     * report 70% with the outputs at zero, and a host had no way to tell from
+     * this frame alone. Sourcing the payload from ledCtrl makes the broadcast
+     * describe the hardware instead of the request. */
+    sm->ledStatus.pwm[0] = (uint16_t)sm->ledCtrl.pwm[0];
+    sm->ledStatus.pwm[1] = (uint16_t)sm->ledCtrl.pwm[1];
+    sm->ledStatus.pwm[2] = (uint16_t)sm->ledCtrl.pwm[2];
 
     switch (phase) {
         case 0:

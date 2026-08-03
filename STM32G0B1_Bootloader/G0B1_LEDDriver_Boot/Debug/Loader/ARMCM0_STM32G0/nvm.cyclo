@@ -1,6 +1,0 @@
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/nvm.c:57:6:NvmInit	1
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/nvm.c:79:10:NvmWrite	1
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/nvm.c:120:10:NvmErase	1
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/nvm.c:160:10:NvmVerifyChecksum	1
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/nvm.c:178:10:NvmGetUserProgBaseAddress	1
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/ARMCM0_STM32G0/nvm.c:193:10:NvmDone	2

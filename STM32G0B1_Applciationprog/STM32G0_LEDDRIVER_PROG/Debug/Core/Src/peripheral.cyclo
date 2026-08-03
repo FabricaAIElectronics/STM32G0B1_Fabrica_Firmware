@@ -1,6 +1,0 @@
-../Core/Src/peripheral.c:17:6:apply_pwm	9
-../Core/Src/peripheral.c:34:7:SET_BUCK	3
-../Core/Src/peripheral.c:47:11:READADC	3
-../Core/Src/peripheral.c:64:6:processADC	3
-../Core/Src/peripheral.c:81:6:TrigerADCMEasurement	1
-../Core/Src/peripheral.c:86:6:HAL_ADC_ConvCpltCallback	2

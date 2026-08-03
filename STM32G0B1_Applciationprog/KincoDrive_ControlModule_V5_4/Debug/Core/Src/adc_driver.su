@@ -1,3 +1,0 @@
-../Core/Src/adc_driver.c:17:5:Calibrate_ADC1	8	static
-../Core/Src/adc_driver.c:25:5:Start_ADC1_DMA	8	static
-../Core/Src/adc_driver.c:32:10:adc_to_mV	16	static

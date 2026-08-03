@@ -85,7 +85,7 @@ Direction  | CAN ID | Name              | DLC | Sender      | Cycle
 -----------+--------+-------------------+-----+-------------+-------
 RX (boot)  | 0x130  | DEVICE_ADDR       |  2  | Master      | Event
 TX (boot)  | 0x131  | PS_Bootloader_TX  |  -  | PowerStage  | Event (XCP)
-RX (cmd)   | 0x140  | CMD_FAN           |  2  | Master      | Event
+RX (cmd)   | 0x140  | CMD_FAN           |  5  | Master      | Event
 RX (cmd)   | 0x141  | CMD_HS            |  5  | Master      | Event
 RX (cmd)   | 0x142  | CMD_OC            |  4  | Master      | Event
 RX (cmd)   | 0x143  | CMD_EEPROM        |  1  | Master      | Event
@@ -96,7 +96,7 @@ RX (cmd)   | 0x147  | CMD_BAT_CFG       |  1  | Master      | Event
 TX (bcast) | 0x150  | BCAST_HS_STATE    |  5  | PowerStage  | 500 ms
 TX (bcast) | 0x151  | BCAST_HS_CURR_A   |  8  | PowerStage  | 500 ms
 TX (bcast) | 0x152  | BCAST_VOLTAGE    |  8  | PowerStage  | 500 ms
-TX (bcast) | 0x153  | BCAST_FAN         |  4  | PowerStage  | 500 ms
+TX (bcast) | 0x153  | BCAST_FAN         |  7  | PowerStage  | 500 ms
 TX (bcast) | 0x154  | BCAST_EEPROM      |  8  | PowerStage  | 500 ms
 TX (bcast) | 0x155  | BCAST_HS_CURR_B   |  4  | PowerStage  | 500 ms
 TX (bcast) | 0x156  | BCAST_UV          |  6  | PowerStage  | 500 ms
@@ -123,16 +123,33 @@ System-level device commands. Also the bootloader RX after reset.
 
 ---
 
-### 0x140 — CMD_FAN (RX, DLC = 2)
+### 0x140 — CMD_FAN (RX, DLC = 5)
 
-Set fan operating mode and manual duty cycle.
+Set fan operating mode, manual duty cycle, and AUTO tuning.
 
 | Byte | Signal | Values | Description |
 |---|---|---|---|
 | 0 | `Fan_Mode` | 0 = OFF, 1 = ON_MANUAL, 2 = AUTO | Operating mode |
 | 1 | `Fan_Duty` | 0-100 | Duty cycle %. Only applied when Mode = 1 |
+| 2 | `Fan_Min_Duty` | 0-100 | Minimum duty for a *running* fan (anti-stall). 0 is never clamped - stop is always honoured |
+| 3 | `Fan_Auto_On_Temp` | 0-150 | AUTO turns ON at or above this C |
+| 4 | `Fan_Auto_Off_Temp` | 0-150 | AUTO turns OFF below this C |
 
-**AUTO mode behaviour:** Fan turns ON at full speed when temperature >= `Cfg_Fan_Auto_On_Temp` and turns OFF when temperature < `Cfg_Fan_Auto_Off_Temp` (hysteresis).
+**Two forms.** `DLC = 2` sets mode and duty only and is unchanged from earlier
+firmware, so existing hosts keep working. `DLC = 5` additionally sets the AUTO
+tuning, which before was reachable only by reflashing the EEPROM defaults.
+
+**Tuning is applied as a group, or not at all.** Bytes 2-4 take effect only when
+`Fan_Auto_On_Temp > Fan_Auto_Off_Temp`. An inverted or equal pair would make the
+hysteresis latch on its first crossing and never release, leaving the fan stuck
+on, so the firmware rejects the whole group rather than half-applying it.
+
+**Live, not saved.** Values set here take effect immediately but are not
+persisted; send `CMD_EEPROM` (0x143) to commit them. Read them back from
+`BCAST_FAN` (0x153) bytes 4-6, *not* from `BCAST_EEPROM` (0x154), which echoes
+the saved config and will still show the old values until you save.
+
+**AUTO mode behaviour:** Fan turns ON at full speed when temperature >= `Fan_Auto_On_Temp` and turns OFF when temperature < `Fan_Auto_Off_Temp` (hysteresis). In AUTO the duty is owned by the temperature controller, so `Fan_Duty` is ignored.
 
 ---
 
@@ -298,15 +315,27 @@ Voltage values are `uint16_t mV` big-endian. **Scale x 0.001 to get Volts.**
 
 ---
 
-### 0x153 — BCAST_FAN (TX, DLC = 4)
+### 0x153 — BCAST_FAN (TX, DLC = 7)
 
-Periodic broadcast of fan state and NTC temperature.
+Periodic broadcast of fan state, NTC temperature, and the live AUTO tuning.
 
 | Bytes | Signal | Type | Scale | Unit | Description |
 |---|---|---|---|---|---|
 | 0 | `Fan_Mode_State` | uint8 | x 1 | — | 0=OFF 1=ON_MANUAL 2=AUTO |
-| 1 | `Fan_Duty_State` | uint8 | x 1 | % | Current duty cycle 0-100 |
+| 1 | `Fan_Duty_State` | uint8 | x 1 | % | **Applied** duty cycle 0-100 |
 | 2-3 | `Temperature_C` | int16 big-endian | x 0.1 | C | NTC temperature x 10. `0x00FD` = 25.3 C |
+| 4 | `Fan_Min_Duty_State` | uint8 | x 1 | % | Live anti-stall floor |
+| 5 | `Fan_Auto_On_Temp_State` | uint8 | x 1 | C | Live AUTO on threshold |
+| 6 | `Fan_Auto_Off_Temp_State` | uint8 | x 1 | C | Live AUTO off threshold |
+
+`Fan_Duty_State` is the duty actually programmed into the timer, not the last
+value commanded. In AUTO the controller sets it from temperature, and when the
+fan is off it reads 0.
+
+Bytes 4-6 report the tuning **currently in force**. `BCAST_EEPROM` (0x154)
+reports the **saved** config instead, so a threshold set over CAN but not yet
+committed appears here and not there. Bytes 0-3 are unchanged from earlier
+firmware.
 
 ---
 

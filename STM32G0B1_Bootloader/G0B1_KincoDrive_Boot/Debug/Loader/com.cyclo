@@ -1,8 +1,0 @@
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/com.c:524:13:ComTimeoutReset	1
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/com.c:119:6:ComInit	1
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/com.c:265:6:ComFree	1
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/com.c:287:6:ComTransmitPacket	2
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/com.c:351:12:ComGetActiveInterfaceMaxRxLen	5
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/com.c:397:12:ComGetActiveInterfaceMaxTxLen	1
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/com.c:442:10:ComIsConnected	1
-C:/Users/jorda/Documents/GitHub/openblt/Target/Source/com.c:172:6:ComTask	5

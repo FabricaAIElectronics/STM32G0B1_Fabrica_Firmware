@@ -33,7 +33,17 @@ void fan_ctrl_off(){
 }
 
 void fan_ctrl_speed(FanCTRL_t *f, uint8_t dutycycle){
-	if(dutycycle < f->min_dutycycle){
+	/* Zero means STOP and is never clamped.
+	 *
+	 * min_dutycycle exists so a *running* fan is not commanded below the duty
+	 * at which it stalls; it was never meant to prevent stopping. Clamping 0
+	 * up to min_dutycycle made FAN_AutoControl's off branch - which calls
+	 * fan_ctrl_speed(f, 0) - leave a 5 % compare value behind and report duty
+	 * 5 on BCAST_FAN after the fan had been switched off. */
+	if(dutycycle == 0U){
+		f->dutycycle_pct = 0U;
+	}
+	else if(dutycycle < f->min_dutycycle){
 		f->dutycycle_pct = f->min_dutycycle;
 	}
 	else{

@@ -87,7 +87,12 @@ CM_ BO_ 368 "CMD 0x170 (CMD_LIGHTSET): set 3-channel PWM duty cycle (0-100% per 
 CM_ BO_ 369 "CMD 0x171 (CMD_VOLTAGESET): set UV thresholds (V24, V17.5) in mV big-endian, AND buck control mode (byte 4: 0=MANUAL_OFF, 1=MANUAL_ON, 2=AUTO). DLC=5; older DLC=4 frames preserve previous mode. AUTO mode ties buck-enable to V24 >= UV_24V_mV threshold.";
 CM_ BO_ 370 "CMD 0x172 (CMD_EEPROMSET): EEPROM action flags. Save and LoadDefault may be sent in the same frame; firmware processes Save before LoadDefault.";
 CM_ BO_ 376 "BCAST 0x178 (BCAST_EEPROMDATA): echo of EEPROM-stored config (UV thresholds + PWM defaults + buck mode). DLC=8. Broadcast at ~3.3 Hz alongside BCAST_LIGHTSTATUS and BCAST_DEVSTATUS in a phased scheduler so the host always has a recent snapshot.";
-CM_ BO_ 377 "BCAST 0x179 (BCAST_LIGHTSTATUS): live PWM levels, voltages, and a wrapping heartbeat counter.";
+CM_ BO_ 377 "BCAST 0x179 (BCAST_LIGHTSTATUS): APPLIED PWM levels, voltages, and a
+wrapping heartbeat counter. The PWM bytes report the duty currently programmed
+into the timer, not the last value commanded by CMD_LIGHTSET - during an
+undervoltage the driver forces the outputs to 0 and this frame reports 0 while
+the commanded value is unchanged. Read 0x17A BCAST_DEVSTATUS for the state and
+error code that explain why.";
 CM_ BO_ 378 "BCAST 0x17A (BCAST_DEVSTATUS): system state (init/load/running/error/recovery) and per-bit error flags.";
 
 CM_ SG_ 352 Boot_Cmd "0xFF (DLC=2) = software reset and re-enter OpenBLT bootloader.";

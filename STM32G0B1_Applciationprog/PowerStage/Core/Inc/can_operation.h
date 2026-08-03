@@ -195,6 +195,16 @@ typedef struct {
     uint8_t     fan_duty;               // 0–100 %
     uint8_t     fan_cmd_received;       // set in ISR, clear after applying
 
+    /* AUTO tuning, carried only by the DLC=5 form of CMD_FAN. Before this the
+     * thresholds could only be changed by reflashing the EEPROM defaults.
+     * fan_cfg_valid is 0 for a short frame, and also for a rejected
+     * (on <= off) hysteresis pair, so the applier can tell "not supplied"
+     * from "supplied and usable". */
+    uint8_t     fan_min_duty;           // 0–100 %, floor for a *running* fan
+    uint8_t     fan_auto_on_temp;       // °C, AUTO turns on at or above this
+    uint8_t     fan_auto_off_temp;      // °C, AUTO turns off below this
+    uint8_t     fan_cfg_valid;          // 1 = the three fields above are set
+
     /* --- HS switch --- */
     uint8_t     hs_state[RAIL_COUNT];   // per-rail: 0=disable, 1=enable
     uint8_t     hs_cmd_received;
@@ -350,7 +360,7 @@ void CAN_Broadcast_EEPROM(Config *cfg);
 /* [0x156] UV thresholds from active uv_status */
 void CAN_Broadcast_UV(void);
 
-/* [0x157 + 0x158] OC thresholds per rail from oc_status */
+/* [0x157] OC thresholds per rail from oc_status */
 void CAN_Broadcast_OC_Config(void);
 
 /* [0x159] SW pin state, V_LED_PWR state, relay status */

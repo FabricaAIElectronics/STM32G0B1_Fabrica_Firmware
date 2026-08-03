@@ -336,7 +336,8 @@ def cmd_verify(args) -> int:
     try:
         results = verify.run_all(bus, board, db, expected,
                                  include_reset=args.include_reset,
-                                 seconds=args.seconds)
+                                 seconds=args.seconds,
+                                 allow_actuate=args.allow_actuate)
     finally:
         bus.shutdown()
 
@@ -404,6 +405,9 @@ def build_parser() -> argparse.ArgumentParser:
     v.add_argument("board")
     v.add_argument("--allow-transmit", action="store_true",
                    help="required: this sends frames on a possibly shared bus")
+    v.add_argument("--allow-actuate", action="store_true",
+                   help="permit a causal check whose command drives hardware "
+                        "(KincoDrive: switches the high-side power rails)")
     v.add_argument("--include-reset", action="store_true",
                    help="also send the bootloader trigger, stopping the board")
     v.add_argument("--seconds", type=float, default=3.0)

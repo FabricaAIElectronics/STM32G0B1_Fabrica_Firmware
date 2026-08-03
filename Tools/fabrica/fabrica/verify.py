@@ -46,12 +46,13 @@ class VerifyResult:
 #: Each pair must be a genuine ECHO: a command field the board reflects back in
 #: telemetry. That is what makes equality a valid assertion.
 #:
-#: KincoDrive deliberately does NOT use its fan command here. Its Bcast_Fans
-#: (0x123) carries fan TACHOMETER percent, a measured quantity - a real fan
-#: takes time to spin up and never reports exactly the commanded duty, so
-#: asserting equality against it would produce a check that fails on correct
-#: hardware. Its OC threshold echo in Bcast_Config_A is a true echo and moves
-#: nothing physical.
+#: Two things that look like echoes and are not:
+#:   * a MEASURED value. KincoDrive's Bcast_Fans (0x123) is fan TACHOMETER
+#:     percent; a real fan takes time to spin up and never reports exactly the
+#:     commanded duty.
+#:   * a STORED value. KincoDrive's Bcast_Config_A (0x126) packs
+#:     EEPROM_GetCachedConfig(), so a RAM-only Cmd_OC_Threshold correctly does
+#:     not move it until a CMD_EEPROM save.
 #:
 #: raw_index is the payload byte to compare when no DBC is loaded.
 STIMULUS = {
@@ -62,13 +63,26 @@ STIMULUS = {
         "signal": "Fan_Duty_State", "raw_index": 1,
         "values": (30, 70),
     },
+    # KincoDrive has NO non-actuating echo, so its causal check is opt-in.
+    #
+    # Cmd_OC_Threshold -> Bcast_Config_A looks like an echo and is not:
+    # send_bcast_config_a() packs EEPROM_GetCachedConfig(), while
+    # Cmd_OC_Threshold sets the live protection threshold and is documented as
+    # RAM-only until a CMD_EEPROM save. Pairing them produced a confident
+    # "the command is not reaching the telemetry" against a board doing exactly
+    # what it was designed to do.
+    #
+    # The only genuine live-state echo this board has is Cmd_HS_Power ->
+    # Bcast_GPIO, and that physically switches the high-side power rails. That
+    # is a real-world side effect, so it requires --allow-actuate rather than
+    # riding along with the other checks.
     "kincodrive": {
-        "cmd_id": 0x113, "cmd_name": "Cmd_OC_Threshold",
-        "bcast_id": 0x126, "bcast_name": "Bcast_Config_A",
-        # three little-endian uint16 thresholds in mA; vary the first
-        "payload_for": lambda v: bytes([v, 0]) + bytes([0xE8, 0x03]) * 2,
-        "signal": "Cfg_OC_DR_mA", "raw_index": 1,    # byte 0 is Cfg_HS_State
-        "values": (30, 70),
+        "cmd_id": 0x110, "cmd_name": "Cmd_HS_Power",
+        "bcast_id": 0x124, "bcast_name": "Bcast_GPIO",
+        "payload_for": lambda v: bytes([v]),      # bitmask of rail enables
+        "signal": None, "raw_index": 0,
+        "values": (0x0F, 0x0F),   # read-modify-nothing: assert the state holds
+        "actuates": "switches the high-side power rails on this board",
     },
     # The knob echoes the commanded common-line mask back in KNOBSTATE within
     # one 500 ms GPIO update tick, so this is a true echo. It only toggles the
@@ -136,13 +150,30 @@ def check_unsolicited(bus, board, db, expected_ids: set[int],
         f"all {len(expected_ids)} broadcasts arrived unsolicited", evidence)
 
 
-def check_command_changes_telemetry(bus, board, db, timeout: float = 3.0
+def check_command_changes_telemetry(bus, board, db, timeout: float = 3.0,
+                                    allow_actuate: bool = False
                                     ) -> VerifyResult:
-    """Property 2: a command visibly changes the telemetry it governs."""
+    """Property 2: a command visibly changes the telemetry it governs.
+
+    The command/telemetry pair must be a genuine ECHO - a field the board
+    reflects back - or equality is not a valid assertion. Two ways that goes
+    wrong, both learned the hard way:
+
+      * a MEASURED quantity is not an echo. A fan tachometer never reports
+        exactly the commanded duty.
+      * a CONFIGURATION echo may report stored settings rather than live ones.
+        KincoDrive's Bcast_Config_A packs the EEPROM cache, so a RAM-only
+        Cmd_OC_Threshold correctly does not move it.
+    """
     spec = STIMULUS.get(board.id)
     if spec is None:
         return VerifyResult("causal", SKIP,
                             f"no stimulus defined for {board.id}", [])
+    if spec.get("actuates") and not allow_actuate:
+        return VerifyResult(
+            "causal", SKIP,
+            f"{board.id}'s only genuine echo is {spec['cmd_name']}, which "
+            f"{spec['actuates']}. Pass --allow-actuate to run it.", [])
 
     observations = []
     for value in spec["values"]:
@@ -272,11 +303,12 @@ def check_reset_enters_bootloader(bus, board, quiet_for: float = 4.0,
 
 
 def run_all(bus, board, db, expected_ids: set[int], *,
-            include_reset: bool = False, seconds: float = 3.0
-            ) -> list[VerifyResult]:
+            include_reset: bool = False, seconds: float = 3.0,
+            allow_actuate: bool = False) -> list[VerifyResult]:
     """Run the checks in order. The reset check is last: it stops the board."""
     results = [check_unsolicited(bus, board, db, expected_ids, seconds)]
-    results.append(check_command_changes_telemetry(bus, board, db))
+    results.append(check_command_changes_telemetry(
+        bus, board, db, allow_actuate=allow_actuate))
     if include_reset:
         results.append(check_reset_enters_bootloader(bus, board))
     else:

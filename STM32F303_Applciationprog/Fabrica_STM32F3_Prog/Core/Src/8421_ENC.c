@@ -66,6 +66,35 @@ uint16_t readEncoderPos( Encoder *enc){
 	return value;
 }
 
+/* Debounced read. A single pass over the four BCD lines catches whatever
+ * happens to be on them at that instant, so a line still settling reads as a
+ * position several counts away from the truth. That is what produced spurious
+ * entries in the error counters: the reading was wrong, not the encoder.
+ *
+ * Sample ENC_DEBOUNCE_SAMPLES times and only report the value if every sample
+ * agreed. `stable` tells the caller whether to trust the result at all. */
+uint16_t readEncoderPosStable(Encoder *enc, uint8_t *stable)
+{
+	uint16_t first = readEncoderPos(enc);
+	uint8_t  agree = 1U;
+
+	for (uint8_t s = 1U; s < ENC_DEBOUNCE_SAMPLES; s++) {
+		for (volatile uint32_t d = 0U; d < ENC_DEBOUNCE_SETTLE; d++) {
+			__NOP();
+		}
+		if (readEncoderPos(enc) != first) {
+			agree = 0U;
+			/* Keep sampling rather than returning early: the loop is short and
+			 * a constant execution time keeps the 100 ms tick predictable. */
+		}
+	}
+
+	if (stable != NULL) {
+		*stable = agree;
+	}
+	return first;
+}
+
 uint16_t readEncoderbutton(Encoder *enc){
 	uint8_t state =0;
 	state = HAL_GPIO_ReadPin(enc->but_port, enc->but_pin);

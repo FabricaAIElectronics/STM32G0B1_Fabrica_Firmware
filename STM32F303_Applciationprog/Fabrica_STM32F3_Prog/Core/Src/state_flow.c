@@ -31,6 +31,23 @@ uint8_t State = 0x00;
 #define INIT_DURATION 500
 #define ERROR_CHECK_DURATION 100
 #define ERROR_RESET_DURATION 2000
+
+/* Sustained-evidence window for the encoder fault check.
+ *
+ * One sample every ERROR_CHECK_DURATION ms, and a fault is only declared when
+ * at least ERROR_WINDOW_MIN_BAD of the last ERROR_WINDOW_SAMPLES samples were
+ * bad. At 100 ms that is 4 bad readings inside a 500 ms window.
+ *
+ * The previous logic incremented a counter that was never decremented - the
+ * decrement was commented out - so six transient glitches at ANY point in the
+ * board's life latched an error bit permanently. Combined with an undebounced
+ * GPIO read, the counters reported faults that were really just noise while a
+ * knob was being turned. The window is a shift register, so it self-clears:
+ * stop seeing bad samples and the count falls back to zero on its own. */
+#define ERROR_WINDOW_SAMPLES 5U
+#define ERROR_WINDOW_MIN_BAD 4U
+#define ERROR_DELTA_FAULT    3U   /* counts of jump that look like a fault  */
+#define ERROR_DELTA_WRAP     8U   /* above this it is 15->0 wraparound      */
 unsigned long timer_count = 0;
 unsigned long last_timer_init = 0;
 unsigned long last_timer_precheck =0;
@@ -42,6 +59,21 @@ uint8_t pre_pos[3];
 uint8_t error_flag=0;
 uint8_t error_state = 0;
 uint8_t error_count[3] = {0,0,0};
+/* One bit per sample, newest in bit 0. Only the low ERROR_WINDOW_SAMPLES bits
+ * are examined, so this is a rolling 500 ms view of each encoder. */
+static uint8_t error_hist[3] = {0,0,0};
+
+/* How many of the last ERROR_WINDOW_SAMPLES samples were bad. */
+static uint8_t error_window_bad(uint8_t hist)
+{
+	uint8_t bad = 0U;
+	for (uint8_t b = 0U; b < ERROR_WINDOW_SAMPLES; b++) {
+		if (hist & (1U << b)) {
+			bad++;
+		}
+	}
+	return bad;
+}
 // only start running when everything is initialized
 void Operation_run(){
 	switch(State){
@@ -141,32 +173,44 @@ void Operation_run(){
 			 * spurious position deltas appear, producing false error_state
 			 * bits. Logical negation is what was meant. */
 			if(!gpio_flag_check()){
-			uint8_t delta[3] = {0,0,0};
 			for(int i =0; i<3; i++){
-			delta[i] = abs(pre_pos[i]-readEncoderPos(encoders[i]));
-			if((delta[i])>8) delta[i]=1;
-//			if((delta[i])<8) delta[i] +=16;
-			if(delta[i]>=3){
-				error_count[i]++;
-				if(error_count[i]>5){
-				error_state |= 1<<i;
-				}
-			}
-			else{
-//				error_state &= ~(1<<i);
-//				if(error_count[i]!=0)
-//				error_count[i]--;
-//				pre_pos[i] = readEncoderPos(encoders[i]);
-				encoders[i]->pos = readEncoderPos(encoders[i]);
-				encoders[i]->but_state = readEncoderbutton(encoders[i]);
+			uint8_t stable = 0U;
+			uint8_t pos = (uint8_t)readEncoderPosStable(encoders[i], &stable);
+			uint8_t bad;
 
+			if (!stable) {
+				/* The lines disagreed with themselves inside one read. That is
+				 * an untrustworthy sample, so record it as bad and move on -
+				 * one bad sample cannot declare a fault by itself. Crucially
+				 * pre_pos is NOT updated from a value we do not believe. */
+				bad = 1U;
+			} else {
+				uint8_t delta = (uint8_t)abs((int)pre_pos[i] - (int)pos);
+				if (delta > ERROR_DELTA_WRAP) {
+					/* 4-bit encoder: a large delta is the 15->0 wrap, not a jump. */
+					delta = (uint8_t)(16U - delta);
+				}
+				bad = (delta >= ERROR_DELTA_FAULT) ? 1U : 0U;
+				if (!bad) {
+					encoders[i]->pos = pos;
+					encoders[i]->but_state = readEncoderbutton(encoders[i]);
+				}
+				pre_pos[i] = pos;
 			}
-			pre_pos[i] = readEncoderPos(encoders[i]);
-//			encoders[i]->pos = readEncoderPos(encoders[i]);
-//			encoders[i]->but_state = readEncoderbutton(encoders[i]);
+
+			/* Shift the verdict into the rolling window and judge the window,
+			 * never the single sample. */
+			error_hist[i] = (uint8_t)((error_hist[i] << 1) | bad);
+			error_count[i] = error_window_bad(error_hist[i]);
+
+			if (error_count[i] >= ERROR_WINDOW_MIN_BAD) {
+				error_state |= (uint8_t)(1U << i);
+			} else if (error_count[i] == 0U) {
+				/* A full clean window clears the fault: a knob that was noisy
+				 * while being handled must not stay flagged forever. */
+				error_state &= (uint8_t)~(1U << i);
 			}
-			//send error data
-//			CAN_Update_ErrorCount(delta,3); for checking how much delta
+			}
 			}
 
 			last_timer_running_error_check = HAL_GetTick();

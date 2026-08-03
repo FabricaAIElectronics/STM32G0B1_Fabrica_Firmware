@@ -22,7 +22,10 @@ def test_bootloader_ids_are_unique():
 
 def test_knob_is_the_only_exempt_board():
     assert [b.id for b in BOARDS if b.address_plan_exempt] == ["knob"]
-    assert board_by_id("knob").dbc is None
+    # The knob now HAS a DBC (authored from the firmware and validated against
+    # real captured frames), but it is still absent from Docs/CAN_Bus.md and
+    # still exempt from the address plan.
+    assert board_by_id("knob").dbc is not None
     assert board_by_id("knob").in_bus_doc is False
 
 

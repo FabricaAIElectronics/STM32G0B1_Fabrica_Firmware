@@ -1,0 +1,68 @@
+VERSION "Fabrica operation knob (STM32F303RE)"
+
+
+NS_ :
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	BA_DEF_DEF_
+
+BS_:
+
+BU_: Host Knob
+
+
+BO_ 1633 KNOBSTATE: 8 Knob
+ SG_ Enc0_Pos : 0|8@1+ (1,0) [0|15] "" Host
+ SG_ Enc0_Button : 8|8@1+ (1,0) [0|1] "" Host
+ SG_ Enc1_Pos : 16|8@1+ (1,0) [0|15] "" Host
+ SG_ Enc1_Button : 24|8@1+ (1,0) [0|1] "" Host
+ SG_ Enc2_Pos : 32|8@1+ (1,0) [0|15] "" Host
+ SG_ Enc2_Button : 40|8@1+ (1,0) [0|1] "" Host
+ SG_ Com_State : 48|4@1+ (1,0) [0|7] "" Host
+ SG_ State : 52|4@1+ (1,0) [0|3] "" Host
+ SG_ Heartbeat : 56|8@1+ (1,0) [0|255] "" Host
+
+BO_ 1634 ERRORSTATE: 1 Knob
+ SG_ Enc0_Fault : 0|1@1+ (1,0) [0|1] "" Host
+ SG_ Enc1_Fault : 1|1@1+ (1,0) [0|1] "" Host
+ SG_ Enc2_Fault : 2|1@1+ (1,0) [0|1] "" Host
+
+BO_ 1635 FIRMWARE_VER: 4 Knob
+ SG_ Firmware_Version : 0|32@1+ (1,0) [0|4294967295] "" Host
+
+BO_ 1636 ERROR_COUNT_STATE: 3 Knob
+ SG_ Enc0_Bad_Samples : 0|8@1+ (1,0) [0|5] "" Host
+ SG_ Enc1_Bad_Samples : 8|8@1+ (1,0) [0|5] "" Host
+ SG_ Enc2_Bad_Samples : 16|8@1+ (1,0) [0|5] "" Host
+
+BO_ 1637 KNOBCOMMAND: 8 Host
+ SG_ Com_Enable_Mask : 56|8@1+ (1,0) [0|7] "" Knob
+
+BO_ 1639 BOOTLOADER_RX: 2 Host
+ SG_ Command : 0|8@1+ (1,0) [0|255] "" Knob
+ SG_ Reserved : 8|8@1+ (1,0) [0|255] "" Knob
+
+BO_ 2017 BOOTLOADER_TX: 8 Knob
+ SG_ XCP_Response : 0|8@1+ (1,0) [0|255] "" Host
+
+
+CM_ BO_ 1633 "Knob state, broadcast unsolicited every 100 ms. Byte 6 packs the
+state machine in the high nibble and the encoder common-line state in the low
+nibble. Byte 7 is a free-running counter, so a restart is visible as it
+returning to a low value.";
+CM_ BO_ 1634 "One fault bit per encoder. Set when at least 4 of the last 5
+samples in a 500 ms window were bad; cleared by a fully clean window.";
+CM_ BO_ 1635 "Firmware version. DECLARED BUT NEVER TRANSMITTED: CAN_Update_Firmware_Ver() is commented out at both call sites in state_flow.c, and the info table it would read is disabled (BOOT_INFO_TABLE_ENABLE 0). Kept here so the id is documented and the gap stays visible.";
+CM_ BO_ 1636 "Rolling count, 0-5, of bad samples in the last 500 ms per encoder.
+NOT a lifetime total: it self-clears once readings settle.";
+CM_ BO_ 1637 "Host command. Byte 7 is a bitmask enabling each encoder's common
+line, bit 0 = encoder 0. The board echoes the resulting state back in
+KNOBSTATE.Com_State within one 500 ms GPIO update tick.";
+CM_ BO_ 1639 "Bootloader entry / XCP CONNECT. Data FF 00 makes a running
+application call NVIC_SystemReset(); the bootloader treats the same frame as
+XCP CONNECT. Sent as: cansend can0 667#FF00";
+CM_ SG_ 1633 State "0=INIT 1=PRECHECK 2=RUNNING 3=ERROR";
+
+VAL_ 1633 State 0 "INIT" 1 "PRECHECK" 2 "RUNNING" 3 "ERROR" ;

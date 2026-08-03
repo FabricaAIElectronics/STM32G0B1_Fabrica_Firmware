@@ -48,7 +48,7 @@ _DEFAULTS = {
     "leddriver": {"blt_rx": 0x160, "blt_tx": 0x161, "mcu": "STM32G0B1RET6",
                   "app_origin": "0x08003000", "dbc": "LEDDriver.dbc"},
     "knob": {"blt_rx": 0x667, "blt_tx": 0x7E1, "mcu": "STM32F303RET6",
-             "app_origin": "0x08003800", "dbc": None},
+             "app_origin": "0x08003800", "dbc": "Knob.dbc"},
 }
 
 CONFIG_NAMES = ("fabrica.json", "config.json", "boards.json")

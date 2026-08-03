@@ -197,9 +197,9 @@ def test_missing_response_broadcast_is_caught(host, channel):
 
 
 def test_board_without_a_stimulus_is_skipped(host):
-    class Knob(Board):
-        id = "knob"
-    r = verify.check_command_changes_telemetry(host, Knob(), None)
+    class Unknown(Board):
+        id = "adc_scaffold"      # a board with no stimulus defined
+    r = verify.check_command_changes_telemetry(host, Unknown(), None)
     assert r.status == verify.SKIP
 
 

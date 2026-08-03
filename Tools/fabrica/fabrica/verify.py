@@ -70,6 +70,16 @@ STIMULUS = {
         "signal": "Cfg_OC_DR_mA", "raw_index": 1,    # byte 0 is Cfg_HS_State
         "values": (30, 70),
     },
+    # The knob echoes the commanded common-line mask back in KNOBSTATE within
+    # one 500 ms GPIO update tick, so this is a true echo. It only toggles the
+    # encoder common lines - nothing moves.
+    "knob": {
+        "cmd_id": 0x665, "cmd_name": "KNOBCOMMAND",
+        "bcast_id": 0x661, "bcast_name": "KNOBSTATE",
+        "payload_for": lambda v: bytes(7) + bytes([v]),   # mask lives in byte 7
+        "signal": "Com_State", "raw_index": 6,
+        "values": (0x05, 0x07),        # enc0+enc2, then all three back on
+    },
     "leddriver": {
         "cmd_id": 0x170, "cmd_name": "CMD_LIGHTSET",
         "bcast_id": 0x179, "bcast_name": "BCAST_LIGHTSTATUS",

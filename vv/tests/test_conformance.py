@@ -78,11 +78,32 @@ def test_exempt_board_skips_the_address_plan_check():
         board_by_id("knob"), {"KNOBSTATE": 0x661}) == []
 
 
-def test_knob_produces_warning_not_failure(monkeypatch):
+def test_a_board_without_a_dbc_is_noted_not_failed(monkeypatch):
+    """A board with no DBC is unchecked, which is a warning, never a failure.
+
+    The knob used to be that board. It now has one, so this exercises the path
+    with a stand-in rather than deleting the coverage - a future board will
+    arrive before its DBC does.
+    """
+    from vv.boards import BOARDS, Board
+
+    dbcless = Board(**{**BOARDS[0].__dict__, "id": "nodbc", "dbc": None})
+    monkeypatch.setattr(conformance, "BOARDS", [dbcless])
     monkeypatch.setattr(conformance, "check_board", lambda b: [])
     result = conformance.run()
-    assert result.status in ("pass", "warn")
-    assert any("knob" in str(i) for i in result.items)
+    assert result.status == "warn"
+    assert any(i.get("kind") == "no_dbc" for i in result.items)
+
+
+def test_every_declared_board_dbc_actually_parses():
+    """Guards the knob DBC authored from the firmware."""
+    from vv.boards import BOARDS, REPO_ROOT
+
+    for b in BOARDS:
+        if b.dbc is None:
+            continue
+        msgs = conformance.dbc_messages(REPO_ROOT / b.dbc)
+        assert msgs, f"{b.id}: {b.dbc} parsed to no messages"
 
 
 def test_parse_defines_handles_suffix_comment_and_parens():

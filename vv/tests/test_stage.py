@@ -42,7 +42,7 @@ def test_manifest_shape(monkeypatch, tmp_path):
 
     knob = next(b for b in manifest["boards"] if b["id"] == "knob")
     assert knob["address_plan_exempt"] is True
-    assert knob["dbc"] is None
+    assert knob["dbc"] == "Knob.dbc"
 
     written = json.loads((tmp_path / "manifest.json").read_text())
     assert written == manifest

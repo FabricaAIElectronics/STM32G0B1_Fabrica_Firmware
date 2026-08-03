@@ -81,7 +81,11 @@ STIMULUS = {
         "bcast_id": 0x124, "bcast_name": "Bcast_GPIO",
         "payload_for": lambda v: bytes([v]),      # bitmask of rail enables
         "signal": None, "raw_index": 0,
-        "values": (0x0F, 0x0F),   # read-modify-nothing: assert the state holds
+        # CAN_Handler.c: 0x110 byte[0] is bit0=Drive bit1=Extruder
+        # bit2=Scrubbing bit3=12V-Buck, and 0x124 byte[0] echoes exactly those
+        # four HS_IsEnabled() bits. Only the Scrubbing rail is toggled, and the
+        # sequence ends on 0x0F so the board is left as it was found.
+        "values": (0x0B, 0x0F),   # scrubbing rail off, then all four back on
         "actuates": "switches the high-side power rails on this board",
     },
     # The knob echoes the commanded common-line mask back in KNOBSTATE within
@@ -175,8 +179,24 @@ def check_command_changes_telemetry(bus, board, db, timeout: float = 3.0,
             f"{board.id}'s only genuine echo is {spec['cmd_name']}, which "
             f"{spec['actuates']}. Pass --allow-actuate to run it.", [])
 
+    # A causal claim needs the telemetry to FOLLOW the command, which cannot be
+    # observed unless the command actually changes. kincodrive shipped with
+    # values (0x0F, 0x0F) and reported a confident
+    #   PASS causal  Cmd_HS_Power changed Bcast_GPIO: 15->15, 15->15
+    # against a board that was already sitting at 0x0F - it would have passed
+    # identically with the CAN transmit pair cut. A green result that cannot go
+    # red is worse than the SKIP it replaced, so a degenerate stimulus is a
+    # failure of the test definition and is reported as one.
+    values = tuple(spec["values"])
+    if len(set(values)) < 2:
+        return VerifyResult(
+            "causal", FAIL,
+            f"stimulus for {board.id} commands {values}: a causal check needs "
+            f"at least two distinct values, otherwise it passes on a board "
+            f"that ignores the command entirely", [])
+
     observations = []
-    for value in spec["values"]:
+    for value in values:
         canbus.send_frame(bus, spec["cmd_id"], spec["payload_for"](value))
         deadline = time.time() + timeout
         got = None

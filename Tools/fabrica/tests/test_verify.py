@@ -203,6 +203,38 @@ def test_board_without_a_stimulus_is_skipped(host):
     assert r.status == verify.SKIP
 
 
+def test_degenerate_stimulus_cannot_report_pass(host, channel, monkeypatch):
+    """A stimulus that commands one value twice proves nothing.
+
+    kincodrive shipped with values (0x0F, 0x0F) and reported
+    'PASS causal Cmd_HS_Power changed Bcast_GPIO: 15->15, 15->15' against a
+    board already sitting at 0x0F - it would have passed with the transmit pair
+    physically cut. This must be a failure of the test definition, not a green
+    tick.
+    """
+    spec = dict(verify.STIMULUS["powerstage"])
+    spec["values"] = (30, 30)
+    monkeypatch.setitem(verify.STIMULUS, "powerstage", spec)
+
+    board = FakeBoard(channel, [0x153], obey=True)
+    board.start()
+    try:
+        r = verify.check_command_changes_telemetry(host, Board(), None,
+                                                   timeout=1.0)
+    finally:
+        board.stop()
+    assert r.status == verify.FAIL
+    assert "two distinct values" in r.detail
+
+
+@pytest.mark.parametrize("board_id", sorted(verify.STIMULUS))
+def test_every_shipped_stimulus_commands_two_distinct_values(board_id):
+    """Guard the definitions themselves, not just the checker."""
+    values = tuple(verify.STIMULUS[board_id]["values"])
+    assert len(set(values)) >= 2, (
+        f"{board_id} stimulus {values} cannot demonstrate causation")
+
+
 # ---------------------------------------------------------- property 3: reset
 def test_reset_detected_when_the_board_stays_in_the_bootloader(host, channel):
     board = FakeBoard(channel, [0x150, 0x153], stop_on_reset=True)

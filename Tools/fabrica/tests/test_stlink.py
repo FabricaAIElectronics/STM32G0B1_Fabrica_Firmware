@@ -199,6 +199,55 @@ def test_unparseable_openocd_version_does_not_block_flashing():
     assert openocd_supports_mcu(G0B1, None) == (True, None)
 
 
+def test_flash_refuses_g0b1_on_old_openocd_without_touching_the_board():
+    """The pre-flight guard must stop before the probe is opened.
+
+    openocd 0.11 halts the core, then fails with 'auto_probe failed' and a Tcl
+    error reading 'write failed: auto erase enabled' - which names neither the
+    version nor the device. Refusing up front is the difference between a
+    two-minute and a thirty-minute diagnosis at the bench.
+    """
+    calls = []
+
+    def runner(command, on_output=None):
+        calls.append(command)
+        return 0, ""
+
+    result = flash("openocd", OPENOCD_PATH, SREC, BOOT_ADDR, G0B1,
+                   runner=runner, version_probe=lambda _p: (0, 11))
+    assert result.ok is False
+    assert calls == [], "openocd must not be launched at all"
+    assert "0.12" in result.output
+
+
+def test_flash_proceeds_on_new_enough_openocd():
+    def runner(command, on_output=None):
+        return 0, "ok"
+
+    result = flash("openocd", OPENOCD_PATH, SREC, BOOT_ADDR, G0B1,
+                   runner=runner, version_probe=lambda _p: (0, 12))
+    assert result.ok is True
+
+
+def test_flash_version_guard_does_not_apply_to_f303():
+    def runner(command, on_output=None):
+        return 0, "ok"
+
+    result = flash("openocd", OPENOCD_PATH, SREC, BOOT_ADDR, F303,
+                   runner=runner, version_probe=lambda _p: (0, 11))
+    assert result.ok is True
+
+
+def test_dry_run_never_probes_the_openocd_version():
+    """--dry-run must stay executable on a laptop with no openocd installed."""
+    def exploding_probe(_path):
+        raise AssertionError("dry run must not shell out")
+
+    result = flash("openocd", OPENOCD_PATH, SREC, BOOT_ADDR, G0B1,
+                   dry_run=True, version_probe=exploding_probe)
+    assert result.ok is True
+
+
 def test_openocd_hex_uses_program_without_address():
     assert build_command("openocd", OPENOCD_PATH, HEX, APP_ADDR, G0B1) == [
         OPENOCD_PATH,

@@ -352,10 +352,20 @@ def _subprocess_runner(command: list[str],
     return returncode, output
 
 
+def _probe_openocd_version(backend_path: str) -> tuple[int, int] | None:
+    try:
+        proc = subprocess.run([backend_path, "--version"], capture_output=True,
+                              text=True, timeout=10)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return parse_openocd_version((proc.stdout or "") + (proc.stderr or ""))
+
+
 def flash(backend: str, backend_path: str, image: Path, load_addr: int,
           mcu: str, dry_run: bool = False,
           on_output: Callable[[str], None] | None = None,
-          runner: Callable | None = None) -> FlashResult:
+          runner: Callable | None = None,
+          version_probe: Callable | None = None) -> FlashResult:
     """Flash `image` to a board over ST-Link.
 
     `runner(command, on_output) -> (returncode, output)` is the only seam that
@@ -366,6 +376,26 @@ def flash(backend: str, backend_path: str, image: Path, load_addr: int,
     backend, MCU, or image format is unusable.
     """
     command = build_command(backend, backend_path, image, load_addr, mcu)
+
+    # Refuse a flash openocd is known to be too old for, rather than letting it
+    # halt the core and fail with a message that names neither the version nor
+    # the device. On the bench 0.11 reported only "auto_probe failed", and the
+    # Tcl error it raises reads "write failed: auto erase enabled" - true, and
+    # completely unhelpful. `version_probe` is the test seam.
+    if backend == "openocd" and not dry_run:
+        probe = version_probe if version_probe is not None else _probe_openocd_version
+        supported, reason = openocd_supports_mcu(mcu, probe(backend_path))
+        if not supported:
+            message = (
+                f"{reason}.\n"
+                "Use STM32CubeProgrammer (STM32_Programmer_CLI), or build "
+                "openocd >= 0.12. Nothing was written and the board was not "
+                "touched."
+            )
+            if on_output is not None:
+                on_output(message)
+            return FlashResult(ok=False, returncode=1, output=message,
+                               command=list(command))
 
     if dry_run:
         message = f"DRY RUN: would execute: {format_command(command)}"

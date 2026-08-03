@@ -104,6 +104,18 @@ STIMULUS = {
         "payload_for": lambda v: bytes([v, v, v]),
         "signal": "PWM_Ch0_State", "raw_index": 0,
         "values": (30, 70),
+        # BCAST_LIGHTSTATUS reports the APPLIED duty, and the driver refuses to
+        # drive the LEDs while an undervoltage shutdown is in force. On a bench
+        # where only logic power is connected the board sits in STATE_ERROR
+        # forever, so CMD_LIGHTSET is ignored by design - asserting causality
+        # there would report a bug against correct protective behaviour.
+        "requires": {
+            "bcast_id": 0x17A, "bcast_name": "BCAST_DEVSTATUS",
+            "raw_index": 0, "not_value": 3, "state_name": "STATE_ERROR",
+            "reason": "the board is in STATE_ERROR (undervoltage): it sheds "
+                      "the LED outputs by design and ignores CMD_LIGHTSET "
+                      "until the 24V and 17.5V rails recover",
+        },
     },
 }
 
@@ -154,6 +166,23 @@ def check_unsolicited(bus, board, db, expected_ids: set[int],
         f"all {len(expected_ids)} broadcasts arrived unsolicited", evidence)
 
 
+def _observe_byte(bus, arb_id: int, index: int, timeout: float = 3.0):
+    """First `index` byte seen on `arb_id`, or None if it never arrives.
+
+    Passive: sends nothing. Used for preconditions, where transmitting to
+    establish the state under test would defeat the purpose.
+    """
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        msg = bus.recv(timeout=max(0.0, deadline - time.time()))
+        if msg is None or msg.arbitration_id != arb_id:
+            continue
+        raw = bytes(msg.data)
+        if len(raw) > index:
+            return raw[index]
+    return None
+
+
 def check_command_changes_telemetry(bus, board, db, timeout: float = 3.0,
                                     allow_actuate: bool = False
                                     ) -> VerifyResult:
@@ -194,6 +223,25 @@ def check_command_changes_telemetry(bus, board, db, timeout: float = 3.0,
             f"stimulus for {board.id} commands {values}: a causal check needs "
             f"at least two distinct values, otherwise it passes on a board "
             f"that ignores the command entirely", [])
+
+    # A precondition the board must be in before causality is even meaningful.
+    # Checked by listening, never by commanding: the point is to describe the
+    # bench honestly, not to change it into a testable state.
+    need = spec.get("requires")
+    if need is not None:
+        state = _observe_byte(bus, need["bcast_id"], need["raw_index"],
+                              timeout=timeout)
+        if state is None:
+            return VerifyResult(
+                "causal", SKIP,
+                f"{need['bcast_name']} (0x{need['bcast_id']:03X}) never "
+                f"arrived, so the board's state could not be established", [])
+        if state == need["not_value"]:
+            return VerifyResult(
+                "causal", SKIP,
+                f"{need['reason']}. Power the rails and re-run to check "
+                f"causality.",
+                [{"state": state, "state_name": need["state_name"]}])
 
     observations = []
     for value in values:

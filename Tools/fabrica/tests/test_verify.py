@@ -39,6 +39,10 @@ class FakeBoard(threading.Thread):
         self.duty = 0
         self.running = True
         self.in_bootloader = False
+        # Byte 0 of the state broadcast (0x17A on the LEDDriver). 0 is a
+        # healthy state; 3 is STATE_ERROR, where the board sheds its outputs
+        # and ignores light commands by design.
+        self.state_byte = 0
 
     def run(self):
         nxt = time.time()
@@ -56,8 +60,12 @@ class FakeBoard(threading.Thread):
             if time.time() >= nxt:
                 nxt = time.time() + self.period
                 for bid in self.broadcast_ids:
-                    payload = bytes([self.duty] * 4) if bid == self.bcast_id \
-                        else bytes(4)
+                    if bid == self.bcast_id:
+                        payload = bytes([self.duty] * 4)
+                    elif bid == 0x17A:
+                        payload = bytes([self.state_byte, 0])
+                    else:
+                        payload = bytes(4)
                     self.bus.send(can.Message(arbitration_id=bid, data=payload,
                                               is_extended_id=False))
 
@@ -113,6 +121,13 @@ class Board:
     id = "powerstage"
     blt_rx = 0x130
     blt_tx = 0x131
+
+
+class LedBoard(Board):
+    """The LEDDriver, whose causal check carries a state precondition."""
+    id = "leddriver"
+    blt_rx = 0x160
+    blt_tx = 0x161
 
 
 @pytest.fixture
@@ -297,3 +312,64 @@ def test_reset_is_not_run_unless_asked(host):
     reset = [r for r in results if r.name == "reset"][0]
     assert reset.status == verify.SKIP
     assert "--include-reset" in reset.detail
+
+
+def test_causal_skips_when_the_board_is_in_the_wrong_state(host, channel):
+    """A board that ignores the command BY DESIGN must not read as a failure.
+
+    The LEDDriver sheds its outputs during an undervoltage and ignores
+    CMD_LIGHTSET until the rails recover. On a bench with only logic power that
+    is the permanent state, so asserting causality there would report a bug
+    against correct protective behaviour.
+    """
+    board = FakeBoard(channel, [0x179, 0x17A], obey=True,
+                      cmd_id=0x170, bcast_id=0x179)
+    board.state_byte = 3          # STATE_ERROR
+    board.start()
+    try:
+        r = verify.check_command_changes_telemetry(host, LedBoard(), None,
+                                                   timeout=1.5)
+    finally:
+        board.stop()
+    assert r.status == verify.SKIP
+    assert "STATE_ERROR" in r.detail or "undervoltage" in r.detail
+
+
+def test_causal_skips_when_the_state_broadcast_is_absent(host, channel):
+    """Unknown state is not the same as a good state - do not assume."""
+    board = FakeBoard(channel, [0x179], obey=True,
+                      cmd_id=0x170, bcast_id=0x179)   # no 0x17A at all
+    board.start()
+    try:
+        r = verify.check_command_changes_telemetry(host, LedBoard(), None,
+                                                   timeout=1.0)
+    finally:
+        board.stop()
+    assert r.status == verify.SKIP
+    assert "never" in r.detail
+
+
+def test_precondition_check_transmits_nothing(host, channel):
+    """Establishing the state must be passive, or it changes what it measures."""
+    sent = []
+    real_send = canbus.send_frame
+
+    def spy(bus, arb_id, payload):
+        sent.append(arb_id)
+        return real_send(bus, arb_id, payload)
+
+    board = FakeBoard(channel, [0x179, 0x17A], obey=True,
+                      cmd_id=0x170, bcast_id=0x179)
+    board.state_byte = 3
+    board.start()
+    try:
+        orig = verify.canbus.send_frame
+        verify.canbus.send_frame = spy
+        try:
+            verify.check_command_changes_telemetry(host, LedBoard(), None,
+                                                   timeout=1.5)
+        finally:
+            verify.canbus.send_frame = orig
+    finally:
+        board.stop()
+    assert sent == [], f"precondition must not transmit, sent {sent}"

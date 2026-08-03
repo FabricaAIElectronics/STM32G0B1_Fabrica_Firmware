@@ -343,6 +343,30 @@ static void ProcessCANCommands(AppStateMachine *sm)
         return;
     }
 
+    /* Do not drive the LEDs while the undervoltage shutdown is in force.
+     *
+     * State_Error turns the outputs off once, on entry, to shed load - but this
+     * function is called from State_Error every pass (so the host can still
+     * change UV thresholds, buck mode and EEPROM), and applying PWM here put
+     * them straight back on. A single LIGHTSET during a brownout therefore
+     * defeated the protection, and because the entry action is one-shot
+     * (`enteredError`), nothing turned them off again for as long as the error
+     * persisted.
+     *
+     * The command is not lost by being ignored here: the ISR has already stored
+     * it in can_rxMessage.pwm[], and State_Recovery's success path re-applies
+     * from exactly that buffer when the rails come back. Consuming the flag
+     * without acting on it is therefore the correct behaviour, not a dropped
+     * command.
+     *
+     * ledCtrl is deliberately left untouched as well. It is what
+     * BCAST_LIGHTSTATUS reports, and writing the commanded duty into it while
+     * the outputs are off would reintroduce exactly the telemetry-versus-reality
+     * gap that reporting the applied value was meant to close. */
+    if (sm->state == STATE_ERROR) {
+        return;
+    }
+
     sm->ledCtrl.pwm[0] = pwm[0];
     sm->ledCtrl.pwm[1] = pwm[1];
     sm->ledCtrl.pwm[2] = pwm[2];

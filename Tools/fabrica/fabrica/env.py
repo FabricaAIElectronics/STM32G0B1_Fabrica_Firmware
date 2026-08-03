@@ -148,9 +148,9 @@ def _openocd_version_checks(path: str) -> list[Check]:
     return [Check(
         "openocd version", WARN,
         f"openocd {have} cannot SWD-flash: {', '.join(blocked)}",
-        "install STM32CubeProgrammer, or build openocd >= 0.12. "
-        "Flashing the application over CAN is unaffected; only writing the "
-        "bootloader through SWD needs this")]
+        "run Tools/fabrica/install_openocd012.sh, or install "
+        "STM32CubeProgrammer. Flashing the application over CAN is "
+        "unaffected; only writing the bootloader through SWD needs this")]
 
 
 def doctor(firmware_dir: Path | str | None = None, iface: str = "can0",

@@ -26,10 +26,40 @@ Specifically untested, in rough order of risk:
 |---|---|---|
 | The whole TUI | Windows Python has no `_curses`, so `fabrica/tui.py` has never been executed | Run `./fabrica_cli.py tui`. If it misbehaves, every function is available as a plain CLI subcommand — use those and carry on |
 | **st-flash + `.srec`** | st-flash has no S-record parser at all. `doctor` now FAILS if st-flash is the only backend, rather than passing and letting the first flash blow up | Install STM32CubeProgrammer |
-| openocd + `.srec` | openocd picks its image parser from the file extension and knows `.s19`, not `.srec`. Given an unrecognised extension it falls back to **raw binary**, which would write the ASCII text of the S-record into flash — silent corruption, not an error. We therefore emit explicit `flash write_image ... s19` rather than the usual `program` helper | Only matters if `STM32_Programmer_CLI` is absent. Prefer installing STM32CubeProgrammer |
+| openocd + `.srec` | openocd picks its image parser from the file extension and knows `.s19`, not `.srec`. Given an unrecognised extension it falls back to **raw binary**, which would write the ASCII text of the S-record into flash — silent corruption, not an error. We therefore emit explicit `flash write_image ... s19` rather than the usual `program` helper | Proven on the KincoDrive with openocd 0.12; see the version note below |
 | `open_bus("can0")` | A one-line wrapper around `can.Bus`, and the one line no test can reach — the tests use the `virtual` backend | `./fabrica_cli.py monitor --seconds 5` |
 | Extended 29-bit CAN | Encoded as `-xid=1` to match `flash_can.sh`. Never exercised by anyone | Nothing to check: all four boards are 11-bit standard |
 | `-s=xcp` and `-t1` | `-s=xcp` matches your working script. `-t1` is **not** passed by default, so the argv is byte-for-byte the invocation already proven on the bench | If BootCommander rejects an option, `-s=xcp` is the only non-script flag |
+
+### openocd must be ≥ 0.12 to flash a G0B1
+
+Ubuntu 22.04 ships openocd **0.11.0** (jammy/universe, no backport). Its
+`stm32l4x` flash driver — the one covering the STM32G0 family — has no entry for
+device id `0x467`, so on a **STM32G0B1** it attaches, reads memory and
+identifies the core correctly, and only then fails:
+
+```
+Warn : Cannot identify target as an STM32G0/G4/L4/L4+/L5/WB/WL family device.
+Error: auto_probe failed
+```
+
+Everything looks healthy right up to the one operation that matters. This blocks
+SWD bootloader flashing on **KincoDrive, PowerStage and LEDDriver**. The F303
+knob is unaffected (it goes through `stm32f1x`), and flashing an *application*
+over CAN never involves openocd at all.
+
+`doctor` now parses `openocd --version` and warns per MCU family, and `flash`
+refuses outright rather than letting openocd halt the core and fail with a
+message naming neither the version nor the device. To fix a bench machine:
+
+```bash
+./install_openocd012.sh
+```
+
+It builds 0.12.0 into `/usr/local` and leaves the distro package in place. A
+working 0.12 reports `device idcode = 0x10016467 (STM32G0B/G0Cx)` and
+`flash size = 512 KiB, dual-bank`. STM32CubeProgrammer is the other option and
+is still the preferred backend where it can be installed.
 
 ---
 

@@ -18,6 +18,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from fabrica import canbus, verify  # noqa: E402
+from fabrica.canflash import RESET_PAYLOAD  # noqa: E402
 
 CHANNEL = "verifytest"
 
@@ -64,6 +65,47 @@ class FakeBoard(threading.Thread):
         self.running = False
         self.join(timeout=1.0)
         self.bus.shutdown()
+
+
+class RebootingBus:
+    """A deterministic stand-in for a bus attached to a rebooting board.
+
+    Not threaded. Two threads racing over a virtual bus made this scenario
+    flaky, and the thing under test is purely the timing arithmetic, so the
+    fake drives the clock instead of a second board.
+
+    Behaviour matches the real knob measured on the bench: broadcasts every
+    `period`, and after FF 00 it goes quiet for `outage` before resuming. On
+    hardware those were 0.100 s and 1.00 s.
+    """
+
+    def __init__(self, period=0.05, outage=0.6, reset_id=0x130):
+        self.period = period
+        self.outage = outage
+        self.reset_id = reset_id
+        self.quiet_until = 0.0
+        self.sent = []
+
+    def recv(self, timeout=0.0):
+        now = time.time()
+        wait = max(0.0, self.quiet_until - now)
+        if wait:                              # rebooting: stay silent
+            if wait >= timeout:
+                time.sleep(timeout)
+                return None
+            time.sleep(wait)
+        time.sleep(min(self.period, max(0.0, timeout)))
+        return can.Message(arbitration_id=0x150, data=bytes(4),
+                           is_extended_id=False, timestamp=time.time())
+
+    def send(self, msg):
+        self.sent.append(msg)
+        if msg.arbitration_id == self.reset_id and \
+                bytes(msg.data)[:2] == RESET_PAYLOAD:
+            self.quiet_until = time.time() + self.outage
+
+    def shutdown(self):
+        pass
 
 
 class Board:
@@ -162,32 +204,50 @@ def test_board_without_a_stimulus_is_skipped(host):
 
 
 # ---------------------------------------------------------- property 3: reset
-def test_reset_stops_the_application(host, channel):
+def test_reset_detected_when_the_board_stays_in_the_bootloader(host, channel):
     board = FakeBoard(channel, [0x150, 0x153], stop_on_reset=True)
     board.start()
     try:
-        r = verify.check_reset_enters_bootloader(host, Board(), quiet_for=0.6)
+        r = verify.check_reset_enters_bootloader(host, Board(), quiet_for=1.5)
     finally:
         board.stop()
     assert r.status == verify.PASS, r.detail
     assert board.in_bootloader
 
 
+def test_reset_detected_when_the_application_comes_back(host, channel):
+    """The case that actually happens on hardware.
+
+    An earlier version of this check asserted the application stopped and
+    STAYED stopped, and reported FAIL on a board that was resetting perfectly -
+    because OpenBLT restarts the application once its backdoor window closes.
+    The observable is the pause, not permanent silence.
+    """
+    bus = RebootingBus(period=0.05, outage=0.6)
+    r = verify.check_reset_enters_bootloader(bus, Board(), quiet_for=2.0)
+    assert r.status == verify.PASS, r.detail
+    assert "paused" in r.detail
+    # the trigger really was sent, and it was the documented one
+    assert any(m.arbitration_id == 0x130 and bytes(m.data)[:2] == RESET_PAYLOAD
+               for m in bus.sent)
+
+
 def test_a_board_that_ignores_the_reset_is_caught(host, channel):
+    """No pause at all means the trigger did nothing."""
     board = FakeBoard(channel, [0x150, 0x153], stop_on_reset=False)
     board.start()
     try:
-        r = verify.check_reset_enters_bootloader(host, Board(), quiet_for=0.6)
+        r = verify.check_reset_enters_bootloader(host, Board(), quiet_for=2.0)
     finally:
         board.stop()
     assert r.status == verify.FAIL
-    assert "still broadcasting" in r.detail
+    assert "no restart seen" in r.detail
 
 
 def test_reset_skipped_when_the_board_was_already_silent(host):
     r = verify.check_reset_enters_bootloader(host, Board(), quiet_for=0.3)
     assert r.status == verify.SKIP
-    assert "already silent" in r.detail
+    assert "not broadcasting" in r.detail
 
 
 # ------------------------------------------------------------------ plumbing

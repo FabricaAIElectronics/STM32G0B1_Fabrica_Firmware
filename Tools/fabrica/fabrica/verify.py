@@ -181,9 +181,18 @@ def check_command_changes_telemetry(bus, board, db, timeout: float = 3.0
 
 
 def _max_gap(bus, seconds: float) -> tuple[float, int]:
-    """Largest silence between consecutive frames in a window, and the count."""
-    end = time.time() + seconds
-    last = None
+    """Largest silence between consecutive frames in a window, and the count.
+
+    `last` is seeded with the window's start rather than the first frame. If a
+    board goes quiet the instant the trigger lands, the silence sits between the
+    start of the window and the first frame after it - and starting from the
+    first frame would miss exactly the gap this exists to detect. It only
+    happened to work on hardware because one broadcast slipped out before the
+    reset took hold.
+    """
+    start = time.time()
+    end = start + seconds
+    last = start
     biggest = 0.0
     seen = 0
     while time.time() < end:
@@ -192,8 +201,7 @@ def _max_gap(bus, seconds: float) -> tuple[float, int]:
         if msg is None:
             continue
         seen += 1
-        if last is not None:
-            biggest = max(biggest, now - last)
+        biggest = max(biggest, now - last)
         last = now
     return biggest, seen
 

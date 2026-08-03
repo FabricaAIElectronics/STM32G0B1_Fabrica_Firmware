@@ -56,7 +56,21 @@ vv/unit/layouts.json
 # generated alongside them and would go stale the moment either changed.
 # ---------------------------------------------------------------------------
 Tools/fabrica/firmware/**/*.srec
-Tools/fabrica/firmware/manifest.json
+Tools/fabrica/firmware/**/*.dbc
+Tools/fabrica/firmware/**/manifest.json
+
+# ---------------------------------------------------------------------------
+# Bench-local binaries and vendored python, both filled by prepare-offline.sh.
+#
+# tools/ holds openocd and BootCommander for one platform. openocd alone is
+# 17 MB and architecture-specific -- an aarch64 build is useless on x86 and
+# neither runs on Windows -- so a committed set for every platform would be
+# 50 MB+ and would still need libusb/libftdi/libhidapi installed on the host.
+# The README explaining that IS tracked; the binaries are not.
+# ---------------------------------------------------------------------------
+Tools/fabrica/tools/*
+!Tools/fabrica/tools/README.md
+Tools/fabrica/vendor/
 
 # ---------------------------------------------------------------------------
 # OS cruft

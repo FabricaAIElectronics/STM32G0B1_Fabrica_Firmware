@@ -22,6 +22,39 @@ from pathlib import Path
 # directly, clearest diagnostics), then openocd, then stlink-tools.
 STLINK_BACKENDS = ("STM32_Programmer_CLI", "openocd", "st-flash")
 
+#: Optional per-platform binaries shipped beside the tool, searched BEFORE
+#: PATH. Populating this makes a bench zero-install; leaving it empty changes
+#: nothing.
+#:
+#: Kept out of git on purpose. openocd alone is 17 MB and ARM-aarch64-only, and
+#: it dynamically links libftdi1/libhidapi/libusb/libudev, so a Jetson build is
+#: useless on an x86 laptop and useless again on Windows. Committing a set for
+#: every platform would add 50 MB+ to the repo and still not remove the system
+#: library dependency. install_openocd012.sh builds the right one instead.
+TOOLS_DIR = Path(__file__).resolve().parent.parent / "tools"
+
+
+def _platform_tag() -> str:
+    """e.g. linux-aarch64, linux-x86_64, windows-amd64."""
+    import platform
+    system = platform.system().lower()
+    machine = platform.machine().lower()
+    return f"{system}-{machine}"
+
+
+def bundled_tool(name: str) -> str | None:
+    """Path to a bundled binary for this platform, or None.
+
+    Looks in tools/<system>-<machine>/ first, then tools/ for a flat drop.
+    """
+    for directory in (TOOLS_DIR / _platform_tag(), TOOLS_DIR):
+        for candidate in (directory / name, directory / f"{name}.exe"):
+            if candidate.is_file() and os.access(candidate, os.X_OK):
+                return str(candidate)
+            if candidate.is_file() and candidate.suffix == ".exe":
+                return str(candidate)
+    return None
+
 def _home_candidate() -> str | None:
     """~/openblt/Host/BootCommander, if a home directory can be resolved.
 
@@ -74,15 +107,25 @@ def _run(cmd: list[str], timeout: int = 10) -> tuple[int, str]:
 
 
 def find_stlink() -> tuple[str | None, str | None]:
-    """Return (backend name, path) for the first available ST-Link backend."""
+    """Return (backend name, path) for the first available ST-Link backend.
+
+    A binary in tools/ wins over the same name on PATH, so a bench can be
+    pinned to a known-good build without touching the system install - which
+    matters here, because the distro openocd on Ubuntu 22.04 cannot flash a
+    G0B1 at all and a machine may well have it first on PATH.
+    """
     for backend in STLINK_BACKENDS:
-        path = shutil.which(backend)
+        path = bundled_tool(backend) or shutil.which(backend)
         if path:
             return backend, path
     return None, None
 
 
 def find_bootcommander() -> str | None:
+    """tools/ first, then the usual locations and PATH."""
+    bundled = bundled_tool("BootCommander")
+    if bundled:
+        return bundled
     for candidate in BOOTCOMMANDER_CANDIDATES:
         path = shutil.which(candidate) if os.sep not in candidate else candidate
         if path and Path(path).is_file():

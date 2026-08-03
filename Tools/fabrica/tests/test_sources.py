@@ -233,3 +233,60 @@ def test_srec_payload_ignores_junk_lines(tmp_path):
 
 def test_srec_payload_of_missing_file_is_zero(tmp_path):
     assert sources.srec_payload_bytes(tmp_path / "nope.srec") == 0
+
+
+# --- versioned firmware folders --------------------------------------------
+
+def _make_version(root, name, boards=("kincodrive", "knob"), manifest=False):
+    for board in boards:
+        d = root / name / board
+        d.mkdir(parents=True, exist_ok=True)
+        (d / f"{board}.srec").write_text("S9030000FC\n", encoding="ascii")
+    if manifest:
+        (root / name / "manifest.json").write_text("{}", encoding="utf-8")
+    return root / name
+
+
+def test_operator_named_version_folders_are_each_one_set(tmp_path):
+    """firmware/ holds versions the operator names and copies in by hand.
+
+    Each version must appear once, under its own name - not once per board.
+    """
+    root = tmp_path / "firmware"
+    _make_version(root, "2026-08-01-aaaaaaa")
+    _make_version(root, "bench-test-A")
+
+    found = sources.discover(root)
+    assert sorted(f.path.name for f in found) == ["2026-08-01-aaaaaaa",
+                                                  "bench-test-A"]
+    for f in found:
+        assert sorted(f.boards) == ["kincodrive", "knob"]
+
+
+def test_the_container_is_not_itself_reported_as_a_version(tmp_path):
+    """The regression this guards: a one-level-down .srec test makes firmware/
+    look like a firmware set, so discover() returns the search root and every
+    version inside it vanishes."""
+    root = tmp_path / "firmware"
+    _make_version(root, "v1")
+    found = sources.discover(root)
+    assert [f.path.name for f in found] == ["v1"]
+    assert root not in [f.path for f in found]
+
+
+def test_a_flat_srec_drop_still_counts_as_a_version(tmp_path):
+    """Images dropped straight into a folder, no board subdirectories."""
+    d = tmp_path / "firmware" / "quick-test"
+    d.mkdir(parents=True)
+    (d / "boot.srec").write_text("S9030000FC\n", encoding="ascii")
+    found = sources.discover(tmp_path / "firmware")
+    assert [f.path.name for f in found] == ["quick-test"]
+
+
+def test_a_folder_named_like_a_board_is_not_a_version_container(tmp_path):
+    """A staged set's own board folders must stay part of it, not become
+    separate entries in the picker."""
+    root = tmp_path / "firmware"
+    _make_version(root, "v1", manifest=True)
+    found = sources.discover(root)
+    assert [f.path.name for f in found] == ["v1"]

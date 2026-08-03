@@ -27,7 +27,17 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+_HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(_HERE))
+
+# vendor/ holds python-can and cantools for benches with no network and no pip.
+# Appended, not inserted, so a system install still wins - a vendored copy is a
+# fallback, not an override, and silently shadowing the operator's own packages
+# is the kind of thing that makes a version mismatch impossible to diagnose.
+# Populate with:  pip install --target vendor -r requirements.txt
+_VENDOR = _HERE / "vendor"
+if _VENDOR.is_dir():
+    sys.path.append(str(_VENDOR))
 
 from fabrica import canflash, env, manifest as mf, stlink  # noqa: E402
 
@@ -87,7 +97,13 @@ def _firmware_candidates() -> list[Path]:
 
 
 def find_firmware_dir() -> Path | None:
-    """First candidate directory that actually holds images, or None.
+    """Newest firmware set under the candidate directories, or None.
+
+    Returns the set itself, not the directory holding it. firmware/ is a
+    container of named versions that the operator copies in - so pointing the
+    tool at firmware/ would either fail or, worse, silently pick one. discover()
+    already sorts newest-modified first, so [0] is the most recent version, and
+    `f` in the TUI lists the rest.
 
     Resolved once in main() and written back into args.firmware, so every
     subcommand - including doctor, which does its own manifest check - sees the
@@ -97,8 +113,11 @@ def find_firmware_dir() -> Path | None:
     """
     from fabrica import sources
     for candidate in _firmware_candidates():
-        if candidate.is_dir() and sources.discover(candidate, max_depth=1):
-            return candidate
+        if not candidate.is_dir():
+            continue
+        found = sources.discover(candidate, max_depth=2)
+        if found:
+            return found[0].path
     return None
 
 
@@ -107,7 +126,14 @@ def _resolve_firmware(args):
     from fabrica import sources
 
     if args.firmware:
+        # Depth 0 first: an explicit path to one version folder must select
+        # exactly that, never a sibling.
         found = sources.discover(args.firmware, max_depth=0)
+        if found:
+            return sources.load(found[0])
+        # Then treat it as a container of versions and take the newest, so
+        # `--firmware .../firmware` works as naturally as naming a version.
+        found = sources.discover(args.firmware, max_depth=2)
         if found:
             return sources.load(found[0])
         return mf.load_manifest(args.firmware)

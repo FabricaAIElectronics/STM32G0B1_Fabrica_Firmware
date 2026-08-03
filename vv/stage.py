@@ -15,8 +15,28 @@ from pathlib import Path
 from vv.boards import BOARDS, REPO_ROOT
 from vv.checks.build import build_project
 
-FIRMWARE_DIR = REPO_ROOT / "Tools" / "fabrica" / "firmware"
+#: Container of named firmware versions, NOT a firmware set itself. Each
+#: staged build lands in its own subfolder, and operators copy their own
+#: versions in beside them - the TUI's `f` picker lists whatever is here,
+#: newest first, by whatever name the folder has.
+FIRMWARE_ROOT = REPO_ROOT / "Tools" / "fabrica" / "firmware"
+
+#: Set per run by stage_artifacts(); the version folder being written.
+FIRMWARE_DIR = FIRMWARE_ROOT
 MANIFEST_PATH = FIRMWARE_DIR / "manifest.json"
+
+
+def default_version_label() -> str:
+    """Date plus short sha, e.g. 2026-08-03-31cbbc2.
+
+    Only a default: the operator names their own folders, since they are the
+    ones copying them onto a bench. This just has to be unique, sort sensibly
+    by name as well as by mtime, and stay traceable to a commit.
+    """
+    sha, dirty = git_info()
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    label = f"{stamp}-{sha[:7]}" if sha else stamp
+    return label + ("-dirty" if dirty else "")
 
 
 def sha256_of(path: Path) -> str:
@@ -115,9 +135,24 @@ def build_manifest(board_entries: list[dict], gate_passed: bool) -> dict:
     }
 
 
-def stage_artifacts(gate_passed: bool) -> dict:
+def stage_artifacts(gate_passed: bool, version: str | None = None) -> dict:
+    """Stage every board into firmware/<version>/.
+
+    `version` names the folder; it defaults to date+sha. Nothing else in the
+    tool cares what it is called - discover() finds sets by shape, not by name -
+    so an operator can drop `bench-test-A/` in beside it and pick either.
+    """
     if not gate_passed:
         raise RuntimeError("gate did not pass; refusing to stage artifacts")
+
+    global FIRMWARE_DIR, MANIFEST_PATH
+    label = version or default_version_label()
+    # Reject path separators rather than silently staging somewhere else.
+    if "/" in label or "\\" in label or label in (".", ".."):
+        raise ValueError(f"invalid version label {label!r}: it names a folder, "
+                         f"not a path")
+    FIRMWARE_DIR = FIRMWARE_ROOT / label
+    MANIFEST_PATH = FIRMWARE_DIR / "manifest.json"
 
     FIRMWARE_DIR.mkdir(parents=True, exist_ok=True)
     entries = []

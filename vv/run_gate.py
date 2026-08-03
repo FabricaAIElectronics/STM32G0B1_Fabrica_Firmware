@@ -64,6 +64,11 @@ def main(argv=None) -> int:
     parser.add_argument("--json", dest="json_path", help="write structured results here")
     parser.add_argument("--update-baseline", action="store_true",
                         help="rewrite vv/baseline.txt from the current warnings")
+    parser.add_argument("--version", metavar="NAME",
+                        help="name the staged firmware folder (default: "
+                             "date+sha). firmware/ holds one folder per "
+                             "version; operators copy their own in beside "
+                             "them and pick with `f` in the TUI")
     parser.add_argument("--stage-artifacts", action="store_true",
                         help="on a green gate, copy .srec files and write the manifest")
     parser.add_argument("--strict", action="store_true",
@@ -94,10 +99,14 @@ def main(argv=None) -> int:
     if args.stage_artifacts:
         fully_ran = all(r.ran for r in results)
         if passed and fully_ran:
-            from vv.stage import stage_artifacts
-            manifest = stage_artifacts(gate_passed=True)
+            from vv import stage as stage_mod
+            manifest = stage_mod.stage_artifacts(gate_passed=True,
+                                                 version=args.version)
+            # Report the version folder actually written, not the container:
+            # naming firmware/ here would hide which version this run produced.
+            where = stage_mod.FIRMWARE_DIR.relative_to(stage_mod.REPO_ROOT)
             print(f"\nstaged {len(manifest['boards'])} boards to "
-                  f"Tools/fabrica/firmware/ (git {manifest['git_sha'][:8]}"
+                  f"{where.as_posix()}/ (git {manifest['git_sha'][:8]}"
                   f"{', DIRTY' if manifest['git_dirty'] else ''})")
         elif not fully_ran:
             skipped = [r.name for r in results if r.status == "skip"]

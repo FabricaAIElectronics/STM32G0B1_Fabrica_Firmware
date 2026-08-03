@@ -31,6 +31,47 @@ Specifically untested, in rough order of risk:
 | Extended 29-bit CAN | Encoded as `-xid=1` to match `flash_can.sh`. Never exercised by anyone | Nothing to check: all four boards are 11-bit standard |
 | `-s=xcp` and `-t1` | `-s=xcp` matches your working script. `-t1` is **not** passed by default, so the argv is byte-for-byte the invocation already proven on the bench | If BootCommander rejects an option, `-s=xcp` is the only non-script flag |
 
+### Layout — the folder is the deployment unit
+
+```
+Tools/fabrica/
+├── fab                     ./fab, or symlink onto PATH
+├── fabrica_cli.py          every operation, as a plain subcommand
+├── fabrica/                the package
+├── firmware/               one folder per version — YOU name these
+│   ├── 2026-08-03-a12db60/     staged by the gate (default name: date+sha)
+│   └── bench-test-A/           copied in by hand; picked up automatically
+├── tools/                  optional local binaries, preferred over PATH
+├── vendor/                 optional vendored python-can + cantools
+├── install_openocd012.sh
+└── prepare-offline.sh      fills tools/ and vendor/ for this machine
+```
+
+Copy the whole folder to a bench and it works:
+
+```bash
+scp -r Tools/fabrica user@bench:~/
+```
+
+**`firmware/` holds versions, not boards.** Each subfolder is a complete set,
+and the name is yours — the tool identifies sets by shape, never by name. Three
+shapes are recognised: a folder with `manifest.json`, a folder of `.srec` files,
+or a folder of per-board subfolders. Press **`f`** in the TUI to switch between
+them; they are listed newest-modified first, then by name.
+
+Point `--firmware` at either a single version or the container. Naming a version
+selects exactly that one; naming the container takes the newest.
+
+To stage a build under a name of your choosing:
+
+```bash
+python vv/run_gate.py --continue --stage-artifacts --version bench-test-A
+```
+
+`tools/` and `vendor/` are `.gitignore`d and optional — see `tools/README.md`
+for why the binaries are not committed, and run `./prepare-offline.sh` to fill
+both for the machine you are on.
+
 ### A board that "looks dead" may just be held by the debugger
 
 A halted STM32 is silent on CAN, draws normal current, and **cannot be flashed

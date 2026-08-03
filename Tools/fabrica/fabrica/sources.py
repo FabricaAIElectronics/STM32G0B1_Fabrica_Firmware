@@ -104,11 +104,36 @@ def _mtime(path: Path) -> float:
 def _is_candidate(path: Path) -> bool:
     """Is this folder itself a firmware set?
 
-    Deliberately NOT recursive. Using rglob here made every ancestor directory
-    look like a firmware folder, so discover() returned the search root instead
-    of the builds inside it.
+    Three shapes count, and all three turn up in practice:
+
+      my-build/manifest.json          staged by the gate
+      my-build/*.srec                 images dropped straight into a folder
+      my-build/<board>/*.srec         images dropped in per-board subfolders
+
+    The third matters because operators copy versions in by hand: without it, a
+    folder holding four board subdirectories and no manifest was reported as
+    four separate firmware sets rather than one, and the picker listed
+    'kincodrive', 'knob', 'leddriver', 'powerstage' where the version name
+    should have been.
+
+    The third case is why the subfolders must be named after BOARDS rather than
+    just "contains a .srec somewhere one level down". firmware/ holds version
+    folders which hold board folders, so a plain one-level-down test makes
+    firmware/ itself look like a set - discover() then returns the search root
+    and the versions inside it disappear, which is the exact failure the
+    original non-recursive rule existed to prevent.
+
+    Still deliberately NOT recursive: the subdirectory check looks exactly one
+    level down, and only at names that are known board ids.
     """
-    return (path / "manifest.json").is_file() or any(path.glob("*.srec"))
+    if (path / "manifest.json").is_file() or any(path.glob("*.srec")):
+        return True
+    try:
+        children = [c for c in path.iterdir()
+                    if c.is_dir() and c.name.lower() in _DEFAULTS]
+    except OSError:
+        return False
+    return any(any(c.glob("*.srec")) for c in children)
 
 
 def _inspect(path: Path) -> FirmwareSource | None:

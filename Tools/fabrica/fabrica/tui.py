@@ -34,8 +34,8 @@ HELP = ("j/k select  b=boot  a=app  r=reset  m=monitor  f=firmware  d=doctor  "
 
 class App:
     def __init__(self, firmware_dir, iface: str, bitrate: int):
-        self.firmware_dir = Path(firmware_dir) if firmware_dir \
-            else mf.DEFAULT_FIRMWARE_DIR
+        self.firmware_dir = self._resolve(
+            Path(firmware_dir) if firmware_dir else mf.DEFAULT_FIRMWARE_DIR)
         self.manifest = self._load(self.firmware_dir)
         # Folder picker state. search_root is the directory scanned for
         # selectable firmware sets; by default the parent of the current one,
@@ -72,6 +72,19 @@ class App:
                                  "provenance is not reproducible")
 
     # ------------------------------------------------------------ state --
+    @staticmethod
+    def _resolve(directory: Path) -> Path:
+        """The version folder to open, given a version OR a container of them.
+
+        firmware/ holds one folder per version, so both are things an operator
+        will reasonably point at. Depth 0 first so naming a version selects
+        exactly that and never a sibling; otherwise take the newest inside.
+        """
+        if sources.discover(directory, max_depth=0):
+            return directory
+        found = sources.discover(directory, max_depth=2)
+        return found[0].path if found else directory
+
     @staticmethod
     def _load(directory: Path) -> mf.Manifest:
         """Load a folder, accepting a loose .srec drop as well as a staged set."""

@@ -3,7 +3,7 @@ CC      ?= gcc
 CFLAGS  ?= -std=c11 -Wall -Wextra -O0 -g -I. -Ifakes
 BINDIR  := build
 
-TESTS   := test_can_layout test_thermistor_math test_battery_soc
+TESTS   := test_can_layout test_thermistor_math test_battery_soc test_i2c_host_proto
 BINS    := $(addprefix $(BINDIR)/,$(TESTS))
 
 # PowerStage sources compiled directly into a test. battery.c includes only
@@ -39,6 +39,12 @@ $(BINDIR)/test_battery_soc: test_battery_soc.c $(PS_CORE)/Src/battery.c \
                             $(PS_CORE)/Inc/battery.h $(HEADERS) | $(BINDIR)
 	$(CC) $(CFLAGS) -I$(PS_CORE)/Inc -o $@ \
 	      test_battery_soc.c $(PS_CORE)/Src/battery.c -lm
+
+BB_CORE := ../../STM32G0B1_Applciationprog/STM32G0_BUTTONBOARD_PROG/Core
+$(BINDIR)/test_i2c_host_proto: test_i2c_host_proto.c $(BB_CORE)/Src/i2c_host_proto.c \
+                               $(BB_CORE)/Inc/i2c_host_proto.h $(HEADERS) | $(BINDIR)
+	$(CC) $(CFLAGS) -I$(BB_CORE)/Inc -o $@ \
+	    test_i2c_host_proto.c $(BB_CORE)/Src/i2c_host_proto.c -lm
 
 $(BINDIR):
 	mkdir -p $(BINDIR)

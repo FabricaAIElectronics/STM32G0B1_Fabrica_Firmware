@@ -95,6 +95,26 @@ BOARDS: list[Board] = [
         address_plan_exempt=False,
         in_bus_doc=True,
     ),
+    Board(
+        id="buttonboard",
+        name="ButtonBoard",
+        mcu="STM32G0B1RET6",
+        app_dir=f"{_APP_G0}/STM32G0_BUTTONBOARD_PROG",
+        app_eclipse="STM32G0_BUTTONBOARD_PROG",
+        boot_dir=f"{_BOOT_G0}/G0B1_ButtonBoard_Boot",
+        boot_eclipse="G0B1_ButtonBoard_Boot",
+        dbc=f"{_APP_G0}/STM32G0_BUTTONBOARD_PROG/ButtonBoard.dbc",
+        headers=(f"{_APP_G0}/STM32G0_BUTTONBOARD_PROG/Core/Inc/can_operation.h",),
+        blt_rx=0x780,
+        blt_tx=0x781,
+        bitrate=500000,
+        extended=False,
+        boot_reserved_bytes=RESERVE_G0B1,
+        app_origin=0x08003000,
+        flash_total_bytes=FLASH_512K,
+        address_plan_exempt=False,
+        in_bus_doc=True,
+    ),
     # The knob predates the 0x101-0x17F address plan. Its ids sit in CANopen SDO
     # space, it has no DBC, and it is absent from Docs/CAN_Bus.md. Another team
     # owns that; the gate records it as a warning, never a failure.

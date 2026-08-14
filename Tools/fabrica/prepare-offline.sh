@@ -51,6 +51,7 @@ if [ "$copied" -eq 0 ]; then
     echo
     echo "Nothing was copied. Install the tools first:"
     echo "  ./install_openocd012.sh"
+    echo "  ./install_bootcommander.sh"
 fi
 
 # The openocd binary alone is useless: `-f interface/stlink.cfg` resolves
@@ -75,13 +76,55 @@ if [ -x "tools/$platform/openocd" ]; then
     fi
 fi
 
+# Refuse to call an incomplete bundle done.
+#
+# The first version printed "not on PATH, skipped" and exited 0, so a bundle
+# with no BootCommander looked successful and only failed on the bench, where
+# `doctor` reported it missing and the operator had nothing local to install
+# from. A packaging step that cannot produce a working bundle must say so here,
+# not there.
+missing=""
+[ -x "tools/$platform/openocd" ] || missing="$missing openocd"
+[ -x "tools/$platform/BootCommander" ] || missing="$missing BootCommander"
+[ -d "tools/$platform/openocd-scripts" ] || missing="$missing openocd-scripts"
+[ -d vendor ] || missing="$missing vendor/"
+
+if [ -n "$missing" ]; then
+    cat >&2 <<EOF
+
+=== INCOMPLETE BUNDLE ===
+Missing:$missing
+
+This folder will NOT work on a machine without those already installed.
+Install what is missing on THIS machine, then re-run:
+
+    ./install_openocd012.sh        # openocd >= 0.12 (G0B1 needs it)
+    ./install_bootcommander.sh     # BootCommander, for flashing over CAN
+
+EOF
+    exit 1
+fi
+
+# tar, not scp -r: scp does not preserve the executable bit without -p, so a
+# copied folder arrives with `fab` and the bundled binaries non-executable and
+# `./fab` fails with "Permission denied". Observed on the Orin.
+bundle="fabrica-$platform-$(date +%Y%m%d).tar.gz"
+echo
+echo "=== building $bundle ==="
+chmod +x fab *.sh 2>/dev/null || true
+chmod +x "tools/$platform/openocd" "tools/$platform/BootCommander" 2>/dev/null || true
+tar -czf "../$bundle" -C .. "$(basename "$here")"
+echo "  ../$bundle  ($(du -h "../$bundle" | cut -f1))"
+
 cat <<EOF
 
 === done ===
-This folder can now be copied to a bench of the same architecture:
+Copy the TARBALL, not the folder - tar preserves the executable bit, plain
+scp -r does not:
 
-    scp -r "$here" user@bench:~/
+    scp ../$bundle user@bench:~/
+    ssh user@bench 'tar -xzf $bundle && ./$(basename "$here")/fab doctor'
 
 Everything the tool needs is inside it: firmware, DBCs, python packages and
-native binaries. Run \`./fab doctor\` there to confirm which copies it resolved.
+native binaries.
 EOF

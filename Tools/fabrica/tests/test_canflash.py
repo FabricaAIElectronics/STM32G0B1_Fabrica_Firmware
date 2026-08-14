@@ -388,3 +388,47 @@ def test_a_flash_that_finishes_is_not_killed(monkeypatch):
 def test_default_timeout_leaves_room_for_a_real_flash():
     """The largest image here is ~54 kB and flashes in well under a minute."""
     assert canflash.DEFAULT_FLASH_TIMEOUT_S >= 120
+
+
+# --- cancellation ----------------------------------------------------------
+
+def test_run_subprocess_hands_the_process_to_the_caller(monkeypatch):
+    """Without a handle on the child there is no way to abort a flash.
+
+    Selecting the wrong board and pressing 'a' used to be unstoppable: the TUI
+    runs the flash on a daemon thread, so quitting killed the interpreter while
+    BootCommander - a separate OS process - kept transmitting as an orphan.
+    """
+    proc = _NeverEndingProc()
+    monkeypatch.setattr(canflash.subprocess, "Popen", lambda *a, **k: proc)
+
+    seen = []
+    canflash.run_subprocess(["BootCommander"], timeout_s=0.05,
+                            on_start=seen.append)
+
+    assert seen == [proc], "the caller was never given the process"
+
+
+def test_flash_passes_on_start_to_the_real_runner(monkeypatch):
+    proc = _NeverEndingProc()
+    monkeypatch.setattr(canflash.subprocess, "Popen", lambda *a, **k: proc)
+    monkeypatch.setattr(canflash, "DEFAULT_FLASH_TIMEOUT_S", 0.05)
+
+    seen = []
+    canflash.flash("BootCommander", "can0", 500000, 0x130, 0x131,
+                   Path("/tmp/x.srec"), on_start=seen.append)
+
+    assert seen == [proc]
+
+
+def test_an_injected_runner_is_not_handed_on_start(monkeypatch):
+    """Test runners take (cmd, on_output); passing on_start would break them."""
+    calls = []
+
+    def runner(cmd, on_output=None):
+        calls.append(cmd)
+        return 0, "ok"
+
+    canflash.flash("BootCommander", "can0", 500000, 0x130, 0x131,
+                   Path("/tmp/x.srec"), runner=runner, on_start=lambda p: None)
+    assert len(calls) == 1

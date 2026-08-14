@@ -28,8 +28,8 @@ from pathlib import Path
 
 from . import canbus, canflash, env, manifest as mf, sources, stlink
 
-HELP = ("j/k select  b=boot  a=app  r=reset  m=monitor  f=firmware  d=doctor  "
-        "q=quit")
+HELP = ("j/k board  [/] scroll  b=boot  a=app  r=reset  m=monitor  f=firmware  "
+        "d=doctor  x=CANCEL  q=quit")
 
 
 class App:
@@ -50,6 +50,15 @@ class App:
         self.log: list[tuple[str, str]] = []
         self.events: queue.Queue = queue.Queue()
         self.busy = False
+        # The subprocess of a running flash, so it can be stopped. Selecting
+        # the wrong board and starting a flash was previously unstoppable:
+        # quitting killed the interpreter while BootCommander carried on
+        # transmitting as an orphan.
+        self.child = None
+        # First visible telemetry line. Kept as an absolute index rather than a
+        # frame number so it stays put as frames arrive and signals change -
+        # a pane that re-anchored itself every 100 ms would be unreadable.
+        self.tel_offset = 0
         self.monitor: canbus.Monitor | None = None
         self.bus = None
         self.monitoring = False
@@ -132,6 +141,7 @@ class App:
     def _worker(self, fn) -> None:
         """Run a blocking action off the UI thread, funnelling output to the queue."""
         self.busy = True
+        self.cancelled = False
 
         def run():
             try:
@@ -139,9 +149,48 @@ class App:
             except Exception as exc:                     # noqa: BLE001
                 self.events.put(("err", f"{type(exc).__name__}: {exc}"))
             finally:
+                self.child = None
                 self.events.put(("done", ""))
 
         threading.Thread(target=run, daemon=True).start()
+
+    def cancel(self) -> None:
+        """Stop a running flash.
+
+        Killing mid-write leaves a partial image, which is recoverable: only
+        the application region is being written, the bootloader is untouched,
+        and re-flashing fixes it. Continuing to write the WRONG image to a
+        board is not recoverable in the same easy way, so stopping wins.
+        """
+        proc = self.child
+        if proc is None:
+            self.say("warn", "nothing running to cancel")
+            return
+        self.cancelled = True
+        try:
+            proc.kill()
+            self.say("warn", "CANCELLED - the image on the board is now "
+                             "incomplete; re-flash the correct one")
+        except Exception as exc:                          # noqa: BLE001
+            self.say("err", f"could not stop it: {exc}")
+
+    def kill_child(self) -> None:
+        """Stop any running subprocess. Called on the way out.
+
+        Without this, quitting orphaned BootCommander: the worker is a daemon
+        thread, so the interpreter exits, but the flasher is a separate OS
+        process and kept polling - transmitting an XCP CONNECT ~17 times a
+        second onto a bus other boards are using.
+        """
+        proc = self.child
+        if proc is None:
+            return
+        try:
+            proc.kill()
+            proc.wait(timeout=2)
+        except Exception:                                 # noqa: BLE001
+            pass
+        self.child = None
 
     def flash_boot(self) -> None:
         board = self.board
@@ -158,7 +207,7 @@ class App:
         self.say("info", f"flashing {board.name} bootloader via {backend}")
         self._worker(lambda cb: stlink.flash(
             backend, exe, path, board.boot.load_addr_int, board.mcu,
-            on_output=cb))
+            on_output=cb, on_start=self._adopt))
 
     def flash_app(self) -> None:
         board = self.board
@@ -176,7 +225,25 @@ class App:
                          f"tid=0x{board.blt_rx:03X} rid=0x{board.blt_tx:03X}")
         self._worker(lambda cb: canflash.flash(
             exe, self.iface, board.bitrate, board.blt_rx, board.blt_tx, path,
-            extended=board.extended, on_output=cb))
+            extended=board.extended, on_output=cb, on_start=self._adopt))
+
+    def clamp_telemetry_offset(self, total: int, capacity: int) -> int:
+        """Keep the window inside the list, and return the offset to draw at.
+
+        Clamped at render time rather than on the keypress: the list grows and
+        shrinks as frames appear, so an offset that was valid when the key was
+        pressed may not be one frame later. Scrolling to the bottom of a short
+        list and then losing a frame must not leave the pane blank.
+        """
+        self.tel_offset = max(0, min(self.tel_offset, max(0, total - capacity)))
+        return self.tel_offset
+
+    def scroll_telemetry(self, delta: int) -> None:
+        self.tel_offset = max(0, self.tel_offset + delta)
+
+    def _adopt(self, proc) -> None:
+        """Remember the child so cancel() and kill_child() can reach it."""
+        self.child = proc
 
     def send_reset(self) -> None:
         board = self.board
@@ -319,27 +386,28 @@ def _draw(stdscr, app: App) -> None:
 
     # telemetry
     stdscr.addnstr(0, left, " TELEMETRY ".ljust(w - left - 1), w - left - 1,
-                   curses.A_REVERSE)
+                   curses.A_REVERSE)   # overwritten below when it scrolls
     if app.monitoring and app.monitor:
         frames = app.monitor.snapshot()
-        counts = app.monitor.counts()
-        r = 1
-        for f in frames:
-            if r >= split:
-                break
-            rate = app.monitor.rate_hz(f.arb_id)
-            stdscr.addnstr(r, left + 1,
-                           f"0x{f.arb_id:03X} {(f.name or 'raw'):<20} "
-                           f"n={counts[f.arb_id]:<4} "
-                           f"{(f'{rate:4.1f}Hz' if rate else '   -  ')} "
-                           f"{f.raw.hex(' ')}", w - left - 2)
-            r += 1
-            for k, v in list(f.signals.items())[:3]:
-                if r >= split:
-                    break
-                stdscr.addnstr(r, left + 3, f"{k} = {v}", w - left - 4,
-                               curses.A_DIM)
-                r += 1
+        # Render a WINDOW onto every line rather than rationing rows between
+        # frames. PowerStage needs about sixty rows for ten broadcasts of up to
+        # eight signals; the pane has under thirty. Any fixed budget therefore
+        # hides real data - the previous one said "+N more", which named what
+        # you could not see without letting you see it.
+        lines = telemetry_lines(app)
+        capacity = max(1, split - 1)
+        offset = app.clamp_telemetry_offset(len(lines), capacity)
+
+        header = telemetry_header(offset, capacity, len(lines))
+        if header:
+            stdscr.addnstr(0, left, header.ljust(w - left - 1),
+                           w - left - 1, curses.A_REVERSE)
+
+        for i, (indent, text, dim) in enumerate(
+                lines[offset:offset + capacity]):
+            stdscr.addnstr(1 + i, left + indent, text,
+                           max(1, w - left - indent - 1),
+                           curses.A_DIM if dim else curses.A_NORMAL)
         if not frames:
             stdscr.addnstr(1, left + 1, "waiting for traffic...", w - left - 2,
                            curses.A_DIM)
@@ -366,6 +434,45 @@ def _draw(stdscr, app: App) -> None:
               f"{'BUSY' if app.busy else 'idle'} | {HELP}")
     stdscr.addnstr(h - 1, 0, status.ljust(w - 1)[:w - 1], w - 1, curses.A_REVERSE)
     stdscr.refresh()
+
+
+def telemetry_header(offset: int, capacity: int, total: int) -> str:
+    """Pane title showing the visible range, or "" when everything fits.
+
+    Separate and pure so the position arithmetic can be tested without a
+    terminal - screen-scraping a curses redraw over ssh proved an unreliable
+    way to check an off-by-one.
+    """
+    if total <= capacity:
+        return ""
+    last = min(offset + capacity, total)
+    return f" TELEMETRY  {offset + 1}-{last}/{total}  [ ] PgUp/PgDn scroll "
+
+
+def telemetry_lines(app) -> list[tuple[int, str, bool]]:
+    """Every renderable line for the current snapshot, as (indent, text, dim).
+
+    Built in full and windowed by the caller, so nothing is ever dropped for
+    lack of space - a frame's ninth signal is one PgDn away rather than gone.
+    Pure apart from reading the monitor, which is what makes it testable
+    without curses.
+    """
+    if not app.monitor:
+        return []
+    counts = app.monitor.counts()
+    lines: list[tuple[int, str, bool]] = []
+    for f in app.monitor.snapshot():
+        rate = app.monitor.rate_hz(f.arb_id)
+        lines.append((
+            1,
+            f"0x{f.arb_id:03X} {(f.name or 'raw'):<20} "
+            f"n={counts.get(f.arb_id, 0):<4} "
+            f"{(f'{rate:4.1f}Hz' if rate else '   -  ')} "
+            f"{f.raw.hex(' ')}",
+            False))
+        for k, v in f.signals.items():
+            lines.append((3, f"{k} = {v}", True))
+    return lines
 
 
 def _loop(stdscr, app: App) -> int:
@@ -400,9 +507,28 @@ def _loop(stdscr, app: App) -> int:
             continue
 
         if key in ("q", "Q"):
+            # Kill first, then close the bus: leaving a flasher running is the
+            # one thing that outlives this process and corrupts the next
+            # session's measurements.
+            app.kill_child()
             if app.bus:
                 app.bus.shutdown()
             return 0
+        if key in ("x", "X") or ch == 3:            # x or Ctrl-C
+            app.cancel()
+            continue
+        # Telemetry scrolling, handled before the busy guard below: a flash is
+        # exactly when you want to watch the bus, and the guard swallows keys.
+        if key == "]" or ch == curses.KEY_NPAGE:
+            app.scroll_telemetry(5)
+            continue
+        if key == "[" or ch == curses.KEY_PPAGE:
+            app.scroll_telemetry(-5)
+            continue
+        if ch == curses.KEY_HOME or key == "0":
+            app.tel_offset = 0
+            continue
+
         if ch in (curses.KEY_DOWN,) or key == "j":
             app.sel = (app.sel + 1) % len(app.manifest.boards)
         elif ch in (curses.KEY_UP,) or key == "k":

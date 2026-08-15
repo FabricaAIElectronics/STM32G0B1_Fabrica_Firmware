@@ -14,18 +14,35 @@ static uint8_t s_rx[4];                  /* cmd + optional 2-byte payload, +1
                                            * guard: I2C_ITSlaveCplt/ITListenCplt
                                            * write one more byte past pBuffPtr
                                            * with no bounds check of their own. */
+static uint8_t s_rx_sink;                /* write-direction over-read pad: the
+                                           * mirror of s_tx_pad below. Any byte
+                                           * the master writes past the command
+                                           * (or, for CMD_RW_ENCODER, past the
+                                           * 2-byte payload) lands here and is
+                                           * discarded - see s_rx_state and
+                                           * HAL_I2C_SlaveRxCpltCallback. */
 static uint8_t s_tx[I2CHOST_MAX_REPLY];
-static uint8_t s_tx_pad[I2CHOST_MAX_REPLY]; /* all-0xFF; only ONE byte is ever
-                                           * re-armed per HAL_I2C_SlaveTxCpltCallback
-                                           * call (see there for why), fed to a
+static uint8_t s_tx_pad;                 /* 0xFF; re-armed one byte at a time
+                                           * by HAL_I2C_SlaveTxCpltCallback
+                                           * (see there for why), fed to a
                                            * master that keeps clocking past
                                            * the documented reply length. */
 
-/* Set when AddrCallback arms the 2-byte encoder payload receive; cleared once
- * that payload is consumed (or a write-direction address restarts a command).
- * HAL_I2C_SlaveRxCpltCallback branches on this instead of on hi2c->pBuffPtr,
- * which is fragile once s_rx is padded past the payload it points into. */
-static volatile uint8_t s_expect_payload;
+/* Tracks what the next write-direction byte(s) mean, since HAL_I2C_Slave-
+ * RxCpltCallback cannot tell from hi2c->pBuffPtr alone once s_rx_sink is in
+ * play. RX_CMD: next byte is the command. RX_PAYLOAD: next two bytes are the
+ * CMD_RW_ENCODER LE payload. RX_SINK: no payload is expected (or the payload
+ * was already consumed); drain and discard every further byte into
+ * s_rx_sink instead of leaving RXI disabled with no buffer armed - with
+ * NoStretchMode disabled, an unserviced RXNE just stretches SCL forever,
+ * wedging the bus (the write-side mirror of the read-side over-read pad). */
+typedef enum {
+    I2CHOST_RX_CMD = 0,
+    I2CHOST_RX_PAYLOAD,
+    I2CHOST_RX_SINK
+} I2CHostRxState;
+
+static volatile I2CHostRxState s_rx_state;
 
 void I2CHost_Init(void)
 {
@@ -34,7 +51,7 @@ void I2CHost_Init(void)
         s_state.uid[i] = (uint8_t)(w[i / 4U] >> (8U * (i % 4U)));
     }
     s_state.ref_mv = I2CHOST_REF_MV;
-    for (uint8_t i = 0U; i < I2CHOST_MAX_REPLY; i++) s_tx_pad[i] = 0xFFU;
+    s_tx_pad = 0xFFU;
     HAL_NVIC_SetPriority(I2C1_IRQn, 1, 0);
     HAL_NVIC_EnableIRQ(I2C1_IRQn);
     (void)HAL_I2C_EnableListen_IT(&hi2c1);
@@ -57,7 +74,7 @@ void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t dir, uint16_t addr)
 
     if (dir == I2C_DIRECTION_TRANSMIT) {
         /* Master writes: first byte is the command. */
-        s_expect_payload = 0U;
+        s_rx_state = I2CHOST_RX_CMD;
         if (HAL_I2C_Slave_Seq_Receive_IT(hi2c, &s_rx[0], 1U, I2C_NEXT_FRAME) != HAL_OK) {
             /* Failed to arm: this does not NACK the transaction - the address
              * byte was already ACKed by hardware before AddrCallback ran.
@@ -125,34 +142,55 @@ void HAL_I2C_SlaveTxCpltCallback(I2C_HandleTypeDef *hi2c)
      * there, and re-arming would leave TXI enabled with a stale byte
      * queued into the next transaction. */
     if (__HAL_I2C_GET_FLAG(hi2c, I2C_FLAG_BUSY) == RESET) return;
-    /* Re-arm exactly ONE pad byte, not the whole buffer: that single byte
-     * is what the already-pending TXIS loads into TXDR, so XferCount is
-     * back to 0 well before the master's next NACK/STOP - keeping the HAL
-     * on its clean XferCount==0 completion path instead of the AF/error
-     * path (see the long comment in HAL_I2C_AddrCallback's read branch). */
-    (void)HAL_I2C_Slave_Seq_Transmit_IT(hi2c, s_tx_pad, 1U, I2C_NEXT_FRAME);
+    /* Re-arm exactly ONE pad byte: that single byte is what the already-
+     * pending TXIS loads into TXDR, so XferCount is back to 0 well before
+     * the master's next NACK/STOP - keeping the HAL on its clean
+     * XferCount==0 completion path instead of the AF/error path (see the
+     * long comment in HAL_I2C_AddrCallback's read branch). */
+    (void)HAL_I2C_Slave_Seq_Transmit_IT(hi2c, &s_tx_pad, 1U, I2C_NEXT_FRAME);
 }
 
 void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
     if (hi2c->Instance != I2C1) return;
-    if (!s_expect_payload) {
+    switch (s_rx_state) {
+    case I2CHOST_RX_CMD:
         /* Command byte just landed. */
         s_last_cmd = s_rx[0];
         if (s_last_cmd == I2CHOST_CMD_RW_ENCODER) {
             /* An encoder write may follow: cmd + 2 LE bytes. */
-            s_expect_payload = 1U;
+            s_rx_state = I2CHOST_RX_PAYLOAD;
             (void)HAL_I2C_Slave_Seq_Receive_IT(hi2c, &s_rx[1], 2U,
                                                I2C_NEXT_FRAME);
+        } else {
+            /* Every other command carries no payload. A well-behaved
+             * master now issues a repeated START to read (AddrCallback's
+             * read branch cancels this pending sink arm via the HAL's
+             * BUSY_RX_LISTEN -> BUSY_TX_LISTEN path) or STOPs, landing in
+             * ListenCplt. Arm the sink anyway so a master that instead
+             * writes one more byte (e.g. a naive write_byte_data() call)
+             * gets it drained instead of wedging the bus. */
+            s_rx_state = I2CHOST_RX_SINK;
+            (void)HAL_I2C_Slave_Seq_Receive_IT(hi2c, &s_rx_sink, 1U,
+                                               I2C_NEXT_FRAME);
         }
-        /* Other commands carry no payload; STOP lands in ListenCplt. */
-    } else {
+        break;
+    case I2CHOST_RX_PAYLOAD:
         /* Payload complete: route through the same preset path CMD_ENCODER
          * uses on CAN, so there is one apply site in applogic.c. */
-        s_expect_payload = 0U;
         can_rxMessage.encoder_preset =
             I2CHostProto_ParseEncoderWrite(&s_rx[1]);
         can_rxMessage.encoder_preset_update = 1U;
+        s_rx_state = I2CHOST_RX_SINK;
+        (void)HAL_I2C_Slave_Seq_Receive_IT(hi2c, &s_rx_sink, 1U,
+                                           I2C_NEXT_FRAME);
+        break;
+    case I2CHOST_RX_SINK:
+    default:
+        /* Still draining: re-arm the same single byte indefinitely. */
+        (void)HAL_I2C_Slave_Seq_Receive_IT(hi2c, &s_rx_sink, 1U,
+                                           I2C_NEXT_FRAME);
+        break;
     }
 }
 

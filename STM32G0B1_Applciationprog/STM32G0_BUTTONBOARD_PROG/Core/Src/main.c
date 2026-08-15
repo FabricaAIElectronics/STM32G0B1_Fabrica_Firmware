@@ -169,10 +169,12 @@ static void MX_FDCAN1_Init(void)
     }
 }
 
-/* AT24C256 EEPROM (IC1) and the external header P1. 0x00B01E60 is the
- * CubeMX-computed 100 kHz timing for a 60 MHz kernel clock — the same value
- * the LEDDriver board runs. P1 leaves the box, so 100 kHz rather than 400 kHz
- * also buys margin on cable capacitance. */
+/* I2C1 is the host port: connector P1, STM32 as a slave at 0x51 serving the
+ * V5.2-compatible protocol (see i2c_host.c). The AT24C256 config EEPROM is
+ * not on this bus - it moved to I2C3. 0x00B01E60 is the CubeMX fast-mode
+ * timing (~400 kHz class) for a 60 MHz kernel clock; in pure-slave mode the
+ * STM32 never drives SCL, so only SDADEL/SCLDEL (extracted from this same
+ * Timing value) matter here - the master sets the actual bus rate. */
 static void MX_I2C1_Init(void)
 {
     hi2c1.Instance              = I2C1;

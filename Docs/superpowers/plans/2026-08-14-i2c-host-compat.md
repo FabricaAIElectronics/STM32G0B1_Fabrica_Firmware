@@ -751,7 +751,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 
 - **Spec coverage:** protocol table → Task 1; dual-role slave, snapshot, preset reuse → Task 2; EEPROM coexistence + ERR_EEPROM (spec's "subsumes finding #5") → Task 3; bench acceptance incl. save-under-polling → Task 4. Rotary hold-last → Tasks 1/2. Version/UID defaults → Task 1 constants. No gaps found.
 - **Placeholder scan:** none; the one "existing field stamping unchanged" comment refers to code that already exists at the cited lines, not deferred work.
-- **Type consistency:** `I2CHostProtoState`, `I2CHostProto_BuildReply/RotaryMv/ParseEncoderWrite`, `I2CHost_Init/Publish/SuspendListen/ResumeListen`, `bool EEPROM_Write_Config/Read_Config` used identically across tasks.
+- **Type consistency:** `I2CHostProtoState`, `I2CHostProto_BuildReply/RotaryMv/ParseEncoderWrite`, `I2CHost_Init/Publish`, `bool EEPROM_Write_Config/Read_Config` used identically across tasks.
 
 ## Task 4 results — 2026-08-15, Nucleo-G0B1RE + Raspberry Pi 4 (`ubuntu@100.124.51.54`)
 

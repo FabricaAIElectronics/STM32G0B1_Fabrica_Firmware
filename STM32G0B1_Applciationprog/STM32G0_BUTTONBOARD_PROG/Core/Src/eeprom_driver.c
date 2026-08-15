@@ -147,6 +147,9 @@ for(int i=0; i <10; i++){
 
 bool EEPROM_Write_Config(const Config *config)
 {
+    /* Config lives at byte 0 (page 0). Moved from page 1 in the I2C3
+     * migration; a board carrying the old layout boots once with ERR_EEPROM
+     * + defaults and is fixed by one CMD_EEPROM save. */
     HAL_StatusTypeDef st = HAL_I2C_Mem_Write(&hi2c3, EEPROM_ADDR, 0U, 2,
                                              (uint8_t *)config, sizeof(Config), 100U);
     if (st == HAL_OK) {
@@ -159,6 +162,9 @@ bool EEPROM_Write_Config(const Config *config)
 
 bool EEPROM_Read_Config(Config *config)
 {
+    /* Config lives at byte 0 (page 0). Moved from page 1 in the I2C3
+     * migration; a board carrying the old layout boots once with ERR_EEPROM
+     * + defaults and is fixed by one CMD_EEPROM save. */
     HAL_StatusTypeDef st = HAL_I2C_Mem_Read(&hi2c3, EEPROM_ADDR, 0U, 2,
                                             (uint8_t *)config, sizeof(Config), 100U);
     return st == HAL_OK;

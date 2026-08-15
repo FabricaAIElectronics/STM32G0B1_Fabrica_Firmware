@@ -36,11 +36,6 @@ typedef enum {
     ERR_CAN            = 0x04   /* FDCAN would not start                    */
 } ErrorCode;
 
-/* Config lives on its own page so a future field cannot collide with
- * anything else stored in the device. */
-#define EEPROM_CONFIG_PAGE      1U
-#define EEPROM_CONFIG_OFFSET    0U
-
 /* --------------------------------------------------------------------------
  * Scheduling
  * --------------------------------------------------------------------------

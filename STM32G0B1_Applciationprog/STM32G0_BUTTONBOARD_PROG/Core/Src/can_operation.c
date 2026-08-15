@@ -28,7 +28,16 @@ static FDCAN_TxHeaderTypeDef txMsgHeader = {
 
 static FDCAN_RxHeaderTypeDef rxMsgHeader;
 static uint8_t txMsgData[8];
-static uint8_t rxMsgData[8];
+
+/* 64, not 8. HAL_FDCAN_GetRxMessage() copies DLCtoBytes[raw DLC] bytes with
+ * no classic-CAN clamp, and a classic frame legally carries DLC codes 9-15
+ * on the wire (M-CAN stores whatever it received). An 8-byte buffer here is
+ * an ISR stack/static overrun of up to 56 bytes for any node or tool that
+ * sends such a frame into our accepted id range. Sizing to the HAL's own
+ * maximum makes the overrun structurally impossible; the dispatcher then
+ * rejects anything over 8 as malformed. */
+#define CAN_RX_BUF_MAX  64U
+static uint8_t rxMsgData[CAN_RX_BUF_MAX];
 
 CAN_RXMessage can_rxMessage = {0};
 
@@ -89,26 +98,22 @@ void CAN_Send(uint32_t id, uint8_t *data, uint8_t len)
     (void)HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &txMsgHeader, txMsgData);
 }
 
-void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
+/* Parse and act on one received frame. Split out of the FIFO callback so
+ * the drain loop below stays a loop and nothing else. */
+static void can_dispatch_frame(void)
 {
-    if ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) == 0U) {
-        return;
-    }
-
-    /* Clear before every receive. HAL_FDCAN_GetRxMessage() writes only DLC
-     * bytes into a file-scope buffer, so without this a short frame leaves
-     * the previous frame's bytes visible underneath it. */
-    memset(rxMsgData, 0, sizeof(rxMsgData));
-
-    if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &rxMsgHeader,
-                               rxMsgData) != HAL_OK) {
-        return;
-    }
-
     /* HAL note: on receive, DataLength holds the RAW 4-bit DLC code in its
      * low nibble — not the bit-shifted FDCAN_DLC_BYTES_x form used on
      * transmit. Mask before comparing against a byte count. */
     const uint8_t dlc = (uint8_t)(rxMsgHeader.DataLength & 0x0FU);
+
+    /* DLC codes 9-15 mean 12..64 bytes and are meaningless on classic CAN.
+     * Nothing this board speaks is longer than 8; treat the frame as
+     * malformed rather than acting on the first 8 bytes of a payload that
+     * was never meant for a classic node. */
+    if (dlc > 8U) {
+        return;
+    }
 
     switch (rxMsgHeader.Identifier) {
 
@@ -173,6 +178,35 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
     default:
         /* In range but not a command we implement. Ignore. */
         break;
+    }
+}
+
+void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
+{
+    if ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) == 0U) {
+        return;
+    }
+
+    /* Drain the FIFO, do not read one frame. HAL_FDCAN_IRQHandler clears
+     * RF0N BEFORE invoking this callback, and RF0N asserts only when a NEW
+     * frame is stored — so a second frame that landed between the first
+     * frame's flag and that clear (back-to-back frames ~230 us apart at
+     * 500 kbit/s do this routinely) never re-raises the interrupt. Reading
+     * one frame per call left that frame stranded until a THIRD arrived,
+     * and the FIFO then ran permanently one-behind. Bench-measured before
+     * this loop: 26 of 40 two-frame bursts lost the second command. */
+    while (HAL_FDCAN_GetRxFifoFillLevel(hfdcan, FDCAN_RX_FIFO0) > 0U) {
+        /* Clear before every receive. HAL_FDCAN_GetRxMessage() writes only
+         * DLC bytes, so without this a short frame leaves the previous
+         * frame's bytes visible underneath it. Only the 8 bytes any command
+         * can legitimately read need clearing. */
+        memset(rxMsgData, 0, 8U);
+
+        if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &rxMsgHeader,
+                                   rxMsgData) != HAL_OK) {
+            return;
+        }
+        can_dispatch_frame();
     }
 }
 

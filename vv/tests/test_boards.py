@@ -3,8 +3,9 @@ import pytest
 from vv.boards import BOARDS, REPO_ROOT, board_by_id
 
 
-def test_four_boards_declared():
-    assert {b.id for b in BOARDS} == {"kincodrive", "powerstage", "leddriver", "knob"}
+def test_five_boards_declared():
+    assert {b.id for b in BOARDS} == {
+        "kincodrive", "powerstage", "leddriver", "buttonboard", "knob"}
 
 
 @pytest.mark.parametrize("board", BOARDS, ids=lambda b: b.id)

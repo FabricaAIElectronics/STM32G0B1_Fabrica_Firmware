@@ -166,10 +166,14 @@ void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c)
             /* Every other command carries no payload. A well-behaved
              * master now issues a repeated START to read (AddrCallback's
              * read branch cancels this pending sink arm via the HAL's
-             * BUSY_RX_LISTEN -> BUSY_TX_LISTEN path) or STOPs, landing in
-             * ListenCplt. Arm the sink anyway so a master that instead
-             * writes one more byte (e.g. a naive write_byte_data() call)
-             * gets it drained instead of wedging the bus. */
+             * BUSY_RX_LISTEN -> BUSY_TX_LISTEN path) or STOPs. On STOP the
+             * sink is still armed (XferCount == 1), so the HAL takes its
+             * AF/I2C_ITError route - ErrorCallback fires but is a no-op
+             * here (State stays LISTEN) - and then I2C_ITListenCplt
+             * re-arms listen. AF is the normal end of a write-only
+             * transaction, not a fault. Arm the sink anyway so a master
+             * that instead writes one more byte (e.g. a naive
+             * write_byte_data() call) gets it drained, not a wedged bus. */
             s_rx_state = I2CHOST_RX_SINK;
             (void)HAL_I2C_Slave_Seq_Receive_IT(hi2c, &s_rx_sink, 1U,
                                                I2C_NEXT_FRAME);

@@ -39,6 +39,7 @@
 
 #include "inputs.h"
 #include "board_pins.h"
+#include "encoder_math.h"
 #include "main.h"
 #include <string.h>
 
@@ -49,8 +50,9 @@ extern TIM_HandleTypeDef htim2;
  * on the bench than to derive from the drawing. */
 #define ENCODER_INVERT      0
 
-/* PEC11L-4120K-S0020: one quadrature cycle per detent, x4 decoding. */
-#define ENCODER_COUNTS_PER_DETENT   4
+/* PEC11L-4120K-S0020: one quadrature cycle per detent, x4 decoding.
+ * ENCODER_COUNTS_PER_DETENT and the count->detent binning live in
+ * encoder_math.h so the vv host harness can assert them directly. */
 
 /* --------------------------------------------------------------------------
  * Per-bit debouncer
@@ -257,12 +259,11 @@ static void encoder_update(InputState *in)
 
     s_quad_accum += (int32_t)delta;
 
-    /* Floor the division rather than letting C truncate toward zero. Plain
-     * integer division maps both -3..-1 and 0..3 onto detent 0, so the
-     * detent straddling zero would be twice as wide as every other one and
-     * the knob would feel like it stuck on the way back through the origin. */
-    in->encoder_pos = (int16_t)(s_quad_accum / ENCODER_COUNTS_PER_DETENT
-                                - ((s_quad_accum % ENCODER_COUNTS_PER_DETENT < 0) ? 1 : 0));
+    /* Half-detent-offset floor: bins are centred on the rest positions, so
+     * +-1 count of contact jitter at rest cannot flip the report and both
+     * approach directions settle on the same value. See encoder_math.h for
+     * the derivation and vv/unit/test_encoder_math.c for the assertions. */
+    in->encoder_pos = Encoder_CountsToDetents(s_quad_accum);
 }
 
 /* --------------------------------------------------------------------------
@@ -321,6 +322,6 @@ void Inputs_SetEncoder(InputState *in, int16_t pos)
      * counter cannot disagree afterwards. */
     __HAL_TIM_SET_COUNTER(&htim2, 0U);
     s_last_cnt   = 0U;
-    s_quad_accum = (int32_t)pos * ENCODER_COUNTS_PER_DETENT;
+    s_quad_accum = Encoder_DetentsToCounts(pos);   /* bin centre of `pos` */
     in->encoder_pos = pos;
 }

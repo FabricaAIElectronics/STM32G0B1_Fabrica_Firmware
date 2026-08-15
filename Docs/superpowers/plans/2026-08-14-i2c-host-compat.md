@@ -4,7 +4,7 @@
 
 **Goal:** Make the ButtonBoard V5.5 firmware answer the V5.2 ATtiny's I2C slave protocol at 7-bit address 0x51, so existing Jetson host code works unchanged.
 
-**Architecture:** A pure protocol module (`i2c_host_proto.c`, no HAL includes, host-testable exactly like `battery.c`) builds every reply from a plain snapshot struct. A thin HAL glue module (`i2c_host.c`) runs I2C1 in dual role — interrupt-driven slave listen for the host, existing blocking master for the EEPROM — and suspends listen around EEPROM transactions. EEPROM driver return codes stop being discarded as part of this work.
+**Architecture:** A pure protocol module (`i2c_host_proto.c`, no HAL includes, host-testable exactly like `battery.c`) builds every reply from a plain snapshot struct. A thin HAL glue module (`i2c_host.c`) runs I2C1 (PB6/PB7, connector P1) as an interrupt-driven pure slave for the host. The AT24C256 EEPROM moves to its own bus, I2C3 (PA6/PA7, 100 kHz) — the buses are fully independent, so no dual-role or arbitration logic exists. EEPROM driver return codes stop being discarded as part of the migration. *(Revised 2026-08-15 from a shared-bus design after the PCB routed the EEPROM to I2C3.)*
 
 **Tech Stack:** STM32G0 HAL (vendored), vv host unit harness (`vv/unit/harness.h`, gcc), STM32CubeIDE headless build.
 
@@ -25,10 +25,11 @@
 
 - Create `STM32G0B1_Applciationprog/STM32G0_BUTTONBOARD_PROG/Core/Inc/i2c_host_proto.h` — command IDs, snapshot struct, pure reply builder (single responsibility: wire format).
 - Create `.../Core/Src/i2c_host_proto.c` — implementation of the above.
-- Create `.../Core/Inc/i2c_host.h` + `.../Core/Src/i2c_host.c` — HAL slave glue: listen management, callbacks, snapshot publish, suspend/resume for EEPROM master ops.
+- Create `.../Core/Inc/i2c_host.h` + `.../Core/Src/i2c_host.c` — HAL slave glue for I2C1: listen management, callbacks, snapshot publish.
 - Create `vv/unit/test_i2c_host_proto.c` — host tests compiling the real `i2c_host_proto.c`.
 - Modify `vv/unit/Makefile` — new test target (battery pattern).
-- Modify `.../Core/Src/main.c` (OwnAddress1, init call), `.../Core/Src/stm32g0xx_it.c` (I2C1 IRQ), `.../Core/Src/applogic.c` (publish + EEPROM error), `.../Core/Src/eeprom_driver.c` + `Inc/eeprom_driver.h` (status returns, ACK-poll fix, suspend/resume wrap).
+- Modify `.../Core/Src/main.c` (I2C1 OwnAddress1 + host init; new `hi2c3` + `MX_I2C3_Init`), `.../Core/Inc/main.h` (`extern hi2c3`), `.../Core/Src/stm32g0xx_hal_msp.c` (I2C3 MSP branch), `.../Core/Inc/board_pins.h` (HOST_/EEPROM_ pin names), `.../Core/Src/stm32g0xx_it.c` (I2C1 IRQ), `.../Core/Src/applogic.c` (publish + EEPROM error), `.../Core/Src/eeprom_driver.c` + `Inc/eeprom_driver.h` (`hi2c3`, status returns, ACK-poll fix).
+- Already done in the `.ioc` (uncommitted, by Jordan): I2C3 on PA6/PA7 at `Timing 0x10A077A8`, PA0 re-bound to `TIM2_CH1`, and `GPIO_Label`s for all 44 function pins matching `board_pins.h`.
 
 ---
 
@@ -238,7 +239,10 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 
 ---
 
-### Task 2: HAL slave glue + firmware wiring
+### Task 2: HAL slave glue + firmware wiring (I2C1 = pure host slave)
+
+> **Revised 2026-08-15:** the EEPROM moved to I2C3, so I2C1 is a pure slave.
+> No listen suspend/resume API exists any more.
 
 **Files:**
 - Create: `STM32G0B1_Applciationprog/STM32G0_BUTTONBOARD_PROG/Core/Inc/i2c_host.h`
@@ -248,15 +252,16 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Modify: `.../Core/Src/applogic.c` (publish after `Inputs_Poll` in `AppLogic_Run`, ~line 148)
 
 **Interfaces:**
-- Consumes: Task 1's `I2CHostProto_*` API; `can_rxMessage.encoder_preset` / `.encoder_preset_update` volatile flags from `can_operation.h` (existing); `InputState` from `inputs.h`.
-- Produces: `void I2CHost_Init(void)` (call after `MX_I2C1_Init`), `void I2CHost_Publish(const InputState *in)` (call each `Inputs_Poll` cycle), `void I2CHost_SuspendListen(void)` / `void I2CHost_ResumeListen(void)` (Task 3 wraps EEPROM ops in these). Task 4 relies on the whole slave being live.
+- Consumes: Task 1's `I2CHostProto_*` API and `I2CHOST_ADDR_7BIT` / `I2CHOST_REF_MV` constants; `can_rxMessage.encoder_preset` / `.encoder_preset_update` volatile flags from `can_operation.h` (existing); `InputState` from `inputs.h`.
+- Produces: `void I2CHost_Init(void)` (call after `MX_I2C1_Init`), `void I2CHost_Publish(const InputState *in)` (call each `Inputs_Poll` cycle). Task 4 relies on the whole slave being live.
 
 - [ ] **Step 1: Write `Core/Inc/i2c_host.h`:**
 
 ```c
-/* Dual-role I2C1: interrupt-driven slave (host at 0x51) alongside the
- * existing blocking EEPROM master. See i2c_host_proto.h for the wire
- * format and Docs/superpowers/specs/2026-08-14-i2c-host-compat-design.md. */
+/* I2C1 host port: interrupt-driven slave at 0x51 serving the V5.2 ATtiny
+ * protocol to an external master (Jetson) via connector P1. Pure slave -
+ * the EEPROM lives on its own bus (I2C3). See i2c_host_proto.h for the
+ * wire format and Docs/superpowers/specs/2026-08-14-i2c-host-compat-design.md. */
 #ifndef INC_I2C_HOST_H_
 #define INC_I2C_HOST_H_
 
@@ -270,12 +275,6 @@ void I2CHost_Init(void);
  * loop after Inputs_Poll; the ISR never touches InputState directly. */
 void I2CHost_Publish(const InputState *in);
 
-/* Master transactions (EEPROM) may not run while listen is armed. Wrap
- * them in Suspend/Resume; the host sees a NACK meanwhile, identical to
- * polling a busy EEPROM. */
-void I2CHost_SuspendListen(void);
-void I2CHost_ResumeListen(void);
-
 #endif /* INC_I2C_HOST_H_ */
 ```
 
@@ -284,10 +283,8 @@ void I2CHost_ResumeListen(void);
 ```c
 #include "i2c_host.h"
 #include "i2c_host_proto.h"
-#include "can_operation.h"   /* encoder preset flags + hi2c1 via main.h  */
-#include "main.h"
-
-extern I2C_HandleTypeDef hi2c1;
+#include "can_operation.h"   /* encoder preset flags                     */
+#include "main.h"            /* hi2c1                                    */
 
 /* Snapshot written by the main loop, read by the slave ISR. Same volatile
  * discipline as CAN_RXMessage: without it a hoisted load serves stale
@@ -317,16 +314,6 @@ void I2CHost_Publish(const InputState *in)
     s_state.knob_mv  = s_last_mv;
     s_state.encoder  = in->encoder_pos;
     s_state.button   = in->encoder_button;
-}
-
-void I2CHost_SuspendListen(void)
-{
-    (void)HAL_I2C_DisableListen_IT(&hi2c1);
-}
-
-void I2CHost_ResumeListen(void)
-{
-    (void)HAL_I2C_EnableListen_IT(&hi2c1);
 }
 
 /* ---- HAL slave callbacks ------------------------------------------------ */
@@ -417,7 +404,7 @@ void I2C1_IRQHandler(void)
 }
 ```
 
-with `extern I2C_HandleTypeDef hi2c1;` next to the file's existing extern declarations. In `applogic.c`, immediately after the `Inputs_Poll(&sm->inputs);` call in `AppLogic_Run` (~line 148) add:
+with `extern I2C_HandleTypeDef hi2c1;` next to the file's existing extern declarations (or rely on `main.h`, which already declares it). In `applogic.c`, immediately after the `Inputs_Poll(&sm->inputs);` call in `AppLogic_Run` (~line 148) add:
 
 ```c
     I2CHost_Publish(&sm->inputs);
@@ -445,61 +432,138 @@ git add STM32G0B1_Applciationprog/STM32G0_BUTTONBOARD_PROG/Core/Inc/i2c_host.h \
     STM32G0B1_Applciationprog/STM32G0_BUTTONBOARD_PROG/Core/Src/stm32g0xx_it.c \
     STM32G0B1_Applciationprog/STM32G0_BUTTONBOARD_PROG/Core/Src/applogic.c
 git add -p STM32G0B1_Applciationprog/STM32G0_BUTTONBOARD_PROG/Core/Src/main.c
-git commit -m "Serve the V5.2 host I2C protocol as a slave on the shared bus
+git commit -m "Serve the V5.2 host I2C protocol as a slave on I2C1
 
 Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ```
 
 ---
 
-### Task 3: EEPROM status propagation + listen coexistence
+### Task 3: Move the EEPROM to I2C3 and propagate its status
+
+> **Revised 2026-08-15:** replaces the old "listen coexistence" task. The
+> `.ioc` already carries I2C3 on PA6/PA7 at 100 kHz (`Timing 0x10A077A8`);
+> the hand-written C must catch up.
 
 **Files:**
+- Modify: `.../Core/Inc/board_pins.h` (I2C section ~lines 58-66: rename + add I2C3 pins)
+- Modify: `.../Core/Src/main.c` (add `hi2c3` handle + `MX_I2C3_Init`, call it in `main()`)
+- Modify: `.../Core/Inc/main.h` (~line 21: `extern hi2c3`)
+- Modify: `.../Core/Src/stm32g0xx_hal_msp.c` (`HAL_I2C_MspInit` ~lines 60-89: add I2C3 branch)
 - Modify: `.../Core/Inc/eeprom_driver.h` (~lines 37-45: return types)
-- Modify: `.../Core/Src/eeprom_driver.c` (write/read/config functions, ACK poll ~lines 73-80)
-- Modify: `.../Core/Src/applogic.c` (`service_commands` ~lines 70-81)
+- Modify: `.../Core/Src/eeprom_driver.c` (`hi2c1` → `hi2c3` everywhere; status returns; ACK poll ~lines 73-80)
+- Modify: `.../Core/Src/applogic.c` (`service_commands` ~lines 70-81, `STATE_LOAD_CONFIG` ~line 162)
 
 **Interfaces:**
-- Consumes: `I2CHost_SuspendListen()` / `I2CHost_ResumeListen()` from Task 2.
-- Produces: `bool EEPROM_Write_Config(const Config *c)` and `bool EEPROM_Read_Config(Config *c)` (were `void`); `applogic.c` sets `ERR_EEPROM` on a failed save.
+- Consumes: nothing from Task 2 (independent buses).
+- Produces: `hi2c3` handle; `bool EEPROM_Write_Config(const Config *c)` and `bool EEPROM_Read_Config(Config *c)` (were `void`); `applogic.c` sets `ERR_EEPROM` on a failed save.
 
-- [ ] **Step 1: Change the driver.** In `eeprom_driver.h` the config API becomes:
+- [ ] **Step 1: Pins.** In `board_pins.h` replace the I2C section with two named buses:
+
+```c
+/* -------------------------------------------------------------------------
+ * I2C1 — host port to the Jetson via P1 (STM32 is a slave at 0x51).
+ * R11/R12 give 10 k on-board.
+ * ------------------------------------------------------------------------- */
+#define HOST_SCL_Pin            GPIO_PIN_6      /* PB6  AF6 I2C1_SCL         */
+#define HOST_SCL_GPIO_Port      GPIOB
+#define HOST_SDA_Pin            GPIO_PIN_7      /* PB7  AF6 I2C1_SDA         */
+#define HOST_SDA_GPIO_Port      GPIOB
+
+/* -------------------------------------------------------------------------
+ * I2C3 — AT24C256 config EEPROM (STM32 is the only master), 100 kHz.
+ * ------------------------------------------------------------------------- */
+#define EEPROM_SCL_Pin          GPIO_PIN_7      /* PA7  AF6 I2C3_SCL         */
+#define EEPROM_SCL_GPIO_Port    GPIOA
+#define EEPROM_SDA_Pin          GPIO_PIN_6      /* PA6  AF6 I2C3_SDA         */
+#define EEPROM_SDA_GPIO_Port    GPIOA
+```
+
+and update the existing `HAL_I2C_MspInit` I2C1 branch in `stm32g0xx_hal_msp.c` to use `HOST_SCL_Pin | HOST_SDA_Pin` (the old `I2C_SCL_Pin`/`I2C_SDA_Pin` names are removed).
+
+- [ ] **Step 2: I2C3 peripheral.** In `main.c` add next to `hi2c1`:
+
+```c
+I2C_HandleTypeDef   hi2c3;      /* EEPROM bus, PA6/PA7, 100 kHz */
+```
+
+and a new init (call it in `main()` right after `MX_I2C1_Init();`):
+
+```c
+/** I2C3: AT24C256 EEPROM, standard-mode 100 kHz from the 60 MHz kernel clock. */
+static void MX_I2C3_Init(void)
+{
+    hi2c3.Instance              = I2C3;
+    hi2c3.Init.Timing           = 0x10A077A8;
+    hi2c3.Init.OwnAddress1      = 0;
+    hi2c3.Init.AddressingMode   = I2C_ADDRESSINGMODE_7BIT;
+    hi2c3.Init.DualAddressMode  = I2C_DUALADDRESS_DISABLE;
+    hi2c3.Init.OwnAddress2      = 0;
+    hi2c3.Init.OwnAddress2Masks = I2C_OA2_NOMASK;
+    hi2c3.Init.GeneralCallMode  = I2C_GENERALCALL_DISABLE;
+    hi2c3.Init.NoStretchMode    = I2C_NOSTRETCH_DISABLE;
+    if (HAL_I2C_Init(&hi2c3) != HAL_OK) {
+        Error_Handler();
+    }
+    if (HAL_I2CEx_ConfigAnalogFilter(&hi2c3, I2C_ANALOGFILTER_ENABLE) != HAL_OK) {
+        Error_Handler();
+    }
+    if (HAL_I2CEx_ConfigDigitalFilter(&hi2c3, 0) != HAL_OK) {
+        Error_Handler();
+    }
+}
+```
+
+`main.h` gets `extern I2C_HandleTypeDef hi2c3;` beside `hi2c1`. In `stm32g0xx_hal_msp.c` `HAL_I2C_MspInit`, add an `else if (hi2c->Instance == I2C3)` branch mirroring the I2C1 one:
+
+```c
+    else if (hi2c->Instance == I2C3)
+    {
+        PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_I2C3;
+        PeriphClkInit.I2c3ClockSelection   = RCC_I2C3CLKSOURCE_PCLK1;
+        if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
+            Error_Handler();
+        }
+        __HAL_RCC_GPIOA_CLK_ENABLE();
+        GPIO_InitStruct.Pin       = (uint16_t)(EEPROM_SCL_Pin | EEPROM_SDA_Pin);
+        GPIO_InitStruct.Mode      = GPIO_MODE_AF_OD;
+        GPIO_InitStruct.Pull      = GPIO_PULLUP;
+        GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_LOW;
+        GPIO_InitStruct.Alternate = GPIO_AF6_I2C3;
+        HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+        __HAL_RCC_I2C3_CLK_ENABLE();
+    }
+```
+
+(Verify the macro names `RCC_PERIPHCLK_I2C3` / `RCC_I2C3CLKSOURCE_PCLK1` / `GPIO_AF6_I2C3` exist in the vendored `stm32g0xx_hal_rcc_ex.h` and `stm32g0xx_hal_gpio_ex.h` for the G0B1 — grep before assuming.)
+
+- [ ] **Step 3: EEPROM driver.** In `eeprom_driver.c` change `extern I2C_HandleTypeDef hi2c1;` to `hi2c3` and every `&hi2c1` to `&hi2c3`. In `eeprom_driver.h` the config API becomes:
 
 ```c
 #include <stdbool.h>
-bool EEPROM_Write_Config(const Config *config);   /* true = persisted     */
-bool EEPROM_Read_Config(Config *config);          /* true = read + valid I2C */
+bool EEPROM_Write_Config(const Config *config);   /* true = persisted        */
+bool EEPROM_Read_Config(Config *config);          /* true = read succeeded   */
 ```
 
-In `eeprom_driver.c`, `EEPROM_Write_Config` wraps the transaction and stops discarding statuses (pattern below; `EEPROM_Read_Config` mirrors it with `HAL_I2C_Mem_Read`):
+`EEPROM_Write_Config` stops discarding statuses (`EEPROM_Read_Config` mirrors it with `HAL_I2C_Mem_Read`):
 
 ```c
 bool EEPROM_Write_Config(const Config *config)
 {
-    HAL_StatusTypeDef st;
-    I2CHost_SuspendListen();
-    /* Two attempts: the Jetson is a second master on this bus, so a
-     * transaction can lose arbitration (ARLO) and must retry once the
-     * bus frees up. */
-    for (uint8_t attempt = 0U; attempt < 2U; attempt++) {
-        st = HAL_I2C_Mem_Write(&hi2c1, EEPROM_ADDR, 0U, 2,
-                               (uint8_t *)config, sizeof(Config), 100U);
-        if (st == HAL_OK) break;
-        HAL_Delay(2);
-    }
+    HAL_StatusTypeDef st = HAL_I2C_Mem_Write(&hi2c3, EEPROM_ADDR, 0U, 2,
+                                             (uint8_t *)config, sizeof(Config), 100U);
     if (st == HAL_OK) {
         /* AT24C256 internal write cycle is ~5 ms: poll with HAL's own
          * trials loop instead of the old 10 fast NACK probes. */
-        st = HAL_I2C_IsDeviceReady(&hi2c1, EEPROM_ADDR, 300U, 10U);
+        st = HAL_I2C_IsDeviceReady(&hi2c3, EEPROM_ADDR, 300U, 10U);
     }
-    I2CHost_ResumeListen();
     return st == HAL_OK;
 }
 ```
 
 Delete the old free-standing ACK-poll retry loop (lines 73-80) and the commented-out `HAL_Delay(5)`; the `IsDeviceReady(…, 300, 10)` call replaces both.
 
-- [ ] **Step 2: Consume the status in `applogic.c` `service_commands`:**
+- [ ] **Step 4: Consume the status in `applogic.c` `service_commands`:**
 
 ```c
     if (can_rxMessage.eeprom_save != 0U) {
@@ -518,17 +582,21 @@ Delete the old free-standing ACK-poll retry loop (lines 73-80) and the commented
 
 and the boot-time read in `STATE_LOAD_CONFIG` treats a `false` return like a bad magic (load defaults + `ERR_EEPROM`).
 
-- [ ] **Step 3: Build headless (same command as Task 2 Step 4).** Expected: 0 errors, 0 warnings.
+- [ ] **Step 5: Build headless (same command as Task 2 Step 4).** Expected: 0 errors, 0 warnings.
 
-- [ ] **Step 4: Re-run host tests** — `make -C vv/unit clean all` — expected all pass (no host-side files touched; this catches accidental proto edits).
+- [ ] **Step 6: Re-run host tests** — `make -C vv/unit clean all` — expected all pass (no host-side files touched; this catches accidental proto edits).
 
-- [ ] **Step 5: Commit:**
+- [ ] **Step 7: Commit** (stage `main.c` and `stm32g0xx_hal_msp.c` by hunk with `git add -p` — both carry uncommitted bench-only deltas that must stay out):
 
 ```bash
-git add STM32G0B1_Applciationprog/STM32G0_BUTTONBOARD_PROG/Core/Inc/eeprom_driver.h \
+git add STM32G0B1_Applciationprog/STM32G0_BUTTONBOARD_PROG/Core/Inc/board_pins.h \
+    STM32G0B1_Applciationprog/STM32G0_BUTTONBOARD_PROG/Core/Inc/main.h \
+    STM32G0B1_Applciationprog/STM32G0_BUTTONBOARD_PROG/Core/Inc/eeprom_driver.h \
     STM32G0B1_Applciationprog/STM32G0_BUTTONBOARD_PROG/Core/Src/eeprom_driver.c \
     STM32G0B1_Applciationprog/STM32G0_BUTTONBOARD_PROG/Core/Src/applogic.c
-git commit -m "Propagate EEPROM I2C failures and coexist with host slave mode
+git add -p STM32G0B1_Applciationprog/STM32G0_BUTTONBOARD_PROG/Core/Src/main.c
+git add -p STM32G0B1_Applciationprog/STM32G0_BUTTONBOARD_PROG/Core/Src/stm32g0xx_hal_msp.c
+git commit -m "Move the config EEPROM to I2C3 and report its I2C failures
 
 Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ```
@@ -538,7 +606,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 4: Bench verification on the Nucleo
 
 **Files:**
-- No firmware changes. Uses the Task 2/3 build, the CAN flash path, and an external I2C master (the V5.2 ATtiny board reflashed, or any Arduino) wired SDA→PB7, SCL→PB6, GND common, 3.3 V logic, 3.3-4.7 k pull-ups to 3V3.
+- No firmware changes. Uses the Task 2/3 build, the CAN flash path, and an external I2C master (the V5.2 ATtiny board reflashed, or any Arduino) wired to the **host port**: SDA→PB7, SCL→PB6, GND common, 3.3 V logic, 3.3-4.7 k pull-ups to 3V3. Nothing is connected to PA6/PA7 on the Nucleo (no EEPROM) — that is the expected ERR_EEPROM condition.
 
 **Interfaces:**
 - Consumes: everything; this is the acceptance gate from the spec's Testing section.
@@ -576,8 +644,9 @@ void loop() {
   1. READ_ALL loop prints `ref=3300`, `enc` tracks the physical encoder ±1 per detent, and CAN 0x7A0 reports the identical count concurrently.
   2. Encoder write: master sends `{0x80, 0x9C, 0xFF}`; both the I2C `enc` readback and CAN 0x7A0 jump to −100.
   3. Version (`0xFE`) reads `2,0`; UID (`0x10`) returns 10 stable bytes.
-  4. CAN `0x793 [01]` (EEPROM save) during continuous host polling: broadcasts continue, the host sees at most brief NACKs, and with no EEPROM fitted DEVSTATUS (0x7A3 byte 1) now sets `ERR_EEPROM` — the Task 3 truth signal.
+  4. CAN `0x793 [01]` (EEPROM save) during continuous host polling: broadcasts continue, **the host port sees no NACKs at all** (separate buses), and with no EEPROM on PA6/PA7 DEVSTATUS (0x7A3 byte 1) sets `ERR_EEPROM` — the Task 3 truth signal.
   5. Rotary lines: ground `ROT_SW_3` (PB2) briefly — `knob` reads 1650 (pos 3 × 550); release → holds 1650 (hold-last rule).
+  6. Bus isolation: scope or logic-analyze PA6/PA7 during the CAN save — traffic appears there and only there; PB6/PB7 carry only host polls.
 
 - [ ] **Step 4: Record results.** Append a dated results section to `Docs/superpowers/plans/2026-08-14-i2c-host-compat.md` (this file) listing pass/fail per check, and report any failure back through the systematic-debugging skill rather than patching ad hoc.
 

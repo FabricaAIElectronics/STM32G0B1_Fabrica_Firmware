@@ -16,12 +16,21 @@ changes.
 
 ## Topology and constraints
 
-- One shared bus: I2C1 on PB6/PB7, taken off-board via connector P1. The
-  AT24C256 config EEPROM (7-bit 0x50) sits on the same bus.
-- The STM32 is therefore **dual-role**: slave at 7-bit **0x51** for the host,
-  master to the EEPROM. The Jetson is also a master on this bus.
-- Bus speed: fast-mode (~400 kHz, `Timing = 0x00B01E60` at 60 MHz kernel
-  clock). Unchanged.
+> **Revised 2026-08-15.** The V5.5 board now routes the EEPROM to its own
+> bus (I2C3 on PA6/PA7). The original design assumed one shared bus and a
+> dual-role STM32; that complexity is gone. Earlier wording below is
+> superseded by this list.
+
+- **Two independent buses:**
+  - **I2C1, PB6/PB7 (`HOST_SCL`/`HOST_SDA`), off-board via connector P1** —
+    the host port. The STM32 is a **pure slave** here at 7-bit **0x51**.
+    Fast-mode (`Timing = 0x00B01E60`).
+  - **I2C3, PA6/PA7 (`EEPROM_SCL`/`EEPROM_SDA`)** — the AT24C256 (7-bit
+    0x50). The STM32 is the only master. Standard-mode 100 kHz
+    (`Timing = 0x10A077A8`), deliberate.
+- No dual-role operation, no listen suspend around EEPROM traffic, no
+  multi-master arbitration handling: the host cannot see EEPROM traffic
+  and vice versa.
 - 0x51 matches the V5.2 board's strap wiring (ATtiny base 0x49 + the +8
   strap). Fixed at compile time; no strap pins exist on V5.5.
 
@@ -76,18 +85,19 @@ slave protocol. Same ISR/main-loop discipline as `can_operation.c`:
   `SlaveTxCpltCallback`, `ListenCpltCallback` (re-arm listen),
   `ErrorCallback` (recover + re-arm). I2C1 event/error IRQs enabled in NVIC.
 
-## EEPROM coexistence
+## EEPROM (I2C3) — driver migration and status propagation
 
-Master transactions (boot config read, `CMD_EEPROM` save) suspend listen mode
-for their duration; the host's polls NACK during that window, which host code
-already tolerates (identical to polling a busy EEPROM). Because the Jetson is
-a second master, the STM32's master ops can now lose arbitration (ARLO):
+The EEPROM driver moves from `hi2c1` to a new `hi2c3` handle (I2C3, PA6/PA7,
+AF6, 100 kHz). No coexistence logic is needed since the buses are separate.
+The migration also fixes what review finding #5 flagged, since the driver is
+being touched anyway:
 
-- The EEPROM driver's HAL statuses stop being discarded: failures (including
-  ARLO and NACK) propagate up, `service_commands` sets `ERR_EEPROM` in the
-  device status mask on a failed save, and an ARLO'd transaction is retried
-  once the bus is free. This subsumes review finding #5's fix — it becomes a
-  prerequisite of this feature, not optional cleanup.
+- HAL statuses stop being discarded: `EEPROM_Write_Config` / `Read_Config`
+  return `bool`, `service_commands` sets `ERR_EEPROM` on a failed save, and
+  the boot-time read treats a bus failure like a bad magic.
+- The AT24C256 write-cycle ACK-poll uses HAL's own trials loop
+  (`HAL_I2C_IsDeviceReady(&hi2c3, EEPROM_ADDR, 300, 10)`) instead of the
+  ten fast NACK probes that returned before the ~5 ms cycle finished.
 
 ## Testing
 
@@ -99,8 +109,8 @@ a second master, the STM32's master ops can now lose arbitration (ARLO):
   master, or the Jetson once the board reaches that bench. Full pass =
   the V5.2 host polling loop (0x09 default) runs unmodified against the
   Nucleo/V5.5 board while CAN broadcasts continue unperturbed, and an EEPROM
-  save under concurrent host polling neither corrupts the config nor wedges
-  the slave interface.
+  save (`CMD_EEPROM` over CAN) during continuous host polling leaves the host
+  port unaffected and reports its result truthfully in `ERR_EEPROM`.
 
 ## Out of scope
 

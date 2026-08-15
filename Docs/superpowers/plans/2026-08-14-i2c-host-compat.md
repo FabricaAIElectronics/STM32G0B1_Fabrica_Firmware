@@ -752,3 +752,34 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - **Spec coverage:** protocol table → Task 1; dual-role slave, snapshot, preset reuse → Task 2; EEPROM coexistence + ERR_EEPROM (spec's "subsumes finding #5") → Task 3; bench acceptance incl. save-under-polling → Task 4. Rotary hold-last → Tasks 1/2. Version/UID defaults → Task 1 constants. No gaps found.
 - **Placeholder scan:** none; the one "existing field stamping unchanged" comment refers to code that already exists at the cited lines, not deferred work.
 - **Type consistency:** `I2CHostProtoState`, `I2CHostProto_BuildReply/RotaryMv/ParseEncoderWrite`, `I2CHost_Init/Publish/SuspendListen/ResumeListen`, `bool EEPROM_Write_Config/Read_Config` used identically across tasks.
+
+## Task 4 results — 2026-08-15, Nucleo-G0B1RE + Raspberry Pi 4 (`ubuntu@100.124.51.54`)
+
+**Bench as actually built** (differs from the plan text above): the Pi's kernel
+(`6.18.34+rpt-rpi-v8`, Raspberry Pi OS Trixie) ships no `i2c-slave-eeprom`
+module, and its `i2c-0` is the camera mux (an `imx219` overlay is active), so
+only `i2c-1` (GPIO2/3, header pins 3/5) is a usable bus. It is wired as the
+**host** bus to PB7 (SDA, CN7-21) / PB6 (SCL, CN10-17). PA6/PA7 (I2C3, EEPROM)
+are left unconnected — the "no chip" case. Firmware = branch HEAD `cea8855`
+build (31024 B), flashed over CAN via BootCommander. Host script:
+`Tools/bench/pi_i2c_host_emu.py` (staged on the Pi as `~/pi_i2c_host_emu.py`).
+
+Two wiring faults were found by pulsing each Pi line with `pinctrl` and reading
+STM32 `GPIOB->IDR` over SWD (0x50000410) — a technique worth keeping: an
+all-addresses `i2cdetect` result means SDA is held/undriven, not "many slaves".
+
+| # | Check | Result | Observed |
+|---|---|---|---|
+| 0 | `i2cdetect -y 1` | **PASS** | exactly one address: `51` |
+| 1 | READ_ALL poll: `ref=3300`, encoder tracks, CAN 0x7A0 identical | **PASS** | `knob=3300 ref=3300 enc=0 btn=1`; enc identical on CAN |
+| 2 | `write-enc` (LE write, BE read) and CAN sees it | **PASS** | −100, 222, −333 all read back; CAN 0x7A0 = −333 |
+| 3 | `version` = (2,0); `uid` 10 bytes, stable | **PASS** | `(2, 0)`; `0f001800145041394b33` twice |
+| 4 | over-read 40 B → 7 real + 33×0xFF, slave not stuck | **PASS** | `0ce40ce400de01` + all-0xFF; next poll fine |
+| 5 | rotary ROT_SW_3 → 1650, hold on release | **not run** | needs a hand on PB2; `knob=3300` = pos 6 held (PB12 floating high on the Nucleo). Rotary decode itself is unchanged code; defer to the V5.5 board |
+| 6 | EEPROM round-trip through emulator | **deferred** | no kernel slave module on this Pi; needs the real AT24C256 on the V5.5 board |
+| 7 | failed save sets `ERR_EEPROM` (truth signal) | **PASS** | CAN `0x793 [01]` with no chip → DEVSTATUS err stays `0x03`; 0x7A0 cadence unaffected (10/s) |
+| 8 | bus isolation / concurrency | **PASS** | 40 host polls, 0 errors, while CAN 0x7A0 max gap = 100 ms exactly |
+
+Notes: `btn=1` and `knob=3300` are floating-pin artefacts on the Nucleo (PA2
+and the ROT_SW lines have no external pulls here), not defects. Bench-only
+firmware deltas (HSI clock, CSS off, encoder pull-ups) remain uncommitted.

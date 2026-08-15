@@ -519,11 +519,8 @@ static void MX_I2C3_Init(void)
 ```c
     else if (hi2c->Instance == I2C3)
     {
-        PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_I2C3;
-        PeriphClkInit.I2c3ClockSelection   = RCC_I2C3CLKSOURCE_PCLK1;
-        if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK) {
-            Error_Handler();
-        }
+        /* I2C3 has no CCIPR kernel-clock mux on the G0B1 - it always runs
+         * from PCLK1, so there is no HAL_RCCEx_PeriphCLKConfig step. */
         __HAL_RCC_GPIOA_CLK_ENABLE();
         GPIO_InitStruct.Pin       = (uint16_t)(EEPROM_SCL_Pin | EEPROM_SDA_Pin);
         GPIO_InitStruct.Mode      = GPIO_MODE_AF_OD;
@@ -535,7 +532,7 @@ static void MX_I2C3_Init(void)
     }
 ```
 
-(Verify the macro names `RCC_PERIPHCLK_I2C3` / `RCC_I2C3CLKSOURCE_PCLK1` / `GPIO_AF6_I2C3` exist in the vendored `stm32g0xx_hal_rcc_ex.h` and `stm32g0xx_hal_gpio_ex.h` for the G0B1 — grep before assuming.)
+(Verified against the vendored HAL: `GPIO_AF6_I2C3` and `__HAL_RCC_I2C3_CLK_ENABLE()` exist; `RCC_PERIPHCLK_I2C3` does **not** — only I2C1/I2C2 have clock-source selectors on this part.)
 
 - [ ] **Step 3: EEPROM driver.** In `eeprom_driver.c` change `extern I2C_HandleTypeDef hi2c1;` to `hi2c3` and every `&hi2c1` to `&hi2c3`. In `eeprom_driver.h` the config API becomes:
 
@@ -603,54 +600,152 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 
 ---
 
-### Task 4: Bench verification on the Nucleo
+### Task 4: Bench verification — Raspberry Pi 4 as host AND EEPROM emulator
+
+> **Revised 2026-08-15:** no standalone I2C master is available; a Raspberry
+> Pi 4 plays both roles. It is a genuine host-class machine (the same
+> `smbus2` loop will later run on the Jetson) and Linux's `i2c-slave-eeprom`
+> module lets a second, bit-banged bus answer as the AT24C256 — with the
+> emulated EEPROM's contents readable from a sysfs file, which a real chip
+> cannot offer.
 
 **Files:**
-- No firmware changes. Uses the Task 2/3 build, the CAN flash path, and an external I2C master (the V5.2 ATtiny board reflashed, or any Arduino) wired to the **host port**: SDA→PB7, SCL→PB6, GND common, 3.3 V logic, 3.3-4.7 k pull-ups to 3V3. Nothing is connected to PA6/PA7 on the Nucleo (no EEPROM) — that is the expected ERR_EEPROM condition.
+- Create: `Tools/bench/pi_i2c_host_emu.py` (host-side V5.2 protocol exerciser, python3 + smbus2)
+- Create: `Tools/bench/pi_setup_i2c_bench.sh` (one-shot Pi configuration)
+- No firmware changes. Uses the Task 2/3 build and the CAN flash path.
 
 **Interfaces:**
-- Consumes: everything; this is the acceptance gate from the spec's Testing section.
+- Consumes: everything from Tasks 1-3; the acceptance gate from the spec's Testing section.
 
-- [ ] **Step 1: Flash the build over CAN** (board must be in bootloader or app running — the 0x780 CONNECT resets it):
+**Wiring (5 wires from the Pi 40-pin header to the Nucleo, all 3.3 V logic):**
+
+| Role | Pi pin | Pi GPIO | → Nucleo pin | STM32 |
+|---|---|---|---|---|
+| Host bus SDA | 3 | GPIO2 (i2c-1 SDA) | PB7 (CN7) | `HOST_SDA` |
+| Host bus SCL | 5 | GPIO3 (i2c-1 SCL) | PB6 (CN10) | `HOST_SCL` |
+| EEPROM bus SDA | 16 | GPIO23 (bit-bang) | PA6 (CN10) | `EEPROM_SDA` |
+| EEPROM bus SCL | 18 | GPIO24 (bit-bang) | PA7 (CN10) | `EEPROM_SCL` |
+| Ground | 6 | GND | any GND | |
+
+Pull-ups: the Pi's i2c-1 already has 1.8 kΩ on-board (host bus needs nothing extra). The bit-banged bus has none — add **3.3–4.7 kΩ from GPIO23 and GPIO24 to the Pi's 3V3 (pin 1)**. Do NOT power the Nucleo from the Pi; it stays on its own USB.
+
+- [ ] **Step 1: Configure the Pi.** Copy and run `Tools/bench/pi_setup_i2c_bench.sh` (contents below) once, then reboot the Pi:
+
+```bash
+#!/usr/bin/env bash
+# One-shot Raspberry Pi 4 setup: hardware I2C1 as the host bus, a bit-banged
+# second bus (GPIO23/24) hosting a kernel-emulated 24C256 for the STM32.
+set -euo pipefail
+sudo raspi-config nonint do_i2c 0                       # enable i2c-1 (GPIO2/3)
+CFG=/boot/firmware/config.txt; [ -f "$CFG" ] || CFG=/boot/config.txt
+grep -q '^dtoverlay=i2c-gpio' "$CFG" || \
+  echo 'dtoverlay=i2c-gpio,bus=3,i2c_gpio_sda=23,i2c_gpio_scl=24,i2c_gpio_delay_us=2' | sudo tee -a "$CFG"
+grep -q '^i2c-dev'          /etc/modules || echo i2c-dev          | sudo tee -a /etc/modules
+grep -q '^i2c-slave-eeprom' /etc/modules || echo i2c-slave-eeprom | sudo tee -a /etc/modules
+sudo apt-get install -y -q python3-smbus2 i2c-tools >/dev/null 2>&1 || sudo pip3 install smbus2
+echo "Reboot, then: sudo bash -c 'echo slave-24c256 0x1050 > /sys/bus/i2c/devices/i2c-3/new_device'"
+echo "Backing file: /sys/bus/i2c/devices/3-1050/slave-eeprom"
+```
+
+After reboot, instantiate the emulated EEPROM (0x1050 = slave flag 0x1000 | address 0x50) and check both buses:
+
+```bash
+sudo bash -c 'echo slave-24c256 0x1050 > /sys/bus/i2c/devices/i2c-3/new_device'
+i2cdetect -y 1        # host bus: expect 51 once the STM32 app is running
+ls -la /sys/bus/i2c/devices/3-1050/slave-eeprom     # 32768-byte backing file
+```
+
+- [ ] **Step 2: Flash the Task 3 build over CAN** (bootloader or app may be running — 0x780 CONNECT resets it):
 
 ```bash
 /c/Users/User/Documents/GitHub/openblt/Host/BootCommander.exe -s=xcp -t=xcp_can \
   -d=peak_pcanusb -b=500000 -tid=780 -rid=781 \
   STM32G0B1_Applciationprog/STM32G0_BUTTONBOARD_PROG/Debug/STM32G0_BUTTONBOARD_PROG.srec
 ```
-Expected: erase/program/finish all `[OK]`, then 0x7A0/0x7A1 broadcasts resume at 100 ms.
+Expected: all `[OK]`; 0x7A0/0x7A1 broadcasts resume at 100 ms; `i2cdetect -y 1` on the Pi shows `51`.
 
-- [ ] **Step 2: Master test sketch** on the I2C master (Arduino-style):
+- [ ] **Step 3: Host emulator** — `Tools/bench/pi_i2c_host_emu.py`:
 
-```c
-#include <Wire.h>
-void setup() { Wire.begin(); Serial.begin(115200); }
-void loop() {
-  uint8_t b[7];
-  Wire.beginTransmission(0x51); Wire.write(0x09); Wire.endTransmission();
-  Wire.requestFrom(0x51, 7);
-  for (int i = 0; i < 7 && Wire.available(); i++) b[i] = Wire.read();
-  int knob = (b[0] << 8) | b[1], ref = (b[2] << 8) | b[3];
-  int16_t enc = (b[4] << 8) | b[5];
-  Serial.print("knob="); Serial.print(knob);
-  Serial.print(" ref="); Serial.print(ref);
-  Serial.print(" enc="); Serial.print(enc);
-  Serial.print(" btn="); Serial.println(b[6]);
-  delay(100);
-}
+```python
+#!/usr/bin/env python3
+"""V5.2 ATtiny-protocol host exerciser for the ButtonBoard V5.5 STM32 slave.
+
+Runs the exact byte sequences the Jetson-side V5.2 code uses, against the
+STM32 at 0x51 on the Pi's i2c-1. Usage:
+    ./pi_i2c_host_emu.py poll            # READ_ALL loop, prints decoded fields
+    ./pi_i2c_host_emu.py write-enc -100  # RW_ENCODER preset (LE), then reads back
+    ./pi_i2c_host_emu.py version         # READ_VERSION -> (major, minor)
+    ./pi_i2c_host_emu.py uid             # READ_UID -> 10 bytes
+    ./pi_i2c_host_emu.py overread        # read 40 bytes after READ_ALL: bytes 7.. must be 0xFF
+"""
+import struct, sys, time
+from smbus2 import SMBus, i2c_msg
+
+ADDR = 0x51
+CMD_READ_ALL, CMD_RW_ENC, CMD_VER, CMD_UID = 0x09, 0x80, 0xFE, 0x10
+
+def xfer(bus, cmd, nread, payload=b""):
+    """Write cmd(+payload), repeated-START read nread bytes - the ATtiny pattern."""
+    w = i2c_msg.write(ADDR, bytes([cmd]) + payload)
+    r = i2c_msg.read(ADDR, nread)
+    bus.i2c_rdwr(w, r)
+    return bytes(r)
+
+def read_all(bus):
+    b = xfer(bus, CMD_READ_ALL, 7)
+    knob, ref, enc = struct.unpack(">HHh", b[:6])      # big-endian, as the ATtiny sent
+    return knob, ref, enc, b[6]
+
+def main():
+    op = sys.argv[1] if len(sys.argv) > 1 else "poll"
+    with SMBus(1) as bus:
+        if op == "poll":
+            while True:
+                knob, ref, enc, btn = read_all(bus)
+                print(f"knob={knob:4d}mV ref={ref}mV enc={enc:6d} btn={btn}", flush=True)
+                time.sleep(0.1)
+        elif op == "write-enc":
+            val = int(sys.argv[2])
+            xfer(bus, CMD_RW_ENC, 0, struct.pack("<h", val))     # LE write - the asymmetry
+            time.sleep(0.05)
+            (enc,) = struct.unpack(">h", xfer(bus, CMD_RW_ENC, 2))  # BE read
+            print(f"wrote {val}, read back {enc}", "OK" if enc == val else "MISMATCH")
+        elif op == "version":
+            print("version", tuple(xfer(bus, CMD_VER, 2)))
+        elif op == "uid":
+            print("uid", xfer(bus, CMD_UID, 10).hex())
+        elif op == "overread":
+            b = xfer(bus, CMD_READ_ALL, 40)
+            print("first 7:", b[:7].hex(), "pad all 0xFF:", all(x == 0xFF for x in b[7:]))
+        else:
+            sys.exit(__doc__)
+
+if __name__ == "__main__":
+    main()
 ```
 
-- [ ] **Step 3: Acceptance checks** (each must hold):
-  1. READ_ALL loop prints `ref=3300`, `enc` tracks the physical encoder ±1 per detent, and CAN 0x7A0 reports the identical count concurrently.
-  2. Encoder write: master sends `{0x80, 0x9C, 0xFF}`; both the I2C `enc` readback and CAN 0x7A0 jump to −100.
-  3. Version (`0xFE`) reads `2,0`; UID (`0x10`) returns 10 stable bytes.
-  4. CAN `0x793 [01]` (EEPROM save) during continuous host polling: broadcasts continue, **the host port sees no NACKs at all** (separate buses), and with no EEPROM on PA6/PA7 DEVSTATUS (0x7A3 byte 1) sets `ERR_EEPROM` — the Task 3 truth signal.
-  5. Rotary lines: ground `ROT_SW_3` (PB2) briefly — `knob` reads 1650 (pos 3 × 550); release → holds 1650 (hold-last rule).
-  6. Bus isolation: scope or logic-analyze PA6/PA7 during the CAN save — traffic appears there and only there; PB6/PB7 carry only host polls.
+The `overread` case exercises Task 2's 1-byte pad re-arm: a 40-byte read after READ_ALL must return the 7 real bytes then 33 × 0xFF with no bus hang.
 
-- [ ] **Step 4: Record results.** Append a dated results section to `Docs/superpowers/plans/2026-08-14-i2c-host-compat.md` (this file) listing pass/fail per check, and report any failure back through the systematic-debugging skill rather than patching ad hoc.
+- [ ] **Step 4: Acceptance checks** (each must hold; record pass/fail):
+  1. `poll`: `ref=3300`, `enc` tracks the physical encoder ±1 per detent, and CAN 0x7A0 shows the identical count concurrently.
+  2. `write-enc -100`: readback −100 **and** CAN 0x7A0 jumps to −100 (one apply path).
+  3. `version` → `(2, 0)`; `uid` → 10 stable bytes across runs.
+  4. `overread` → 7 real bytes then all-0xFF, and the next `poll` still works (no stuck slave).
+  5. Rotary: ground `ROT_SW_3` (PB2) → `knob=1650`; release → holds 1650.
+  6. **EEPROM round-trip through the emulator:** with the emulated EEPROM instantiated, power-cycle the Nucleo. First boot: DEVSTATUS (CAN 0x7A3 byte 1) has ERR_EEPROM set (blank chip → bad magic → defaults). Send CAN `0x793 [01]` (save); ERR_EEPROM clears. On the Pi: `xxd -l 16 /sys/bus/i2c/devices/3-1050/slave-eeprom` shows `42 4b ...` (magic 'KB' 0x4B42 LE) — the STM32's bytes, verbatim. Power-cycle the Nucleo again: ERR_EEPROM stays clear (config persisted and read back).
+  7. **Failure truth signal:** remove the emulated device (`echo 0x1050 > /sys/bus/i2c/devices/i2c-3/delete_device`), send `0x793 [01]` again → ERR_EEPROM **sets** (Task 3's status propagation). Re-add the device, save again → clears.
+  8. **Bus isolation:** run `poll` continuously while doing check 6/7 — the host stream never stalls or errors; a logic analyser (or the Pi's own `i2cdetect -y 3` timing) shows EEPROM traffic only on PA6/PA7.
 
----
+- [ ] **Step 5: Record results.** Append a dated results section to this plan file listing pass/fail per check with the observed values; any failure goes through the systematic-debugging skill, not an ad-hoc patch. Commit `Tools/bench/*` and the results:
+
+```bash
+git add Tools/bench/pi_i2c_host_emu.py Tools/bench/pi_setup_i2c_bench.sh Docs/superpowers/plans/2026-08-14-i2c-host-compat.md
+git commit -m "Add the Raspberry Pi host/EEPROM emulator bench for the I2C host port
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
+```
+
+**Known limits of this bench:** the kernel EEPROM slave does not emulate the AT24C256's ~5 ms write-cycle NACK, so the `IsDeviceReady(…, 300, 10)` poll returns on the first trial here — its timing is only proven on the real board. The Pi 4's hardware I2C1 clock-stretch bug is irrelevant on the host bus (the STM32 slave stretches only within one byte time); if the emulated-EEPROM link is flaky, lower `i2c_gpio_delay_us` sensitivity by raising it to 5 (≈50 kHz).
 
 ## Self-Review
 

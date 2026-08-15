@@ -58,7 +58,7 @@ void HAL_FDCAN_MspInit(FDCAN_HandleTypeDef *hfdcan)
     }
 }
 
-/** I2C1 on PB6 (SCL) / PB7 (SDA), AF6, open drain. */
+/** I2C1 on PB6 (SCL) / PB7 (SDA), AF6, open drain — the host port. */
 void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c)
 {
     GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -77,7 +77,7 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c)
         /* R11/R12 give 10 k on-board. The internal pull-ups are enabled as
          * well — roughly 8 k combined — because P1 takes this bus off the
          * board and 10 k alone is weak for any cable length. */
-        GPIO_InitStruct.Pin       = (uint16_t)(I2C_SCL_Pin | I2C_SDA_Pin);
+        GPIO_InitStruct.Pin       = (uint16_t)(HOST_SCL_Pin | HOST_SDA_Pin);
         GPIO_InitStruct.Mode      = GPIO_MODE_AF_OD;
         GPIO_InitStruct.Pull      = GPIO_PULLUP;
         GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_LOW;
@@ -85,6 +85,22 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c)
         HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
         __HAL_RCC_I2C1_CLK_ENABLE();
+    }
+    else if (hi2c->Instance == I2C3)
+    {
+        /* I2C3 has no CCIPR kernel-clock mux on the G0B1 (only I2C1/I2C2 do)
+         * — it always runs from PCLK1, so there is no PeriphClkInit call
+         * here. */
+        __HAL_RCC_GPIOA_CLK_ENABLE();
+
+        GPIO_InitStruct.Pin       = (uint16_t)(EEPROM_SCL_Pin | EEPROM_SDA_Pin);
+        GPIO_InitStruct.Mode      = GPIO_MODE_AF_OD;
+        GPIO_InitStruct.Pull      = GPIO_PULLUP;
+        GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_LOW;
+        GPIO_InitStruct.Alternate = GPIO_AF6_I2C3;
+        HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+        __HAL_RCC_I2C3_CLK_ENABLE();
     }
 }
 

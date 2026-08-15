@@ -19,6 +19,7 @@ void Error_Handler(void);
 
 extern FDCAN_HandleTypeDef hfdcan1;
 extern I2C_HandleTypeDef   hi2c1;
+extern I2C_HandleTypeDef   hi2c3;
 extern TIM_HandleTypeDef   htim2;
 
 #ifdef __cplusplus

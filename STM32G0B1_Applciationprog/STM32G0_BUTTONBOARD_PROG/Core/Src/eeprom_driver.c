@@ -34,7 +34,7 @@ bool checkcfg(Config *cfg){
 	else
 		return false;
 }
-extern I2C_HandleTypeDef hi2c1;
+extern I2C_HandleTypeDef hi2c3;
 //function to determine the remaining bytes
 uint16_t bytes_to_write(uint16_t size, uint16_t offset){
 	if((size+offset)<PAGE_SIZE)return size;
@@ -65,19 +65,11 @@ void EEPROM_Write (uint16_t page,uint16_t offset, uint8_t *data,uint16_t size){
 		uint16_t MemAddress = StartPage<<paddrposition|offset;
 		uint16_t bytesremaining = bytes_to_write(size, offset);
 
-		HAL_I2C_Mem_Write(&hi2c1, EEPROM_ADDR, MemAddress, 2, &data[pos], bytesremaining, 1000);
+		HAL_I2C_Mem_Write(&hi2c3, EEPROM_ADDR, MemAddress, 2, &data[pos], bytesremaining, 1000);
 		StartPage+=1; //increment the page for new page address can be selected for future write
 		offset=0; // for new page offset is 0
 		size = size - bytesremaining; //recalculate the remaining size to write
 		pos+=bytesremaining; // update the position for data to be written
-		//HAL_Delay(5);
-		/* Renamed from 'i': it shadowed the page-loop counter above, which
-		 * -Wshadow flags and which would silently break the outer loop if
-		 * anyone ever moved a 'break' between the two scopes. */
-		for(int retry=0; retry <10; retry++){
-		if(HAL_I2C_IsDeviceReady(&hi2c1, EEPROM_ADDR, 1, 100)==HAL_OK)
-			break;
-		}
 	}
 }
 //read data to eeprom
@@ -93,7 +85,7 @@ void EEPROM_Read (uint16_t page, uint16_t offset, uint8_t *data,uint16_t size){
 	for (int i=0;i<NumOfPages; i++){
 		uint16_t MemAddress = StartPage<<paddrposition|offset;
 		uint16_t BytesRemaining = bytes_to_write(size, offset);
-		HAL_I2C_Mem_Read(&hi2c1, EEPROM_ADDR, MemAddress, 2, &data[pos],BytesRemaining, 1000);
+		HAL_I2C_Mem_Read(&hi2c3, EEPROM_ADDR, MemAddress, 2, &data[pos],BytesRemaining, 1000);
 		StartPage+=1;
 		offset=0;
 		size = size -BytesRemaining;
@@ -143,20 +135,31 @@ uint16_t MemAddress = page<<paddrposition;
 uint8_t data[PAGE_SIZE];
 memset(data,0xff,PAGE_SIZE);
 //write to the dedicated page
-HAL_I2C_Mem_Write(&hi2c1, EEPROM_ADDR, MemAddress, 2, data, PAGE_SIZE, 1000);
+HAL_I2C_Mem_Write(&hi2c3, EEPROM_ADDR, MemAddress, 2, data, PAGE_SIZE, 1000);
 HAL_Delay(5);
 for(int i=0; i <10; i++){
-	if(HAL_I2C_IsDeviceReady(&hi2c1, EEPROM_ADDR, 1, 100)==HAL_OK)
+	if(HAL_I2C_IsDeviceReady(&hi2c3, EEPROM_ADDR, 1, 100)==HAL_OK)
 		break;
 	}
 }
 
 
 
-void EEPROM_Write_Config(uint16_t page, uint16_t offset, Config *cfg) {
-    EEPROM_Write(page, offset, (uint8_t*)cfg, sizeof(Config));
+bool EEPROM_Write_Config(const Config *config)
+{
+    HAL_StatusTypeDef st = HAL_I2C_Mem_Write(&hi2c3, EEPROM_ADDR, 0U, 2,
+                                             (uint8_t *)config, sizeof(Config), 100U);
+    if (st == HAL_OK) {
+        /* AT24C256 internal write cycle is ~5 ms: poll with HAL's own
+         * trials loop instead of the old 10 fast NACK probes. */
+        st = HAL_I2C_IsDeviceReady(&hi2c3, EEPROM_ADDR, 300U, 10U);
+    }
+    return st == HAL_OK;
 }
 
-void EEPROM_Read_Config(uint16_t page, uint16_t offset, Config *cfg) {
-    EEPROM_Read(page, offset, (uint8_t*)cfg, sizeof(Config));
+bool EEPROM_Read_Config(Config *config)
+{
+    HAL_StatusTypeDef st = HAL_I2C_Mem_Read(&hi2c3, EEPROM_ADDR, 0U, 2,
+                                            (uint8_t *)config, sizeof(Config), 100U);
+    return st == HAL_OK;
 }

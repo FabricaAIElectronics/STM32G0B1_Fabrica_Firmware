@@ -1,7 +1,7 @@
 /*
  * eeprom_driver.h
  *
- * AT24C256 (IC1) on I2C1, device address 0xA0.
+ * AT24C256 (IC1) on I2C3, device address 0xA0.
  * The page read/write primitives are shared verbatim with the LEDDriver and
  * PowerStage builds; only Config and LoadDefault() are board-specific.
  */
@@ -43,8 +43,8 @@ float bytes2Float(uint8_t buffer[4]);
 void  EEPROM_Write_Num(uint16_t page, uint16_t offset, float data);
 float EEPROM_Read_Num(uint16_t page, uint16_t offset);
 void  EEPROM_pageErase(uint16_t page);
-void  EEPROM_Write_Config(uint16_t page, uint16_t offset, Config *cfg);
-void  EEPROM_Read_Config(uint16_t page, uint16_t offset, Config *cfg);
+bool  EEPROM_Write_Config(const Config *config);  /* true = persisted        */
+bool  EEPROM_Read_Config(Config *config);         /* true = read succeeded   */
 void  LoadDefault(Config *config);
 bool  checkcfg(Config *cfg);
 

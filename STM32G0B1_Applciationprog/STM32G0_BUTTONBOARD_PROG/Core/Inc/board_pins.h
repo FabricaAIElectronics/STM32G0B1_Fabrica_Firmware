@@ -57,12 +57,21 @@
 #define CAN_TX_GPIO_Port        GPIOB
 
 /* ==========================================================================
- * I2C1 — AT24C256 EEPROM (IC1) and the external header P1
+ * I2C1 — host port to the Jetson via P1 (STM32 is a slave at 0x51).
+ * R11/R12 give 10 k on-board.
  * ========================================================================== */
-#define I2C_SCL_Pin             GPIO_PIN_6      /* PB6  AF6 I2C1_SCL         */
-#define I2C_SCL_GPIO_Port       GPIOB
-#define I2C_SDA_Pin             GPIO_PIN_7      /* PB7  AF6 I2C1_SDA         */
-#define I2C_SDA_GPIO_Port       GPIOB
+#define HOST_SCL_Pin            GPIO_PIN_6      /* PB6  AF6 I2C1_SCL         */
+#define HOST_SCL_GPIO_Port      GPIOB
+#define HOST_SDA_Pin            GPIO_PIN_7      /* PB7  AF6 I2C1_SDA         */
+#define HOST_SDA_GPIO_Port      GPIOB
+
+/* ==========================================================================
+ * I2C3 — AT24C256 config EEPROM (STM32 is the only master), 100 kHz.
+ * ========================================================================== */
+#define EEPROM_SCL_Pin          GPIO_PIN_7      /* PA7  AF6 I2C3_SCL         */
+#define EEPROM_SCL_GPIO_Port    GPIOA
+#define EEPROM_SDA_Pin          GPIO_PIN_6      /* PA6  AF6 I2C3_SDA         */
+#define EEPROM_SDA_GPIO_Port    GPIOA
 
 /* ==========================================================================
  * PEC11L incremental encoder — TIM2 encoder mode, x4 decoding

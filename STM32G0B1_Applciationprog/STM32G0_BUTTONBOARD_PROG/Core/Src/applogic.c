@@ -76,8 +76,13 @@ static void service_commands(AppStateMachine *sm)
         sm->config.default_led_mask     = Leds_GetMask();
         sm->config.default_led_int_mask = Leds_GetIntMask();
         sm->config.default_led_source   = (uint8_t)Leds_GetSource();
-        EEPROM_Write_Config(EEPROM_CONFIG_PAGE, EEPROM_CONFIG_OFFSET,
-                            &sm->config);
+        if (EEPROM_Write_Config(&sm->config)) {
+            sm->errorMask &= (uint8_t)~ERR_EEPROM;
+        } else {
+            /* Host must see the failed save: EEPROMDATA still echoes the
+             * RAM copy, so this bit is the only truth signal. */
+            sm->errorMask |= (uint8_t)ERR_EEPROM;
+        }
         can_rxMessage.eeprom_save = 0U;
     }
 }
@@ -161,11 +166,11 @@ void AppLogic_Run(AppStateMachine *sm)
         break;
 
     case STATE_LOAD_CONFIG:
-        EEPROM_Read_Config(EEPROM_CONFIG_PAGE, EEPROM_CONFIG_OFFSET,
-                           &sm->config);
-        if (!checkcfg(&sm->config)) {
-            /* Blank or stale device — fall back to defaults and say so. Not
-             * fatal: a board with no EEPROM fitted still has to work. */
+        /* A failed read gets the same treatment as a bad magic: blank or
+         * stale device, unresponsive EEPROM, whatever — fall back to
+         * defaults and say so. Not fatal: a board with no EEPROM fitted
+         * still has to work. */
+        if (!EEPROM_Read_Config(&sm->config) || !checkcfg(&sm->config)) {
             LoadDefault(&sm->config);
             sm->errorMask |= (uint8_t)ERR_EEPROM;
         }

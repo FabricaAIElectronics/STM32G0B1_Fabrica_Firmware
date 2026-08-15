@@ -15,7 +15,9 @@ static uint8_t s_rx[4];                  /* cmd + optional 2-byte payload, +1
                                            * write one more byte past pBuffPtr
                                            * with no bounds check of their own. */
 static uint8_t s_tx[I2CHOST_MAX_REPLY];
-static uint8_t s_tx_pad[I2CHOST_MAX_REPLY]; /* all-0xFF; re-armed chunk for a
+static uint8_t s_tx_pad[I2CHOST_MAX_REPLY]; /* all-0xFF; only ONE byte is ever
+                                           * re-armed per HAL_I2C_SlaveTxCpltCallback
+                                           * call (see there for why), fed to a
                                            * master that keeps clocking past
                                            * the documented reply length. */
 
@@ -57,8 +59,14 @@ void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t dir, uint16_t addr)
         /* Master writes: first byte is the command. */
         s_expect_payload = 0U;
         if (HAL_I2C_Slave_Seq_Receive_IT(hi2c, &s_rx[0], 1U, I2C_NEXT_FRAME) != HAL_OK) {
-            /* Failed to arm: NACK the transaction instead of stretching
-             * SCL forever waiting for a receive that will never start. */
+            /* Failed to arm: this does not NACK the transaction - the address
+             * byte was already ACKed by hardware before AddrCallback ran.
+             * Clearing ADDR here just releases the clock stretch so the bus
+             * is not held forever; the master still sees a slave present.
+             * In practice this branch is unreachable: State always carries
+             * I2C_STATE_LISTEN by the time AddrCallback runs, and
+             * Slave_Seq_Receive_IT only rejects a state that lacks that
+             * bit. */
             __HAL_I2C_CLEAR_FLAG(hi2c, I2C_FLAG_ADDR);
         }
     } else {
@@ -70,23 +78,41 @@ void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t dir, uint16_t addr)
         for (uint8_t i = 0U; i < I2CHOST_UID_LEN; i++) st.uid[i] = s_state.uid[i];
 
         uint8_t len = I2CHostProto_BuildReply(s_last_cmd, &st, s_tx);
-        /* Transmit exactly the documented reply length with NEXT_FRAME: a
+        /* Transmit exactly the documented reply length with NEXT_FRAME. A
          * master that reads exactly len bytes then NACKs+STOPs lands on the
          * XferCount==0 branch of I2C_Slave_ISR_IT's AF handling, which goes
          * straight through I2C_ITSlaveSeqCplt() to HAL_I2C_SlaveTxCpltCallback
-         * below with no error code set. If we instead armed the full 16-byte
-         * buffer with I2C_LAST_FRAME (as before), XferCount would still be
-         * nonzero when STOP lands, and NEXT_FRAME/LAST_FRAME both force the
-         * transfer through the HAL_I2C_ERROR_AF path in I2C_ITSlaveCplt for
-         * every reply shorter than 16 bytes - i.e. every real reply. Worse,
-         * LAST_FRAME leaves TXI enabled once XferCount hits 0 (the ISR's
-         * TXIS branch only calls I2C_ITSlaveSeqCplt for FIRST_FRAME/
-         * NEXT_FRAME), so it either spins on dummy TXIS events or, if the
-         * master keeps reading past byte 16, clock-stretches forever
-         * (NoStretch is disabled) - a hard lockup. HAL_I2C_SlaveTxCpltCallback
-         * re-arms a 0xFF pad chunk with NEXT_FRAME so an over-reading master
-         * keeps getting 0xFF bytes instead. */
+         * below with no error code set - no AF, ErrorCode stays NONE,
+         * HAL_I2C_ErrorCallback is never invoked for a normal read.
+         *
+         * The dummy TXIS that always follows XferCount reaching 0 (the HAL
+         * loads TXDR speculatively before it knows the master will NACK) is
+         * what drives SeqCplt -> HAL_I2C_SlaveTxCpltCallback while the
+         * transaction is still open. That callback re-arms exactly ONE pad
+         * byte with NEXT_FRAME: that single byte is what the pending TXIS
+         * loads into TXDR, so XferCount is back to 0 by the time the next
+         * NACK/STOP lands, keeping every subsequent boundary on the same
+         * clean XferCount==0 path. An over-reading master keeps receiving
+         * 0xFF, one byte re-armed per TXIS, with the same reload margin as
+         * the documented-length reply - no clock stretching (NoStretch is
+         * disabled here, so a slow re-arm would stall SCL, not just skip a
+         * byte).
+         *
+         * HAL_I2C_SlaveTxCpltCallback guards the re-arm on BUSY: it is also
+         * reached from I2C_ITSlaveCplt after STOP already landed, and without
+         * the guard it would re-arm a pad byte for a transaction that is
+         * already over, leaving TXI enabled with a stale 0xFF queued to be
+         * shifted out as the first byte of the *next* transaction. */
         if (HAL_I2C_Slave_Seq_Transmit_IT(hi2c, s_tx, len, I2C_NEXT_FRAME) != HAL_OK) {
+            /* Failed to arm: this does not NACK the transaction - the address
+             * byte was already ACKed by hardware before AddrCallback ran.
+             * Clearing ADDR here just releases the clock stretch so the bus
+             * is not held forever; the master still sees a slave present.
+             * In practice this branch is unreachable: State always carries
+             * I2C_STATE_LISTEN by the time AddrCallback runs (set by
+             * HAL_I2C_EnableListen_IT/ListenCpltCallback re-arm), and
+             * Slave_Seq_Transmit_IT only rejects a state that lacks that
+             * bit. */
             __HAL_I2C_CLEAR_FLAG(hi2c, I2C_FLAG_ADDR);
         }
     }
@@ -95,12 +121,16 @@ void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t dir, uint16_t addr)
 void HAL_I2C_SlaveTxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
     if (hi2c->Instance != I2C1) return;
-    /* The reply just drained (either the real len-byte reply or a previous
-     * pad chunk) and the master is still clocking SCL. Re-arm another 16
-     * bytes of 0xFF: if the master stops here instead, this chunk simply
-     * never gets consumed and the transaction ends via ListenCplt. */
-    (void)HAL_I2C_Slave_Seq_Transmit_IT(hi2c, s_tx_pad, I2CHOST_MAX_REPLY,
-                                        I2C_NEXT_FRAME);
+    /* Also reached from I2C_ITSlaveCplt after STOP; BUSY is already clear
+     * there, and re-arming would leave TXI enabled with a stale byte
+     * queued into the next transaction. */
+    if (__HAL_I2C_GET_FLAG(hi2c, I2C_FLAG_BUSY) == RESET) return;
+    /* Re-arm exactly ONE pad byte, not the whole buffer: that single byte
+     * is what the already-pending TXIS loads into TXDR, so XferCount is
+     * back to 0 well before the master's next NACK/STOP - keeping the HAL
+     * on its clean XferCount==0 completion path instead of the AF/error
+     * path (see the long comment in HAL_I2C_AddrCallback's read branch). */
+    (void)HAL_I2C_Slave_Seq_Transmit_IT(hi2c, s_tx_pad, 1U, I2C_NEXT_FRAME);
 }
 
 void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c)

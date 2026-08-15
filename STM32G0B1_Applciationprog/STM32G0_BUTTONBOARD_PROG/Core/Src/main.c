@@ -15,6 +15,8 @@
 #include "can_operation.h"
 #include "inputs.h"
 #include "leds.h"
+#include "i2c_host.h"
+#include "i2c_host_proto.h"
 
 FDCAN_HandleTypeDef hfdcan1;
 I2C_HandleTypeDef   hi2c1;
@@ -58,6 +60,7 @@ int main(void)
 
     MX_FDCAN1_Init();
     MX_I2C1_Init();
+    I2CHost_Init();      /* slave listen for the V5.2-compatible host port */
     MX_TIM2_Init();
 
     CAN_Init();          /* filter + RX FIFO0 interrupt + HAL_FDCAN_Start */
@@ -171,7 +174,7 @@ static void MX_I2C1_Init(void)
 {
     hi2c1.Instance              = I2C1;
     hi2c1.Init.Timing           = 0x00B01E60;
-    hi2c1.Init.OwnAddress1      = 0;
+    hi2c1.Init.OwnAddress1      = (uint16_t)(I2CHOST_ADDR_7BIT << 1);
     hi2c1.Init.AddressingMode   = I2C_ADDRESSINGMODE_7BIT;
     hi2c1.Init.DualAddressMode  = I2C_DUALADDRESS_DISABLE;
     hi2c1.Init.OwnAddress2      = 0;

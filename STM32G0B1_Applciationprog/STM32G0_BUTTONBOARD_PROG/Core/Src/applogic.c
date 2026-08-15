@@ -19,6 +19,7 @@
   */
 
 #include "applogic.h"
+#include "i2c_host.h"
 #include <string.h>
 
 static void enter_state(AppStateMachine *sm, AppState next)
@@ -146,6 +147,7 @@ void AppLogic_Run(AppStateMachine *sm)
      * samples to converge, and a host watching during startup should see
      * real input data rather than zeros. */
     Inputs_Poll(&sm->inputs);
+    I2CHost_Publish(&sm->inputs);
     CAN_FlashDetectionTick();
 
     switch (sm->state) {

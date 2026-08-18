@@ -169,15 +169,20 @@ void HAL_MspDeInit(void)
   /* Reset GPIO pin for the LED to turn it off. */
   LL_GPIO_ResetOutputPin(GPIOA, LL_GPIO_PIN_5);
 
-  /* Deinit used GPIOs. */
-  LL_GPIO_DeInit(GPIOC);
+  /* Deinit used GPIOs - GPIOA only. GPIOB/C/D carry the parked LED buffer
+   * nets (see MX_GPIO_Init in main.c): BUFF_SEL_1/2 on PC0/PC1 and the ten
+   * LED data lines. LL_GPIO_DeInit() is a whole-port RCC reset, so
+   * deiniting GPIOC here would drop the enables back to Hi-Z for the gap
+   * between this jump and the application's Leds_Init() - the exact
+   * output-fight window the parking exists to close. The application
+   * reconfigures those pins itself and inherits the safe levels meanwhile.
+   * PC13 (blue button, input) is harmless to leave configured. */
   LL_GPIO_DeInit(GPIOA);
 
   /* UART clock disable. */
   LL_APB1_GRP1_DisableClock(LL_APB1_GRP1_PERIPH_USART2);
 
-  /* GPIO ports clock disable. */
-  LL_IOP_GRP1_DisableClock(LL_IOP_GRP1_PERIPH_GPIOC);
+  /* GPIO port clock disable - GPIOA only, for the same reason. */
   LL_IOP_GRP1_DisableClock(LL_IOP_GRP1_PERIPH_GPIOA);
 
   /* SYSCFG clock disable. */

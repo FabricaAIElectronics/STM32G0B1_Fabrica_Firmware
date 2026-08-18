@@ -231,6 +231,62 @@ static void MX_GPIO_Init(void)
   LL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
+
+  /* --------------------------------------------------------------------
+   * Park the LED buffer nets in a safe state for the whole bootloader
+   * session (backdoor window on every reset, the full duration of a CAN
+   * flash, and indefinitely if no valid application is present).
+   *
+   * The two SN74ACT240 output-enables BUFF_SEL_1 (PC0) and BUFF_SEL_2 (PC1)
+   * are INDEPENDENT and active-low, and BUFF_SEL_1 has no hardware default
+   * (R51 is DNP). Left in reset (Hi-Z), both banks can be enabled onto the
+   * same LED nets at once - an output fight, not a wired-OR - with the
+   * STM32-side bank's data inputs floating on top of it. The application
+   * drives these as its very first act; the bootloader runs FIRST and
+   * for far longer, so it must do the same.
+   *
+   * State chosen == exactly what the application's Leds_Init() sets, in
+   * the same order, so the hand-over is glitch-free:
+   *   1. all ten LED data lines HIGH  (dark - the ACT240 inverts once)
+   *   2. BUFF_SEL_2 HIGH              (STM32-driven bank disabled)
+   *   3. BUFF_SEL_1 LOW               (direct/button bank enabled)
+   * so the panel's own buttons still light the LEDs while flashing.
+   *
+   * Pin set mirrors STM32G0_BUTTONBOARD_PROG/Core/Inc/board_pins.h:
+   *   LED_1..6      PC9, PD0, PD1, PD2, PD3, PD4
+   *   LED_INT_1..4  PD5, PD6, PB3, PB4
+   *   BUFF_SEL_1/2  PC0, PC1
+   * Keep the two in step if the board is respun.
+   * ------------------------------------------------------------------ */
+  LL_IOP_GRP1_EnableClock(LL_IOP_GRP1_PERIPH_GPIOD);
+
+  /* 1. Data lines high (dark) BEFORE any bank is enabled. */
+  LL_GPIO_SetOutputPin(GPIOC, LL_GPIO_PIN_9);
+  LL_GPIO_SetOutputPin(GPIOD, LL_GPIO_PIN_0 | LL_GPIO_PIN_1 | LL_GPIO_PIN_2 |
+                              LL_GPIO_PIN_3 | LL_GPIO_PIN_4 | LL_GPIO_PIN_5 |
+                              LL_GPIO_PIN_6);
+  LL_GPIO_SetOutputPin(GPIOB, LL_GPIO_PIN_3 | LL_GPIO_PIN_4);
+  /* 2./3. Enables: SEL_2 high (off), SEL_1 low (direct path on). */
+  LL_GPIO_SetOutputPin(GPIOC, LL_GPIO_PIN_1);
+  LL_GPIO_ResetOutputPin(GPIOC, LL_GPIO_PIN_0);
+
+  /* Now switch the pins from reset Hi-Z to push-pull outputs; the ODR
+   * values above take effect the moment the mode changes, so the nets
+   * never pass through an intermediate driven-low state. */
+  GPIO_InitStruct.Mode       = LL_GPIO_MODE_OUTPUT;
+  GPIO_InitStruct.Speed      = LL_GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull       = LL_GPIO_PULL_NO;
+
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_9 | LL_GPIO_PIN_0 | LL_GPIO_PIN_1;
+  LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_0 | LL_GPIO_PIN_1 | LL_GPIO_PIN_2 |
+                        LL_GPIO_PIN_3 | LL_GPIO_PIN_4 | LL_GPIO_PIN_5 |
+                        LL_GPIO_PIN_6;
+  LL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = LL_GPIO_PIN_3 | LL_GPIO_PIN_4;
+  LL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
   /* USER CODE END MX_GPIO_Init_2 */
 }
 

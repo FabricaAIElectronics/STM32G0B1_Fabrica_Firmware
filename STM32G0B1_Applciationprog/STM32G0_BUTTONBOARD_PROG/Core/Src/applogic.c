@@ -135,12 +135,21 @@ static void broadcast_rotating(AppStateMachine *sm)
     sm->rotatePhase = (uint8_t)((sm->rotatePhase + 1U) % 3U);
 }
 
-void AppLogic_Init(AppStateMachine *sm)
+void AppLogic_Init(AppStateMachine *sm, bool can_ok)
 {
     memset(sm, 0, sizeof(*sm));
     sm->errorMask = (uint8_t)ERR_NONE;
 
     Inputs_Init(&sm->inputs);
+
+    if (!can_ok) {
+        /* The one fatal error. Nothing can be reported over CAN, so go
+         * straight to STATE_ERROR: the heartbeat blinks fast (see main.c)
+         * and the state retries with a reset after TICK_ERROR_RETRY_MS. */
+        sm->errorMask |= (uint8_t)ERR_CAN;
+        enter_state(sm, STATE_ERROR);
+        return;
+    }
     enter_state(sm, STATE_INIT);
 }
 
@@ -200,8 +209,9 @@ void AppLogic_Run(AppStateMachine *sm)
 
     case STATE_ERROR:
     default:
-        /* Only reachable if CAN itself failed, in which case the retry below
-         * is the only thing that can help. */
+        /* Reached only when CAN_Init() failed (ERR_CAN). No telemetry can
+         * leave the board, so a reset-retry is the only thing that can
+         * help; the fast heartbeat in main.c is the visible symptom. */
         if ((now - sm->stateEntryTick) >= TICK_ERROR_RETRY_MS) {
             NVIC_SystemReset();
         }

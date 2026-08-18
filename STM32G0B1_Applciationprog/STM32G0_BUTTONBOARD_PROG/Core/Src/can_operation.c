@@ -54,7 +54,7 @@ static const uint32_t dlc_lut[9] = {
     FDCAN_DLC_BYTES_6, FDCAN_DLC_BYTES_7, FDCAN_DLC_BYTES_8
 };
 
-void CAN_Init(void)
+bool CAN_Init(void)
 {
     /* Accept the whole 0x780-0x7BF sub-block in one range filter, so adding a
      * command id later needs no filter change. MX_FDCAN1_Init() must declare
@@ -66,17 +66,34 @@ void CAN_Init(void)
     filt.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
     filt.FilterID1    = BTN_CAN_ID_RANGE_LOW;
     filt.FilterID2    = BTN_CAN_ID_RANGE_HIGH;
-    HAL_FDCAN_ConfigFilter(&hfdcan1, &filt);
+
+    /* Every step's status matters. Before this returned a value, a failure
+     * anywhere here left the board running with dead CAN and a healthy-
+     * looking heartbeat - indistinguishable from an unpowered node - and
+     * the ERR_CAN / STATE_ERROR path the DBC documents as fatal was
+     * unreachable. Now the caller starts the state machine in STATE_ERROR,
+     * which reset-retries and blinks the heartbeat fast. */
+    if (HAL_FDCAN_ConfigFilter(&hfdcan1, &filt) != HAL_OK) {
+        return false;
+    }
 
     /* Everything outside the filter is rejected, extended frames included.
      * This board shares a bus with CANopen traffic, so a permissive global
      * filter would flood the RX FIFO with frames it must ignore anyway. */
-    HAL_FDCAN_ConfigGlobalFilter(&hfdcan1,
-                                 FDCAN_REJECT, FDCAN_REJECT,
-                                 FDCAN_REJECT_REMOTE, FDCAN_REJECT_REMOTE);
+    if (HAL_FDCAN_ConfigGlobalFilter(&hfdcan1,
+                                     FDCAN_REJECT, FDCAN_REJECT,
+                                     FDCAN_REJECT_REMOTE,
+                                     FDCAN_REJECT_REMOTE) != HAL_OK) {
+        return false;
+    }
 
-    HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0U);
-    HAL_FDCAN_Start(&hfdcan1);
+    if (HAL_FDCAN_ActivateNotification(&hfdcan1,
+                                       FDCAN_IT_RX_FIFO0_NEW_MESSAGE,
+                                       0U) != HAL_OK) {
+        return false;
+    }
+
+    return HAL_FDCAN_Start(&hfdcan1) == HAL_OK;
 }
 
 void CAN_Send(uint32_t id, uint8_t *data, uint8_t len)

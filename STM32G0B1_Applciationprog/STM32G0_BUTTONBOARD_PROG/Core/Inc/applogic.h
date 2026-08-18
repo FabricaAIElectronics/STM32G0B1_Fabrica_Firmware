@@ -68,7 +68,10 @@ typedef struct {
     uint8_t    rotatePhase;
 } AppStateMachine;
 
-void AppLogic_Init(AppStateMachine *sm);
+/* can_ok is CAN_Init()'s result. false starts the machine in STATE_ERROR
+ * with ERR_CAN set: no telemetry is possible without CAN, so the only
+ * useful behaviour is a visibly-different heartbeat and a reset-retry. */
+void AppLogic_Init(AppStateMachine *sm, bool can_ok);
 void AppLogic_Run(AppStateMachine *sm);
 
 #endif /* INC_APPLOGIC_H_ */

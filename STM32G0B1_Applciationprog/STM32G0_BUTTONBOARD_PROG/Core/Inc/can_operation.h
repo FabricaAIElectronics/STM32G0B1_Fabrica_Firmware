@@ -26,6 +26,7 @@
 
 #include "stm32g0xx_hal.h"
 #include "main.h"
+#include <stdbool.h>
 #include "eeprom_driver.h"
 
 extern FDCAN_HandleTypeDef hfdcan1;
@@ -87,7 +88,10 @@ typedef struct {
 
 extern CAN_RXMessage can_rxMessage;
 
-void CAN_Init(void);
+/* Filter + RX FIFO0 interrupt + HAL_FDCAN_Start. Returns false if any HAL
+ * step fails; the caller must then start the state machine in STATE_ERROR
+ * (ERR_CAN is the one fatal error - see applogic.h). */
+bool CAN_Init(void);
 void CAN_Send(uint32_t id, uint8_t *data, uint8_t len);
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs);
 

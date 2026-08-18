@@ -66,17 +66,23 @@ int main(void)
     MX_I2C3_Init();
     MX_TIM2_Init();
 
-    CAN_Init();          /* filter + RX FIFO0 interrupt + HAL_FDCAN_Start */
-    AppLogic_Init(&sm);
+    /* CAN is the one peripheral whose failure is fatal: with it dead the
+     * board cannot report anything, so the state machine goes straight to
+     * STATE_ERROR (fast heartbeat + reset-retry) instead of running silent. */
+    const bool can_ok = CAN_Init();
+    AppLogic_Init(&sm, can_ok);
 
     while (1)
     {
         /* Green heartbeat on PA5 — the fastest way to tell "the application
-         * is running" from "the bootloader is waiting" at a glance. */
+         * is running" from "the bootloader is waiting" at a glance. 500 ms
+         * when healthy; 100 ms in STATE_ERROR (CAN failed to start), because
+         * a board that cannot talk on the bus has no other way to say so. */
         {
             static uint32_t led_last_tick = 0U;
             const uint32_t now = HAL_GetTick();
-            if ((now - led_last_tick) >= 500U) {
+            const uint32_t period = (sm.state == STATE_ERROR) ? 100U : 500U;
+            if ((now - led_last_tick) >= period) {
                 led_last_tick = now;
                 HAL_GPIO_TogglePin(LED_OUT_GPIO_Port, LED_OUT_Pin);
             }

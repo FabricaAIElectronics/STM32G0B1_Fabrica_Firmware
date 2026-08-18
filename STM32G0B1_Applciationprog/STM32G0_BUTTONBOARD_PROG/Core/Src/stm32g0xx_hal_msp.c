@@ -97,7 +97,12 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c)
         GPIO_InitStruct.Mode      = GPIO_MODE_AF_OD;
         GPIO_InitStruct.Pull      = GPIO_PULLUP;
         GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_LOW;
-        GPIO_InitStruct.Alternate = GPIO_AF6_I2C3;
+        /* AF9, not AF6. The HAL defines BOTH GPIO_AF6_I2C3 and GPIO_AF9_I2C3
+         * because I2C3 sits on different AF slots on different pins; on
+         * PA6/PA7 it is AF9 (CubeMX pin database). With AF6 the pins bind
+         * to another function that idles SCL low, and I2C3 wedges BUSY on
+         * its first START forever - which is exactly how this was found. */
+        GPIO_InitStruct.Alternate = GPIO_AF9_I2C3;
         HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
         __HAL_RCC_I2C3_CLK_ENABLE();

@@ -68,9 +68,9 @@
 /* ==========================================================================
  * I2C3 — AT24C256 config EEPROM (STM32 is the only master), 100 kHz.
  * ========================================================================== */
-#define EEPROM_SCL_Pin          GPIO_PIN_7      /* PA7  AF6 I2C3_SCL         */
+#define EEPROM_SCL_Pin          GPIO_PIN_7      /* PA7  AF9 I2C3_SCL         */
 #define EEPROM_SCL_GPIO_Port    GPIOA
-#define EEPROM_SDA_Pin          GPIO_PIN_6      /* PA6  AF6 I2C3_SDA         */
+#define EEPROM_SDA_Pin          GPIO_PIN_6      /* PA6  AF9 I2C3_SDA         */
 #define EEPROM_SDA_GPIO_Port    GPIOA
 
 /* ==========================================================================

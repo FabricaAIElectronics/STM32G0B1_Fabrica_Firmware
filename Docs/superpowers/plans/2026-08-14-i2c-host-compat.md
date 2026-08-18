@@ -775,8 +775,8 @@ all-addresses `i2cdetect` result means SDA is held/undriven, not "many slaves".
 | 2 | `write-enc` (LE write, BE read) and CAN sees it | **PASS** | −100, 222, −333 all read back; CAN 0x7A0 = −333 |
 | 3 | `version` = (2,0); `uid` 10 bytes, stable | **PASS** | `(2, 0)`; `0f001800145041394b33` twice |
 | 4 | over-read 40 B → 7 real + 33×0xFF, slave not stuck | **PASS** | `0ce40ce400de01` + all-0xFF; next poll fine |
-| 5 | rotary ROT_SW_3 → 1650, hold on release | **not run** | needs a hand on PB2; `knob=3300` = pos 6 held (PB12 floating high on the Nucleo). Rotary decode itself is unchanged code; defer to the V5.5 board |
-| 6 | EEPROM round-trip through emulator | **deferred** | no kernel slave module on this Pi; needs the real AT24C256 on the V5.5 board |
+| 5 | rotary ROT_SW_3 → 1650, hold on release | **PASS** (2026-08-15) | Jordan wired the real rotary switch to the Nucleo; positions read correctly over CAN (`rotary_pos` 0..6), confirming the 7-position mapping and closing spec review note #1 |
+| 6 | EEPROM round-trip | **PASS** (2026-08-15, real AT24C256 on I2C3) | save `2a 05 01` → hardware reset → read back `42 4b 2a 05 01`, `ERR_EEPROM` clear. Initially FAILED: I2C3 was configured AF6 instead of AF9 on PA6/PA7 and wedged BUSY on its first START — fixed in `9b3e264` |
 | 7 | failed save sets `ERR_EEPROM` (truth signal) | **PASS** | CAN `0x793 [01]` with no chip → DEVSTATUS err stays `0x03`; 0x7A0 cadence unaffected (10/s) |
 | 8 | bus isolation / concurrency | **PASS** | 40 host polls, 0 errors, while CAN 0x7A0 max gap = 100 ms exactly |
 

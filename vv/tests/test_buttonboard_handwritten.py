@@ -105,7 +105,11 @@ def test_ioc_regen_guards_intact():
     assert "ProjectManager.FirmwarePackage=STM32Cube FW_G0 V1.6.2" in ioc, \
         "ioc firmware package must stay pinned to the vendored FW_G0 1.6.2"
     assert "ProjectManager.KeepUserCode=true" in ioc, "fences only work with KeepUserCode"
-    assert "I2C1.OwnAddress=81" in ioc, "I2C1 slave address 0x51 must be generated from the ioc"
+    # CubeMX's I2C panel takes the address in DECIMAL. 0x51 == 81. A regen once
+    # produced OwnAddress=51 (== 0x33) after the panel was touched, which moved
+    # the host port off its address; the generated-line check below caught it.
+    assert "I2C1.OwnAddress=81" in ioc, "I2C1 slave address must be 81 decimal (= 0x51) in the ioc"
+    assert "I2C1.OwnAddress=51" not in ioc, "I2C1.OwnAddress=51 is 0x33 - the CubeMX decimal-field trap; set 81"
     assert "NVIC.I2C1_IRQn=true" in ioc, "I2C1 IRQ must be generated from the ioc"
 
 

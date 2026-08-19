@@ -24,7 +24,9 @@ changes.
 - **Two independent buses:**
   - **I2C1, PB6/PB7 (`HOST_SCL`/`HOST_SDA`), off-board via connector P1** —
     the host port. The STM32 is a **pure slave** here at 7-bit **0x51**.
-    Fast-mode (`Timing = 0x00B01E60`).
+    Standard-mode 100 kHz (`Timing = 0x10A077A8`) since 2026-08-19 - for a
+    pure slave only SDADEL/SCLDEL matter (the master drives SCL) and the
+    100 kHz value gives more data-hold margin on a cable-borne bus.
   - **I2C3, PA6/PA7 (`EEPROM_SCL`/`EEPROM_SDA`)** — the AT24C256 (7-bit
     0x50). The STM32 is the only master. Standard-mode 100 kHz
     (`Timing = 0x10A077A8`), deliberate.

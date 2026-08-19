@@ -93,7 +93,7 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
   VectorBase_Config();
-/* USER CODE END 1 */
+  /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -128,7 +128,7 @@ int main(void)
    * (fast heartbeat + reset-retry) instead of running silent. */
   const bool can_ok = CAN_Init();
   AppLogic_Init(&sm, can_ok);
-/* USER CODE END 2 */
+  /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -217,7 +217,7 @@ static void MX_FDCAN1_Init(void)
    * StdFiltersNbr = 1: CAN_Init() installs one range filter; declaring the
    * slot here is what makes the message-RAM allocation include it. All of
    * that is driven from the .ioc - this comment records WHY. */
-/* USER CODE END FDCAN1_Init 0 */
+  /* USER CODE END FDCAN1_Init 0 */
 
   /* USER CODE BEGIN FDCAN1_Init 1 */
 
@@ -264,13 +264,13 @@ static void MX_I2C1_Init(void)
    * (= 0x51 << 1) is generated from I2C1.OwnAddress in the .ioc - keep it
    * there, not here. 0x00B01E60 is fast-mode-class timing; in pure-slave mode
    * only SDADEL/SCLDEL matter, the master drives SCL. */
-/* USER CODE END I2C1_Init 0 */
+  /* USER CODE END I2C1_Init 0 */
 
   /* USER CODE BEGIN I2C1_Init 1 */
 
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x00B01E60;
+  hi2c1.Init.Timing = 0x10A077A8;
   hi2c1.Init.OwnAddress1 = 162;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -313,7 +313,7 @@ static void MX_I2C3_Init(void)
   /* USER CODE BEGIN I2C3_Init 0 */
   /* I2C3 = the AT24C256 config EEPROM (PA6/PA7, AF9 - see MSP), STM32 is
    * the only master, standard-mode 100 kHz from the 60 MHz PCLK1. */
-/* USER CODE END I2C3_Init 0 */
+  /* USER CODE END I2C3_Init 0 */
 
   /* USER CODE BEGIN I2C3_Init 1 */
 
@@ -502,7 +502,7 @@ static void MX_GPIO_Init(void)
    * MX_FDCAN1_Init/MX_I2C*_Init in main(), which is earlier than the old
    * hand-written order - strictly safer. */
   Leds_Init();
-/* USER CODE END MX_GPIO_Init_2 */
+  /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */

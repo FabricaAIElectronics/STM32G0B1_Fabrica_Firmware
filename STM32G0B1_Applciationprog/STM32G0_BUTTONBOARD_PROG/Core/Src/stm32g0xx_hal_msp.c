@@ -93,7 +93,7 @@ void HAL_FDCAN_MspInit(FDCAN_HandleTypeDef* hfdcan)
      * RX carries a PULL-UP (set in the .ioc): if the TJA1057 is unpowered or
      * the bus is disconnected the receiver input would otherwise float and
      * the peripheral would see a stream of phantom dominant bits. */
-/* USER CODE END FDCAN1_MspInit 0 */
+    /* USER CODE END FDCAN1_MspInit 0 */
 
   /** Initializes the peripherals clocks
   */
@@ -188,7 +188,7 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef* hi2c)
      * P1 takes this bus off the board and 10 k alone is weak for any cable
      * length. I2C1_IRQn priority 1 (below FDCAN at 0) is generated from the
      * .ioc NVIC table and must match i2c_host.c's assumptions. */
-/* USER CODE END I2C1_MspInit 0 */
+    /* USER CODE END I2C1_MspInit 0 */
 
   /** Initializes the peripherals clocks
   */
@@ -231,7 +231,7 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef* hi2c)
      * low and I2C3 wedged BUSY on its first START forever - which is how this
      * was found. I2C3 has no CCIPR kernel-clock mux on the G0B1; it always
      * runs from PCLK1, hence no PeriphClkInit block. */
-/* USER CODE END I2C3_MspInit 0 */
+    /* USER CODE END I2C3_MspInit 0 */
 
     __HAL_RCC_GPIOA_CLK_ENABLE();
     /**I2C3 GPIO Configuration
@@ -323,7 +323,7 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* htim_encoder)
      * PCB: R32/R33 already pull both channels to VCC through 1 k and the
      * encoder common is grounded, so the externals define the idle level far
      * more stiffly than an internal pull could. */
-/* USER CODE END TIM2_MspInit 0 */
+    /* USER CODE END TIM2_MspInit 0 */
     /* Peripheral clock enable */
     __HAL_RCC_TIM2_CLK_ENABLE();
 
@@ -341,7 +341,7 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* htim_encoder)
 
     /* USER CODE BEGIN TIM2_MspInit 1 */
 
-/* USER CODE END TIM2_MspInit 1 */
+    /* USER CODE END TIM2_MspInit 1 */
 
   }
 

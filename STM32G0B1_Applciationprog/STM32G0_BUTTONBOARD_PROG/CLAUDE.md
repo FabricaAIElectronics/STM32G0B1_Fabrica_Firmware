@@ -41,6 +41,19 @@ HAL trace for this project was done against **FW_G0 1.6.2 (HAL 1.4.6)**.
    in `stm32g0xx_hal_msp.c`) are marked `Bench only` in comments and must
    stay **uncommitted** — stage those files by hunk.
 
+### These guards are the interim, not the end state
+The intended fix is the standard ST workflow: move every hand-written block
+into the CubeMX `USER CODE BEGIN/END` fences so a regen is safe **by
+construction** and the `.ioc` becomes a live generator again (then set
+`NoMain=false` back and retarget the tripwire test to "no diff outside
+fences"). It was deliberately NOT done on 2026-08-15 because the divergence
+is deep (bootloader VTOR hand-off before `HAL_Init`, `Leds_Init` ordered
+before the peripheral inits, `CAN_Init` returning `bool`, internal pull-ups
+the generated MSP omits) and re-laying out verified files means re-running
+the whole bench sequence. Do it as its own task, after the branch merges or on
+a sub-branch — see the "Migrate ButtonBoard C into CubeMX USER CODE fences"
+task if it is still queued.
+
 ## Two buses, one slave
 - I2C1 (PB6/PB7, AF6, connector P1): STM32 is a **pure slave at 0x51**
   speaking the V5.2 ATtiny protocol (`i2c_host*.c`, `i2c_host_proto*.[ch]`

@@ -41,7 +41,15 @@
   *    programmed so a debugger holding SWCLK cannot drop the part into the
   *    ST system bootloader, which would bypass OpenBLT entirely.
   ******************************************************************************
-  */
+   *
+ * NOTE (CubeMX fence migration, 2026-08-19): the .ioc now labels every pin,
+ * so the GENERATED Core/Inc/main.h emits all 88 *_Pin / *_GPIO_Port defines
+ * with identical names and values (verified: 88/88 match, zero mismatches).
+ * The defines below are therefore #ifndef-guarded and only take effect if
+ * main.h has not defined them - main.h is the source of truth, this file is
+ * the annotated explanation of WHY each pin is what it is. Keep both in step
+ * by editing the .ioc labels first, then the comments here.
+*/
 
 #ifndef INC_BOARD_PINS_H_
 #define INC_BOARD_PINS_H_
@@ -51,27 +59,51 @@
 /* ==========================================================================
  * CAN — FDCAN1, TJA1057GT/3J transceiver
  * ========================================================================== */
+#ifndef CAN_RX_Pin
 #define CAN_RX_Pin              GPIO_PIN_8      /* PB8  AF3 FDCAN1_RX        */
+#endif
+#ifndef CAN_RX_GPIO_Port
 #define CAN_RX_GPIO_Port        GPIOB
+#endif
+#ifndef CAN_TX_Pin
 #define CAN_TX_Pin              GPIO_PIN_9      /* PB9  AF3 FDCAN1_TX        */
+#endif
+#ifndef CAN_TX_GPIO_Port
 #define CAN_TX_GPIO_Port        GPIOB
+#endif
 
 /* ==========================================================================
  * I2C1 — host port to the Jetson via P1 (STM32 is a slave at 0x51).
  * R11/R12 give 10 k on-board.
  * ========================================================================== */
+#ifndef HOST_SCL_Pin
 #define HOST_SCL_Pin            GPIO_PIN_6      /* PB6  AF6 I2C1_SCL         */
+#endif
+#ifndef HOST_SCL_GPIO_Port
 #define HOST_SCL_GPIO_Port      GPIOB
+#endif
+#ifndef HOST_SDA_Pin
 #define HOST_SDA_Pin            GPIO_PIN_7      /* PB7  AF6 I2C1_SDA         */
+#endif
+#ifndef HOST_SDA_GPIO_Port
 #define HOST_SDA_GPIO_Port      GPIOB
+#endif
 
 /* ==========================================================================
  * I2C3 — AT24C256 config EEPROM (STM32 is the only master), 100 kHz.
  * ========================================================================== */
+#ifndef EEPROM_SCL_Pin
 #define EEPROM_SCL_Pin          GPIO_PIN_7      /* PA7  AF9 I2C3_SCL         */
+#endif
+#ifndef EEPROM_SCL_GPIO_Port
 #define EEPROM_SCL_GPIO_Port    GPIOA
+#endif
+#ifndef EEPROM_SDA_Pin
 #define EEPROM_SDA_Pin          GPIO_PIN_6      /* PA6  AF9 I2C3_SDA         */
+#endif
+#ifndef EEPROM_SDA_GPIO_Port
 #define EEPROM_SDA_GPIO_Port    GPIOA
+#endif
 
 /* ==========================================================================
  * PEC11L incremental encoder — TIM2 encoder mode, x4 decoding
@@ -81,12 +113,24 @@
  * clamped to 16 bits (ARR = 0xFFFF) so the wrap arithmetic in Inputs_Encoder
  * stays in one word.
  * ========================================================================== */
+#ifndef ENC_A_Pin
 #define ENC_A_Pin               GPIO_PIN_0      /* PA0  AF2 TIM2_CH1         */
+#endif
+#ifndef ENC_A_GPIO_Port
 #define ENC_A_GPIO_Port         GPIOA
+#endif
+#ifndef ENC_B_Pin
 #define ENC_B_Pin               GPIO_PIN_1      /* PA1  AF2 TIM2_CH2         */
+#endif
+#ifndef ENC_B_GPIO_Port
 #define ENC_B_GPIO_Port         GPIOA
+#endif
+#ifndef ENC_BUT_Pin
 #define ENC_BUT_Pin             GPIO_PIN_2      /* PA2  active low, ext 10k  */
+#endif
+#ifndef ENC_BUT_GPIO_Port
 #define ENC_BUT_GPIO_Port       GPIOA
+#endif
 
 /* ==========================================================================
  * ALPS SRBV170501 — 7-position rotary switch, one-hot
@@ -97,20 +141,48 @@
  * non-shorting is still an open item on the schematic checklist.
  * ========================================================================== */
 #define ROT_SW_COUNT            7U
+#ifndef ROT_SW_0_Pin
 #define ROT_SW_0_Pin            GPIO_PIN_5      /* PC5                       */
+#endif
+#ifndef ROT_SW_0_GPIO_Port
 #define ROT_SW_0_GPIO_Port      GPIOC
+#endif
+#ifndef ROT_SW_1_Pin
 #define ROT_SW_1_Pin            GPIO_PIN_0      /* PB0                       */
+#endif
+#ifndef ROT_SW_1_GPIO_Port
 #define ROT_SW_1_GPIO_Port      GPIOB
+#endif
+#ifndef ROT_SW_2_Pin
 #define ROT_SW_2_Pin            GPIO_PIN_1      /* PB1                       */
+#endif
+#ifndef ROT_SW_2_GPIO_Port
 #define ROT_SW_2_GPIO_Port      GPIOB
+#endif
+#ifndef ROT_SW_3_Pin
 #define ROT_SW_3_Pin            GPIO_PIN_2      /* PB2                       */
+#endif
+#ifndef ROT_SW_3_GPIO_Port
 #define ROT_SW_3_GPIO_Port      GPIOB
+#endif
+#ifndef ROT_SW_4_Pin
 #define ROT_SW_4_Pin            GPIO_PIN_10     /* PB10                      */
+#endif
+#ifndef ROT_SW_4_GPIO_Port
 #define ROT_SW_4_GPIO_Port      GPIOB
+#endif
+#ifndef ROT_SW_5_Pin
 #define ROT_SW_5_Pin            GPIO_PIN_11     /* PB11                      */
+#endif
+#ifndef ROT_SW_5_GPIO_Port
 #define ROT_SW_5_GPIO_Port      GPIOB
+#endif
+#ifndef ROT_SW_6_Pin
 #define ROT_SW_6_Pin            GPIO_PIN_12     /* PB12                      */
+#endif
+#ifndef ROT_SW_6_GPIO_Port
 #define ROT_SW_6_GPIO_Port      GPIOB
+#endif
 
 /* ==========================================================================
  * C&K SPDT toggle switches SW1..SW4
@@ -124,14 +196,30 @@
  * change from 10 k, so both levels are hard-driven. Use GPIO_NOPULL.
  * ========================================================================== */
 #define TOGGLE_COUNT            4U
+#ifndef TOGGLE_1_Pin
 #define TOGGLE_1_Pin            GPIO_PIN_11     /* PA11  SW_1_3V3            */
+#endif
+#ifndef TOGGLE_1_GPIO_Port
 #define TOGGLE_1_GPIO_Port      GPIOA
+#endif
+#ifndef TOGGLE_2_Pin
 #define TOGGLE_2_Pin            GPIO_PIN_12     /* PA12  SW_2_3V3            */
+#endif
+#ifndef TOGGLE_2_GPIO_Port
 #define TOGGLE_2_GPIO_Port      GPIOA
+#endif
+#ifndef TOGGLE_3_Pin
 #define TOGGLE_3_Pin            GPIO_PIN_15     /* PA15  SW_3_3V3            */
+#endif
+#ifndef TOGGLE_3_GPIO_Port
 #define TOGGLE_3_GPIO_Port      GPIOA
+#endif
+#ifndef TOGGLE_4_Pin
 #define TOGGLE_4_Pin            GPIO_PIN_8      /* PC8   SW_4_3V3            */
+#endif
+#ifndef TOGGLE_4_GPIO_Port
 #define TOGGLE_4_GPIO_Port      GPIOC
+#endif
 
 /* ==========================================================================
  * Button inputs — 5 V contacts translated to 3.3 V by LSF0108 (U1/U4)
@@ -144,27 +232,67 @@
 #define BUTTON_COUNT            6U
 #define BUTTON_INT_COUNT        4U
 
+#ifndef BUTTON_1_Pin
 #define BUTTON_1_Pin            GPIO_PIN_13     /* PB13  Button_3V3_1        */
+#endif
+#ifndef BUTTON_1_GPIO_Port
 #define BUTTON_1_GPIO_Port      GPIOB
+#endif
+#ifndef BUTTON_2_Pin
 #define BUTTON_2_Pin            GPIO_PIN_14     /* PB14  Button_3V3_2        */
+#endif
+#ifndef BUTTON_2_GPIO_Port
 #define BUTTON_2_GPIO_Port      GPIOB
+#endif
+#ifndef BUTTON_3_Pin
 #define BUTTON_3_Pin            GPIO_PIN_15     /* PB15  Button_3V3_3        */
+#endif
+#ifndef BUTTON_3_GPIO_Port
 #define BUTTON_3_GPIO_Port      GPIOB
+#endif
+#ifndef BUTTON_4_Pin
 #define BUTTON_4_Pin            GPIO_PIN_8      /* PA8   Button_3V3_4        */
+#endif
+#ifndef BUTTON_4_GPIO_Port
 #define BUTTON_4_GPIO_Port      GPIOA
+#endif
+#ifndef BUTTON_5_Pin
 #define BUTTON_5_Pin            GPIO_PIN_9      /* PA9   Button_3V3_5        */
+#endif
+#ifndef BUTTON_5_GPIO_Port
 #define BUTTON_5_GPIO_Port      GPIOA
+#endif
+#ifndef BUTTON_6_Pin
 #define BUTTON_6_Pin            GPIO_PIN_6      /* PC6   Button_3V3_6        */
+#endif
+#ifndef BUTTON_6_GPIO_Port
 #define BUTTON_6_GPIO_Port      GPIOC
+#endif
 
+#ifndef BUTTON_INT_1_Pin
 #define BUTTON_INT_1_Pin        GPIO_PIN_7      /* PC7   Button_3V3_int_1    */
+#endif
+#ifndef BUTTON_INT_1_GPIO_Port
 #define BUTTON_INT_1_GPIO_Port  GPIOC
+#endif
+#ifndef BUTTON_INT_2_Pin
 #define BUTTON_INT_2_Pin        GPIO_PIN_8      /* PD8   Button_3V3_int_2    */
+#endif
+#ifndef BUTTON_INT_2_GPIO_Port
 #define BUTTON_INT_2_GPIO_Port  GPIOD
+#endif
+#ifndef BUTTON_INT_3_Pin
 #define BUTTON_INT_3_Pin        GPIO_PIN_9      /* PD9   Button_3V3_int_3    */
+#endif
+#ifndef BUTTON_INT_3_GPIO_Port
 #define BUTTON_INT_3_GPIO_Port  GPIOD
+#endif
+#ifndef BUTTON_INT_4_Pin
 #define BUTTON_INT_4_Pin        GPIO_PIN_10     /* PA10  Button_3V3_int_4    */
+#endif
+#ifndef BUTTON_INT_4_GPIO_Port
 #define BUTTON_INT_4_GPIO_Port  GPIOA
+#endif
 
 /* ==========================================================================
  * LED outputs — straight into the SN74ACT240 inverting buffers
@@ -176,27 +304,67 @@
 #define LED_COUNT               6U
 #define LED_INT_COUNT           4U
 
+#ifndef LED_1_Pin
 #define LED_1_Pin               GPIO_PIN_9      /* PC9   BUTTON_1_uC         */
+#endif
+#ifndef LED_1_GPIO_Port
 #define LED_1_GPIO_Port         GPIOC
+#endif
+#ifndef LED_2_Pin
 #define LED_2_Pin               GPIO_PIN_0      /* PD0   BUTTON_2_uC         */
+#endif
+#ifndef LED_2_GPIO_Port
 #define LED_2_GPIO_Port         GPIOD
+#endif
+#ifndef LED_3_Pin
 #define LED_3_Pin               GPIO_PIN_1      /* PD1   BUTTON_3_uC         */
+#endif
+#ifndef LED_3_GPIO_Port
 #define LED_3_GPIO_Port         GPIOD
+#endif
+#ifndef LED_4_Pin
 #define LED_4_Pin               GPIO_PIN_2      /* PD2   BUTTON_4_uC         */
+#endif
+#ifndef LED_4_GPIO_Port
 #define LED_4_GPIO_Port         GPIOD
+#endif
+#ifndef LED_5_Pin
 #define LED_5_Pin               GPIO_PIN_3      /* PD3   BUTTON_5_uC         */
+#endif
+#ifndef LED_5_GPIO_Port
 #define LED_5_GPIO_Port         GPIOD
+#endif
+#ifndef LED_6_Pin
 #define LED_6_Pin               GPIO_PIN_4      /* PD4   BUTTON_6_uC         */
+#endif
+#ifndef LED_6_GPIO_Port
 #define LED_6_GPIO_Port         GPIOD
+#endif
 
+#ifndef LED_INT_1_Pin
 #define LED_INT_1_Pin           GPIO_PIN_5      /* PD5   BUTTON_INT_1_uC     */
+#endif
+#ifndef LED_INT_1_GPIO_Port
 #define LED_INT_1_GPIO_Port     GPIOD
+#endif
+#ifndef LED_INT_2_Pin
 #define LED_INT_2_Pin           GPIO_PIN_6      /* PD6   BUTTON_INT_2_uC     */
+#endif
+#ifndef LED_INT_2_GPIO_Port
 #define LED_INT_2_GPIO_Port     GPIOD
+#endif
+#ifndef LED_INT_3_Pin
 #define LED_INT_3_Pin           GPIO_PIN_3      /* PB3   BUTTON_INT_3_uC     */
+#endif
+#ifndef LED_INT_3_GPIO_Port
 #define LED_INT_3_GPIO_Port     GPIOB
+#endif
+#ifndef LED_INT_4_Pin
 #define LED_INT_4_Pin           GPIO_PIN_4      /* PB4   BUTTON_INT_4_uC     */
+#endif
+#ifndef LED_INT_4_GPIO_Port
 #define LED_INT_4_GPIO_Port     GPIOB
+#endif
 
 /* ==========================================================================
  * Buffer bank output-enables — both ACTIVE LOW
@@ -206,18 +374,34 @@
  *
  * Never both low. See Leds_SelectSource().
  * ========================================================================== */
+#ifndef BUFF_SEL_1_Pin
 #define BUFF_SEL_1_Pin          GPIO_PIN_0      /* PC0                       */
+#endif
+#ifndef BUFF_SEL_1_GPIO_Port
 #define BUFF_SEL_1_GPIO_Port    GPIOC
+#endif
+#ifndef BUFF_SEL_2_Pin
 #define BUFF_SEL_2_Pin          GPIO_PIN_1      /* PC1                       */
+#endif
+#ifndef BUFF_SEL_2_GPIO_Port
 #define BUFF_SEL_2_GPIO_Port    GPIOC
+#endif
 
 /* ==========================================================================
  * Board housekeeping
  * ========================================================================== */
+#ifndef LED_OUT_Pin
 #define LED_OUT_Pin             GPIO_PIN_5      /* PA5  green heartbeat LED  */
+#endif
+#ifndef LED_OUT_GPIO_Port
 #define LED_OUT_GPIO_Port       GPIOA
+#endif
+#ifndef BLUE_BUTTON_Pin
 #define BLUE_BUTTON_Pin         GPIO_PIN_13     /* PC13 on-board user button */
+#endif
+#ifndef BLUE_BUTTON_GPIO_Port
 #define BLUE_BUTTON_GPIO_Port   GPIOC
+#endif
 
 /* Debug: PA13 = SWDIO, PA14 = SWCLK/BOOT0. Left at their reset AF — do not
  * reconfigure them as GPIO or the board becomes unflashable over SWD. */

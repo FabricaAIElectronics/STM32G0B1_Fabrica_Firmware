@@ -5,54 +5,47 @@ STM32G0B1RET6, bare-metal, STM32CubeIDE build, OpenBLT user program linked at
 `../KincoDrive_ControlModule_V5_4/CLAUDE.md`. This file covers what is
 specific to this project.
 
-## The `.ioc` is documentation, not a code generator
+## The `.ioc` is a LIVE code generator - hand-written code lives in USER CODE fences
 
-`STM32G0_BUTTONBOARD_PROG.ioc` is kept as the pinout/peripheral record and
-for CubeMX's pin database (it is the authority on per-pin AF numbers, e.g.
-I2C3 on PA6/PA7 is **AF9**, not AF6). **The C code diverged from CubeMX
-long ago and is hand-written.** These files are NOT CubeMX-managed and carry
-no `USER CODE` fences, so a CubeMX *Generate Code* **overwrites them**:
+Since 2026-08-19 `main.c`, `stm32g0xx_hal_msp.c`, `stm32g0xx_it.c`, `main.h`
+and `stm32g0xx_hal_conf.h` are **CubeMX-managed**: everything outside a
+`/* USER CODE BEGIN x */ ... /* USER CODE END x */` fence is generated from
+`STM32G0_BUTTONBOARD_PROG.ioc` and is rewritten by *Generate Code*; every
+hand-written block sits inside a fence. A real regen was run against the
+fenced tree and changed **zero lines** outside fences (proof in
+`vv/tests/test_buttonboard_handwritten.py`'s history / the 2026-08-19 commit).
 
-- `Core/Src/main.c` — the whole application entry (`VectorBase_Config`,
-  `Leds_Init`, `CAN_Init`, `I2CHost_Init`, `AppLogic_Init/Run`, heartbeat)
-- `Core/Src/stm32g0xx_hal_msp.c` — pin/AF/NVIC wiring with board rationale
-- `Core/Src/stm32g0xx_it.c` — FDCAN + I2C1 handlers
-- `Core/Inc/main.h`, `Core/Inc/stm32g0xx_hal_conf.h`
-
-A regen also silently **upgrades the vendored HAL** under `Drivers/`
-(`LibraryCopy=1`) and rewrites `.cproject`/`.mxproject`. Every review and
-HAL trace for this project was done against **FW_G0 1.6.2 (HAL 1.4.6)**.
+What lives where:
+- `USER CODE 1` (before `HAL_Init`): `VectorBase_Config()` - the OpenBLT VTOR
+  hand-off must precede the SysTick enable.
+- `MX_GPIO_Init_2`: `Leds_Init()` - parks the LED buffer nets before any other
+  peripheral init (earlier than the old hand-written order; strictly safer).
+- `USER CODE 2`: `I2CHost_Init()`, `CAN_Init()` -> `AppLogic_Init(&sm, can_ok)`.
+- `USER CODE 3` (inside `while(1)`, before its closing brace): the heartbeat
+  and `AppLogic_Run()`. NOT the gap between `END WHILE` and `BEGIN 3` - that
+  is generated territory and a regen deletes it (this exact mistake was made
+  and caught during the migration).
+- `*_MspInit 0` fences: board rationale comments only - the pin/AF/pull/NVIC
+  DECISIONS are generated from the .ioc (I2C1 pull-ups, CAN RX pull-up, I2C3
+  **AF9**, I2C1_IRQn prio 1, UCPD dead-battery strobe, I2C1 OwnAddress 0x51).
+- `main.h` `Includes`/`ET` fences: `board_pins.h` + the shared `extern`
+  handles. Generated `main.h` emits all 88 `*_Pin`/`*_GPIO_Port` defines from
+  the .ioc labels; `board_pins.h` keeps identical, `#ifndef`-guarded copies as
+  the annotated explanation. Edit the .ioc label first, then the comment.
 
 ### Rules
-1. **Do not press Generate Code.** Change the `.ioc` in CubeMX freely (pin
-   labels, pull-ups, timings) and port the change to the C by hand, reading
-   it out of the `.ioc` diff.
-2. The `.ioc` is set to `NoMain=true` (never emits `main.c`),
-   `LastFirmware=false` + `FirmwarePackage=FW_G0 V1.6.2` (never auto-migrates
-   the HAL), `BackupPrevious=true` (leaves `.bak` files if a regen happens
-   anyway). Do not undo these.
-3. **If a regen has already happened:** do not build or flash it. Restore
-   with `git checkout HEAD -- Core/Src/main.c Core/Src/stm32g0xx_hal_msp.c
-   Core/Src/stm32g0xx_it.c Core/Inc/main.h Core/Inc/stm32g0xx_hal_conf.h
-   Drivers .cproject .mxproject`, keep only the intended `.ioc` diff (drop the
-   `MxCube.Version` / `FirmwarePackage` stamp lines), then re-apply any
-   uncommitted bench deltas by hand.
-4. Bench-only deltas (HSI clock + CSS off in `main.c`, encoder `GPIO_PULLUP`
-   in `stm32g0xx_hal_msp.c`) are marked `Bench only` in comments and must
-   stay **uncommitted** — stage those files by hunk.
-
-### These guards are the interim, not the end state
-The intended fix is the standard ST workflow: move every hand-written block
-into the CubeMX `USER CODE BEGIN/END` fences so a regen is safe **by
-construction** and the `.ioc` becomes a live generator again (then set
-`NoMain=false` back and retarget the tripwire test to "no diff outside
-fences"). It was deliberately NOT done on 2026-08-15 because the divergence
-is deep (bootloader VTOR hand-off before `HAL_Init`, `Leds_Init` ordered
-before the peripheral inits, `CAN_Init` returning `bool`, internal pull-ups
-the generated MSP omits) and re-laying out verified files means re-running
-the whole bench sequence. Do it as its own task, after the branch merges or on
-a sub-branch — see the "Migrate ButtonBoard C into CubeMX USER CODE fences"
-task if it is still queued.
+1. **Generate Code is now safe** - but change peripheral/pin settings in the
+   `.ioc`, never by editing generated lines (they revert on regen).
+2. New hand-written code goes in a fence. `vv/tests/test_buttonboard_handwritten.py`
+   fails the gate if any listed marker is missing or sits outside a fence.
+3. The `.ioc` stays pinned: `FirmwarePackage=FW_G0 V1.6.2` (vendored HAL
+   1.4.6), `LastFirmware=false`, `KeepUserCode=true`, `NoMain=false`,
+   `BackupPrevious=true`. Do not undo these; the tripwire checks them.
+4. Bench-only deltas: the encoder `GPIO_PULLUP` lives in the `TIM2_MspInit 1`
+   fence (survives regen, still uncommitted); the Nucleo HSI clock delta is a
+   direct edit of the generated `SystemClock_Config` and **is reverted by any
+   regen - re-apply it after regenerating** (it is marked "Bench only" and
+   must stay uncommitted either way).
 
 ## Two buses, one slave
 - I2C1 (PB6/PB7, AF6, connector P1): STM32 is a **pure slave at 0x51**

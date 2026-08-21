@@ -8,6 +8,7 @@ the other descriptions agree with it.
 """
 import json
 import re
+import sys
 from pathlib import Path
 
 from vv.boards import BOARDS, REPO_ROOT
@@ -345,6 +346,37 @@ def check_header_comments(board, dbc: dict[int, dict]) -> list[dict]:
     return problems
 
 
+def _load_param_map():
+    """fabrica.params, or None when the bench tool is not importable.
+
+    vv gates the firmware; the bench tool is a separate deployable that an
+    operator may have copied away. Missing is a skip, not a failure - but a
+    map that IS present and disagrees with a DBC is a failure, because that
+    disagreement is only ever discovered on a bench otherwise.
+    """
+    tool = REPO_ROOT / "Tools" / "fabrica"
+    if not (tool / "fabrica" / "params.py").is_file():
+        return None
+    if str(tool) not in sys.path:
+        sys.path.insert(0, str(tool))
+    try:
+        from fabrica import params
+        return params
+    except Exception:
+        return None
+
+
+def check_param_map(board, dbc_path) -> list[dict]:
+    """The bench tool's configuration map must match this board's DBC."""
+    params = _load_param_map()
+    if params is None:
+        return []
+    import cantools
+    db = cantools.database.load_file(dbc_path)
+    return [{"board": board.id, "kind": "param_map", "detail": problem}
+            for problem in params.validate(board.id, db)]
+
+
 def check_board(board) -> list[dict]:
     if board.dbc is None:
         return []
@@ -359,6 +391,7 @@ def check_board(board) -> list[dict]:
     problems += check_address_plan(board, defines)
     problems += check_broadcasts_transmitted(board, defines, dbc)
     problems += check_header_comments(board, dbc)
+    problems += check_param_map(board, REPO_ROOT / board.dbc)
     if board.in_bus_doc:
         doc = doc_messages()
         problems += compare_dbc_to_doc(board.id, dbc, doc)

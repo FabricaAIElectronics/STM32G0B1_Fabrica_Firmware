@@ -7,12 +7,18 @@ already uses.
 Layout:
 
     +--------------------------+-----------------------------------+
-    | boards (select with j/k) | live telemetry, decoded via DBC   |
+    | boards (select with j/k) | live telemetry, decoded via DBC,  |
+    |                          | OR the config table (press c)     |
     +--------------------------+-----------------------------------+
     | log - every command run, every result                         |
     +---------------------------------------------------------------+
     | status: interface, manifest provenance, key hints             |
     +---------------------------------------------------------------+
+
+The config screen shows three columns per parameter - desired, live, stored -
+because they are three different facts. Live is what the board is doing now;
+stored is what it comes back to after a power cycle. A write moves the first;
+only an EEPROM save moves the second.
 
 Flashing runs in a worker thread so the UI keeps redrawing; output lines are
 pushed onto a queue the main loop drains. Nothing else is threaded.
@@ -26,10 +32,11 @@ import threading
 import time
 from pathlib import Path
 
-from . import canbus, canflash, env, manifest as mf, sources, stlink
+from . import (canbus, canflash, config, env, manifest as mf, params, sources,
+               stlink)
 
-HELP = ("j/k board  [/] scroll  b=boot  a=app  r=reset  m=monitor  f=firmware  "
-        "d=doctor  x=CANCEL  q=quit")
+HELP = ("j/k board  [/] scroll  b=boot  a=app  c=config  r=reset  m=monitor  "
+        "f=firmware  d=doctor  x=CANCEL  q=quit")
 
 
 class App:
@@ -62,6 +69,23 @@ class App:
         self.monitor: canbus.Monitor | None = None
         self.bus = None
         self.monitoring = False
+        # Config screen. Its bus is separate from the monitor's so leaving
+        # config does not tear down a monitor session, and entering it does
+        # not inherit a stream something else is already draining.
+        self.config_mode = False
+        self.config_db = None
+        self.config_bus = None
+        self.cfg_state: config.BoardState | None = None
+        self.cfg_params: list = []
+        self.cfg_sel = 0
+        self.cfg_edits: dict = {}
+        self.cfg_editing = False
+        self.cfg_buf = ""
+        self.cfg_timeout = config.DEFAULT_READ_TIMEOUT
+        # Off by default and reset on every entry to the screen: consent to
+        # switch a power rail should not outlive the moment it was given.
+        self.cfg_allow_actuate = False
+        self.cfg_confirm_defaults = False
         # An empty git_sha means the manifest was SYNTHESISED from a loose
         # folder of .srec files, not that a staged build had a dirty tree.
         # Both are untrusted, but saying "staged from a dirty tree" about a
@@ -295,6 +319,195 @@ class App:
             self.monitor.observe(msg.arbitration_id, bytes(msg.data),
                                  msg.timestamp)
 
+    # ------------------------------------------------------------ config --
+    def board_db(self):
+        """The selected board's DBC, or None. Same resolution as the monitor."""
+        board = self.board
+        if not board.dbc:
+            return None
+        path = canbus.find_dbc(board.dbc, self.manifest.root)
+        if not path:
+            return None
+        try:
+            return canbus.load_dbc(path)
+        except Exception as exc:                          # noqa: BLE001
+            self.say("warn", f"DBC load failed: {exc}")
+            return None
+
+    def enter_config(self) -> None:
+        board = self.board
+        db = self.board_db()
+        if db is None:
+            self.say("err", f"no DBC for {board.id}: configuration is "
+                            f"addressed by signal name, so there is nothing "
+                            f"to read or write without one")
+            return
+        if not params.signals(board.id):
+            self.say("err", f"no configurable parameters known for {board.id}")
+            return
+        # The monitor and a config read would compete for the same frames off
+        # one bus and each would see a random half of them. Reading a board
+        # back needs every frame, so the monitor stands down.
+        if self.monitoring:
+            self.toggle_monitor()
+            self.say("info", "monitor stopped: config needs the whole stream")
+        self.config_db = db
+        self.config_mode = True
+        self.cfg_sel = 0
+        self.cfg_edits = {}
+        self.cfg_editing = False
+        self.cfg_buf = ""
+        self.cfg_confirm_defaults = False
+        self.cfg_params = [(g, p) for g in params.for_board(board.id).groups
+                           for p in g.params]
+        self.config_refresh()
+
+    def leave_config(self) -> None:
+        self.config_mode = False
+        self.cfg_editing = False
+        if self.cfg_edits:
+            self.say("warn", f"{len(self.cfg_edits)} edited value(s) were "
+                             f"never written")
+        self.cfg_edits = {}
+        if self.config_bus is not None:
+            self.config_bus.shutdown()
+            self.config_bus = None
+
+    def _cfg_bus(self):
+        if self.config_bus is None:
+            self.config_bus = canbus.open_bus(self.iface)
+        return self.config_bus
+
+    def config_refresh(self) -> None:
+        board = self.board
+
+        def job(emit):
+            state = config.collect(self._cfg_bus(), self.config_db, board.id,
+                                   timeout=self.cfg_timeout)
+            self.cfg_state = state
+            if state.missing:
+                emit(f"no frames seen for: {', '.join(state.missing)}")
+                emit("those parameters read as unknown, not as zero")
+            else:
+                emit(f"read {len(state.values)} parameter(s) from {board.name}")
+
+        self._worker(job)
+
+    def cfg_current(self):
+        if not self.cfg_params:
+            return None, None
+        return self.cfg_params[min(self.cfg_sel, len(self.cfg_params) - 1)]
+
+    def cfg_begin_edit(self) -> None:
+        _, param = self.cfg_current()
+        if param is None:
+            return
+        self.cfg_editing = True
+        self.cfg_buf = ""
+
+    def cfg_commit_edit(self) -> None:
+        _, param = self.cfg_current()
+        self.cfg_editing = False
+        if param is None or not self.cfg_buf:
+            return
+        try:
+            value = int(self.cfg_buf, 0)
+        except ValueError:
+            try:
+                value = float(self.cfg_buf)
+            except ValueError:
+                self.say("err", f"{self.cfg_buf!r} is not a number")
+                self.cfg_buf = ""
+                return
+        self.cfg_edits[param.signal] = value
+        self.cfg_buf = ""
+
+    def cfg_type(self, ch: str) -> None:
+        if ch in "0123456789.-xabcdefABCDEF":
+            self.cfg_buf += ch
+
+    def cfg_backspace(self) -> None:
+        self.cfg_buf = self.cfg_buf[:-1]
+
+    def config_write(self, all_edits: bool = False) -> None:
+        """Write the selected parameter, or every edited one."""
+        if not self.cfg_edits:
+            self.say("warn", "nothing edited to write")
+            return
+        board = self.board
+        if all_edits:
+            wanted = dict(self.cfg_edits)
+        else:
+            _, param = self.cfg_current()
+            if param is None or param.signal not in self.cfg_edits:
+                self.say("warn", "this parameter has no edited value")
+                return
+            wanted = {param.signal: self.cfg_edits[param.signal]}
+
+        actuating = [p for _, p in self.cfg_params
+                     if p.signal in wanted and p.actuates]
+        if actuating and not self.cfg_allow_actuate:
+            for p in actuating:
+                self.say("warn", f"{p.signal} {p.actuates}")
+            self.say("warn", "press A to allow writing parameters that drive "
+                             "hardware, then write again")
+            return
+
+        def job(emit):
+            state = self.cfg_state
+            for message, overrides in config.group_overrides(
+                    board.id, wanted).items():
+                results, state = config.write_and_verify(
+                    self._cfg_bus(), self.config_db, board, message, overrides,
+                    state=state, timeout=self.cfg_timeout)
+                for r in results:
+                    if r.signal not in overrides:
+                        continue
+                    emit(f"{'OK  ' if r.ok else 'FAIL'} {r.signal} "
+                         f"wrote={r.wanted} live={r.live_status} "
+                         f"stored={r.stored_status}")
+                    if r.ok:
+                        self.cfg_edits.pop(r.signal, None)
+            self.cfg_state = state
+            emit("written - not persistent until you press s (EEPROM save)")
+
+        self._worker(job)
+
+    def config_save(self) -> None:
+        board = self.board
+
+        def job(emit):
+            arb_id, data = config.persist(self._cfg_bus(), self.config_db,
+                                          board)
+            emit(f"EEPROM save sent id=0x{arb_id:03X} data={data.hex(' ')}")
+            self.cfg_state = config.collect(
+                self._cfg_bus(), self.config_db, board.id,
+                timeout=config.DEFAULT_PERSIST_TIMEOUT)
+            emit("re-read after save")
+
+        self._worker(job)
+
+    def config_defaults(self) -> None:
+        """Restore factory defaults. Confirmed, because it overwrites EEPROM."""
+        board = self.board
+        if not self.cfg_confirm_defaults:
+            self.cfg_confirm_defaults = True
+            self.say("warn", f"press D again to overwrite {board.name}'s "
+                             f"stored configuration with factory defaults")
+            return
+        self.cfg_confirm_defaults = False
+
+        def job(emit):
+            arb_id, data = config.load_defaults(self._cfg_bus(),
+                                                self.config_db, board)
+            emit(f"load-defaults sent id=0x{arb_id:03X} data={data.hex(' ')}")
+            self.cfg_state = config.collect(
+                self._cfg_bus(), self.config_db, board.id,
+                timeout=config.DEFAULT_PERSIST_TIMEOUT)
+            emit("re-read after defaults")
+
+        self._worker(job)
+
     def run_doctor(self) -> None:
         e = env.doctor(self.manifest.root, self.iface, self.bitrate)
         for c in e.checks:
@@ -384,10 +597,32 @@ def _draw(stdscr, app: App) -> None:
             stdscr.addnstr(row, 1, f"{label:<8}{value}", left - 2, curses.A_DIM)
             row += 1
 
-    # telemetry
-    stdscr.addnstr(0, left, " TELEMETRY ".ljust(w - left - 1), w - left - 1,
-                   curses.A_REVERSE)   # overwritten below when it scrolls
-    if app.monitoring and app.monitor:
+    # right pane: the config table when that screen is open, else telemetry
+    capacity = max(1, split - 1)
+
+    def put_lines(lines, first):
+        for i, (indent, text, dim) in enumerate(lines[first:first + capacity]):
+            stdscr.addnstr(1 + i, left + indent, text,
+                           max(1, w - left - indent - 1),
+                           curses.A_DIM if dim else curses.A_NORMAL)
+
+    if app.config_mode:
+        title = " CONFIG " + app.board.name + " "
+        if app.cfg_allow_actuate:
+            title += "[ACTUATE ALLOWED] "
+        stdscr.addnstr(0, left, title.ljust(w - left - 1), w - left - 1,
+                       curses.A_REVERSE)
+        lines = config_lines(app)
+        # Keep the cursor on screen without a second scroll offset to manage:
+        # the selected row is the only one that has to be visible.
+        put_lines(lines, max(0, min(app.cfg_sel + 3 - capacity,
+                                    len(lines) - capacity)))
+        if app.cfg_state is None:
+            stdscr.addnstr(1, left + 1, "reading board...", w - left - 2,
+                           curses.A_DIM)
+    elif app.monitoring and app.monitor:
+        stdscr.addnstr(0, left, " TELEMETRY ".ljust(w - left - 1), w - left - 1,
+                       curses.A_REVERSE)   # overwritten below when it scrolls
         frames = app.monitor.snapshot()
         # Render a WINDOW onto every line rather than rationing rows between
         # frames. PowerStage needs about sixty rows for ten broadcasts of up to
@@ -395,7 +630,6 @@ def _draw(stdscr, app: App) -> None:
         # hides real data - the previous one said "+N more", which named what
         # you could not see without letting you see it.
         lines = telemetry_lines(app)
-        capacity = max(1, split - 1)
         offset = app.clamp_telemetry_offset(len(lines), capacity)
 
         header = telemetry_header(offset, capacity, len(lines))
@@ -403,15 +637,13 @@ def _draw(stdscr, app: App) -> None:
             stdscr.addnstr(0, left, header.ljust(w - left - 1),
                            w - left - 1, curses.A_REVERSE)
 
-        for i, (indent, text, dim) in enumerate(
-                lines[offset:offset + capacity]):
-            stdscr.addnstr(1 + i, left + indent, text,
-                           max(1, w - left - indent - 1),
-                           curses.A_DIM if dim else curses.A_NORMAL)
+        put_lines(lines, offset)
         if not frames:
             stdscr.addnstr(1, left + 1, "waiting for traffic...", w - left - 2,
                            curses.A_DIM)
     else:
+        stdscr.addnstr(0, left, " TELEMETRY ".ljust(w - left - 1), w - left - 1,
+                       curses.A_REVERSE)
         stdscr.addnstr(1, left + 1, "monitor stopped - press m", w - left - 2,
                        curses.A_DIM)
 
@@ -430,8 +662,9 @@ def _draw(stdscr, app: App) -> None:
         prov = f"git {man.git_sha[:8]}{' DIRTY' if man.git_dirty else ''}"
     else:
         prov = "UNVERIFIED"
+    help_text = CONFIG_HELP if app.config_mode else HELP
     status = (f" {app.iface} | {app.firmware_dir.name} | {prov} | "
-              f"{'BUSY' if app.busy else 'idle'} | {HELP}")
+              f"{'BUSY' if app.busy else 'idle'} | {help_text}")
     stdscr.addnstr(h - 1, 0, status.ljust(w - 1)[:w - 1], w - 1, curses.A_REVERSE)
     stdscr.refresh()
 
@@ -475,6 +708,103 @@ def telemetry_lines(app) -> list[tuple[int, str, bool]]:
     return lines
 
 
+def _fmt_value(value) -> str:
+    if value is None:
+        return "-"
+    if isinstance(value, float) and value == int(value):
+        return str(int(value))
+    return str(value)
+
+
+def config_lines(app) -> list[tuple[int, str, bool]]:
+    """Every renderable line of the config table, as (indent, text, dim).
+
+    Three columns because there are three facts and conflating any two of them
+    misleads: what you have typed but not sent, what the board is doing, and
+    what it will come back to after a power cycle. Pure apart from reading
+    app state, so it is testable without curses - which matters here, because
+    this file has never been executed on the machine it was written on.
+    """
+    state = app.cfg_state
+    lines: list[tuple[int, str, bool]] = []
+    header = f"{'parameter':26} {'desired':>10} {'live':>10} {'stored':>10}"
+    lines.append((1, header, True))
+
+    last_group = None
+    for index, (grp, param) in enumerate(app.cfg_params):
+        if grp is not last_group:
+            last_group = grp
+            lines.append((1, f"{grp.message}", False))
+            if grp.note:
+                lines.append((3, grp.note, True))
+
+        value = state.get(param.signal) if state else None
+        live = _fmt_value(value.live) if value and value.live_seen else "-"
+        stored = _fmt_value(value.stored) if value and value.stored_seen else "-"
+
+        if app.cfg_editing and index == app.cfg_sel:
+            desired = (app.cfg_buf or "") + "_"
+        elif param.signal in app.cfg_edits:
+            desired = "*" + _fmt_value(app.cfg_edits[param.signal])
+        else:
+            desired = "-"
+
+        cursor = ">" if index == app.cfg_sel else " "
+        flag = " !" if param.actuates else ""
+        lines.append((
+            2,
+            f"{cursor}{param.signal:25} {desired:>10} {live:>10} "
+            f"{stored:>10}{flag}",
+            False))
+    return lines
+
+
+#: Shown in the status bar while the config screen is open.
+CONFIG_HELP = ("j/k param  e=edit  w=write  W=write-all  s=SAVE-eeprom  "
+               "D=defaults  R=re-read  A=allow-actuate  c/Esc=back")
+
+
+def _handle_config_key(app, ch: int, key: str) -> None:
+    """Key handling for the config screen. Separated so it can be tested."""
+    if app.cfg_editing:
+        if ch in (27,):                                   # Esc abandons
+            app.cfg_editing = False
+            app.cfg_buf = ""
+        elif ch in (curses.KEY_ENTER, 10, 13):
+            app.cfg_commit_edit()
+        elif ch in (curses.KEY_BACKSPACE, 127, 8):
+            app.cfg_backspace()
+        elif key:
+            app.cfg_type(key)
+        return
+
+    if ch == 27 or key == "c":
+        app.leave_config()
+    elif ch == curses.KEY_DOWN or key == "j":
+        app.cfg_sel = (app.cfg_sel + 1) % max(1, len(app.cfg_params))
+    elif ch == curses.KEY_UP or key == "k":
+        app.cfg_sel = (app.cfg_sel - 1) % max(1, len(app.cfg_params))
+    elif app.busy:
+        app.say("warn", "a command is already running")
+    elif key in ("e",) or ch in (curses.KEY_ENTER, 10, 13):
+        app.cfg_begin_edit()
+    elif key == "w":
+        app.config_write()
+    elif key == "W":
+        app.config_write(all_edits=True)
+    elif key == "s":
+        app.config_save()
+    elif key == "D":
+        app.config_defaults()
+    elif key == "R":
+        app.config_refresh()
+    elif key == "A":
+        app.cfg_allow_actuate = not app.cfg_allow_actuate
+        app.say("warn" if app.cfg_allow_actuate else "info",
+                f"writing parameters that drive hardware is "
+                f"{'ALLOWED' if app.cfg_allow_actuate else 'blocked'}")
+
+
 def _loop(stdscr, app: App) -> int:
     curses.curs_set(0)
     stdscr.nodelay(True)
@@ -506,14 +836,20 @@ def _loop(stdscr, app: App) -> int:
                 app.choose_source()
             continue
 
-        if key in ("q", "Q"):
+        if key in ("q", "Q") and not (app.config_mode and app.cfg_editing):
             # Kill first, then close the bus: leaving a flasher running is the
             # one thing that outlives this process and corrupts the next
             # session's measurements.
             app.kill_child()
             if app.bus:
                 app.bus.shutdown()
+            if app.config_bus:
+                app.config_bus.shutdown()
             return 0
+
+        if app.config_mode:
+            _handle_config_key(app, ch, key)
+            continue
         if key in ("x", "X") or ch == 3:            # x or Ctrl-C
             app.cancel()
             continue
@@ -545,6 +881,8 @@ def _loop(stdscr, app: App) -> int:
             app.toggle_monitor()
         elif key == "d":
             app.run_doctor()
+        elif key == "c":
+            app.enter_config()
         elif key == "f":
             app.open_picker()
 

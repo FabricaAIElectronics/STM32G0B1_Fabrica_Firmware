@@ -100,7 +100,7 @@ CubeIDE builds.
 | build | all 8 projects build headless, Debug config |
 | size | every artifact fits its flash region (coarse - see below) |
 | memmap | the .srec files do not overlap and stay inside their regions |
-| conformance | the per-board DBCs, firmware `#define`s and header comment blocks, `Docs/CAN_Bus.md`, `Docs/Fabrica_Bus.dbc` and the unit-test layouts all describe the same protocol |
+| conformance | the per-board DBCs, firmware `#define`s and header comment blocks, `Docs/CAN_Bus.md`, `Docs/Fabrica_Bus.dbc`, the bench tool's configuration parameter map and the unit-test layouts all describe the same protocol |
 
 Run the gate's own tests with `python -m pytest vv/tests -q`, and the C
 assertions with `make -C vv/unit clean all`.

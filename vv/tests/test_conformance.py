@@ -240,3 +240,33 @@ def test_stale_header_comment_dlc_is_reported(tmp_path, monkeypatch):
                            ("STM32G0B1_Applciationprog/PowerStage/Core/Inc/can_operation.h",))
     assert [p["kind"] for p in problems] == ["header_comment_dlc"]
     assert problems[0]["comment_dlc"] == 2 and problems[0]["dbc_dlc"] == 5
+
+
+# ── The bench tool's configuration parameter map ────────────────────────────
+# It names DBC messages and signals that nothing else in the gate reads, and a
+# dangling entry there is only discovered on a bench.
+
+def test_param_map_matches_every_board_dbc():
+    for board in conformance.BOARDS:
+        if board.dbc is None:
+            continue
+        assert conformance.check_param_map(
+            board, conformance.REPO_ROOT / board.dbc) == [], board.id
+
+
+def test_param_map_drift_is_reported(monkeypatch):
+    board = next(b for b in conformance.BOARDS if b.id == "powerstage")
+    fake = type("P", (), {
+        "validate": staticmethod(lambda bid, db: ["powerstage: made up"])})
+    monkeypatch.setattr(conformance, "_load_param_map", lambda: fake)
+    problems = conformance.check_param_map(
+        board, conformance.REPO_ROOT / board.dbc)
+    assert [p["kind"] for p in problems] == ["param_map"]
+
+
+def test_a_missing_bench_tool_is_skipped_not_failed(monkeypatch):
+    """vv gates the firmware; the bench tool is a separate deployable."""
+    monkeypatch.setattr(conformance, "_load_param_map", lambda: None)
+    board = next(b for b in conformance.BOARDS if b.id == "powerstage")
+    assert conformance.check_param_map(
+        board, conformance.REPO_ROOT / board.dbc) == []

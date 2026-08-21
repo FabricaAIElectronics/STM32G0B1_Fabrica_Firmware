@@ -340,7 +340,15 @@ void HAL_TIM_Encoder_MspInit(TIM_HandleTypeDef* htim_encoder)
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     /* USER CODE BEGIN TIM2_MspInit 1 */
-
+    /* Bench only: the Nucleo has no R-pack on A/B; the V5.5 PCB does. Re-run
+     * the pin init with internal pull-ups on top of the generated NOPULL.
+     * Delete this block (do not commit it) for the real board. */
+    GPIO_InitStruct.Pin       = ENC_A_Pin|ENC_B_Pin;
+    GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull      = GPIO_PULLUP;
+    GPIO_InitStruct.Speed     = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Alternate = GPIO_AF2_TIM2;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
     /* USER CODE END TIM2_MspInit 1 */
 
   }

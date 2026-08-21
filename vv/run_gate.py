@@ -100,11 +100,11 @@ def main(argv=None) -> int:
         fully_ran = all(r.ran for r in results)
         if passed and fully_ran:
             from vv import stage as stage_mod
-            manifest = stage_mod.stage_artifacts(gate_passed=True,
-                                                 version=args.version)
+            manifest, staged_dir = stage_mod.stage_artifacts(
+                gate_passed=True, version=args.version)
             # Report the version folder actually written, not the container:
             # naming firmware/ here would hide which version this run produced.
-            where = stage_mod.FIRMWARE_DIR.relative_to(stage_mod.REPO_ROOT)
+            where = staged_dir.relative_to(stage_mod.REPO_ROOT)
             print(f"\nstaged {len(manifest['boards'])} boards to "
                   f"{where.as_posix()}/ (git {manifest['git_sha'][:8]}"
                   f"{', DIRTY' if manifest['git_dirty'] else ''})")

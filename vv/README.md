@@ -100,22 +100,25 @@ CubeIDE builds.
 | build | all 8 projects build headless, Debug config |
 | size | every artifact fits its flash region (coarse - see below) |
 | memmap | the .srec files do not overlap and stay inside their regions |
-| conformance | DBC, firmware `#define`s, `Docs/CAN_Bus.md` and the unit-test layouts agree |
+| conformance | the per-board DBCs, firmware `#define`s and header comment blocks, `Docs/CAN_Bus.md`, `Docs/Fabrica_Bus.dbc`, the bench tool's configuration parameter map and the unit-test layouts all describe the same protocol |
 
 Run the gate's own tests with `python -m pytest vv/tests -q`, and the C
 assertions with `make -C vv/unit clean all`.
 
 ## What "green" does and does not mean
 
-**The static stage is baselined.** `vv/baseline.txt` records 37 pre-existing
+**The static stage is baselined.** `vv/baseline.txt` records 34 pre-existing
 warnings, mostly `-Wstrict-prototypes` in the OpenBLT-derived files under each
 bootloader's `App/`. Green means *no new warnings*, not *no warnings*. Shrinking
 the baseline is optional cleanup; regenerate it with `--update-baseline`.
 
-**The knob board is only partly covered.** It has no DBC and does not appear in
-`Docs/CAN_Bus.md`, so conformance reports it as unchecked rather than failing.
-Its CAN ids sit in CANopen SDO space and are owned by another team, so the
-address-plan check skips it by design (`address_plan_exempt` in `vv/boards.py`).
+**The knob board is only partly covered.** It now has a DBC (`Knob.dbc`), so
+its `#define`s, layouts and broadcasts are checked like any other board. What
+is still not checked is the documentation half: it is absent from
+`Docs/CAN_Bus.md` and from `Docs/Fabrica_Bus.dbc`, so the doc-agreement and
+combined-bus checks skip it (`in_bus_doc = False` in `vv/boards.py`). Its CAN
+ids sit in CANopen SDO space and are owned by another team, so the address-plan
+check skips it by design too (`address_plan_exempt`).
 
 **Some modules are not unit tested.** `battery.c` is compiled and tested for
 real. `thermistor.c` has its Beta equation restated because it reaches ADC/DMA
@@ -124,12 +127,18 @@ state through `adc_driver.h`. `power_monitor.c`, `ssd1306.c`, `Fan_PWM.c` and
 
 ## Current status
 
-The gate exits 0. Two warnings stand, both understood:
+The gate exits 0 and conformance is clean - `protocol descriptions agree`, with
+all five boards checked. One warning stands, and it is a measurement artefact
+rather than a finding:
 
-- **Size:** reports the three G0B1 bootloaders at 82.8% of their 12 KB
-  reservation. **That figure is pessimistic** - see below. The memmap stage
-  measures the artifacts directly and puts them at 72.6%.
-- **Conformance:** the knob board is unchecked (no DBC, absent from the docs).
+- **Size:** reports the G0B1 bootloaders at 82.8% of their 12 KB reservation.
+  **That figure is pessimistic** - see below. The memmap stage measures the
+  S-records directly and puts them at 72.6% (73.1% for ButtonBoard, the
+  largest, at 8980 B; the knob is 51.5% of its 14 KB).
+
+Conformance last reported a warning when the knob had no DBC. It has one now,
+and ButtonBoard has both a DBC and an entry in `Docs/CAN_Bus.md`, so the only
+remaining exemption is the knob's absence from the two bus-wide documents.
 
 ### Findings the first real run produced, and how they were resolved
 

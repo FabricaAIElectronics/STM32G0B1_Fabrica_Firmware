@@ -8,6 +8,7 @@ the other descriptions agree with it.
 """
 import json
 import re
+import sys
 from pathlib import Path
 
 from vv.boards import BOARDS, REPO_ROOT
@@ -15,6 +16,11 @@ from vv.result import StageResult
 
 LAYOUTS_PATH = REPO_ROOT / "vv" / "unit" / "layouts.json"
 BUS_DOC = REPO_ROOT / "Docs" / "CAN_Bus.md"
+#: The all-boards DBC operators load in PCAN-Explorer / CANalyzer to watch
+#: the whole bus. It is a fifth description of the same protocol and used
+#: to be the only one nothing checked, which is exactly how it came to
+#: carry PowerStage's pre-AUTO fan DLCs long after the firmware moved on.
+COMBINED_DBC = REPO_ROOT / "Docs" / "Fabrica_Bus.dbc"
 
 # Per-device sub-blocks from Docs/CAN_Bus.md section 2. The knob is exempt and
 # therefore absent.
@@ -291,6 +297,86 @@ def compare_dbc_to_doc(board_id: str, dbc: dict[int, dict],
     return problems
 
 
+def check_combined_dbc() -> list[dict]:
+    """Every per-board message must appear in Docs/Fabrica_Bus.dbc at the same DLC.
+
+    Names are prefixed per board there (CMD_FAN -> PS_CMD_FAN), so only the
+    frame id and the DLC are comparable - which is enough: a wrong DLC is what
+    silently truncates a decode in the operator's tool.
+    """
+    if not COMBINED_DBC.is_file():
+        return [{"board": "-", "kind": "combined_dbc_missing",
+                 "detail": f"{COMBINED_DBC.name} not found"}]
+    combined = dbc_messages(COMBINED_DBC)
+    problems = []
+    for board in BOARDS:
+        if board.dbc is None or not board.in_bus_doc:
+            continue
+        for fid, msg in dbc_messages(REPO_ROOT / board.dbc).items():
+            if fid not in combined:
+                problems.append({"board": board.id, "kind": "missing_from_combined_dbc",
+                                 "id": f"0x{fid:03X}", "name": msg["name"]})
+            elif combined[fid]["dlc"] != msg["dlc"]:
+                problems.append({"board": board.id, "kind": "combined_dbc_dlc",
+                                 "id": f"0x{fid:03X}",
+                                 "board_dlc": msg["dlc"],
+                                 "combined_dlc": combined[fid]["dlc"]})
+    return problems
+
+
+#: `CMD_FAN     [0x140] DLC=5` in the big comment block at the top of each
+#: board's CAN header. Those blocks are what someone reads before writing a
+#: host frame, so they are a protocol description like any other.
+_COMMENT_DLC_RE = re.compile(r"\[0x([0-9A-Fa-f]{3})\]\s*DLC=(\d+)")
+
+
+def check_header_comments(board, dbc: dict[int, dict]) -> list[dict]:
+    problems = []
+    for header in board.headers:
+        path = REPO_ROOT / header
+        if not path.is_file():
+            continue
+        for m in _COMMENT_DLC_RE.finditer(path.read_text(encoding="utf-8",
+                                                         errors="replace")):
+            fid, dlc = int(m.group(1), 16), int(m.group(2))
+            if fid in dbc and dbc[fid]["dlc"] != dlc:
+                problems.append({"board": board.id, "kind": "header_comment_dlc",
+                                 "id": f"0x{fid:03X}", "file": header,
+                                 "comment_dlc": dlc, "dbc_dlc": dbc[fid]["dlc"]})
+    return problems
+
+
+def _load_param_map():
+    """fabrica.params, or None when the bench tool is not importable.
+
+    vv gates the firmware; the bench tool is a separate deployable that an
+    operator may have copied away. Missing is a skip, not a failure - but a
+    map that IS present and disagrees with a DBC is a failure, because that
+    disagreement is only ever discovered on a bench otherwise.
+    """
+    tool = REPO_ROOT / "Tools" / "fabrica"
+    if not (tool / "fabrica" / "params.py").is_file():
+        return None
+    if str(tool) not in sys.path:
+        sys.path.insert(0, str(tool))
+    try:
+        from fabrica import params
+        return params
+    except Exception:
+        return None
+
+
+def check_param_map(board, dbc_path) -> list[dict]:
+    """The bench tool's configuration map must match this board's DBC."""
+    params = _load_param_map()
+    if params is None:
+        return []
+    import cantools
+    db = cantools.database.load_file(dbc_path)
+    return [{"board": board.id, "kind": "param_map", "detail": problem}
+            for problem in params.validate(board.id, db)]
+
+
 def check_board(board) -> list[dict]:
     if board.dbc is None:
         return []
@@ -304,6 +390,8 @@ def check_board(board) -> list[dict]:
     problems += compare_layouts_to_dbc(board.id, load_layouts().get(board.id, []), dbc)
     problems += check_address_plan(board, defines)
     problems += check_broadcasts_transmitted(board, defines, dbc)
+    problems += check_header_comments(board, dbc)
+    problems += check_param_map(board, REPO_ROOT / board.dbc)
     if board.in_bus_doc:
         doc = doc_messages()
         problems += compare_dbc_to_doc(board.id, dbc, doc)
@@ -339,6 +427,8 @@ def run() -> StageResult:
                                     "Docs/CAN_Bus.md; conformance not checked"})
             continue
         problems.extend(check_board(board))
+
+    problems.extend(check_combined_dbc())
 
     if not LAYOUTS_PATH.is_file():
         notes.append({"kind": "no_layouts",

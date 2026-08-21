@@ -12,7 +12,7 @@ bench machine.
 ## Read this first
 
 **This tool has never touched hardware.** It was written on a Windows box with
-no ST-Link, no CAN interface, and no `_curses`. 227 unit tests pass, but they
+no ST-Link, no CAN interface, and no `_curses`. 406 unit tests pass, but they
 prove the *logic* — command construction, checksum enforcement, DBC decoding,
 error handling. They prove nothing about whether ST-Link enumerates or whether
 BootCommander likes our arguments.
@@ -277,11 +277,68 @@ Note on the causal check: KincoDrive deliberately uses its OC-threshold echo
 takes time to spin up and never reports exactly the commanded duty, so asserting
 equality against it would fail on correct hardware.
 
+**7c. Configure it.**
+
+```bash
+./fabrica_cli.py config read powerstage
+```
+
+Three columns per parameter, and they are three different facts:
+
+| Column | Means |
+|---|---|
+| `desired` | edited here, not yet sent |
+| `live` | what the board is doing right now |
+| `stored` | what it will come back to after a power cycle |
+
+They are allowed to disagree. A write moves `live`; only `config save` moves
+`stored`. That split is not this tool being fussy - it is how the firmware
+works, and a screen showing one number would either hide unsaved work or
+report a fault against a board behaving correctly.
+
+```bash
+./fabrica_cli.py config write powerstage Fan_Duty=40 --allow-transmit
+./fabrica_cli.py config save  powerstage --allow-transmit
+```
+
+Every write is verified: the frame goes out, the board's telemetry is read
+back, and the value is compared. Nothing acknowledges a CAN command, so the
+readback is the only evidence it landed.
+
+Parameters that drive hardware - rail enables, LED outputs, the CAN relay -
+need `--allow-actuate` on top of `--allow-transmit`. Two flags because they are
+two different risks: one puts frames on a shared bus, the other switches
+something.
+
+Note on KincoDrive: its OC and UV thresholds have no live echo. The board sets
+them in RAM and only reports them once they are saved, so they read as
+`stored` only and stay `-` under `live` until you run `config save`. That is
+correct firmware behaviour, not a failed write.
+
+**7d. Make it repeatable.**
+
+```bash
+./fabrica_cli.py config dump  powerstage            # board -> profiles/powerstage.json
+./fabrica_cli.py config diff  powerstage            # profile vs board
+./fabrica_cli.py config apply powerstage --allow-transmit --save
+```
+
+`apply` writes only what differs, so re-applying to an already-configured rig
+puts nothing on the bus. See `profiles/README.md`.
+
 **8. Only now repeat for the other boards**, and consider the TUI:
 
 ```bash
 ./fabrica_cli.py tui
 ```
+
+Once one board has been through the whole list, `flash all app` does the rest
+in one go. Applications only - a bootloader needs a physical ST-Link probe per
+board, so there is no unattended version of that. It runs strictly one board at
+a time and stops at the first failure, because a flash that cannot reach its
+target leaves BootCommander transmitting XCP CONNECT about 17 times a second;
+flashing the next board into that produces a second failure whose real cause is
+the first one. `--keep-going` overrides it when you know why.
 
 ---
 
@@ -293,10 +350,18 @@ sources [--root DIR]          list selectable firmware folders, newest first
 doctor                        check tools, CAN link, firmware checksums
 list                          boards, CAN ids, image sizes, provenance
 flash <board> boot|app        flash via ST-Link (boot) or CAN (app)
+flash all app                 every board's application, one at a time
 reset <board>                 send the bootloader trigger frame
 monitor [--board B]           listen and decode, --seconds N
 verify <board>                HIL check of the three behavioural properties
                               (needs --allow-transmit; --include-reset opt-in)
+config read <board>           every parameter: desired / live / stored
+config write <board> S=V ...  set live values, then verify the readback
+config save <board>           commit the live config to EEPROM
+config defaults <board>       restore factory defaults
+config dump <board>           capture the board into a profile file
+config diff <board>           profile vs board
+config apply <board>          write what differs, optionally --save
 tui                           full-screen interface
 ```
 
@@ -311,7 +376,17 @@ Board ids: `kincodrive`, `powerstage`, `leddriver`, `knob`.
 j / k    select board          b   flash bootloader (ST-Link)
 m        start/stop monitor    a   flash application (CAN)
 d        run doctor            r   send bootloader trigger
-f        choose firmware folder    q   quit
+c        configuration screen  f   choose firmware folder
+q        quit
+
+Inside the config screen:
+
+j / k    select parameter      w   write the selected parameter
+e        edit its value        W   write every edited parameter
+R        re-read the board     s   SAVE the live config to EEPROM
+A        allow writing         D   restore factory defaults (press twice)
+         parameters that       c / Esc   back to the board list
+         drive hardware
 
 Pressing `f` opens a picker listing firmware folders under the parent of the
 current one, newest first. Enter selects, Esc cancels.
@@ -373,7 +448,7 @@ deliberately not tracked in git — attach them to a tagged release instead.
 ## Tests
 
 ```bash
-python -m pytest Tools/fabrica/tests -q     # 227 tests, no hardware needed
+python -m pytest Tools/fabrica/tests -q     # 406 tests, no hardware needed
 ```
 
 ## Layout

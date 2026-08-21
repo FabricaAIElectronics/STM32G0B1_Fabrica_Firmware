@@ -159,9 +159,12 @@ BO_ 304 PS_DEVICE_ADDR: 2 Host
 BO_ 305 PS_Bootloader_TX: 8 PowerStage
  SG_ PS_Boot_Resp : 0|8@1+ (1,0) [0|255] "" Host
 
-BO_ 320 PS_CMD_FAN: 2 Host
+BO_ 320 PS_CMD_FAN: 5 Host
  SG_ PS_Fan_Mode : 0|8@1+ (1,0) [0|2] "" PowerStage
  SG_ PS_Fan_Duty : 8|8@1+ (1,0) [0|100] "%" PowerStage
+ SG_ PS_Fan_Min_Duty : 16|8@1+ (1,0) [0|100] "%" PowerStage
+ SG_ PS_Fan_Auto_On_Temp : 24|8@1+ (1,0) [0|150] "degC" PowerStage
+ SG_ PS_Fan_Auto_Off_Temp : 32|8@1+ (1,0) [0|150] "degC" PowerStage
 
 BO_ 321 PS_CMD_HS: 1 Host
  SG_ PS_HS_Cmd_AUX : 0|1@1+ (1,0) [0|1] "" PowerStage
@@ -245,10 +248,13 @@ BO_ 338 PS_BCAST_VOLTAGE: 8 PowerStage
  SG_ PS_Battery_SOC_Low_Flag : 51|1@1+ (1,0) [0|1] "" Host
  SG_ PS_Battery_SOC_pct : 56|8@1+ (1,0) [0|100] "%" Host
 
-BO_ 339 PS_BCAST_FAN: 4 PowerStage
+BO_ 339 PS_BCAST_FAN: 7 PowerStage
  SG_ PS_Fan_Mode_State : 0|8@1+ (1,0) [0|2] "" Host
  SG_ PS_Fan_Duty_State : 8|8@1+ (1,0) [0|100] "%" Host
  SG_ PS_Temperature_C : 23|16@0- (0.1,0) [-40|150] "degC" Host
+ SG_ PS_Fan_Min_Duty_State : 32|8@1+ (1,0) [0|100] "%" Host
+ SG_ PS_Fan_Auto_On_Temp_State : 40|8@1+ (1,0) [0|150] "degC" Host
+ SG_ PS_Fan_Auto_Off_Temp_State : 48|8@1+ (1,0) [0|150] "degC" Host
 
 BO_ 340 PS_BCAST_EEPROM: 8 PowerStage
  SG_ PS_Cfg_Fan_Def_Mode : 0|8@1+ (1,0) [0|2] "" Host
@@ -442,6 +448,9 @@ CM_ BO_ 305 "0x131 PowerStage bootloader TX (XCP responses).";
 CM_ BO_ 320 "0x140 PowerStage CMD_FAN: set fan mode and manual duty cycle. Accepted from both CAN buses.";
 CM_ SG_ 320 PS_Fan_Mode "0=OFF 1=ON_MANUAL 2=AUTO. In AUTO mode Fan_Duty is ignored.";
 CM_ SG_ 320 PS_Fan_Duty "Manual duty cycle 0-100%. Applied only when Fan_Mode=1.";
+CM_ SG_ 320 PS_Fan_Min_Duty "AUTO-mode floor duty. Carried only by the DLC=5 form.";
+CM_ SG_ 320 PS_Fan_Auto_On_Temp "AUTO-mode switch-on temperature. DLC=5 form only.";
+CM_ SG_ 320 PS_Fan_Auto_Off_Temp "AUTO-mode switch-off temperature. DLC=5 form only.";
 CM_ BO_ 321 "0x141 PowerStage CMD_HS: per-rail enable bits (1 byte, bit0=AUX..bit4=SBC). Accepted from both CAN buses.";
 CM_ SG_ 321 PS_HS_Cmd_AUX "0=disable RAIL_AUX 1=enable.";
 CM_ SG_ 321 PS_HS_Cmd_LED "0=disable RAIL_LED 1=enable.";
@@ -492,6 +501,9 @@ CM_ BO_ 339 "0x153 PowerStage BCAST_FAN: fan mode, duty, NTC temperature (int16 
 CM_ SG_ 339 PS_Fan_Mode_State "Current active fan mode.";
 CM_ SG_ 339 PS_Fan_Duty_State "Current active PWM duty cycle.";
 CM_ SG_ 339 PS_Temperature_C "NTC temperature, scale 0.1 °C.";
+CM_ SG_ 339 PS_Fan_Min_Duty_State "Live AUTO-mode floor duty.";
+CM_ SG_ 339 PS_Fan_Auto_On_Temp_State "Live AUTO-mode switch-on temperature.";
+CM_ SG_ 339 PS_Fan_Auto_Off_Temp_State "Live AUTO-mode switch-off temperature.";
 CM_ BO_ 340 "0x154 PowerStage BCAST_EEPROM: live echo of EEPROM-stored boot config.";
 CM_ SG_ 340 PS_Cfg_HS_Def_AUX "Boot-default enable state for RAIL_AUX.";
 CM_ SG_ 340 PS_Cfg_HS_Def_LED "Boot-default enable state for RAIL_LED.";

@@ -173,3 +173,70 @@ def test_real_multibyte_signal_still_sets_byte_order(tmp_path):
         ' SG_ Threshold_mA : 0|16@0+ (1,0) [0|65535] "mA" Tester\n',
         encoding="utf-8")
     assert conformance.dbc_messages(dbc)[341]["byte_order"] == "big"
+
+
+# ── The combined all-boards DBC and the header comment blocks ───────────────
+# Both are protocol descriptions an operator reads, and neither was checked
+# until Docs/Fabrica_Bus.dbc was found carrying PowerStage's pre-AUTO fan DLCs.
+
+def test_combined_dbc_agrees_with_every_per_board_dbc():
+    assert conformance.check_combined_dbc() == []
+
+
+def test_combined_dbc_dlc_drift_is_reported(tmp_path, monkeypatch):
+    board = next(b for b in conformance.BOARDS if b.id == "powerstage")
+    real = conformance.dbc_messages(conformance.REPO_ROOT / board.dbc)
+    fid = next(iter(real))
+    stale = {i: dict(m) for i, m in real.items()}
+    stale[fid]["dlc"] = real[fid]["dlc"] + 1
+
+    combined = tmp_path / "Fabrica_Bus.dbc"
+    combined.write_text("", encoding="utf-8")
+    monkeypatch.setattr(conformance, "COMBINED_DBC", combined)
+    monkeypatch.setattr(conformance, "dbc_messages",
+                        lambda path: stale if Path(path) == combined else real)
+    monkeypatch.setattr(conformance, "BOARDS", [board])
+
+    problems = conformance.check_combined_dbc()
+    assert [p["kind"] for p in problems] == ["combined_dbc_dlc"]
+    assert problems[0]["id"] == f"0x{fid:03X}"
+
+
+def test_message_absent_from_the_combined_dbc_is_reported(tmp_path, monkeypatch):
+    board = next(b for b in conformance.BOARDS if b.id == "powerstage")
+    real = conformance.dbc_messages(conformance.REPO_ROOT / board.dbc)
+
+    combined = tmp_path / "Fabrica_Bus.dbc"
+    combined.write_text("", encoding="utf-8")
+    monkeypatch.setattr(conformance, "COMBINED_DBC", combined)
+    monkeypatch.setattr(conformance, "dbc_messages",
+                        lambda path: {} if Path(path) == combined else real)
+    monkeypatch.setattr(conformance, "BOARDS", [board])
+
+    problems = conformance.check_combined_dbc()
+    assert {p["kind"] for p in problems} == {"missing_from_combined_dbc"}
+    assert len(problems) == len(real)
+
+
+def test_header_comment_dlcs_match_the_dbc():
+    for board in conformance.BOARDS:
+        if board.dbc is None:
+            continue
+        dbc = conformance.dbc_messages(conformance.REPO_ROOT / board.dbc)
+        assert conformance.check_header_comments(board, dbc) == [], board.id
+
+
+def test_stale_header_comment_dlc_is_reported(tmp_path, monkeypatch):
+    header = tmp_path / "can_operation.h"
+    header.write_text(" *  CMD_FAN     [0x140] DLC=2\n", encoding="utf-8")
+    board = next(b for b in conformance.BOARDS if b.id == "powerstage")
+    monkeypatch.setattr(conformance, "REPO_ROOT", tmp_path)
+    object.__setattr__(board, "headers", ("can_operation.h",))
+    try:
+        problems = conformance.check_header_comments(
+            board, {0x140: {"name": "Cmd_Fan", "dlc": 5, "byte_order": None}})
+    finally:
+        object.__setattr__(board, "headers",
+                           ("STM32G0B1_Applciationprog/PowerStage/Core/Inc/can_operation.h",))
+    assert [p["kind"] for p in problems] == ["header_comment_dlc"]
+    assert problems[0]["comment_dlc"] == 2 and problems[0]["dbc_dlc"] == 5

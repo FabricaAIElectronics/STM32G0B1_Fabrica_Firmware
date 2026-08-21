@@ -25,19 +25,20 @@
  * Must match STM32G0B1_Bootloader/G0B1_PowerStage_Boot/App/blt_conf.h.
  * ============================================================
  *
- *  CMD_FAN     [0x140] DLC=2
+ *  CMD_FAN     [0x140] DLC=5   (the DLC=2 form is still accepted)
  *    Byte[0] : Fan mode      (0=OFF, 1=ON_MANUAL, 2=AUTO)
  *    Byte[1] : Duty cycle    (0–100 %)
+ *    Byte[2] : AUTO min duty (0–100 %)
+ *    Byte[3] : AUTO on temp  (°C)
+ *    Byte[4] : AUTO off temp (°C)
  *
- *  CMD_HS      [0x141] DLC=5
- *    Byte[0] : RAIL_AUX      (0=disable, 1=enable)
- *    Byte[1] : RAIL_LED      (0=disable, 1=enable)
- *    Byte[2] : RAIL_DRIVE    (0=disable, 1=enable)
- *    Byte[3] : RAIL_CAP      (0=disable, 1=enable)
- *    Byte[4] : RAIL_SBC      (IGNORED — no MCU-controlled EN line on
- *                             this PowerStage board; SBC is permanently
- *                             enabled by hardware. The byte is reserved
- *                             for backward compatibility.)
+ *  CMD_HS      [0x141] DLC=1
+ *    Byte[0] : Rail enable bitmask
+ *                bit0 = RAIL_AUX    bit1 = RAIL_LED
+ *                bit2 = RAIL_DRIVE  bit3 = RAIL_CAP
+ *              Set bit = enable. RAIL_SBC has no MCU-controlled EN
+ *              line on this board — it is permanently enabled by
+ *              hardware and has no bit here.
  *
  *  DEVICE_ADDR [0x130] DLC=2
  *    Byte[0] : 0xFF → system reset into bootloader
@@ -118,10 +119,13 @@
  *    Byte[6]   : UV fault mask  (bit0=V24, bit1=VCAP, bit2=V12)
  *    Byte[7]   : Reserved
  *
- *  BCAST_FAN        [0x153] DLC=4
+ *  BCAST_FAN        [0x153] DLC=7
  *    Byte[0]   : Fan mode     (0=OFF, 1=ON, 2=AUTO)
  *    Byte[1]   : Duty cycle   (0–100 %)
  *    Byte[2-3] : Temperature  (int16_t, °C × 10, e.g. 253 = 25.3 °C)
+ *    Byte[4]   : Live AUTO min duty  (0–100 %)
+ *    Byte[5]   : Live AUTO on temp   (°C)
+ *    Byte[6]   : Live AUTO off temp  (°C)
  *
  *  BCAST_EEPROM     [0x154] DLC=8
  *    Byte[0]   : fan_default_mode

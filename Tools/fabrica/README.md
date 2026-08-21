@@ -12,7 +12,7 @@ bench machine.
 ## Read this first
 
 **This tool has never touched hardware.** It was written on a Windows box with
-no ST-Link, no CAN interface, and no `_curses`. 227 unit tests pass, but they
+no ST-Link, no CAN interface, and no `_curses`. 296 unit tests pass, but they
 prove the *logic* — command construction, checksum enforcement, DBC decoding,
 error handling. They prove nothing about whether ST-Link enumerates or whether
 BootCommander likes our arguments.
@@ -373,7 +373,7 @@ deliberately not tracked in git — attach them to a tagged release instead.
 ## Tests
 
 ```bash
-python -m pytest Tools/fabrica/tests -q     # 227 tests, no hardware needed
+python -m pytest Tools/fabrica/tests -q     # 296 tests, no hardware needed
 ```
 
 ## Layout

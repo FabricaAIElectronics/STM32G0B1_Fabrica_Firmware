@@ -21,9 +21,12 @@ from vv.checks.build import build_project
 #: newest first, by whatever name the folder has.
 FIRMWARE_ROOT = REPO_ROOT / "Tools" / "fabrica" / "firmware"
 
-#: Set per run by stage_artifacts(); the version folder being written.
-FIRMWARE_DIR = FIRMWARE_ROOT
-MANIFEST_PATH = FIRMWARE_DIR / "manifest.json"
+#: The version folder being written is NOT module state. It was, and
+#: stage_artifacts() reassigned it per run, which meant a caller could not
+#: redirect staging without the reassignment clobbering the redirection - the
+#: vv test suite monkeypatched it and had its artifacts written into the real
+#: Tools/fabrica/firmware/ tree anyway. The destination is now a parameter
+#: threaded from stage_artifacts() down to each copy helper.
 
 
 def default_version_label() -> str:
@@ -56,7 +59,7 @@ def git_info() -> tuple[str, bool]:
 
 
 def _copy_srec(board, project_dir: str, eclipse_name: str, load_addr: int,
-               kind: str) -> dict:
+               kind: str, dest_root: Path) -> dict:
     """Build, then copy, then hash - in that order.
 
     The build must come first. Copying first and building afterwards let the
@@ -78,7 +81,7 @@ def _copy_srec(board, project_dir: str, eclipse_name: str, load_addr: int,
     if not src.is_file():
         raise FileNotFoundError(f"{kind} artifact missing after build: {src}")
 
-    dest_dir = FIRMWARE_DIR / board.id
+    dest_dir = dest_root / board.id
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest = dest_dir / src.name
     shutil.copy2(src, dest)
@@ -91,7 +94,7 @@ def _copy_srec(board, project_dir: str, eclipse_name: str, load_addr: int,
     }
 
 
-def _copy_dbc(board) -> None:
+def _copy_dbc(board, dest_root: Path) -> None:
     """Stage the board's DBC beside its images.
 
     Without this the staged tree is not self-contained: the DBCs live in the
@@ -109,17 +112,19 @@ def _copy_dbc(board) -> None:
     src = REPO_ROOT / board.dbc
     if not src.is_file():
         return
-    dest_dir = FIRMWARE_DIR / board.id
+    dest_dir = dest_root / board.id
     dest_dir.mkdir(parents=True, exist_ok=True)
     shutil.copy2(src, dest_dir / src.name)
 
 
-def collect_board_artifacts(board) -> dict:
+def collect_board_artifacts(board, dest_root: Path) -> dict:
     artifacts = {
-        "boot": _copy_srec(board, board.boot_dir, board.boot_eclipse, 0x08000000, "boot"),
-        "app": _copy_srec(board, board.app_dir, board.app_eclipse, board.app_origin, "app"),
+        "boot": _copy_srec(board, board.boot_dir, board.boot_eclipse, 0x08000000,
+                           "boot", dest_root),
+        "app": _copy_srec(board, board.app_dir, board.app_eclipse, board.app_origin,
+                          "app", dest_root),
     }
-    _copy_dbc(board)
+    _copy_dbc(board, dest_root)
     return artifacts
 
 
@@ -135,29 +140,35 @@ def build_manifest(board_entries: list[dict], gate_passed: bool) -> dict:
     }
 
 
-def stage_artifacts(gate_passed: bool, version: str | None = None) -> dict:
+def stage_artifacts(gate_passed: bool, version: str | None = None,
+                    firmware_root: Path | None = None) -> tuple[dict, Path]:
     """Stage every board into firmware/<version>/.
 
     `version` names the folder; it defaults to date+sha. Nothing else in the
     tool cares what it is called - discover() finds sets by shape, not by name -
     so an operator can drop `bench-test-A/` in beside it and pick either.
+
+    `firmware_root` overrides the container. It exists so a caller - a test, or
+    anything staging outside the checkout - can redirect the write and have it
+    actually go there.
+
+    Returns the manifest and the version folder it was written to.
     """
     if not gate_passed:
         raise RuntimeError("gate did not pass; refusing to stage artifacts")
 
-    global FIRMWARE_DIR, MANIFEST_PATH
     label = version or default_version_label()
     # Reject path separators rather than silently staging somewhere else.
     if "/" in label or "\\" in label or label in (".", ".."):
         raise ValueError(f"invalid version label {label!r}: it names a folder, "
                          f"not a path")
-    FIRMWARE_DIR = FIRMWARE_ROOT / label
-    MANIFEST_PATH = FIRMWARE_DIR / "manifest.json"
+    dest_root = (firmware_root or FIRMWARE_ROOT) / label
+    manifest_path = dest_root / "manifest.json"
 
-    FIRMWARE_DIR.mkdir(parents=True, exist_ok=True)
+    dest_root.mkdir(parents=True, exist_ok=True)
     entries = []
     for board in BOARDS:
-        art = collect_board_artifacts(board)
+        art = collect_board_artifacts(board, dest_root)
         entries.append({
             "id": board.id,
             "name": board.name,
@@ -175,5 +186,5 @@ def stage_artifacts(gate_passed: bool, version: str | None = None) -> dict:
         })
 
     manifest = build_manifest(entries, gate_passed)
-    MANIFEST_PATH.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-    return manifest
+    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    return manifest, dest_root

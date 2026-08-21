@@ -82,3 +82,12 @@ Thumbs.db
 # Scratch/staging directory, not a source tree.
 # ---------------------------------------------------------------------------
 _to_delete/
+
+# ---------------------------------------------------------------------------
+# Build/source archives. _to_delete/ was ignored and got committed anyway
+# with `git add -f`, putting 17 MB of .tgz into history permanently. An
+# ignore rule on the directory did not stop that; one on the extension
+# means the force-add has to be deliberate about the file itself.
+# ---------------------------------------------------------------------------
+*.tgz
+*.tar.gz

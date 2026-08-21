@@ -1,10 +1,11 @@
 # Fabrica STM32G0 CAN Bus — Single-Page Reference
 
-This document describes the shared CAN bus that the three Fabrica STM32G0B1 modules use to coexist:
+This document describes the shared CAN bus that the Fabrica STM32G0B1 modules use to coexist:
 
 - **KincoDrive Control Module V5.4** (`STM32G0B1_Applciationprog/KincoDrive_ControlModule_V5_4`)
 - **PowerStage Controller** (`STM32G0B1_Applciationprog/PowerStage`)
 - **LEDDriver** (`STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG`)
+- **Button / Calibration Knob Board V5.5** (`STM32G0B1_Applciationprog/STM32G0_BUTTONBOARD_PROG`)
 
 Each module has its own application + OpenBLT bootloader and is intended to share one 500 kbps classic-CAN bus with the others.
 
@@ -36,7 +37,8 @@ Each module has its own application + OpenBLT bootloader and is intended to shar
 0x181-0x1FF       │ CANopen TPDO1        (avoid)
 0x200-0x27F       │ CANopen RPDO1        (avoid)
 … (CANopen ranges through 0x77F) …
-0x780-0x7DF       │ Reserved (free)
+0x780-0x7BF       │ ButtonBoard          ← FABRICA
+0x7C0-0x7DF       │ Reserved (free)
 0x7E4 / 0x7E5     │ CANopen LSS          (avoid)
 ```
 
@@ -58,6 +60,7 @@ Each module has its own application + OpenBLT bootloader and is intended to shar
 | **KincoDrive** | `0x101` | `0x102` | `0x110-0x114` | `0x120-0x127` |
 | **PowerStage** | `0x130` | `0x131` | `0x140-0x145` | `0x150-0x159` |
 | **LEDDriver**  | `0x160` | `0x161` | `0x170-0x172` | `0x178-0x17A` |
+| **ButtonBoard** | `0x780` | `0x781` | `0x790-0x793` | `0x7A0-0x7A4` |
 
 **Per-device DBCs**
 
@@ -66,6 +69,7 @@ Each module has its own application + OpenBLT bootloader and is intended to shar
 | KincoDrive | `STM32G0B1_Applciationprog/KincoDrive_ControlModule_V5_4/KincoDrive_ControlModule.dbc` |
 | PowerStage | `STM32G0B1_Applciationprog/PowerStage/PowerStage.dbc` |
 | LEDDriver  | `STM32G0B1_Applciationprog/STM32G0_LEDDRIVER_PROG/LEDDriver.dbc` |
+| ButtonBoard | `STM32G0B1_Applciationprog/STM32G0_BUTTONBOARD_PROG/ButtonBoard.dbc` |
 
 **Combined bus DBC** (load this in PCAN-Explorer or Vector CANalyzer to monitor all three at once): `Docs/Fabrica_Bus.dbc`.
 
@@ -138,6 +142,51 @@ PowerStage has dual CAN buses (FDCAN1 internal, FDCAN2 host gateway) and transpa
 | `0x179` | LIGHTSTATUS | TX | 8 | ~300 ms | PWM levels + voltages + heartbeat counter. Phase 0 of the rotation |
 | `0x17A` | DEVSTATUS | TX | 2 | ~300 ms | system state + error code. Phase 1 of the rotation |
 
+
+### ButtonBoard — `0x780-0x7A4`
+
+fabricaAI calibration knob V5.5. Ten illuminated buttons, ten LED drives, one
+PEC11L quadrature encoder with push-button, a 7-position ALPS SRBV170501
+rotary and four SPDT toggles.
+
+This block sits outside the CiA-301 gap the other three boards share, because
+that gap (`0x101-0x17F`) is fully allocated. `0x780-0x7BF` is above CANopen's
+NMT error-control range (`0x700-0x77F`) and below LSS (`0x7E4/0x7E5`), so it
+collides with nothing.
+
+| ID | Name | Dir | DLC | Cycle | Notes |
+|---|---|---|---|---|---|
+| `0x780` | Bootloader RX / Reset | RX | 2 | Event | byte[0]=0xFF triggers reset; bootloader then re-handles XCP CONNECT |
+| `0x781` | Bootloader TX | TX | - | Event | OpenBLT XCP responses |
+| `0x790` | CMD_LED | RX | 2 | Event | byte0 bits0-5 = LED_1..6, byte1 bits0-3 = LED_INT_1..4. Set bit = lit. Frames shorter than DLC=2 ignored |
+| `0x791` | CMD_BUFFER | RX | 1 | Event | 0 = J1/direct path owns the LED nets, 1 = STM32 owns them. Firmware guarantees the two buffer banks are never both enabled |
+| `0x792` | CMD_ENCODER | RX | 3 | Event | byte0 bit0 = apply; bytes 1-2 = new signed detent count (LE) |
+| `0x793` | CMD_EEPROM | RX | 1 | Event | bit0 = save current LED pattern + source as power-on default, bit1 = reload built-in defaults |
+| `0x7A0` | BCAST_KNOBSTATE | TX | 8 | 100 ms | enc pos (int16 LE, **detents**) + enc button + rotary pos + rotary raw one-hot + toggles + state/buff_sel nibbles + heartbeat |
+| `0x7A1` | BCAST_BUTTONS | TX | 2 | 100 ms | byte0 bits0-5 = Button_3V3_1..6, byte1 bits0-3 = Button_3V3_int_1..4. Set bit = pressed |
+| `0x7A2` | BCAST_LEDSTATE | TX | 3 | ~500 ms | LED pattern echo + which bank owns the nets. Phase 0 of the rotation |
+| `0x7A3` | BCAST_DEVSTATUS | TX | 2 | ~500 ms | state + error mask. Phase 1 of the rotation |
+| `0x7A4` | BCAST_EEPROMDATA | TX | 8 | ~500 ms | stored config echo. Phase 2 of the rotation |
+
+Error mask bits (`BCAST_DEVSTATUS` byte 1): `0x01`=ROTARY_INVALID,
+`0x02`=EEPROM (stored config rejected, defaults in use), `0x04`=CAN. Only the
+CAN bit is fatal — a bad rotary contact or a missing EEPROM does not stop the
+buttons and LEDs working, so those bits are advisory and self-clear.
+
+`KNOBSTATE` byte 6 packs the state machine in the high nibble
+(0=INIT 1=LOAD_CONFIG 2=RUNNING 3=ERROR) and the live output-enable levels in
+the low nibble (bit0 = `BUFF_SEL_1` asserted, bit1 = `BUFF_SEL_2` asserted).
+Reading back the pins rather than the requested source means that if the two
+ever disagree, the host sees it.
+
+`Encoder_Pos` counts **detents**, not quadrature edges. TIM2 runs x4 on
+PA0/PA1 and the firmware divides by four, so a PEC11L gives one count per
+click. `Rotary_Pos` is `0..6`, or `0xFF` when the switch lines do not describe
+a valid position; `Rotary_Raw` carries the unprocessed one-hot pattern, which
+is what to look at when diagnosing RS1. RS1 is make-before-break, so two
+adjacent lines high is a normal mid-detent transition and the decoder holds
+the previous position through it.
+
 ---
 
 ## 5. Bootloader workflow (per device)
@@ -149,13 +198,13 @@ The same XCP CONNECT frame works whether the application or the bootloader is cu
 3. If the **bootloader** is running (either after that reset, or after a power-on if no valid app is flashed), it receives the same frame on the same ID, recognises it as XCP CONNECT, and responds on `0x131`.
 4. Host proceeds with the normal OpenBLT XCP download sequence on the `0x130 / 0x131` pair.
 
-The address pairs `(0x101/0x102)`, `(0x130/0x131)`, `(0x160/0x161)` are unique per device — three boards in bootloader at once will never collide with each other.
+The address pairs `(0x101/0x102)`, `(0x130/0x131)`, `(0x160/0x161)` and `(0x780/0x781)` are unique per device — four boards in bootloader at once will never collide with each other.
 
 ---
 
 ## 6. Verification checklist
 
-- **Build all 6 projects** (3 bootloaders, 3 apps) in STM32CubeIDE — confirm no unresolved CAN ID symbols.
+- **Build all 8 projects** (4 bootloaders, 4 apps) in STM32CubeIDE — confirm no unresolved CAN ID symbols.
 - **Static grep** the source tree for the old IDs (`0x0667`, `0x1F100`, `0x66[2-9A-F]`, `0x67[012]`, `0x7E1`, `0x030`, `0x010`, `0x040`) — only doc strings should remain.
 - **CANopen overlap grep** — verify no source defines `0x080`, `0x100`, or anything in `0x180-0x77F` ranges as a CAN message ID.
 - **Single-device flashing** — for each device, send `0xFF 0x00` (DLC=2) on `0xN00`, confirm the bootloader's TX appears on `0xN01`, then verify OpenBLT BootCommander download succeeds.

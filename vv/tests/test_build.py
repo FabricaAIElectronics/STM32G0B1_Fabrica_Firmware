@@ -42,4 +42,4 @@ def test_run_passes_when_all_projects_build(monkeypatch):
                                       "elf": f"{n}.elf", "text": 1000, "data": 0, "bss": 100})
     result = build.run()
     assert result.status == "pass"
-    assert len(result.items) == 8  # 4 boards x (app + bootloader)
+    assert len(result.items) == 10  # 5 boards x (app + bootloader)

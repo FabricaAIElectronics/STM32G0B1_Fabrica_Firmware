@@ -32,7 +32,7 @@ def test_manifest_shape(monkeypatch, tmp_path):
     assert manifest["schema"] == 1
     assert manifest["gate"] == "pass"
     assert {b["id"] for b in manifest["boards"]} == {
-        "kincodrive", "powerstage", "leddriver", "knob"}
+        "kincodrive", "powerstage", "leddriver", "buttonboard", "knob"}
 
     ps = next(b for b in manifest["boards"] if b["id"] == "powerstage")
     assert ps["can"]["blt_rx"] == "0x130"

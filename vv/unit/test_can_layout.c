@@ -19,8 +19,10 @@ static void write_layouts_json(void)
     if (!fh) { printf("TEST FAIL layouts_json_open\n"); return; }
 
     fprintf(fh, "{\n  \"boards\": {\n");
-    const char *boards[] = {"kincodrive", "powerstage", "leddriver", "knob"};
-    for (unsigned b = 0; b < 4; b++) {
+    const char *boards[] = {"kincodrive", "powerstage", "leddriver",
+                            "buttonboard", "knob"};
+    const unsigned nboards = sizeof(boards) / sizeof(boards[0]);
+    for (unsigned b = 0; b < nboards; b++) {
         fprintf(fh, "    \"%s\": [\n", boards[b]);
         int first = 1;
         for (unsigned i = 0; i < VV_LAYOUT_COUNT; i++) {
@@ -30,7 +32,7 @@ static void write_layouts_json(void)
                     VV_LAYOUTS[i].dlc, VV_LAYOUTS[i].byte_order);
             first = 0;
         }
-        fprintf(fh, "\n    ]%s\n", b == 3 ? "" : ",");
+        fprintf(fh, "\n    ]%s\n", b == nboards - 1 ? "" : ",");
     }
     fprintf(fh, "  }\n}\n");
     fclose(fh);

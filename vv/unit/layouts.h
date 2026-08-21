@@ -64,6 +64,19 @@ static const vv_layout_t VV_LAYOUTS[] = {
     {"leddriver",  0x179, "LightStatus",       8, "big"},
     {"leddriver",  0x17A, "DevStatus",         2, "big"},
 
+    /* ButtonBoard - little endian uint16, matching the knob's Knob.dbc
+     * convention rather than PowerStage/LEDDriver's big endian. */
+    {"buttonboard", 0x780, "Bootloader_RX",    2, "little"},
+    {"buttonboard", 0x790, "Cmd_Led",          2, "little"},
+    {"buttonboard", 0x791, "Cmd_Buffer",       1, "little"},
+    {"buttonboard", 0x792, "Cmd_Encoder",      3, "little"},
+    {"buttonboard", 0x793, "Cmd_EEPROM",       1, "little"},
+    {"buttonboard", 0x7A0, "Knob_State",       8, "little"},
+    {"buttonboard", 0x7A1, "Buttons",          2, "little"},
+    {"buttonboard", 0x7A2, "Led_State",        3, "little"},
+    {"buttonboard", 0x7A3, "Dev_Status",       2, "little"},
+    {"buttonboard", 0x7A4, "EEPROM_Data",      8, "little"},
+
     /* Knob - no DBC, recorded for completeness only */
     {"knob",       0x661, "KnobState",         8, "big"},
     {"knob",       0x662, "ErrorState",        1, "big"},

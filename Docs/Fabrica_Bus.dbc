@@ -33,7 +33,7 @@ NS_ :
 
 BS_:
 
-BU_: Host KincoDrive PowerStage LEDDriver
+BU_: Host KincoDrive PowerStage LEDDriver ButtonBoard
 
 
 BO_ 257 KD_Bootloader_RX: 2 Host
@@ -331,6 +331,75 @@ BO_ 378 LED_BCAST_DEVSTATUS: 2 LEDDriver
  SG_ LED_Err_UV_24V : 8|1@1+ (1,0) [0|1] "" Host
  SG_ LED_Err_UV_17V5 : 9|1@1+ (1,0) [0|1] "" Host
 
+
+BO_ 1920 BTN_BOOTLOADER_RX: 2 Host
+ SG_ Command : 0|8@1+ (1,0) [0|255] "" ButtonBoard
+ SG_ Reserved : 8|8@1+ (1,0) [0|255] "" ButtonBoard
+
+BO_ 1921 BTN_BOOTLOADER_TX: 8 ButtonBoard
+ SG_ XCP_Response : 0|8@1+ (1,0) [0|255] "" Host
+
+BO_ 1936 BTN_CMD_LED: 2 Host
+ SG_ Led_Mask : 0|6@1+ (1,0) [0|63] "" ButtonBoard
+ SG_ Led_Int_Mask : 8|4@1+ (1,0) [0|15] "" ButtonBoard
+
+BO_ 1937 BTN_CMD_BUFFER: 1 Host
+ SG_ Led_Source : 0|8@1+ (1,0) [0|1] "" ButtonBoard
+
+BO_ 1938 BTN_CMD_ENCODER: 3 Host
+ SG_ Flags : 0|8@1+ (1,0) [0|255] "" ButtonBoard
+ SG_ Position : 8|16@1- (1,0) [-32768|32767] "detent" ButtonBoard
+
+BO_ 1939 BTN_CMD_EEPROM: 1 Host
+ SG_ Command : 0|8@1+ (1,0) [0|3] "" ButtonBoard
+
+BO_ 1952 BTN_KNOBSTATE: 8 ButtonBoard
+ SG_ Encoder_Pos : 0|16@1- (1,0) [-32768|32767] "detent" Host
+ SG_ Encoder_Button : 16|8@1+ (1,0) [0|1] "" Host
+ SG_ Rotary_Pos : 24|8@1+ (1,0) [0|255] "" Host
+ SG_ Rotary_Raw : 32|7@1+ (1,0) [0|127] "" Host
+ SG_ Toggle_Mask : 40|4@1+ (1,0) [0|15] "" Host
+ SG_ Buff_Sel : 48|4@1+ (1,0) [0|3] "" Host
+ SG_ State : 52|4@1+ (1,0) [0|3] "" Host
+ SG_ Heartbeat : 56|8@1+ (1,0) [0|255] "" Host
+
+BO_ 1953 BTN_BUTTONS: 2 ButtonBoard
+ SG_ Button_1 : 0|1@1+ (1,0) [0|1] "" Host
+ SG_ Button_2 : 1|1@1+ (1,0) [0|1] "" Host
+ SG_ Button_3 : 2|1@1+ (1,0) [0|1] "" Host
+ SG_ Button_4 : 3|1@1+ (1,0) [0|1] "" Host
+ SG_ Button_5 : 4|1@1+ (1,0) [0|1] "" Host
+ SG_ Button_6 : 5|1@1+ (1,0) [0|1] "" Host
+ SG_ Button_Int_1 : 8|1@1+ (1,0) [0|1] "" Host
+ SG_ Button_Int_2 : 9|1@1+ (1,0) [0|1] "" Host
+ SG_ Button_Int_3 : 10|1@1+ (1,0) [0|1] "" Host
+ SG_ Button_Int_4 : 11|1@1+ (1,0) [0|1] "" Host
+
+BO_ 1954 BTN_LEDSTATE: 3 ButtonBoard
+ SG_ Led_1 : 0|1@1+ (1,0) [0|1] "" Host
+ SG_ Led_2 : 1|1@1+ (1,0) [0|1] "" Host
+ SG_ Led_3 : 2|1@1+ (1,0) [0|1] "" Host
+ SG_ Led_4 : 3|1@1+ (1,0) [0|1] "" Host
+ SG_ Led_5 : 4|1@1+ (1,0) [0|1] "" Host
+ SG_ Led_6 : 5|1@1+ (1,0) [0|1] "" Host
+ SG_ Led_Int_1 : 8|1@1+ (1,0) [0|1] "" Host
+ SG_ Led_Int_2 : 9|1@1+ (1,0) [0|1] "" Host
+ SG_ Led_Int_3 : 10|1@1+ (1,0) [0|1] "" Host
+ SG_ Led_Int_4 : 11|1@1+ (1,0) [0|1] "" Host
+ SG_ Led_Source : 16|8@1+ (1,0) [0|1] "" Host
+
+BO_ 1955 BTN_DEVSTATUS: 2 ButtonBoard
+ SG_ State : 0|8@1+ (1,0) [0|3] "" Host
+ SG_ Err_Rotary_Invalid : 8|1@1+ (1,0) [0|1] "" Host
+ SG_ Err_Eeprom : 9|1@1+ (1,0) [0|1] "" Host
+ SG_ Err_Can : 10|1@1+ (1,0) [0|1] "" Host
+
+BO_ 1956 BTN_EEPROMDATA: 8 ButtonBoard
+ SG_ Magic : 0|16@1+ (1,0) [0|65535] "" Host
+ SG_ Default_Led_Mask : 16|8@1+ (1,0) [0|63] "" Host
+ SG_ Default_Led_Int_Mask : 24|8@1+ (1,0) [0|15] "" Host
+ SG_ Default_Led_Source : 32|8@1+ (1,0) [0|1] "" Host
+ SG_ Flags : 40|8@1+ (1,0) [0|255] "" Host
 
 CM_ BU_ Host "Supervisory host or CAN analyzer. Issues commands to the three Fabrica devices and consumes their broadcasts.";
 CM_ BU_ KincoDrive "Fabrica KincoDrive Control Module V5.4. Standard 11-bit IDs in 0x101-0x12F. Bootloader RX 0x101 / TX 0x102.";

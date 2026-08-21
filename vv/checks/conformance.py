@@ -22,6 +22,9 @@ SUB_BLOCKS = {
     "kincodrive": (0x101, 0x12F),
     "powerstage": (0x130, 0x15F),
     "leddriver": (0x160, 0x17F),
+    # Outside the CiA-301 gap because that gap is full; see
+    # Docs/CAN_Bus.md section 2.
+    "buttonboard": (0x780, 0x7BF),
 }
 
 # Tolerates the three forms that occur in the real headers:

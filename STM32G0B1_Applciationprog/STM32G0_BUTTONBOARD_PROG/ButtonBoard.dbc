@@ -1,0 +1,129 @@
+VERSION "fabricaAI calibration knob / button board V5.5 (STM32G0B1RET6)"
+
+
+NS_ :
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	BA_DEF_DEF_
+
+BS_:
+
+BU_: Host ButtonBoard
+
+
+BO_ 1920 BOOTLOADER_RX: 2 Host
+ SG_ Command : 0|8@1+ (1,0) [0|255] "" ButtonBoard
+ SG_ Reserved : 8|8@1+ (1,0) [0|255] "" ButtonBoard
+
+BO_ 1921 BOOTLOADER_TX: 8 ButtonBoard
+ SG_ XCP_Response : 0|8@1+ (1,0) [0|255] "" Host
+
+BO_ 1936 CMD_LED: 2 Host
+ SG_ Led_Mask : 0|6@1+ (1,0) [0|63] "" ButtonBoard
+ SG_ Led_Int_Mask : 8|4@1+ (1,0) [0|15] "" ButtonBoard
+
+BO_ 1937 CMD_BUFFER: 1 Host
+ SG_ Led_Source : 0|8@1+ (1,0) [0|1] "" ButtonBoard
+
+BO_ 1938 CMD_ENCODER: 3 Host
+ SG_ Flags : 0|8@1+ (1,0) [0|255] "" ButtonBoard
+ SG_ Position : 8|16@1- (1,0) [-32768|32767] "detent" ButtonBoard
+
+BO_ 1939 CMD_EEPROM: 1 Host
+ SG_ Command : 0|8@1+ (1,0) [0|3] "" ButtonBoard
+
+BO_ 1952 KNOBSTATE: 8 ButtonBoard
+ SG_ Encoder_Pos : 0|16@1- (1,0) [-32768|32767] "detent" Host
+ SG_ Encoder_Button : 16|8@1+ (1,0) [0|1] "" Host
+ SG_ Rotary_Pos : 24|8@1+ (1,0) [0|255] "" Host
+ SG_ Rotary_Raw : 32|7@1+ (1,0) [0|127] "" Host
+ SG_ Toggle_Mask : 40|4@1+ (1,0) [0|15] "" Host
+ SG_ Buff_Sel : 48|4@1+ (1,0) [0|3] "" Host
+ SG_ State : 52|4@1+ (1,0) [0|3] "" Host
+ SG_ Heartbeat : 56|8@1+ (1,0) [0|255] "" Host
+
+BO_ 1953 BUTTONS: 2 ButtonBoard
+ SG_ Button_1 : 0|1@1+ (1,0) [0|1] "" Host
+ SG_ Button_2 : 1|1@1+ (1,0) [0|1] "" Host
+ SG_ Button_3 : 2|1@1+ (1,0) [0|1] "" Host
+ SG_ Button_4 : 3|1@1+ (1,0) [0|1] "" Host
+ SG_ Button_5 : 4|1@1+ (1,0) [0|1] "" Host
+ SG_ Button_6 : 5|1@1+ (1,0) [0|1] "" Host
+ SG_ Button_Int_1 : 8|1@1+ (1,0) [0|1] "" Host
+ SG_ Button_Int_2 : 9|1@1+ (1,0) [0|1] "" Host
+ SG_ Button_Int_3 : 10|1@1+ (1,0) [0|1] "" Host
+ SG_ Button_Int_4 : 11|1@1+ (1,0) [0|1] "" Host
+
+BO_ 1954 LEDSTATE: 3 ButtonBoard
+ SG_ Led_1 : 0|1@1+ (1,0) [0|1] "" Host
+ SG_ Led_2 : 1|1@1+ (1,0) [0|1] "" Host
+ SG_ Led_3 : 2|1@1+ (1,0) [0|1] "" Host
+ SG_ Led_4 : 3|1@1+ (1,0) [0|1] "" Host
+ SG_ Led_5 : 4|1@1+ (1,0) [0|1] "" Host
+ SG_ Led_6 : 5|1@1+ (1,0) [0|1] "" Host
+ SG_ Led_Int_1 : 8|1@1+ (1,0) [0|1] "" Host
+ SG_ Led_Int_2 : 9|1@1+ (1,0) [0|1] "" Host
+ SG_ Led_Int_3 : 10|1@1+ (1,0) [0|1] "" Host
+ SG_ Led_Int_4 : 11|1@1+ (1,0) [0|1] "" Host
+ SG_ Led_Source : 16|8@1+ (1,0) [0|1] "" Host
+
+BO_ 1955 DEVSTATUS: 2 ButtonBoard
+ SG_ State : 0|8@1+ (1,0) [0|3] "" Host
+ SG_ Err_Rotary_Invalid : 8|1@1+ (1,0) [0|1] "" Host
+ SG_ Err_Eeprom : 9|1@1+ (1,0) [0|1] "" Host
+ SG_ Err_Can : 10|1@1+ (1,0) [0|1] "" Host
+
+BO_ 1956 EEPROMDATA: 8 ButtonBoard
+ SG_ Magic : 0|16@1+ (1,0) [0|65535] "" Host
+ SG_ Default_Led_Mask : 16|8@1+ (1,0) [0|63] "" Host
+ SG_ Default_Led_Int_Mask : 24|8@1+ (1,0) [0|15] "" Host
+ SG_ Default_Led_Source : 32|8@1+ (1,0) [0|1] "" Host
+ SG_ Flags : 40|8@1+ (1,0) [0|255] "" Host
+
+
+CM_ BO_ 1920 "Bootloader entry / XCP CONNECT. Data FF 00 (DLC=2) makes a
+running application call NVIC_SystemReset(); the OpenBLT bootloader treats the
+identical frame on the identical id as XCP CONNECT, so the host sends it once
+either way. Sent as: cansend can0 780#FF00";
+CM_ BO_ 1921 "OpenBLT XCP responses. Must match BOOT_COM_CAN_TX_MSG_ID in
+STM32G0B1_Bootloader/G0B1_ButtonBoard_Boot/App/blt_conf.h.";
+CM_ BO_ 1936 "Set the ten LED outputs. Byte 0 bits 0-5 are LED_1..LED_6, byte 1
+bits 0-3 are LED_INT_1..LED_INT_4. A set bit means lit. Frames shorter than
+DLC=2 are ignored rather than treated as 'all internal LEDs off'. The pattern
+is stored even while the direct/J1 path owns the nets, so it takes effect the
+instant CMD_BUFFER hands ownership to the STM32.";
+CM_ BO_ 1937 "Choose which source drives the LED nets. 0 = J1 / direct feedback
+(BUFF_SEL_1 asserted), 1 = this STM32 (BUFF_SEL_2 asserted). The two output
+enables are independent GPIOs, so firmware always disables the outgoing bank
+before enabling the incoming one - both enabled at once is an output fight.";
+CM_ BO_ 1938 "Preset the encoder count. Byte 0 bit 0 = apply; bytes 1-2 are the
+new signed detent position. Other flag bits are reserved and ignored.";
+CM_ BO_ 1939 "bit0 = save the current LED pattern and source as the power-on
+defaults, bit1 = reload built-in defaults.";
+CM_ BO_ 1952 "Broadcast every 100 ms. Encoder_Pos counts DETENTS, not
+quadrature edges - TIM2 runs x4 and the firmware divides by four, so a PEC11L
+gives one count per click. Rotary_Pos is 0..6, or 0xFF when the switch lines do
+not describe a valid position. Rotary_Raw is the unprocessed one-hot pattern,
+which is what to look at when diagnosing RS1. Buff_Sel reports the live pin
+levels: bit0 = BUFF_SEL_1 asserted, bit1 = BUFF_SEL_2 asserted - never both.
+Heartbeat free-runs, so a restart shows up as it dropping to a low value.";
+CM_ BO_ 1953 "Broadcast every 100 ms. A set bit means the contact is CLOSED.
+The pins are active low on the board; the firmware inverts so the protocol
+reads the obvious way.";
+CM_ BO_ 1954 "Broadcast about twice a second. Echoes the LED pattern the board
+is holding and which bank currently owns the nets.";
+CM_ BO_ 1955 "Broadcast about twice a second. Only Err_Can is fatal - a rotary
+or EEPROM fault is reported but the board keeps running, because the buttons
+and LEDs are independent of both.";
+CM_ BO_ 1956 "Broadcast about twice a second. Echo of the stored configuration.
+Magic must read 0x4B42; anything else means the stored image was rejected and
+built-in defaults are in use.";
+CM_ SG_ 1952 State "0=INIT 1=LOAD_CONFIG 2=RUNNING 3=ERROR";
+CM_ SG_ 1952 Rotary_Pos "0..6 = switch position, 255 = invalid";
+
+VAL_ 1952 State 0 "INIT" 1 "LOAD_CONFIG" 2 "RUNNING" 3 "ERROR" ;
+VAL_ 1955 State 0 "INIT" 1 "LOAD_CONFIG" 2 "RUNNING" 3 "ERROR" ;
+VAL_ 1937 Led_Source 0 "DIRECT_J1" 1 "STM32" ;
+VAL_ 1954 Led_Source 0 "DIRECT_J1" 1 "STM32" ;

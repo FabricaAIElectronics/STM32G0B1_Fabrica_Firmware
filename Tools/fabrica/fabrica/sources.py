@@ -33,6 +33,7 @@ _BOARD_TOKENS = (
     ("kincodrive", ("kincodrive", "kinco", "actuation_io", "actuation")),
     ("powerstage", ("powerstage", "power_stage")),
     ("leddriver", ("leddriver", "led_driver", "ledd")),
+    ("buttonboard", ("buttonboard", "button_board", "btnboard", "g0_buttonboard")),
     ("knob", ("knob", "stm32f3re", "f3re", "stm32f3_prog", "f3_prog", "f303")),
 )
 _BOOT_TOKENS = ("boot", "bootloader", "blt")
@@ -47,6 +48,8 @@ _DEFAULTS = {
                    "app_origin": "0x08003000", "dbc": "PowerStage.dbc"},
     "leddriver": {"blt_rx": 0x160, "blt_tx": 0x161, "mcu": "STM32G0B1RET6",
                   "app_origin": "0x08003000", "dbc": "LEDDriver.dbc"},
+    "buttonboard": {"blt_rx": 0x780, "blt_tx": 0x781, "mcu": "STM32G0B1RET6",
+                    "app_origin": "0x08003000", "dbc": "ButtonBoard.dbc"},
     "knob": {"blt_rx": 0x667, "blt_tx": 0x7E1, "mcu": "STM32F303RET6",
              "app_origin": "0x08003800", "dbc": "Knob.dbc"},
 }

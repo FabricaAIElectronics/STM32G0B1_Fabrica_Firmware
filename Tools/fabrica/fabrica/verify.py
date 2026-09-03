@@ -91,6 +91,23 @@ STIMULUS = {
     # The knob echoes the commanded common-line mask back in KNOBSTATE within
     # one 500 ms GPIO update tick, so this is a true echo. It only toggles the
     # encoder common lines - nothing moves.
+    # ButtonBoard: CMD_LED -> LEDSTATE is a textbook non-actuating echo - the
+    # board reflects the commanded LED mask back within one 500 ms rotating
+    # tick. LEDSTATE's DBC signals are one bit per LED, so the check drives
+    # LED_1 alone (mask 0x01) and compares the decoded Led_1 bit; the raw
+    # fallback compares byte 0, which IS the mask. The sequence ends dark
+    # (0x00) so the panel is left as it was found. Visible side effect: LED 1
+    # on the button panel lights for a few seconds - no motion, no power rails.
+    "buttonboard": {
+        "cmd_id": 0x790, "cmd_name": "CMD_LED",
+        "bcast_id": 0x7A2, "bcast_name": "LEDSTATE",
+        "payload_for": lambda v: bytes([v, 0]),          # led_mask, led_int_mask
+        "signal": "Led_1", "raw_index": 0,
+        "values": (0x01, 0x00),
+        # params.py classes every LED write on this board as actuating; keep
+        # verify consistent with that so the causal check is opt-in here too.
+        "actuates": "lights LED 1 on the button panel",
+    },
     "knob": {
         "cmd_id": 0x665, "cmd_name": "KNOBCOMMAND",
         "bcast_id": 0x661, "bcast_name": "KNOBSTATE",

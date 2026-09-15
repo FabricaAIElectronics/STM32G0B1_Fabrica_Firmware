@@ -1,6 +1,6 @@
 # Fabrica bench tool
 
-Flashes and debugs the four Fabrica boards from a Jetson, Raspberry Pi, or any
+Flashes and debugs the five Fabrica boards from a Jetson, Raspberry Pi, or any
 Ubuntu machine. Bootloaders go over ST-Link V3; applications go over CAN via
 OpenBLT BootCommander; telemetry is decoded live from the DBC files.
 
@@ -28,7 +28,7 @@ Specifically untested, in rough order of risk:
 | **st-flash + `.srec`** | st-flash has no S-record parser at all. `doctor` now FAILS if st-flash is the only backend, rather than passing and letting the first flash blow up | Install STM32CubeProgrammer |
 | openocd + `.srec` | openocd picks its image parser from the file extension and knows `.s19`, not `.srec`. Given an unrecognised extension it falls back to **raw binary**, which would write the ASCII text of the S-record into flash — silent corruption, not an error. We therefore emit explicit `flash write_image ... s19` rather than the usual `program` helper | Proven on the KincoDrive with openocd 0.12; see the version note below |
 | `open_bus("can0")` | A one-line wrapper around `can.Bus`, and the one line no test can reach — the tests use the `virtual` backend | `./fabrica_cli.py monitor --seconds 5` |
-| Extended 29-bit CAN | Encoded as `-xid=1` to match `flash_can.sh`. Never exercised by anyone | Nothing to check: all four boards are 11-bit standard |
+| Extended 29-bit CAN | Encoded as `-xid=1` to match `flash_can.sh`. Never exercised by anyone | Nothing to check: all five boards are 11-bit standard |
 | `-s=xcp` and `-t1` | `-s=xcp` matches your working script. `-t1` is **not** passed by default, so the argv is byte-for-byte the invocation already proven on the bench | If BootCommander rejects an option, `-s=xcp` is the only non-script flag |
 
 ### Layout — the folder is the deployment unit
@@ -368,7 +368,7 @@ tui                           full-screen interface
 Global: `--firmware DIR`, `--iface can0`, `--bitrate 500000`, `--no-colour`.
 `--dry-run` works on `flash` and `reset`.
 
-Board ids: `kincodrive`, `powerstage`, `leddriver`, `knob`.
+Board ids: `kincodrive`, `powerstage`, `leddriver`, `buttonboard`, `knob`.
 
 ### TUI keys
 
